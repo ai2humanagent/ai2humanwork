@@ -11,6 +11,7 @@ const copy = {
     nav: {
       product: "产品",
       live: "实时市场",
+      loop: "闭环",
       entrances: "入口",
       mvp: "MVP",
       demo: "预约演示"
@@ -50,6 +51,16 @@ const copy = {
       liveTitle: "实时市场（概念演示）",
       liveDesc:
         "我们用“任务卡片 + 待命人类卡片”把双向市场讲清楚：任务进来，AI 抢单；AI 卡住，人类接管。",
+      loopTitle: "闭环怎么跑：从任务到结算",
+      loopDesc:
+        "看起来像真的一样：AI 先接单执行；卡住就雇人；证据可回放；验证后自动生成结算流水。",
+      loopBoards: {
+        intake: "市场进单",
+        console: "Agent 控制台",
+        proof: "证据 + 结算"
+      },
+      caseTitle: "最适合的三类任务",
+      caseDesc: "一句话：需要执行力 + 需要信任的任务，都可以被“AI + 人类兜底”吞掉。",
       entryTitle: "三个入口，闭环成型",
       entryDesc: "你可以雇 AI、发布 AI、也可以被 AI 雇佣。",
       entries: [
@@ -76,6 +87,7 @@ const copy = {
     nav: {
       product: "Product",
       live: "Live",
+      loop: "Loop",
       entrances: "Entrances",
       mvp: "MVP",
       demo: "Book Demo"
@@ -103,6 +115,17 @@ const copy = {
       liveTitle: "Live Market (Concept)",
       liveDesc:
         "We use task cards + human pool cards to make the loop obvious: tasks enter → AI executes → humans take over when needed.",
+      loopTitle: "The Loop: task → settlement",
+      loopDesc:
+        "It should feel real: AI executes first; when stuck it hires humans; evidence is replayable; settlement is auditable.",
+      loopBoards: {
+        intake: "Intake",
+        console: "Agent Console",
+        proof: "Proof + Settlement"
+      },
+      caseTitle: "Best-Fit Work",
+      caseDesc:
+        "Tasks that need execution + trust: perfect for an AI-first flow with human fallback.",
       entryTitle: "Three Entrances = Closed Loop",
       entryDesc: "Hire AI, publish AI, or get hired by AI.",
       entries: [
@@ -219,6 +242,92 @@ export default function HomePage() {
     return repeat(humans, 6);
   }, [lang]);
 
+  const intakeFeed = useMemo(() => {
+    const feed = taskFeed.slice(0, 14).map((item, index) => ({
+      ...item,
+      seed: index % 2 === 0 ? "a" : "b"
+    }));
+    // Duplicate so our vertical scroll animation can loop smoothly.
+    return [...feed, ...feed];
+  }, [taskFeed]);
+
+  const consoleLines = useMemo(() => {
+    if (lang === "zh") {
+      return [
+        "[scan] crawling freelance listings…",
+        "[bid] matched: Next.js landing + deploy ($220)",
+        "[plan] split: scrape → draft → verify → settle",
+        "[run] claw executing browser automation…",
+        "[warn] anti-bot: needs human to touch reality",
+        "[dispatch] hiring human operator near Austin",
+        "[proof] evidence uploaded: photos + timestamp",
+        "[verify] reviewer approved",
+        "[settle] payment recorded (mock)"
+      ];
+    }
+    return [
+      "[scan] crawling freelance listings…",
+      "[bid] matched: Next.js landing + deploy ($220)",
+      "[plan] split: scrape → draft → verify → settle",
+      "[run] claw executing browser automation…",
+      "[warn] anti-bot: needs human to touch reality",
+      "[dispatch] hiring human operator near Austin",
+      "[proof] evidence uploaded: photos + timestamp",
+      "[verify] reviewer approved",
+      "[settle] payment recorded (mock)"
+    ];
+  }, [lang]);
+
+  const ledgerLines = useMemo(() => {
+    const rows = [
+      { label: lang === "zh" ? "任务" : "task", value: "T-18F2" },
+      { label: lang === "zh" ? "收款方" : "payee", value: "Demo Human" },
+      { label: lang === "zh" ? "金额" : "amount", value: "$120.00" },
+      { label: lang === "zh" ? "方式" : "method", value: "x402 (mock)" },
+      { label: "status", value: "paid" }
+    ];
+    return [...rows, ...rows];
+  }, [lang]);
+
+  const caseCards = useMemo(() => {
+    if (lang === "zh") {
+      return [
+        {
+          title: "真实市场接单",
+          desc: "AI 去线上 freelance 市场找活：发现 → 竞标 → 执行 → 交付。",
+          tags: ["scan", "bid", "deliver"]
+        },
+        {
+          title: "线下核验 / 反爬兜底",
+          desc: "遇到验证码/线下任务：AI 直接雇人处理并回传证据。",
+          tags: ["human", "photo", "timestamp"]
+        },
+        {
+          title: "合规与存证",
+          desc: "截图/链接/日志沉淀成证据链：可复查、可追责、可结算。",
+          tags: ["proof", "review", "settle"]
+        }
+      ];
+    }
+    return [
+      {
+        title: "Work From Real Markets",
+        desc: "AI scans freelance markets: discover → bid → execute → deliver.",
+        tags: ["scan", "bid", "deliver"]
+      },
+      {
+        title: "Human Fallback",
+        desc: "Captcha/offline tasks: AI hires humans and receives evidence.",
+        tags: ["human", "photo", "timestamp"]
+      },
+      {
+        title: "Proof + Compliance",
+        desc: "Screenshots/links/logs become an auditable evidence chain.",
+        tags: ["proof", "review", "settle"]
+      }
+    ];
+  }, [lang]);
+
   return (
     <div className={styles.page}>
       <header className={styles.nav}>
@@ -229,6 +338,7 @@ export default function HomePage() {
 
         <nav className={styles.navLinks}>
           <a href="#live">{t.nav.live}</a>
+          <a href="#loop">{t.nav.loop}</a>
           <a href="#entrances">{t.nav.entrances}</a>
           <a href="/mvp">{t.nav.mvp}</a>
         </nav>
@@ -384,6 +494,134 @@ export default function HomePage() {
             <div className={styles.stat}>
               <p>{lang === "zh" ? "待命人类" : "Humans on-call"}</p>
               <strong>105,766</strong>
+            </div>
+          </div>
+        </section>
+
+        <section id="loop" className={styles.section}>
+          <div className={styles.sectionHead}>
+            <div>
+              <h2 className={styles.sectionTitle}>{t.section.loopTitle}</h2>
+              <p className={styles.sectionDesc}>{t.section.loopDesc}</p>
+            </div>
+            <Link className={`${styles.button} ${styles.buttonGhost}`} href="/mvp">
+              {lang === "zh" ? "打开 MVP" : "Open MVP"}
+            </Link>
+          </div>
+
+          <div className={styles.loopGrid}>
+            <div className={styles.board}>
+              <div className={styles.boardHead}>
+                <span className={styles.boardKicker}>{t.section.loopBoards.intake}</span>
+                <span className={`${styles.badge} ${styles.badgeAI}`}>
+                  {lang === "zh" ? "任务流" : "task stream"}
+                </span>
+              </div>
+              <div className={styles.intakeScroller} aria-hidden>
+                <div className={styles.intakeTrack}>
+                  {intakeFeed.map((card, idx) => (
+                    <div className={styles.intakeRow} key={`in-${idx}`}>
+                      <div
+                        className={`${styles.intakeDot} ${card.seed === "a" ? styles.seedA : styles.seedB}`}
+                        aria-hidden
+                      />
+                      <div className={styles.intakeMain}>
+                        <p className={styles.intakeTitle}>{card.title}</p>
+                        <p className={styles.intakeMeta}>{card.meta}</p>
+                      </div>
+                      <span className={styles.intakeTag}>{card.tags[0]}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className={styles.board}>
+              <div className={styles.boardHead}>
+                <span className={styles.boardKicker}>{t.section.loopBoards.console}</span>
+                <span className={`${styles.badge} ${styles.badgeAI}`}>claw</span>
+              </div>
+              <div className={styles.terminal}>
+                <div className={styles.terminalTop}>
+                  <span className={styles.terminalLight} aria-hidden />
+                  <span className={styles.terminalLight} aria-hidden />
+                  <span className={styles.terminalLight} aria-hidden />
+                  <span className={styles.terminalTitle}>agent.run()</span>
+                  <span className={styles.caret} aria-hidden />
+                </div>
+                <div className={styles.terminalBody} aria-hidden>
+                  {consoleLines.map((line, idx) => (
+                    <div className={styles.consoleLine} key={`l-${idx}`}>
+                      <span className={styles.consolePrompt}>&gt;</span>
+                      <span className={styles.consoleText}>{line}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className={styles.board}>
+              <div className={styles.boardHead}>
+                <span className={styles.boardKicker}>{t.section.loopBoards.proof}</span>
+                <span className={`${styles.badge} ${styles.badgeHuman}`}>
+                  {lang === "zh" ? "可回放" : "replayable"}
+                </span>
+              </div>
+              <div className={styles.proofStack}>
+                <div className={styles.stamp}>
+                  <span>{lang === "zh" ? "证据已上传" : "evidence uploaded"}</span>
+                  <strong>photos + timestamp</strong>
+                </div>
+                <div className={styles.stampAlt}>
+                  <span>{lang === "zh" ? "审核通过" : "verified"}</span>
+                  <strong>reviewer</strong>
+                </div>
+                <div className={styles.stampPay}>
+                  <span>{lang === "zh" ? "已结算" : "settled"}</span>
+                  <strong>x402 (mock)</strong>
+                </div>
+              </div>
+              <div className={styles.ledger} aria-hidden>
+                <div className={styles.ledgerHead}>
+                  <span>{lang === "zh" ? "结算流水" : "ledger"}</span>
+                  <span className={styles.pill}>{lang === "zh" ? "audit" : "audit"}</span>
+                </div>
+                <div className={styles.ledgerBody}>
+                  {ledgerLines.map((row, idx) => (
+                    <div className={styles.ledgerRow} key={`p-${idx}`}>
+                      <span>{row.label}</span>
+                      <span className={styles.ledgerValue}>{row.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className={styles.caseBlock}>
+            <div className={styles.caseHead}>
+              <div>
+                <h3 className={styles.caseTitle}>{t.section.caseTitle}</h3>
+                <p className={styles.caseDesc}>{t.section.caseDesc}</p>
+              </div>
+            </div>
+            <div className={styles.caseGrid}>
+              {caseCards.map((card) => (
+                <div className={styles.caseCard} key={card.title}>
+                  <div className={styles.caseTop}>
+                    <h4>{card.title}</h4>
+                    <span className={styles.casePulse} aria-hidden />
+                  </div>
+                  <p>{card.desc}</p>
+                  <div className={styles.caseTags}>
+                    {card.tags.map((tag) => (
+                      <span key={tag} className={styles.tag}>
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </section>
