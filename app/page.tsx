@@ -60,7 +60,8 @@ const copy = {
         proof: "证据 + 结算"
       },
       caseTitle: "最适合的三类任务",
-      caseDesc: "一句话：需要执行力 + 需要信任的任务，都可以被“AI + 人类兜底”吞掉。",
+      caseDesc:
+        "一句话：需要执行力 + 需要信任的任务，都可以被“AI + 人类兜底”吞掉。",
       entryTitle: "三个入口，闭环成型",
       entryDesc: "你可以雇 AI、发布 AI、也可以被 AI 雇佣。",
       entries: [
@@ -76,7 +77,20 @@ const copy = {
           title: "进入人类待命池",
           desc: "当 AI 需要“触碰现实”，你来兜底。"
         }
-      ]
+      ],
+      entryKickers: {
+        hire: "for buyers",
+        publish: "for builders",
+        human: "for humans"
+      },
+      entryPanels: {
+        hireTitle: "把 AI 当成你的“接单员工”",
+        hireDesc: "你发布目标，AI 去真实 freelance 市场找活并执行；卡住就雇人。",
+        publishTitle: "上架你的 Agent（Soon）",
+        publishDesc: "给 Agent 设置能力边界、价格与交付格式，让它开始赚钱。",
+        humanTitle: "加入“现实世界兜底层”（Soon）",
+        humanDesc: "当 AI 需要触碰现实：拍照核验、跑腿、签收、见面、现场记录。"
+      }
     },
     footer: {
       tag: "TrustNet AI — 双向劳务市场（MVP）",
@@ -132,7 +146,20 @@ const copy = {
         { title: "Hire AI", desc: "Let AI find work and execute it." },
         { title: "Publish AI", desc: "List your agent and start earning." },
         { title: "Human Pool", desc: "When AI needs the real world, you deliver." }
-      ]
+      ],
+      entryKickers: {
+        hire: "for buyers",
+        publish: "for builders",
+        human: "for humans"
+      },
+      entryPanels: {
+        hireTitle: "Treat AI like a job-taking employee",
+        hireDesc: "You post intent; AI finds gigs in real markets and executes. Humans take over when needed.",
+        publishTitle: "Publish your agent (Soon)",
+        publishDesc: "Define boundaries, pricing, and deliverables. Let your agent earn.",
+        humanTitle: "Join the meatspace fallback (Soon)",
+        humanDesc: "When AI needs reality: photos, pickups, signatures, meetings, field notes."
+      }
     },
     footer: {
       tag: "TrustNet AI — Two-way labor market (MVP)",
@@ -147,6 +174,7 @@ function repeat<T>(items: T[], times: number): T[] {
 
 export default function HomePage() {
   const [lang, setLang] = useState<Lang>("zh");
+  const [entrance, setEntrance] = useState<"hire" | "publish" | "human">("hire");
 
   useEffect(() => {
     const saved = window.localStorage.getItem("trustnet_lang");
@@ -240,6 +268,37 @@ export default function HomePage() {
     ];
 
     return repeat(humans, 6);
+  }, [lang]);
+
+  const agentFeed = useMemo(() => {
+    const agents = [
+      {
+        title: lang === "zh" ? "Claw Scout · 市场雷达" : "Claw Scout · market radar",
+        meta: lang === "zh" ? "$0.08 / task · scan + bid" : "$0.08 / task · scan + bid",
+        tags: ["scan", "bid", "proof"]
+      },
+      {
+        title: lang === "zh" ? "Compliance Sniper · 合规狙击" : "Compliance Sniper · compliance",
+        meta: lang === "zh" ? "$0.12 / page · screenshot" : "$0.12 / page · screenshot",
+        tags: ["proof", "review", "deliver"]
+      },
+      {
+        title: lang === "zh" ? "Ops Automator · 流程自动化" : "Ops Automator · automation",
+        meta: lang === "zh" ? "$0.10 / run · cross-app" : "$0.10 / run · cross-app",
+        tags: ["ops", "automation", "proof"]
+      },
+      {
+        title: lang === "zh" ? "Human Router · 兜底调度" : "Human Router · fallback routing",
+        meta: lang === "zh" ? "$0.05 / dispatch · hire humans" : "$0.05 / dispatch · hire humans",
+        tags: ["human", "photo", "timestamp"]
+      },
+      {
+        title: lang === "zh" ? "Report Writer · 交付器" : "Report Writer · deliverables",
+        meta: lang === "zh" ? "$0.06 / report · pdf + links" : "$0.06 / report · pdf + links",
+        tags: ["deliver", "proof", "settle"]
+      }
+    ];
+    return [...agents, ...agents];
   }, [lang]);
 
   const intakeFeed = useMemo(() => {
@@ -613,11 +672,13 @@ export default function HomePage() {
                     <span className={styles.casePulse} aria-hidden />
                   </div>
                   <p>{card.desc}</p>
-                  <div className={styles.caseTags}>
-                    {card.tags.map((tag) => (
-                      <span key={tag} className={styles.tag}>
-                        {tag}
-                      </span>
+                  <div className={styles.caseFlow} aria-hidden>
+                    {card.tags.map((tag, idx) => (
+                      <div key={tag} className={styles.flowNode}>
+                        <span className={styles.flowDot} />
+                        <span className={styles.flowLabel}>{tag}</span>
+                        {idx < card.tags.length - 1 && <span className={styles.flowLine} />}
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -634,41 +695,153 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className={styles.grid3}>
-            <div className={styles.entry}>
-              <h3 className={styles.entryTitle}>{t.section.entries[0].title}</h3>
-              <p className={styles.entryDesc}>{t.section.entries[0].desc}</p>
-              <div className={styles.entryActions}>
-                <Link className={`${styles.button} ${styles.buttonPrimary}`} href="/mvp">
-                  {lang === "zh" ? "开始" : "Start"}
-                </Link>
-                <Link className={styles.button} href="/mvp#market">
-                  {lang === "zh" ? "浏览任务" : "Browse"}
-                </Link>
-              </div>
+          <div className={styles.entranceGrid}>
+            <div className={styles.entranceChooser}>
+              <button
+                className={`${styles.entranceCard} ${entrance === "hire" ? styles.entranceActive : ""}`}
+                onClick={() => setEntrance("hire")}
+              >
+                <div className={styles.entranceTop}>
+                  <span className={styles.entranceKicker}>{t.section.entryKickers.hire}</span>
+                  <span className={`${styles.badge} ${styles.badgeAI}`}>{lang === "zh" ? "work" : "work"}</span>
+                </div>
+                <h3 className={styles.entryTitle}>{t.section.entries[0].title}</h3>
+                <p className={styles.entryDesc}>{t.section.entries[0].desc}</p>
+              </button>
+
+              <button
+                className={`${styles.entranceCard} ${entrance === "publish" ? styles.entranceActive : ""}`}
+                onClick={() => setEntrance("publish")}
+              >
+                <div className={styles.entranceTop}>
+                  <span className={styles.entranceKicker}>{t.section.entryKickers.publish}</span>
+                  <span className={`${styles.badge} ${styles.badgeAI}`}>agent</span>
+                </div>
+                <h3 className={styles.entryTitle}>{t.section.entries[1].title}</h3>
+                <p className={styles.entryDesc}>{t.section.entries[1].desc}</p>
+              </button>
+
+              <button
+                className={`${styles.entranceCard} ${entrance === "human" ? styles.entranceActive : ""}`}
+                onClick={() => setEntrance("human")}
+              >
+                <div className={styles.entranceTop}>
+                  <span className={styles.entranceKicker}>{t.section.entryKickers.human}</span>
+                  <span className={`${styles.badge} ${styles.badgeHuman}`}>{lang === "zh" ? "meatspace" : "meatspace"}</span>
+                </div>
+                <h3 className={styles.entryTitle}>{t.section.entries[2].title}</h3>
+                <p className={styles.entryDesc}>{t.section.entries[2].desc}</p>
+              </button>
             </div>
-            <div className={styles.entry}>
-              <h3 className={styles.entryTitle}>{t.section.entries[1].title}</h3>
-              <p className={styles.entryDesc}>{t.section.entries[1].desc}</p>
-              <div className={styles.entryActions}>
-                <button className={`${styles.button} ${styles.buttonPrimary}`}>
-                  {lang === "zh" ? "发布 AI（Soon）" : "Publish (Soon)"}
-                </button>
-                <button className={styles.button}>
-                  {lang === "zh" ? "查看示例" : "See example"}
-                </button>
+
+            <div className={styles.entrancePreview}>
+              <div className={styles.previewHead}>
+                <div>
+                  <p className={styles.previewEyebrow}>
+                    {entrance === "hire"
+                      ? (lang === "zh" ? "雇 AI 接单" : "Hire AI")
+                      : entrance === "publish"
+                        ? (lang === "zh" ? "发布你的 AI" : "Publish")
+                        : (lang === "zh" ? "进入人类待命池" : "Human pool")}
+                  </p>
+                  <h3 className={styles.previewTitle}>
+                    {entrance === "hire"
+                      ? t.section.entryPanels.hireTitle
+                      : entrance === "publish"
+                        ? t.section.entryPanels.publishTitle
+                        : t.section.entryPanels.humanTitle}
+                  </h3>
+                  <p className={styles.previewDesc}>
+                    {entrance === "hire"
+                      ? t.section.entryPanels.hireDesc
+                      : entrance === "publish"
+                        ? t.section.entryPanels.publishDesc
+                        : t.section.entryPanels.humanDesc}
+                  </p>
+                </div>
+                <div className={styles.previewActions}>
+                  {entrance === "hire" && (
+                    <>
+                      <Link className={`${styles.button} ${styles.buttonPrimary}`} href="/mvp">
+                        {lang === "zh" ? "开始" : "Start"}
+                      </Link>
+                      <Link className={styles.button} href="/mvp#market">
+                        {lang === "zh" ? "浏览任务" : "Browse"}
+                      </Link>
+                    </>
+                  )}
+                  {entrance === "publish" && (
+                    <>
+                      <button className={`${styles.button} ${styles.buttonPrimary}`} disabled>
+                        {lang === "zh" ? "发布 AI（Soon）" : "Publish (Soon)"}
+                      </button>
+                      <a className={styles.button} href="#loop">
+                        {lang === "zh" ? "看闭环" : "See loop"}
+                      </a>
+                    </>
+                  )}
+                  {entrance === "human" && (
+                    <>
+                      <button className={`${styles.button} ${styles.buttonPrimary}`} disabled>
+                        {lang === "zh" ? "加入待命池（Soon）" : "Join (Soon)"}
+                      </button>
+                      <a className={styles.button} href="#loop">
+                        {lang === "zh" ? "看证据" : "See proof"}
+                      </a>
+                    </>
+                  )}
+                </div>
               </div>
-            </div>
-            <div className={styles.entry}>
-              <h3 className={styles.entryTitle}>{t.section.entries[2].title}</h3>
-              <p className={styles.entryDesc}>{t.section.entries[2].desc}</p>
-              <div className={styles.entryActions}>
-                <button className={`${styles.button} ${styles.buttonPrimary}`}>
-                  {lang === "zh" ? "加入待命池（Soon）" : "Join (Soon)"}
-                </button>
-                <button className={styles.button}>
-                  {lang === "zh" ? "查看待命示例" : "Preview"}
-                </button>
+
+              <div className={styles.previewWindow} aria-hidden>
+                <div className={styles.previewTop}>
+                  <span className={styles.widgetTitle}>
+                    {entrance === "hire"
+                      ? (lang === "zh" ? "任务队列" : "Task queue")
+                      : entrance === "publish"
+                        ? (lang === "zh" ? "Agents 上架" : "Agents listed")
+                        : (lang === "zh" ? "待命人类" : "Humans on-call")}
+                  </span>
+                  <span className={styles.pill}>{lang === "zh" ? "live" : "live"}</span>
+                </div>
+
+                <div className={styles.previewScroll}>
+                  <div className={styles.previewTrack}>
+                    {(() => {
+                      const base =
+                        entrance === "hire"
+                          ? taskFeed.slice(0, 10)
+                          : entrance === "publish"
+                            ? agentFeed.slice(0, 10)
+                            : humanFeed.slice(0, 10);
+                      const items = [...base, ...base];
+                      return items.map((item, idx) => (
+                        <div className={styles.previewRow} key={`pv-${entrance}-${idx}`}>
+                          <div
+                            className={`${styles.previewAvatar} ${
+                              entrance === "human" ? styles.seedB : styles.seedA
+                            }`}
+                            aria-hidden
+                          />
+                          <div className={styles.previewMain}>
+                            <p className={styles.previewRowTitle}>{item.title}</p>
+                            <p className={styles.previewRowMeta}>{item.meta}</p>
+                            <div className={styles.previewTags}>
+                              {item.tags.slice(0, 3).map((tag) => (
+                                <span
+                                  key={`${idx}-${tag}`}
+                                  className={`${styles.tag} ${tag === "proof" ? styles.tagAlt : ""}`}
+                                >
+                                  {tag}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      ));
+                    })()}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
