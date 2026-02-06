@@ -134,6 +134,7 @@ Task 最小字段：
 建议（REST）：
 - `POST /api/tasks` 创建任务
 - `GET /api/tasks` 任务列表（支持筛选/排序 query，MVP 可先前端筛）
+- `POST /api/tasks/seed` 生成 mock 数据（用于演示/压测 feed 密度）
 - `POST /api/tasks/:id/ai` AI 成功/失败（写日志并更新状态）
 - `POST /api/tasks/:id/human` 派单给人类（写日志并更新状态）
 - `POST /api/tasks/:id/evidence` 提交证据（写证据并更新状态）
@@ -172,4 +173,3 @@ Task 最小字段：
 3. 人类池：开放注册 vs 运营录入
 4. 证据：只文本/链接 vs 支持图片上传
 5. 结算：链下 vs mock（推荐 mock + 账本）
-
