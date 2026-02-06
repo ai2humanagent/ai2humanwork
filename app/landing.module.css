@@ -258,6 +258,30 @@
   position: relative;
 }
 
+.marketWidget {
+  border-radius: 26px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: linear-gradient(140deg, rgba(12, 14, 22, 0.92), rgba(7, 8, 14, 0.86));
+  box-shadow: var(--ln-shadow);
+  overflow: hidden;
+  position: relative;
+}
+
+.marketWidget::before {
+  content: "";
+  position: absolute;
+  inset: -60%;
+  background: conic-gradient(
+    from 120deg,
+    rgba(128, 255, 234, 0.12),
+    rgba(124, 92, 255, 0.14),
+    rgba(255, 179, 71, 0.09),
+    rgba(128, 255, 234, 0.12)
+  );
+  animation: spin 8s linear infinite;
+  opacity: 0.65;
+}
+
 .widget::before {
   content: "";
   position: absolute;
@@ -365,6 +389,132 @@
   color: rgba(255, 255, 255, 0.7);
   letter-spacing: 0.14em;
   text-transform: uppercase;
+}
+
+.marketCols {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.marketCol {
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  background: rgba(9, 10, 15, 0.5);
+  overflow: hidden;
+}
+
+.marketColHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 12px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.scroller {
+  height: 330px;
+  overflow: hidden;
+  position: relative;
+}
+
+.scrollerTrack,
+.scrollerTrackAlt {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  animation: scrollY 16s linear infinite;
+  will-change: transform;
+}
+
+.scrollerTrackAlt {
+  animation-direction: reverse;
+}
+
+.marketWidget:hover .scrollerTrack,
+.marketWidget:hover .scrollerTrackAlt {
+  animation-play-state: paused;
+}
+
+.miniCard {
+  display: grid;
+  grid-template-columns: 34px 1fr;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 12px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(12, 14, 22, 0.72);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.26);
+}
+
+.miniAvatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 14px;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12);
+}
+
+.seedA {
+  background: radial-gradient(circle at 30% 30%, rgba(128, 255, 234, 0.95), rgba(124, 92, 255, 0.65));
+}
+
+.seedB {
+  background: radial-gradient(circle at 30% 30%, rgba(255, 179, 71, 0.92), rgba(124, 92, 255, 0.6));
+}
+
+.miniMain {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.miniTitle {
+  margin: 0;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.92);
+  line-height: 1.35;
+}
+
+.miniMeta {
+  margin: 0;
+  font-size: 12px;
+  color: var(--ln-muted);
+  line-height: 1.35;
+}
+
+.liveStats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.stat {
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: linear-gradient(140deg, rgba(12, 14, 22, 0.82), rgba(8, 10, 16, 0.62));
+  box-shadow: var(--ln-shadow);
+  padding: 18px;
+}
+
+.stat p {
+  margin: 0;
+  color: var(--ln-muted);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-size: 12px;
+}
+
+.stat strong {
+  display: block;
+  margin-top: 10px;
+  font-size: clamp(28px, 4vw, 44px);
+  color: rgba(255, 255, 255, 0.92);
 }
 
 .section {
@@ -606,6 +756,15 @@
   }
 }
 
+@keyframes scrollY {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-50%);
+  }
+}
+
 @keyframes scan {
   0% {
     transform: translateX(-120%);
@@ -644,8 +803,11 @@
   .brandMark::after,
   .orb,
   .widget::before,
+  .marketWidget::before,
   .pipeRow::after,
   .track,
+  .scrollerTrack,
+  .scrollerTrackAlt,
   .eyebrowDot {
     animation: none !important;
   }
@@ -660,4 +822,3 @@
     grid-template-columns: 1fr;
   }
 }
-

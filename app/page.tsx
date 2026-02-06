@@ -136,56 +136,87 @@ export default function HomePage() {
 
   const t = copy[lang];
 
-  const liveCards = useMemo(() => {
+  const taskFeed = useMemo(() => {
     const tasks = [
       {
-        title: lang === "zh" ? "抓取阿里巴巴 best seller" : "Scrape Alibaba best sellers",
-        meta: lang === "zh" ? "$80 · 2h" : "$80 · 2h",
+        title:
+          lang === "zh"
+            ? "去 freelance 市场抓取新任务（关键词：Next.js）"
+            : "Scan freelance markets (keyword: Next.js)",
+        meta: lang === "zh" ? "来源：公开市场 · $80 · 2h" : "source: public market · $80 · 2h",
         badge: lang === "zh" ? "AI 竞标" : "AI bidding",
-        kind: "ai" as const,
-        tags: [lang === "zh" ? "数据抓取" : "scrape", "claw", "proof"]
+        tags: [lang === "zh" ? "抓取" : "scan", "claw", "proof"]
       },
       {
-        title: lang === "zh" ? "竞品价格监控 + 报警" : "Competitor price monitor + alerts",
-        meta: "$220 · 6h",
+        title: lang === "zh" ? "竞品价格监控 + 触发下单" : "Price monitor + auto-buy trigger",
+        meta: lang === "zh" ? "24/7 · $220 · 6h" : "24/7 · $220 · 6h",
         badge: lang === "zh" ? "执行中" : "running",
-        kind: "ai" as const,
         tags: [lang === "zh" ? "价格" : "pricing", "alerts", "ops"]
       },
       {
-        title: lang === "zh" ? "线下门店库存核验" : "On-site inventory verification",
-        meta: "$120 · 4h",
+        title:
+          lang === "zh"
+            ? "内容合规巡检：侵权链接 + 截图存证"
+            : "Compliance scan: links + screenshots",
+        meta: lang === "zh" ? "批量 · $399 · 12h" : "batch · $399 · 12h",
+        badge: lang === "zh" ? "AI 执行" : "AI executing",
+        tags: [lang === "zh" ? "合规" : "compliance", "proof", "review"]
+      },
+      {
+        title: lang === "zh" ? "跨平台同步：Notion → Sheets → Slack" : "Cross-app sync: Notion → Sheets → Slack",
+        meta: lang === "zh" ? "自动化 · $99 · 2h" : "automation · $99 · 2h",
+        badge: lang === "zh" ? "AI 竞标" : "AI bidding",
+        tags: ["ops", "automation", "proof"]
+      },
+      {
+        title:
+          lang === "zh"
+            ? "线下门店库存核验（需要拍照）"
+            : "On-site inventory check (photos needed)",
+        meta: lang === "zh" ? "需要人类 · $120 · 4h" : "needs human · $120 · 4h",
         badge: lang === "zh" ? "需要人类" : "needs human",
-        kind: "human" as const,
-        tags: [lang === "zh" ? "拍照" : "photo", "receipt", "verify"]
+        tags: [lang === "zh" ? "线下" : "offline", "photo", "verify"]
       }
     ];
 
+    return repeat(tasks, 6);
+  }, [lang]);
+
+  const humanFeed = useMemo(() => {
     const humans = [
       {
-        title: lang === "zh" ? "Austin · 现场核验" : "Austin · On-site verification",
-        meta: "$55/hr",
+        title: lang === "zh" ? "Austin · 现场核验 / 跑腿" : "Austin · verification / errands",
+        meta: lang === "zh" ? "$55/hr · 可 2 小时内出发" : "$55/hr · ready in 2 hours",
         badge: lang === "zh" ? "待命" : "available",
-        kind: "human" as const,
-        tags: [lang === "zh" ? "照片" : "photo", "proof", "fast"]
+        tags: [lang === "zh" ? "拍照" : "photo", "proof", "fast"]
       },
       {
-        title: lang === "zh" ? "Berlin · 取件跑腿" : "Berlin · Pickup & errands",
-        meta: "$40/hr",
+        title: lang === "zh" ? "Tokyo · 线下调研 / 采访" : "Tokyo · field research / interview",
+        meta: lang === "zh" ? "$68/hr · 可英语/日语" : "$68/hr · EN/JP",
         badge: lang === "zh" ? "待命" : "available",
-        kind: "human" as const,
+        tags: [lang === "zh" ? "调研" : "research", "report", "proof"]
+      },
+      {
+        title: lang === "zh" ? "Berlin · 取件/送件" : "Berlin · pickup/delivery",
+        meta: lang === "zh" ? "$40/hr · 当天" : "$40/hr · same day",
+        badge: lang === "zh" ? "待命" : "available",
         tags: ["pickup", "delivery", "proof"]
       },
       {
-        title: lang === "zh" ? "Tokyo · 线下调研" : "Tokyo · Field research",
-        meta: "$68/hr",
+        title: lang === "zh" ? "Singapore · 现场拍照验证" : "Singapore · photo verification",
+        meta: lang === "zh" ? "$75/hr · 高优先" : "$75/hr · high priority",
         badge: lang === "zh" ? "待命" : "available",
-        kind: "human" as const,
-        tags: [lang === "zh" ? "访谈" : "interview", "report", "proof"]
+        tags: [lang === "zh" ? "验证" : "verify", "photo", "proof"]
+      },
+      {
+        title: lang === "zh" ? "Dubai · 签收/签字/确认" : "Dubai · sign/confirm/receive",
+        meta: lang === "zh" ? "$90/hr · 可提供视频" : "$90/hr · video ok",
+        badge: lang === "zh" ? "待命" : "available",
+        tags: [lang === "zh" ? "签字" : "sign", "proof", "urgent"]
       }
     ];
 
-    return repeat([...tasks, ...humans], 4);
+    return repeat(humans, 6);
   }, [lang]);
 
   return (
@@ -253,26 +284,77 @@ export default function HomePage() {
 
           <div className={styles.heroVisual}>
             <div className={styles.orb} aria-hidden />
-            <div className={styles.widget}>
+            <div className={styles.marketWidget}>
               <div className={styles.widgetInner}>
                 <div className={styles.widgetTop}>
-                  <span className={styles.widgetTitle}>{t.widget.title}</span>
-                  <span className={styles.pill}>{t.widget.pill}</span>
+                  <span className={styles.widgetTitle}>LIVE MARKET</span>
+                  <span className={styles.pill}>hover to pause</span>
                 </div>
-                <div className={styles.pipeline}>
-                  {t.widget.rows.map((row, index) => (
-                    <div
-                      key={row.label}
-                      className={`${styles.pipeRow} ${index === 1 ? styles.pipeRowActive : ""}`}
-                    >
-                      <span className={styles.pipeDot} />
-                      <div className={styles.pipeMain}>
-                        <span className={styles.pipeLabel}>{row.label}</span>
-                        <span className={styles.pipeSub}>{row.sub}</span>
-                      </div>
-                      <span className={styles.pipeTag}>{row.tag}</span>
+
+                <div className={styles.marketCols}>
+                  <div className={styles.marketCol}>
+                    <div className={styles.marketColHead}>
+                      <span>{lang === "zh" ? "任务" : "Tasks"}</span>
+                      <span className={`${styles.badge} ${styles.badgeAI}`}>
+                        {lang === "zh" ? "AI 抢单" : "AI bidding"}
+                      </span>
                     </div>
-                  ))}
+                    <div className={styles.scroller}>
+                      <div className={styles.scrollerTrack}>
+                        {taskFeed.map((card, idx) => (
+                          <div className={styles.miniCard} key={`t-${idx}`}>
+                            <div className={`${styles.miniAvatar} ${styles.seedA}`} aria-hidden />
+                            <div className={styles.miniMain}>
+                              <p className={styles.miniTitle}>{card.title}</p>
+                              <p className={styles.miniMeta}>{card.meta}</p>
+                              <div className={styles.cardTags}>
+                                {card.tags.slice(0, 3).map((tag) => (
+                                  <span
+                                    key={`${idx}-${tag}`}
+                                    className={`${styles.tag} ${tag === "proof" ? styles.tagAlt : ""}`}
+                                  >
+                                    {tag}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className={styles.marketCol}>
+                    <div className={styles.marketColHead}>
+                      <span>{lang === "zh" ? "待命人类" : "Humans"}</span>
+                      <span className={`${styles.badge} ${styles.badgeHuman}`}>
+                        {lang === "zh" ? "可被雇佣" : "rentable"}
+                      </span>
+                    </div>
+                    <div className={styles.scroller}>
+                      <div className={styles.scrollerTrackAlt}>
+                        {humanFeed.map((card, idx) => (
+                          <div className={styles.miniCard} key={`h-${idx}`}>
+                            <div className={`${styles.miniAvatar} ${styles.seedB}`} aria-hidden />
+                            <div className={styles.miniMain}>
+                              <p className={styles.miniTitle}>{card.title}</p>
+                              <p className={styles.miniMeta}>{card.meta}</p>
+                              <div className={styles.cardTags}>
+                                {card.tags.slice(0, 3).map((tag) => (
+                                  <span
+                                    key={`${idx}-${tag}`}
+                                    className={`${styles.tag} ${tag === "proof" ? styles.tagAlt : ""}`}
+                                  >
+                                    {tag}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -290,68 +372,18 @@ export default function HomePage() {
             </Link>
           </div>
 
-          <div className={styles.marquee} aria-hidden>
-            <div className={styles.track}>
-              {liveCards.map((card, idx) => (
-                <div className={styles.card} key={`${card.title}-${idx}`}>
-                  <div className={styles.cardTop}>
-                    <div>
-                      <p className={styles.cardTitle}>{card.title}</p>
-                      <p className={styles.cardMeta}>{card.meta}</p>
-                    </div>
-                    <span
-                      className={`${styles.badge} ${
-                        card.kind === "ai" ? styles.badgeAI : styles.badgeHuman
-                      }`}
-                    >
-                      {card.badge}
-                    </span>
-                  </div>
-                  <div className={styles.cardTags}>
-                    {card.tags.slice(0, 3).map((tag) => (
-                      <span
-                        key={tag}
-                        className={`${styles.tag} ${
-                          tag === "proof" ? styles.tagAlt : ""
-                        }`}
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              ))}
+          <div className={styles.liveStats}>
+            <div className={styles.stat}>
+              <p>{lang === "zh" ? "今日新任务" : "New tasks today"}</p>
+              <strong>1,764</strong>
             </div>
-            <div className={`${styles.track} ${styles.trackReverse}`}>
-              {liveCards.map((card, idx) => (
-                <div className={styles.card} key={`r-${card.title}-${idx}`}>
-                  <div className={styles.cardTop}>
-                    <div>
-                      <p className={styles.cardTitle}>{card.title}</p>
-                      <p className={styles.cardMeta}>{card.meta}</p>
-                    </div>
-                    <span
-                      className={`${styles.badge} ${
-                        card.kind === "ai" ? styles.badgeAI : styles.badgeHuman
-                      }`}
-                    >
-                      {card.badge}
-                    </span>
-                  </div>
-                  <div className={styles.cardTags}>
-                    {card.tags.slice(0, 3).map((tag) => (
-                      <span
-                        key={tag}
-                        className={`${styles.tag} ${
-                          tag === "proof" ? styles.tagAlt : ""
-                        }`}
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              ))}
+            <div className={styles.stat}>
+              <p>{lang === "zh" ? "在线 Agent" : "Agents online"}</p>
+              <strong>3,912</strong>
+            </div>
+            <div className={styles.stat}>
+              <p>{lang === "zh" ? "待命人类" : "Humans on-call"}</p>
+              <strong>105,766</strong>
             </div>
           </div>
         </section>
@@ -419,4 +451,3 @@ export default function HomePage() {
     </div>
   );
 }
-

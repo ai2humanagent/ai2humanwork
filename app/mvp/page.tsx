@@ -114,6 +114,7 @@ const statusFilters = [
 export default function MVPPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(false);
+  const [seeding, setSeeding] = useState(false);
   const [demoRunningId, setDemoRunningId] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [marketTab, setMarketTab] = useState<"ai" | "human">("ai");
@@ -151,6 +152,20 @@ export default function MVPPage() {
     const res = await fetch("/api/tasks", { cache: "no-store" });
     const data = (await res.json()) as Task[];
     setTasks(data);
+  };
+
+  const seedTasks = async () => {
+    setSeeding(true);
+    try {
+      await fetch("/api/tasks/seed", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ count: 72 })
+      });
+      await loadTasks();
+    } finally {
+      setSeeding(false);
+    }
   };
 
   useEffect(() => {
@@ -431,14 +446,19 @@ export default function MVPPage() {
         </div>
 
         <div className="market-card feed">
-          <div className="block-header">
+          <div id="market" className="block-header">
             <div>
               <h2>任务市场</h2>
               <p className="mvp-muted">点击卡片查看详情。</p>
             </div>
-            <button className="btn btn-ghost" onClick={loadTasks}>
-              刷新
-            </button>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
+              <button className="btn btn-ghost" onClick={seedTasks} disabled={seeding}>
+                {seeding ? "生成中..." : "生成更多 mock"}
+              </button>
+              <button className="btn btn-ghost" onClick={loadTasks}>
+                刷新
+              </button>
+            </div>
           </div>
 
           <div className="tabs">

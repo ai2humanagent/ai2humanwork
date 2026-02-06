@@ -1,19 +1,5 @@
 import type { Metadata } from "next";
-import { Sora, Playfair_Display } from "next/font/google";
 import "./globals.css";
-
-const sora = Sora({
-  subsets: ["latin"],
-  variable: "--font-sans",
-  weight: ["300", "400", "500", "600", "700"]
-});
-
-const playfair = Playfair_Display({
-  subsets: ["latin"],
-  variable: "--font-display",
-  weight: ["400", "600", "700"],
-  style: ["normal", "italic"]
-});
 
 export const metadata: Metadata = {
   title: "TrustNet AI — Hybrid Work Market",
@@ -27,7 +13,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="zh-Hans" className={`${sora.variable} ${playfair.variable}`}>
+    <html lang="zh-Hans">
       <body>{children}</body>
     </html>
   );
