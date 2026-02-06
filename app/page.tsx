@@ -175,6 +175,7 @@ function repeat<T>(items: T[], times: number): T[] {
 export default function HomePage() {
   const [lang, setLang] = useState<Lang>("zh");
   const [entrance, setEntrance] = useState<"hire" | "publish" | "human">("hire");
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     const saved = window.localStorage.getItem("trustnet_lang");
@@ -184,6 +185,14 @@ export default function HomePage() {
   useEffect(() => {
     window.localStorage.setItem("trustnet_lang", lang);
   }, [lang]);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMenuOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
 
   const t = copy[lang];
 
@@ -410,10 +419,46 @@ export default function HomePage() {
           >
             {lang === "zh" ? "EN" : "中文"}
           </button>
-          <Link className={`${styles.button} ${styles.buttonGhost}`} href="/mvp">
+          <Link className={`${styles.button} ${styles.buttonGhost} ${styles.navMvp}`} href="/mvp">
             {t.nav.mvp}
           </Link>
-          <button className={`${styles.button} ${styles.buttonPrimary}`}>
+          <button className={`${styles.button} ${styles.buttonPrimary} ${styles.navDemo}`}>
+            {t.nav.demo}
+          </button>
+          <button
+            className={styles.menuButton}
+            onClick={() => setMenuOpen((prev) => !prev)}
+            aria-label={menuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={menuOpen}
+          >
+            <span className={styles.menuIcon} aria-hidden />
+          </button>
+        </div>
+
+        {menuOpen && (
+          <button
+            className={styles.mobileBackdrop}
+            onClick={() => setMenuOpen(false)}
+            aria-label="Close menu"
+          />
+        )}
+        <div className={`${styles.mobileMenu} ${menuOpen ? styles.mobileMenuOpen : ""}`}>
+          <a href="#live" onClick={() => setMenuOpen(false)}>
+            {t.nav.live}
+          </a>
+          <a href="#loop" onClick={() => setMenuOpen(false)}>
+            {t.nav.loop}
+          </a>
+          <a href="#entrances" onClick={() => setMenuOpen(false)}>
+            {t.nav.entrances}
+          </a>
+          <a href="/mvp" onClick={() => setMenuOpen(false)}>
+            {t.nav.mvp}
+          </a>
+          <button
+            className={`${styles.button} ${styles.buttonPrimary}`}
+            onClick={() => setMenuOpen(false)}
+          >
             {t.nav.demo}
           </button>
         </div>

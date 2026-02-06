@@ -1042,6 +1042,16 @@ button {
   margin-top: 12px;
 }
 
+@media (max-width: 980px) {
+  .market-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .market-hero {
+    grid-template-columns: 1fr;
+  }
+}
+
 .detail-body {
   display: grid;
   gap: 16px;

@@ -110,6 +110,68 @@
   align-items: center;
 }
 
+.navMvp {
+  display: inline-flex;
+}
+
+.navDemo {
+  display: inline-flex;
+}
+
+.menuButton {
+  display: none;
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--ln-text);
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.menuButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 16px 30px rgba(0, 0, 0, 0.35);
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+.menuIcon {
+  display: inline-block;
+  width: 18px;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.82);
+  border-radius: 2px;
+  position: relative;
+}
+
+.menuIcon::before,
+.menuIcon::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.menuIcon::before {
+  top: -6px;
+}
+
+.menuIcon::after {
+  top: 6px;
+}
+
+.mobileBackdrop {
+  display: none;
+}
+
+.mobileMenu {
+  display: none;
+}
+
 .button {
   appearance: none;
   border: 1px solid rgba(255, 255, 255, 0.14);
@@ -1563,5 +1625,108 @@
 
   .grid3 {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .page {
+    padding: 18px 16px 70px;
+  }
+
+  .nav {
+    top: 12px;
+    padding: 10px 12px;
+    border-radius: 18px;
+  }
+
+  .navLinks {
+    display: none;
+  }
+
+  .navMvp,
+  .navDemo {
+    display: none;
+  }
+
+  .menuButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .mobileBackdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.48);
+    backdrop-filter: blur(2px);
+    border: 0;
+    z-index: 18;
+  }
+
+  .mobileMenu {
+    display: grid;
+    gap: 10px;
+    position: fixed;
+    left: 16px;
+    right: 16px;
+    top: 78px;
+    padding: 14px;
+    border-radius: 22px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(8, 10, 16, 0.82);
+    box-shadow: var(--ln-shadow);
+    z-index: 19;
+    transform: translateY(-10px);
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.18s ease, opacity 0.18s ease;
+  }
+
+  .mobileMenuOpen {
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .mobileMenu a {
+    padding: 12px 12px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.04);
+    color: rgba(255, 255, 255, 0.9);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-size: 12px;
+  }
+
+  .title {
+    font-size: clamp(34px, 9vw, 52px);
+  }
+
+  .lead {
+    font-size: 16px;
+  }
+
+  .heroActions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .marketCols {
+    grid-template-columns: 1fr;
+  }
+
+  .scroller {
+    height: 240px;
+  }
+
+  .previewHead {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .previewActions {
+    justify-content: flex-start;
   }
 }
