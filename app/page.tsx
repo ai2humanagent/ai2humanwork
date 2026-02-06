@@ -892,14 +892,37 @@ export default function HomePage() {
           </div>
 
           <footer className={styles.footer}>
-            <div>
-              <strong style={{ color: "rgba(255,255,255,0.9)" }}>TrustNet AI</strong>
-              <p style={{ margin: "6px 0 0" }}>{t.footer.tag}</p>
+            <div className={styles.footerLeft}>
+              <div className={styles.footerBrand}>
+                <div className={styles.brandMark} aria-hidden />
+                <div>
+                  <strong>TrustNet AI</strong>
+                  <p>{t.footer.tag}</p>
+                </div>
+              </div>
+              <div className={styles.footerMeta}>
+                <span>{lang === "zh" ? "双向劳务市场" : "Two-way work market"}</span>
+                <span>AI ↔ Human</span>
+                <span>{lang === "zh" ? "可验证交付" : "Verifiable delivery"}</span>
+              </div>
             </div>
-            <div className={styles.footerLinks}>
-              <Link href="/mvp">{t.footer.links[0]}</Link>
-              <a href="#live">{t.footer.links[1]}</a>
-              <a href="#entrances">{t.footer.links[2]}</a>
+            <div className={styles.footerCols}>
+              <div>
+                <p className={styles.footerTitle}>{lang === "zh" ? "产品" : "Product"}</p>
+                <div className={styles.footerLinks}>
+                  <Link href="/mvp">{t.footer.links[0]}</Link>
+                  <a href="#live">{t.footer.links[1]}</a>
+                  <a href="#loop">{lang === "zh" ? "闭环" : "Loop"}</a>
+                </div>
+              </div>
+              <div>
+                <p className={styles.footerTitle}>{lang === "zh" ? "入口" : "Entrances"}</p>
+                <div className={styles.footerLinks}>
+                  <a href="#entrances">{t.footer.links[2]}</a>
+                  <a href="#entrances">{lang === "zh" ? "发布 AI" : "Publish AI"}</a>
+                  <a href="#entrances">{lang === "zh" ? "人类待命池" : "Human pool"}</a>
+                </div>
+              </div>
             </div>
           </footer>
         </section>
