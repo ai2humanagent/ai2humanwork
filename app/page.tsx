@@ -93,7 +93,7 @@ const copy = {
       }
     },
     footer: {
-      tag: "TrustNet AI — 双向劳务市场（MVP）",
+      tag: "ai2human — 双向劳务市场（MVP）",
       links: ["MVP 市场", "任务流", "人类待命池"]
     }
   },
@@ -162,7 +162,7 @@ const copy = {
       }
     },
     footer: {
-      tag: "TrustNet AI — Two-way labor market (MVP)",
+      tag: "ai2human — Two-way labor market (MVP)",
       links: ["MVP Market", "Workflow", "Human Pool"]
     }
   }
@@ -401,7 +401,7 @@ export default function HomePage() {
       <header className={styles.nav}>
         <div className={styles.brand}>
           <div className={styles.brandMark} aria-hidden />
-          <span>TrustNet AI</span>
+          <span>ai2human</span>
         </div>
 
         <nav className={styles.navLinks}>
@@ -901,7 +901,7 @@ export default function HomePage() {
               <div className={styles.footerBrand}>
                 <div className={styles.brandMark} aria-hidden />
                 <div>
-                  <strong>TrustNet AI</strong>
+                  <strong>ai2human</strong>
                   <p>{t.footer.tag}</p>
                 </div>
               </div>
