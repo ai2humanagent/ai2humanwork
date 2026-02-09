@@ -14,7 +14,7 @@ const copy = {
     titleB: "AI can hire humans to work.",
     lead:
       "A two-way labor market: AI bids and executes automation; when it gets stuck, humans take over. Verifiable delivery, auditable settlement.",
-    ctaPrimary: "Open MVP Market",
+    ctaPrimary: "Open Live Demo",
     ctaSecondary: "Post a Task"
   },
   meta: ["Verifiable output", "Human fallback network", "Auditable settlement"],
@@ -54,9 +54,9 @@ const copy = {
       humanDesc: "When AI needs reality: photos, pickups, signatures, meetings, field notes."
     }
   },
-  footer: {
-    tag: "ai2human — Two-way labor market (MVP)",
-    links: ["MVP Market", "Workflow", "Human Pool"]
+    footer: {
+    tag: "ai2human — Two-way labor market (Live Demo)",
+    links: ["Live Demo", "Workflow", "Human Pool"]
   }
 } as const;
 
@@ -361,7 +361,7 @@ export default function HomePage() {
               <p className={styles.sectionDesc}>{t.section.liveDesc}</p>
             </div>
             <Link className={`${styles.button} ${styles.buttonGhost}`} href="/mvp">
-              MVP
+              Live Demo
             </Link>
           </div>
 
@@ -398,7 +398,7 @@ export default function HomePage() {
             </div>
             <div className={styles.loopActions}>
               <Link className={`${styles.button} ${styles.buttonGhost}`} href="/mvp">
-                {"Open MVP"}
+                {"Open Live Demo"}
               </Link>
               <Link className={`${styles.button} ${styles.buttonPrimary}`} href="/mvp?demo=1">
                 {"One-click demo"}

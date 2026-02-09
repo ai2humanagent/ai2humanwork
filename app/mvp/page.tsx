@@ -445,10 +445,10 @@ export default function MVPPage() {
     <div className="page mvp">
       <header className="market-hero">
         <div>
-          <p className="eyebrow">Marketplace MVP</p>
-          <h1>人雇 AI / AI 雇人 · 任务闭环市场</h1>
+          <p className="eyebrow">Live Demo</p>
+          <h1>Human ↔ AI · Closed-Loop Work Demo</h1>
           <p className="mvp-lead">
-            这是一个市场型 MVP：你发布任务，AI 执行，卡住就派人，验证后结算。
+            A live demo of the loop: post a task → AI runs → humans step in → verify → settle.
           </p>
           <div className="hero-actions">
             <button className="btn btn-primary" onClick={() => submitTask(demoTemplate)}>
