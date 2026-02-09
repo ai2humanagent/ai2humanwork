@@ -35,24 +35,24 @@ type Task = {
 };
 
 const statusLabels: Record<Task["status"], string> = {
-  created: "已创建",
-  ai_running: "AI 执行中",
-  ai_failed: "AI 失败",
-  ai_done: "AI 完成",
-  human_assigned: "已派人",
-  human_done: "人类完成",
-  verified: "已验证",
-  paid: "已结算"
+  created: "Created",
+  ai_running: "AI Running",
+  ai_failed: "AI Failed",
+  ai_done: "AI Done",
+  human_assigned: "Human Assigned",
+  human_done: "Human Done",
+  verified: "Verified",
+  paid: "Paid"
 };
 
 const demoTemplate = {
-  title: "线下核验门店库存",
+  title: "On-site inventory check",
   budget: "$120",
   deadline: "4h",
-  acceptance: "门店照片 + 时间戳"
+  acceptance: "Photos + timestamp"
 };
 
-const flowSteps = ["任务创建", "AI 执行", "人类兜底", "验证", "结算"];
+const flowSteps = ["Task", "AI", "Human", "Verify", "Settle"];
 
 const getStageIndex = (status: Task["status"]) => {
   switch (status) {
@@ -83,33 +83,35 @@ const pick = (items: string[], index: number) =>
   items[index % items.length];
 
 const taskLocations = [
-  "Shenzhen",
-  "Shanghai",
   "Austin",
-  "Seoul",
   "Berlin",
   "Tokyo",
+  "Seoul",
   "Singapore",
-  "Dubai"
+  "Dubai",
+  "London",
+  "NYC"
 ];
 
 const taskTypes = [
-  "线下核验",
-  "价格监控",
-  "内容合规",
-  "物流跑腿",
-  "数据抓取",
-  "跨平台同步"
+  "On-site verification",
+  "Price monitoring",
+  "Compliance scan",
+  "Pickup & delivery",
+  "Data scraping",
+  "Cross-app sync"
 ];
 
-const urgencyLevels = ["紧急", "高优", "普通"];
+const urgencyLevels = ["Urgent", "High", "Normal"];
 
 const statusFilters = [
-  { value: "all", label: "全部状态" },
-  { value: "open", label: "待接单" },
-  { value: "assigned", label: "已派人" },
-  { value: "paid", label: "已结算" }
+  { value: "all", label: "All status" },
+  { value: "open", label: "Open" },
+  { value: "assigned", label: "Assigned" },
+  { value: "paid", label: "Paid" }
 ];
+
+const MAX_VISIBLE_TASKS = 12;
 
 export default function MVPPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -167,7 +169,7 @@ export default function MVPPage() {
       await fetch("/api/tasks/seed", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ count: 72 })
+        body: JSON.stringify({ count: 12 })
       });
       await loadTasks();
     } finally {
@@ -257,7 +259,7 @@ export default function MVPPage() {
       body: JSON.stringify({
         by: "human",
         type,
-        note: evidenceNote[id] || "照片与时间戳已上传",
+        note: evidenceNote[id] || "Photo + timestamp uploaded",
         url: evidenceUrl[id] || ""
       })
     });
@@ -306,20 +308,20 @@ export default function MVPPage() {
   const getNextAction = (task: Task) => {
     switch (task.status) {
       case "created":
-        return { label: "运行 AI（失败触发人类）", action: () => runAi(task.id, "fail") };
+        return { label: "Run AI (fail to trigger human)", action: () => runAi(task.id, "fail") };
       case "ai_failed":
-        return { label: "派单给人", action: () => assignHuman(task.id) };
+        return { label: "Assign human", action: () => assignHuman(task.id) };
       case "human_assigned":
-        return { label: "提交证据", action: () => submitEvidence(task.id) };
+        return { label: "Submit evidence", action: () => submitEvidence(task.id) };
       case "human_done":
       case "ai_done":
-        return { label: "验证通过", action: () => verifyTask(task.id) };
+        return { label: "Verify", action: () => verifyTask(task.id) };
       case "verified":
-        return { label: "结算完成", action: () => settleTask(task.id) };
+        return { label: "Settle", action: () => settleTask(task.id) };
       case "paid":
-        return { label: "已完成", action: null };
+        return { label: "Done", action: null };
       default:
-        return { label: "开始", action: null };
+        return { label: "Start", action: null };
     }
   };
 
@@ -389,6 +391,11 @@ export default function MVPPage() {
     return result;
   }, [enrichedTasks, filters, marketTab]);
 
+  const visibleTasks = useMemo(
+    () => filteredTasks.slice(0, MAX_VISIBLE_TASKS),
+    [filteredTasks]
+  );
+
   const humanPool = useMemo(
     () => [
       {
@@ -452,10 +459,10 @@ export default function MVPPage() {
           </p>
           <div className="hero-actions">
             <button className="btn btn-primary" onClick={() => submitTask(demoTemplate)}>
-              一键创建示例任务
+              Create sample task
             </button>
             <button className="btn btn-outline" onClick={scrollToPost}>
-              发布我的任务
+              Post a task
             </button>
           </div>
           <div className="mvp-steps">
@@ -469,31 +476,31 @@ export default function MVPPage() {
         </div>
         <div className="market-kpis">
           <div>
-            <span>任务总数</span>
+            <span>Total tasks</span>
             <strong>{stats.total}</strong>
           </div>
           <div>
-            <span>进行中</span>
+            <span>In progress</span>
             <strong>{stats.running}</strong>
           </div>
           <div>
-            <span>已结算</span>
+            <span>Paid</span>
             <strong>{stats.paid}</strong>
           </div>
         </div>
       </header>
 
       <section className="market-grid">
-        <div id="post-task" className="market-card">
-          <div className="block-header">
-            <div>
-              <h2>发布任务</h2>
-              <p className="mvp-muted">进入市场队列，等待 AI 接单。</p>
+          <div id="post-task" className="market-card">
+            <div className="block-header">
+              <div>
+                <h2>Post a task</h2>
+                <p className="mvp-muted">Enter the market queue and let AI bid.</p>
+              </div>
+              <button className="btn btn-ghost" onClick={() => setForm(demoTemplate)}>
+                Fill sample
+              </button>
             </div>
-            <button className="btn btn-ghost" onClick={() => setForm(demoTemplate)}>
-              填入示例
-            </button>
-          </div>
           <form
             className="mvp-form"
             onSubmit={(event) => {
@@ -503,7 +510,7 @@ export default function MVPPage() {
           >
             <input
               className="mvp-input"
-              placeholder="任务标题"
+              placeholder="Task title"
               value={form.title}
               onChange={(event) =>
                 setForm((prev) => ({ ...prev, title: event.target.value }))
@@ -511,7 +518,7 @@ export default function MVPPage() {
             />
             <input
               className="mvp-input"
-              placeholder="预算（例如 $200）"
+              placeholder="Budget (e.g. $200)"
               value={form.budget}
               onChange={(event) =>
                 setForm((prev) => ({ ...prev, budget: event.target.value }))
@@ -519,7 +526,7 @@ export default function MVPPage() {
             />
             <input
               className="mvp-input"
-              placeholder="截止时间"
+              placeholder="Deadline"
               value={form.deadline}
               onChange={(event) =>
                 setForm((prev) => ({ ...prev, deadline: event.target.value }))
@@ -527,14 +534,14 @@ export default function MVPPage() {
             />
             <textarea
               className="mvp-textarea"
-              placeholder="验收标准"
+              placeholder="Acceptance criteria"
               value={form.acceptance}
               onChange={(event) =>
                 setForm((prev) => ({ ...prev, acceptance: event.target.value }))
               }
             />
             <button className="btn btn-primary" disabled={loading}>
-              {loading ? "提交中..." : "发布任务"}
+              {loading ? "Submitting..." : "Post task"}
             </button>
           </form>
         </div>
@@ -542,15 +549,15 @@ export default function MVPPage() {
         <div className="market-card feed">
           <div id="market" className="block-header">
             <div>
-              <h2>任务市场</h2>
-              <p className="mvp-muted">点击卡片查看详情。</p>
+              <h2>Task market</h2>
+              <p className="mvp-muted">Click a card to view details.</p>
             </div>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
               <button className="btn btn-ghost" onClick={seedTasks} disabled={seeding}>
-                {seeding ? "生成中..." : "生成更多 mock"}
+                {seeding ? "Generating..." : "Generate mock"}
               </button>
               <button className="btn btn-ghost" onClick={loadTasks}>
-                刷新
+                Refresh
               </button>
             </div>
           </div>
@@ -560,27 +567,27 @@ export default function MVPPage() {
               className={`tab ${marketTab === "ai" ? "active" : ""}`}
               onClick={() => setMarketTab("ai")}
             >
-              雇 AI 接单
+              Hire AI
             </button>
             <button
               className={`tab ${marketTab === "human" ? "active" : ""}`}
               onClick={() => setMarketTab("human")}
             >
-              AI 雇人兜底
+              AI hires humans
             </button>
             <div className="density">
-              <span>密度</span>
+              <span>Density</span>
               <button
                 className={`density-btn ${density === "compact" ? "active" : ""}`}
                 onClick={() => setDensity("compact")}
               >
-                紧凑
+                Compact
               </button>
               <button
                 className={`density-btn ${density === "comfortable" ? "active" : ""}`}
                 onClick={() => setDensity("comfortable")}
               >
-                舒适
+                Comfortable
               </button>
             </div>
           </div>
@@ -592,7 +599,7 @@ export default function MVPPage() {
                 setFilters((prev) => ({ ...prev, location: event.target.value }))
               }
             >
-              <option value="all">全部地点</option>
+              <option value="all">All locations</option>
               {taskLocations.map((loc) => (
                 <option key={loc} value={loc}>
                   {loc}
@@ -605,7 +612,7 @@ export default function MVPPage() {
                 setFilters((prev) => ({ ...prev, type: event.target.value }))
               }
             >
-              <option value="all">全部类型</option>
+              <option value="all">All types</option>
               {taskTypes.map((type) => (
                 <option key={type} value={type}>
                   {type}
@@ -618,7 +625,7 @@ export default function MVPPage() {
                 setFilters((prev) => ({ ...prev, urgency: event.target.value }))
               }
             >
-              <option value="all">全部紧急度</option>
+              <option value="all">All urgency</option>
               {urgencyLevels.map((level) => (
                 <option key={level} value={level}>
                   {level}
@@ -639,7 +646,7 @@ export default function MVPPage() {
             </select>
             <input
               className="mvp-input"
-              placeholder="最低预算"
+              placeholder="Min budget"
               value={filters.budgetMin}
               onChange={(event) =>
                 setFilters((prev) => ({ ...prev, budgetMin: event.target.value }))
@@ -647,7 +654,7 @@ export default function MVPPage() {
             />
             <input
               className="mvp-input"
-              placeholder="最高预算"
+              placeholder="Max budget"
               value={filters.budgetMax}
               onChange={(event) =>
                 setFilters((prev) => ({ ...prev, budgetMax: event.target.value }))
@@ -659,18 +666,18 @@ export default function MVPPage() {
                 setFilters((prev) => ({ ...prev, sort: event.target.value }))
               }
             >
-              <option value="recent">最近</option>
-              <option value="high">高价优先</option>
-              <option value="urgent">紧急优先</option>
+              <option value="recent">Recent</option>
+              <option value="high">High budget</option>
+              <option value="urgent">Urgent</option>
             </select>
           </div>
 
-          {filteredTasks.length === 0 && (
-            <div className="market-empty">没有符合条件的任务。</div>
+          {visibleTasks.length === 0 && (
+            <div className="market-empty">No matching tasks.</div>
           )}
 
           <div className={`feed-grid ${density}`}>
-            {filteredTasks.map((task) => {
+            {visibleTasks.map((task) => {
               const isSelected = task.id === selectedId;
               return (
                 <article
@@ -695,10 +702,10 @@ export default function MVPPage() {
                     <span className="tag-pill ghost">{task.urgency}</span>
                   </div>
                   <div className="task-meta">
-                    <span>验收：{task.acceptance}</span>
+                    <span>Acceptance: {task.acceptance}</span>
                     {task.assignee && (
                       <span>
-                        执行者：{task.assignee.name} ({task.assignee.type})
+                        Assignee: {task.assignee.name} ({task.assignee.type})
                       </span>
                     )}
                   </div>
@@ -717,11 +724,11 @@ export default function MVPPage() {
         <div className="market-card detail">
           <div className="block-header">
             <div>
-              <h2>任务详情</h2>
-              <p className="mvp-muted">选择任务后可推进闭环。</p>
+              <h2>Task detail</h2>
+              <p className="mvp-muted">Select a task to advance the loop.</p>
             </div>
           </div>
-          {!selectedTask && <div className="market-empty">请选择一个任务。</div>}
+          {!selectedTask && <div className="market-empty">Select a task to view details.</div>}
           {selectedTask && (
             <div className="detail-body">
               <div className="detail-head">
@@ -749,10 +756,10 @@ export default function MVPPage() {
                 ))}
               </div>
               <div className="detail-meta">
-                <span>验收：{selectedTask.acceptance}</span>
+                <span>Acceptance: {selectedTask.acceptance}</span>
                 {selectedTask.assignee && (
                   <span>
-                    执行者：{selectedTask.assignee.name} ({selectedTask.assignee.type})
+                    Executor: {selectedTask.assignee.name} ({selectedTask.assignee.type})
                   </span>
                 )}
               </div>
@@ -769,16 +776,16 @@ export default function MVPPage() {
                   disabled={selectedTask.status === "paid" || demoRunningId === selectedTask.id}
                   onClick={() => runFullDemo(selectedTask)}
                 >
-                  一键走完整闭环
+                  Run full loop
                 </button>
               </div>
 
               <details className="mvp-details">
-                <summary>手动操作</summary>
+                <summary>Manual actions</summary>
                 <div className="mvp-inline">
                   <input
                     className="mvp-input"
-                    placeholder="AI 日志 / 失败原因"
+                    placeholder="AI log / failure reason"
                     value={aiNote[selectedTask.id] || ""}
                     onChange={(event) =>
                       setAiNote((prev) => ({
@@ -791,7 +798,7 @@ export default function MVPPage() {
                 <div className="mvp-inline">
                   <input
                     className="mvp-input"
-                    placeholder="AI 日志 / 失败原因"
+                    placeholder="AI log / failure reason"
                     value={aiNote[selectedTask.id] || ""}
                     onChange={(event) =>
                       setAiNote((prev) => ({
@@ -806,19 +813,19 @@ export default function MVPPage() {
                     className="btn btn-outline"
                     onClick={() => runAi(selectedTask.id, "success")}
                   >
-                    AI 成功
+                    AI success
                   </button>
                   <button
                     className="btn btn-outline"
                     onClick={() => runAi(selectedTask.id, "fail")}
                   >
-                    AI 失败
+                    AI fail
                   </button>
                 </div>
                 <div className="mvp-inline">
                   <input
                     className="mvp-input"
-                    placeholder="人类姓名"
+                    placeholder="Human name"
                     value={humanName[selectedTask.id] || ""}
                     onChange={(event) =>
                       setHumanName((prev) => ({
@@ -828,13 +835,13 @@ export default function MVPPage() {
                     }
                   />
                   <button className="btn btn-ghost" onClick={() => assignHuman(selectedTask.id)}>
-                    派单给人
+                    Assign human
                   </button>
                 </div>
                 <div className="mvp-inline">
                   <input
                     className="mvp-input"
-                    placeholder="证据描述"
+                    placeholder="Evidence note"
                     value={evidenceNote[selectedTask.id] || ""}
                     onChange={(event) =>
                       setEvidenceNote((prev) => ({
@@ -853,13 +860,13 @@ export default function MVPPage() {
                       }))
                     }
                   >
-                    <option value="note">文本证据</option>
-                    <option value="photo">图片链接</option>
+                    <option value="note">Text evidence</option>
+                    <option value="photo">Photo link</option>
                   </select>
                   {(evidenceType[selectedTask.id] || "note") === "photo" && (
                     <input
                       className="mvp-input"
-                      placeholder="图片 URL"
+                      placeholder="Photo URL"
                       value={evidenceUrl[selectedTask.id] || ""}
                       onChange={(event) =>
                         setEvidenceUrl((prev) => ({
@@ -870,24 +877,24 @@ export default function MVPPage() {
                     />
                   )}
                   <button className="btn btn-ghost" onClick={() => submitEvidence(selectedTask.id)}>
-                    提交证据
+                    Submit evidence
                   </button>
                 </div>
                 <div className="mvp-actions">
                   <button className="btn btn-ghost" onClick={() => verifyTask(selectedTask.id)}>
-                    验证通过
+                    Verify
                   </button>
                   <button className="btn btn-outline" onClick={() => rejectTask(selectedTask.id)}>
-                    驳回
+                    Reject
                   </button>
                   <button className="btn btn-primary" onClick={() => settleTask(selectedTask.id)}>
-                    结算完成
+                    Settle
                   </button>
                 </div>
                 <div className="mvp-inline">
                   <input
                     className="mvp-input"
-                    placeholder="驳回原因（可选）"
+                    placeholder="Rejection reason (optional)"
                     value={rejectReason[selectedTask.id] || ""}
                     onChange={(event) =>
                       setRejectReason((prev) => ({
@@ -900,9 +907,9 @@ export default function MVPPage() {
               </details>
 
               <div className="mvp-evidence">
-                <h4>证据 / 日志</h4>
+                <h4>Evidence / Logs</h4>
                 {selectedTask.evidence.length === 0 && (
-                  <p className="mvp-muted">暂无证据</p>
+                  <p className="mvp-muted">No evidence yet.</p>
                 )}
                 {selectedTask.evidence.map((item) => (
                   <div key={item.id} className="mvp-evidence-item">
@@ -927,8 +934,8 @@ export default function MVPPage() {
         <div className="market-card">
           <div className="block-header">
             <div>
-              <h2>人类待命池</h2>
-              <p className="mvp-muted">AI 卡住时，快速派单给人。</p>
+              <h2>Human pool</h2>
+              <p className="mvp-muted">Dispatch a human when AI gets stuck.</p>
             </div>
           </div>
           <div className="human-grid">
@@ -942,7 +949,7 @@ export default function MVPPage() {
                     </p>
                   </div>
                   <span className={`status-pill ${human.available ? "status-ai_running" : "status-ai_failed"}`}>
-                    {human.available ? "可接单" : "忙碌"}
+                    {human.available ? "Available" : "Busy"}
                   </span>
                 </div>
                 <div className="task-tags">
@@ -957,7 +964,7 @@ export default function MVPPage() {
                   disabled={!selectedTask || !human.available}
                   onClick={() => selectedTask && assignHuman(selectedTask.id, human.name)}
                 >
-                  {selectedTask ? "派单给此人" : "先选择任务"}
+                  {selectedTask ? "Assign this human" : "Select a task first"}
                 </button>
               </div>
             ))}
