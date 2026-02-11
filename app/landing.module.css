@@ -133,6 +133,16 @@
   color: rgba(255, 255, 255, 0.52);
 }
 
+.waitlistNote {
+  font-size: 12px;
+  color: rgba(128, 255, 234, 0.9);
+}
+
+.waitlistError {
+  font-size: 12px;
+  color: #ff9ca8;
+}
+
 .navMvp {
   display: inline-flex;
 }
@@ -1738,11 +1748,18 @@
 
   .waitlist {
     width: 100%;
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .waitlistInput {
     flex: 1;
     min-width: 0;
+  }
+
+  .waitlistNote,
+  .waitlistError {
+    text-align: left;
   }
 
   .navLinks {

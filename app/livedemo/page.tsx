@@ -298,11 +298,27 @@ export default function LiveDemoPage() {
   );
 
   const selectedTask = tasks.find((task) => task.id === selectedId) || null;
+  const stageIndex = selectedTask ? getStageIndex(selectedTask.status) : 0;
+  const stageProgress = Math.min(100, Math.round((stageIndex / 4) * 100));
+  const stageLabels = [
+    "Task received",
+    "AI executing",
+    "Human dispatched",
+    "Verified",
+    "Settled"
+  ];
 
   return (
     <div className="page mvp live-demo">
       <header className="market-hero">
         <div>
+          <div className="auto-banner">
+            <span className="auto-pill">
+              <span className="auto-dot" aria-hidden />
+              AUTO-RUNNING DEMO
+            </span>
+            <span className="auto-tag">hands-free playback</span>
+          </div>
           <p className="eyebrow">Live Demo</p>
           <h1>Auto-running loop: task → AI → human → verify → settle</h1>
           <p className="mvp-lead">
@@ -347,6 +363,9 @@ export default function LiveDemoPage() {
               {demoRunningId ? "Running" : seeding ? "Seeding" : "Idle"}
             </span>
           </div>
+          <div className="auto-progress" aria-hidden>
+            <span style={{ width: `${stageProgress}%` }} />
+          </div>
           <div className="auto-status">
             <div>
               <span>Mode</span>
@@ -369,6 +388,19 @@ export default function LiveDemoPage() {
                 {statusLabels[selectedTask.status]}
               </span>
             )}
+          </div>
+          <div className="auto-timeline">
+            {stageLabels.map((label, index) => (
+              <div
+                key={label}
+                className={`auto-step ${index <= stageIndex ? "done" : ""} ${
+                  index === stageIndex ? "active" : ""
+                }`}
+              >
+                <span className="auto-index">{index + 1}</span>
+                <span>{label}</span>
+              </div>
+            ))}
           </div>
         </div>
 

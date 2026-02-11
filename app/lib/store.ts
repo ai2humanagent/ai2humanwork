@@ -36,8 +36,16 @@ export type Task = {
   evidence: EvidenceItem[];
 };
 
+export type WaitlistEntry = {
+  id: string;
+  email: string;
+  source: string;
+  createdAt: string;
+};
+
 type Db = {
   tasks: Task[];
+  waitlist: WaitlistEntry[];
 };
 
 export function makeSeedTasks(count: number): Task[] {
@@ -152,7 +160,7 @@ async function ensureDb(): Promise<void> {
     await fs.access(DB_PATH);
   } catch {
     await fs.mkdir(path.dirname(DB_PATH), { recursive: true });
-    const initial: Db = { tasks: makeSeedTasks(60) };
+    const initial: Db = { tasks: makeSeedTasks(60), waitlist: [] };
     await fs.writeFile(DB_PATH, JSON.stringify(initial, null, 2), "utf-8");
   }
 }
@@ -160,7 +168,11 @@ async function ensureDb(): Promise<void> {
 export async function readDb(): Promise<Db> {
   await ensureDb();
   const raw = await fs.readFile(DB_PATH, "utf-8");
-  return JSON.parse(raw) as Db;
+  const parsed = JSON.parse(raw) as Db;
+  return {
+    tasks: parsed.tasks ?? [],
+    waitlist: parsed.waitlist ?? []
+  };
 }
 
 export async function writeDb(db: Db): Promise<void> {

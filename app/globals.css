@@ -877,6 +877,102 @@ button {
   font-size: 14px;
 }
 
+.auto-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.auto-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(124, 92, 255, 0.2);
+  border: 1px solid rgba(124, 92, 255, 0.45);
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #e9e4ff;
+}
+
+.auto-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #80ffea;
+  box-shadow: 0 0 12px rgba(128, 255, 234, 0.9);
+  animation: pulse 1.6s ease-in-out infinite;
+}
+
+.auto-tag {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.auto-progress {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+
+.auto-progress span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(120deg, rgba(128, 255, 234, 0.8), rgba(124, 92, 255, 0.85));
+  transition: width 0.5s ease;
+}
+
+.auto-timeline {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.auto-step {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px;
+  align-items: center;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.auto-step .auto-index {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.auto-step.done {
+  color: #d8fff7;
+}
+
+.auto-step.done .auto-index {
+  background: rgba(128, 255, 234, 0.2);
+  color: #d8fff7;
+}
+
+.auto-step.active {
+  color: #ffffff;
+}
+
+.auto-step.active .auto-index {
+  background: rgba(124, 92, 255, 0.35);
+  color: #ffffff;
+}
+
 .live-demo .task-card {
   cursor: default;
 }

@@ -68,6 +68,11 @@ export default function HomePage() {
   const [entrance, setEntrance] = useState<"hire" | "publish" | "human">("hire");
   const [waitlistEmail, setWaitlistEmail] = useState("");
   const [waitlistJoined, setWaitlistJoined] = useState(false);
+  const [waitlistStatus, setWaitlistStatus] = useState<"idle" | "loading" | "done" | "error">(
+    "idle"
+  );
+  const [waitlistError, setWaitlistError] = useState("");
+  const [waitlistCount, setWaitlistCount] = useState<number | null>(null);
 
   const t = copy;
 
@@ -245,7 +250,27 @@ export default function HomePage() {
             onSubmit={(event) => {
               event.preventDefault();
               if (!waitlistEmail.trim()) return;
-              setWaitlistJoined(true);
+              setWaitlistStatus("loading");
+              setWaitlistError("");
+              fetch("/api/waitlist", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: waitlistEmail, source: "landing" })
+              })
+                .then(async (res) => {
+                  const data = await res.json();
+                  if (!res.ok) {
+                    throw new Error(data?.error || "Unable to join waitlist.");
+                  }
+                  setWaitlistJoined(true);
+                  setWaitlistStatus("done");
+                  setWaitlistCount(typeof data?.count === "number" ? data.count : null);
+                })
+                .catch((err) => {
+                  setWaitlistJoined(false);
+                  setWaitlistStatus("error");
+                  setWaitlistError(err instanceof Error ? err.message : "Unable to join waitlist.");
+                });
             }}
           >
             <input
@@ -257,14 +282,29 @@ export default function HomePage() {
               onChange={(event) => {
                 setWaitlistEmail(event.target.value);
                 if (waitlistJoined) setWaitlistJoined(false);
+                if (waitlistStatus !== "idle") setWaitlistStatus("idle");
               }}
             />
             <button
               className={`${styles.button} ${styles.buttonPrimary}`}
               type="submit"
+              disabled={waitlistStatus === "loading"}
             >
-              {waitlistJoined ? "Joined" : t.nav.demo}
+              {waitlistStatus === "loading"
+                ? "Joining..."
+                : waitlistJoined
+                  ? "Joined"
+                  : t.nav.demo}
             </button>
+            {waitlistStatus === "done" && (
+              <span className={styles.waitlistNote}>
+                {"You're in"}
+                {typeof waitlistCount === "number" ? ` · #${waitlistCount}` : ""}
+              </span>
+            )}
+            {waitlistStatus === "error" && (
+              <span className={styles.waitlistError}>{waitlistError}</span>
+            )}
           </form>
         </div>
       </header>
@@ -386,9 +426,6 @@ export default function HomePage() {
               <h2 className={styles.sectionTitle}>{t.section.liveTitle}</h2>
               <p className={styles.sectionDesc}>{t.section.liveDesc}</p>
             </div>
-            <Link className={`${styles.button} ${styles.buttonGhost}`} href="/livedemo">
-              Live Demo
-            </Link>
           </div>
 
           <div className={styles.liveStats}>
@@ -421,14 +458,6 @@ export default function HomePage() {
             <div>
               <h2 className={styles.sectionTitle}>{t.section.loopTitle}</h2>
               <p className={styles.sectionDesc}>{t.section.loopDesc}</p>
-            </div>
-            <div className={styles.loopActions}>
-              <Link className={`${styles.button} ${styles.buttonGhost}`} href="/livedemo">
-                {"Open Live Demo"}
-              </Link>
-              <Link className={`${styles.button} ${styles.buttonPrimary}`} href="/livedemo">
-                {"Watch live"}
-              </Link>
             </div>
           </div>
 
@@ -626,12 +655,12 @@ export default function HomePage() {
                 <div className={styles.previewActions}>
                   {entrance === "hire" && (
                     <>
-                      <Link className={`${styles.button} ${styles.buttonPrimary}`} href="/livedemo">
-                        {"Start"}
-                      </Link>
-                      <Link className={styles.button} href="/livedemo#market">
-                        {"Browse"}
-                      </Link>
+                      <a className={`${styles.button} ${styles.buttonPrimary}`} href="#waitlist">
+                        {"Join waitlist"}
+                      </a>
+                      <a className={styles.button} href="#loop">
+                        {"See loop"}
+                      </a>
                     </>
                   )}
                   {entrance === "publish" && (
