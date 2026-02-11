@@ -64,7 +64,7 @@ function repeat<T>(items: T[], times: number): T[] {
   return Array.from({ length: times }).flatMap(() => items);
 }
 
-const WAITLIST_OFFSET = 2333;
+const WAITLIST_START = 2333;
 
 export default function HomePage() {
   const [entrance, setEntrance] = useState<"hire" | "publish" | "human">("hire");
@@ -238,6 +238,11 @@ export default function HomePage() {
     ];
   }, []);
 
+  const displayWaitlistNumber =
+    typeof waitlistCount === "number"
+      ? Math.max(WAITLIST_START, WAITLIST_START + waitlistCount - 1)
+      : null;
+
   return (
     <div className={styles.page}>
       <header className={styles.nav}>
@@ -303,7 +308,7 @@ export default function HomePage() {
             {waitlistStatus === "done" && (
               <span className={styles.waitlistNote}>
                 {"You're in"}
-                {typeof waitlistCount === "number" ? ` · #${WAITLIST_OFFSET + waitlistCount}` : ""}
+                {displayWaitlistNumber ? ` · #${displayWaitlistNumber}` : ""}
               </span>
             )}
             {waitlistStatus === "error" && (
@@ -787,7 +792,7 @@ export default function HomePage() {
             <h3>Welcome to ai2human</h3>
             <p>
               You are officially on the list.
-              {typeof waitlistCount === "number" ? ` Your spot: #${WAITLIST_OFFSET + waitlistCount}.` : ""}
+              {displayWaitlistNumber ? ` Your spot: #${displayWaitlistNumber}.` : ""}
             </p>
             <div className={styles.waitlistModalBadges}>
               <span>Early access</span>

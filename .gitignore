@@ -19,3 +19,4 @@ pnpm-debug.log*
 
 # Local MVP data (use /tmp in prod)
 data/
+.vercel
