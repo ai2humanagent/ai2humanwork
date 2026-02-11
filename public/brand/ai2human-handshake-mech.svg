@@ -1,0 +1,51 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="human" x1="50" y1="230" x2="250" y2="320" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFD9B0"/>
+      <stop offset="1" stop-color="#FFB57C"/>
+    </linearGradient>
+    <linearGradient id="metal" x1="260" y1="210" x2="470" y2="330" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#D6E2FF"/>
+      <stop offset="0.5" stop-color="#8FA0C7"/>
+      <stop offset="1" stop-color="#6B5CFF"/>
+    </linearGradient>
+    <linearGradient id="core" x1="210" y1="238" x2="300" y2="330" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFE9CE"/>
+      <stop offset="1" stop-color="#B9B4FF"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Human arm -->
+  <rect x="42" y="236" width="186" height="80" rx="40" fill="url(#human)"/>
+  <rect x="194" y="220" width="102" height="92" rx="28" fill="url(#human)"/>
+  <rect x="214" y="198" width="42" height="36" rx="12" fill="#EFA772"/>
+
+  <!-- Robot forearm -->
+  <rect x="280" y="226" width="190" height="92" rx="14" fill="url(#metal)"/>
+  <rect x="244" y="214" width="110" height="104" rx="18" fill="url(#metal)"/>
+  <rect x="306" y="206" width="66" height="18" rx="6" fill="#7C5CFF" opacity="0.7"/>
+
+  <!-- Mechanical fingers -->
+  <rect x="340" y="238" width="44" height="26" rx="6" fill="#C8D4F7"/>
+  <rect x="382" y="238" width="44" height="26" rx="6" fill="#C8D4F7"/>
+  <rect x="424" y="238" width="44" height="26" rx="6" fill="#C8D4F7"/>
+  <rect x="340" y="272" width="44" height="26" rx="6" fill="#C8D4F7"/>
+  <rect x="382" y="272" width="44" height="26" rx="6" fill="#C8D4F7"/>
+  <rect x="424" y="272" width="44" height="26" rx="6" fill="#C8D4F7"/>
+
+  <!-- Handshake center -->
+  <rect x="202" y="238" width="118" height="60" rx="20" fill="url(#core)" stroke="rgba(12,15,26,0.45)" stroke-width="2"/>
+  <path d="M220 252h80" stroke="rgba(12,15,26,0.55)" stroke-width="6" stroke-linecap="round"/>
+
+  <!-- Bolts + joints -->
+  <circle cx="318" cy="272" r="6" fill="#0B0F1A" fill-opacity="0.5"/>
+  <circle cx="360" cy="272" r="6" fill="#0B0F1A" fill-opacity="0.5"/>
+  <circle cx="402" cy="272" r="6" fill="#0B0F1A" fill-opacity="0.5"/>
+  <circle cx="444" cy="272" r="6" fill="#0B0F1A" fill-opacity="0.5"/>
+
+  <!-- Circuit traces -->
+  <path d="M330 214v-26h62" stroke="#80FFEA" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="392" cy="188" r="6" fill="#80FFEA"/>
+  <path d="M366 320v26h44" stroke="#7C5CFF" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="410" cy="346" r="6" fill="#7C5CFF"/>
+</svg>

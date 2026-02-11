@@ -9,7 +9,9 @@ const names = [
   'ai2human-badge',
   'ai2human-wordmark',
   'ai2human-handshake',
-  'ai2human-handshake-dark'
+  'ai2human-handshake-dark',
+  'ai2human-handshake-mech',
+  'ai2human-handshake-mech-dark'
 ];
 const sizes = [256, 512, 1024];
 
