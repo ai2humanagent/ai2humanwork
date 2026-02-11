@@ -1,0 +1,40 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="human" x1="60" y1="240" x2="260" y2="320" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFD9B0"/>
+      <stop offset="1" stop-color="#FFB57C"/>
+    </linearGradient>
+    <linearGradient id="robot" x1="260" y1="240" x2="460" y2="320" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#80FFEA"/>
+      <stop offset="1" stop-color="#7C5CFF"/>
+    </linearGradient>
+    <linearGradient id="center" x1="210" y1="238" x2="300" y2="330" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFE9CE"/>
+      <stop offset="1" stop-color="#B9B4FF"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Human arm -->
+  <rect x="48" y="236" width="182" height="80" rx="40" fill="url(#human)"/>
+  <rect x="196" y="220" width="96" height="88" rx="28" fill="url(#human)"/>
+  <rect x="214" y="198" width="40" height="34" rx="12" fill="#EFA772"/>
+
+  <!-- Robot arm -->
+  <rect x="282" y="236" width="182" height="80" rx="18" fill="url(#robot)"/>
+  <rect x="220" y="220" width="96" height="88" rx="24" fill="url(#robot)"/>
+
+  <!-- Handshake center -->
+  <rect x="202" y="238" width="108" height="60" rx="20" fill="url(#center)" stroke="rgba(12,15,26,0.35)" stroke-width="2"/>
+  <path d="M220 252h72" stroke="rgba(12,15,26,0.45)" stroke-width="6" stroke-linecap="round"/>
+
+  <!-- Robot joints -->
+  <circle cx="324" cy="276" r="8" fill="#0B0F1A" fill-opacity="0.4"/>
+  <circle cx="368" cy="276" r="8" fill="#0B0F1A" fill-opacity="0.4"/>
+  <circle cx="412" cy="276" r="8" fill="#0B0F1A" fill-opacity="0.4"/>
+
+  <!-- Circuit traces -->
+  <path d="M360 220v-24h64" stroke="#80FFEA" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="424" cy="196" r="6" fill="#80FFEA"/>
+  <path d="M392 332v24h40" stroke="#7C5CFF" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="432" cy="356" r="6" fill="#7C5CFF"/>
+</svg>

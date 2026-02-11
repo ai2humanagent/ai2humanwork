@@ -3,7 +3,14 @@ const path = require('path');
 const { Resvg } = require('@resvg/resvg-js');
 
 const srcDir = path.join(process.cwd(), 'public', 'brand');
-const names = ['ai2human-mark','ai2human-mark-dark','ai2human-badge','ai2human-wordmark'];
+const names = [
+  'ai2human-mark',
+  'ai2human-mark-dark',
+  'ai2human-badge',
+  'ai2human-wordmark',
+  'ai2human-handshake',
+  'ai2human-handshake-dark'
+];
 const sizes = [256, 512, 1024];
 
 for (const name of names) {
