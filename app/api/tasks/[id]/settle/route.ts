@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { updateDb } from "../../../../lib/store";
+import { checkAdminAuth } from "../../../../lib/adminAuth";
 import { canTransition, explainInvalidTransition } from "../../../../lib/taskStateMachine";
 
 export const runtime = "nodejs";
@@ -8,6 +9,11 @@ export async function POST(
   _request: Request,
   { params }: { params: { id: string } }
 ) {
+  const auth = checkAdminAuth(_request);
+  if (!auth.ok) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
+
   let updated: unknown = null;
   let transitionError = "";
 

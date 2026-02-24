@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "node --test app/lib/taskStateMachine.test.js"
+    "test": "node --test app/lib/*.test.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.95.3",
