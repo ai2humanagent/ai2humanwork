@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { updateDb } from "../../../../lib/store";
+import { canTransition, explainInvalidTransition } from "../../../../lib/taskStateMachine";
 
 export const runtime = "nodejs";
 
@@ -8,10 +9,16 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   let updated: unknown = null;
+  let transitionError = "";
 
   await updateDb((db) => {
     const task = db.tasks.find((item) => item.id === params.id);
     if (!task) {
+      return;
+    }
+
+    if (!canTransition(task.status, "paid")) {
+      transitionError = explainInvalidTransition(task.status, "paid");
       return;
     }
 
@@ -26,6 +33,10 @@ export async function POST(
     });
     updated = task;
   });
+
+  if (transitionError) {
+    return NextResponse.json({ error: transitionError }, { status: 400 });
+  }
 
   if (!updated) {
     return NextResponse.json({ error: "Task not found" }, { status: 404 });

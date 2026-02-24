@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { updateDb } from "../../../../lib/store";
+import { canTransition, explainInvalidTransition } from "../../../../lib/taskStateMachine";
 
 export const runtime = "nodejs";
 
@@ -14,6 +15,7 @@ export async function POST(
   const type = body.type === "photo" ? "photo" : "note";
 
   let updated: unknown = null;
+  let transitionError = "";
 
   await updateDb((db) => {
     const task = db.tasks.find((item) => item.id === params.id);
@@ -28,12 +30,22 @@ export async function POST(
       content: type === "photo" ? url || "Photo evidence" : note || "Evidence submitted",
       createdAt: new Date().toISOString()
     });
-    if (task.status !== "verified" && task.status !== "paid") {
+
+    if (task.status === "human_assigned") {
+      if (!canTransition(task.status, "human_done")) {
+        transitionError = explainInvalidTransition(task.status, "human_done");
+        return;
+      }
       task.status = "human_done";
     }
+
     task.updatedAt = new Date().toISOString();
     updated = task;
   });
+
+  if (transitionError) {
+    return NextResponse.json({ error: transitionError }, { status: 400 });
+  }
 
   if (!updated) {
     return NextResponse.json({ error: "Task not found" }, { status: 404 });
