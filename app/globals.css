@@ -1225,6 +1225,58 @@ button {
   font-size: 13px;
 }
 
+.reviewer-queue {
+  display: grid;
+  gap: 10px;
+}
+
+.reviewer-queue-item {
+  width: 100%;
+  text-align: left;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(9, 10, 15, 0.55);
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.reviewer-queue-item:hover {
+  transform: translateY(-1px);
+  border-color: rgba(128, 255, 234, 0.35);
+}
+
+.reviewer-queue-item.active {
+  border-color: rgba(124, 92, 255, 0.6);
+  box-shadow: 0 0 0 1px rgba(124, 92, 255, 0.35);
+}
+
+.reviewer-label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.reviewer-actions {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+}
+
+.reviewer-error {
+  margin-top: 10px;
+  color: #ffb4b4;
+  font-size: 13px;
+}
+
+.reviewer-success {
+  margin-top: 10px;
+  color: #c4fff5;
+  font-size: 13px;
+}
+
 @media (max-width: 980px) {
   .market-grid {
     grid-template-columns: 1fr;
