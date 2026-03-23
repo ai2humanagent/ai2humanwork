@@ -43,6 +43,15 @@ export async function POST(
       type: "note",
       content: `AI note: ${note}`
     });
+    appendEvidence(task, {
+      by: "ai",
+      type: "note",
+      content: `agent_event: planner_agent | ${
+        outcome === "success"
+          ? "Planner kept the task autonomous."
+          : "Planner detected a real-world blocker and escalated to fallback."
+      }`
+    });
     updated = task;
   });
 

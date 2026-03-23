@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import PrivyAppProvider from "./components/PrivyAppProvider";
 
 export const metadata: Metadata = {
   title: "ai2human — Hybrid Work Market",
@@ -27,7 +28,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <PrivyAppProvider>{children}</PrivyAppProvider>
+      </body>
     </html>
   );
 }

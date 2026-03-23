@@ -7,6 +7,7 @@ import {
   explainInvalidFallbackTransition
 } from "../../../../lib/fallbackOrderState";
 import { appendEvidence } from "../../../../lib/taskEvidence";
+import { executeXLayerSettlement } from "../../../../lib/xlayerSettlement";
 
 export const runtime = "nodejs";
 
@@ -28,66 +29,89 @@ export async function POST(
   let transitionError = "";
   let conflictError = "";
   let idempotentReplay = false;
+  let settlementError = "";
 
-  await updateDb((db) => {
-    const order = db.fallbackOrders.find((item) => item.id === params.id);
-    if (!order) return;
+  try {
+    await updateDb(async (db) => {
+      const order = db.fallbackOrders.find((item) => item.id === params.id);
+      if (!order) return;
 
-    const existingByKey = db.payments.find(
-      (entry) =>
-        entry.fallbackOrderId === order.id &&
-        entry.source === "fallback_order" &&
-        entry.idempotencyKey === idempotencyKey
-    );
-    if (existingByKey) {
-      idempotentReplay = true;
-      updated = order;
-      payment = existingByKey;
-      return;
-    }
-
-    if (order.status === "paid") {
-      const existingPayment = db.payments.find(
-        (entry) => entry.fallbackOrderId === order.id && entry.source === "fallback_order"
+      const existingByKey = db.payments.find(
+        (entry) =>
+          entry.fallbackOrderId === order.id &&
+          entry.source === "fallback_order" &&
+          entry.idempotencyKey === idempotencyKey
       );
-      conflictError =
-        existingPayment?.idempotencyKey
-          ? "Order is already settled with a different idempotency key."
-          : "Order is already settled.";
-      return;
-    }
+      if (existingByKey) {
+        idempotentReplay = true;
+        updated = order;
+        payment = existingByKey;
+        return;
+      }
 
-    if (!canTransitionFallback(order.status, "paid")) {
-      transitionError = explainInvalidFallbackTransition(order.status, "paid");
-      return;
-    }
+      if (order.status === "paid") {
+        const existingPayment = db.payments.find(
+          (entry) => entry.fallbackOrderId === order.id && entry.source === "fallback_order"
+        );
+        conflictError =
+          existingPayment?.idempotencyKey
+            ? "Order is already settled with a different idempotency key."
+            : "Order is already settled.";
+        return;
+      }
 
-    order.status = "paid";
-    order.updatedAt = new Date().toISOString();
+      if (!canTransitionFallback(order.status, "paid")) {
+        transitionError = explainInvalidFallbackTransition(order.status, "paid");
+        return;
+      }
 
-    appendEvidence(order, {
-      by: "system",
-      type: "log",
-      content: "Payment settled (mock_x402)."
+      const settlement = await executeXLayerSettlement({
+        amount: order.budget
+      });
+
+      order.status = "paid";
+      order.updatedAt = new Date().toISOString();
+
+      appendEvidence(order, {
+        by: "system",
+        type: "log",
+        content: settlement.evidenceLabel
+      });
+      if (settlement.configurationHint && settlement.method === "mock_x402") {
+        appendEvidence(order, {
+          by: "system",
+          type: "note",
+          content: settlement.configurationHint
+        });
+      }
+
+      const nextPayment: PaymentEntry = {
+        id: crypto.randomUUID(),
+        taskId: order.id,
+        fallbackOrderId: order.id,
+        idempotencyKey,
+        amount: settlement.amount,
+        receiver: order.humanName || "Human Operator",
+        receiverAddress: settlement.receiverAddress,
+        method: settlement.method,
+        status: settlement.status,
+        source: "fallback_order",
+        network: settlement.network,
+        chainId: settlement.chainId,
+        tokenSymbol: settlement.tokenSymbol,
+        tokenAddress: settlement.tokenAddress,
+        txHash: settlement.txHash,
+        explorerUrl: settlement.explorerUrl,
+        createdAt: order.updatedAt
+      };
+      db.payments.unshift(nextPayment);
+
+      updated = order;
+      payment = nextPayment;
     });
-
-    const nextPayment: PaymentEntry = {
-      id: crypto.randomUUID(),
-      taskId: order.id,
-      fallbackOrderId: order.id,
-      idempotencyKey,
-      amount: order.budget,
-      receiver: order.humanName || "Human Operator",
-      method: "mock_x402",
-      status: "paid",
-      source: "fallback_order",
-      createdAt: order.updatedAt
-    };
-    db.payments.unshift(nextPayment);
-
-    updated = order;
-    payment = nextPayment;
-  });
+  } catch (error) {
+    settlementError = error instanceof Error ? error.message : "Settlement failed";
+  }
 
   if (conflictError) {
     return NextResponse.json({ error: conflictError }, { status: 409 });
@@ -95,6 +119,10 @@ export async function POST(
 
   if (transitionError) {
     return NextResponse.json({ error: transitionError }, { status: 400 });
+  }
+
+  if (settlementError) {
+    return NextResponse.json({ error: settlementError }, { status: 500 });
   }
 
   if (!updated) {

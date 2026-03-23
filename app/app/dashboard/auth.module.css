@@ -1,0 +1,227 @@
+.stage {
+  min-height: 70vh;
+  display: grid;
+  place-items: center;
+}
+
+.center {
+  width: min(520px, 100%);
+  display: grid;
+  gap: 12px;
+}
+
+.heading {
+  text-align: center;
+}
+
+.heading h2 {
+  margin: 0;
+  font-size: clamp(34px, 4vw, 46px);
+  line-height: 1.06;
+  letter-spacing: -0.02em;
+  color: #f3f5fa;
+  text-transform: lowercase;
+}
+
+.heading p {
+  margin: 6px 0 0;
+  color: rgba(198, 205, 219, 0.72);
+  font-size: 30px;
+  line-height: 1.1;
+  text-transform: lowercase;
+}
+
+.panel {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  background:
+    linear-gradient(180deg, rgba(24, 26, 36, 0.88), rgba(20, 22, 31, 0.94));
+  padding: 14px;
+  display: grid;
+  gap: 12px;
+  box-shadow: 0 20px 55px rgba(0, 0, 0, 0.45);
+}
+
+.googleButton,
+.emailButton,
+.submit,
+.back {
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 14px 16px;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: filter 0.15s ease, transform 0.15s ease;
+}
+
+.googleButton:hover,
+.emailButton:hover,
+.submit:hover,
+.back:hover {
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+}
+
+.googleButton {
+  background: #f2f3f5;
+  color: #171a23;
+  border-color: rgba(255, 255, 255, 0.3);
+  text-transform: lowercase;
+}
+
+.googleIcon {
+  width: 22px;
+  height: 22px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 14px;
+  background: conic-gradient(#ea4335 0deg 90deg, #fbbc05 90deg 180deg, #34a853 180deg 270deg, #4285f4 270deg);
+  color: #fff;
+}
+
+.divider {
+  position: relative;
+  display: grid;
+  place-items: center;
+  color: rgba(205, 212, 225, 0.62);
+  font-size: 17px;
+  text-transform: lowercase;
+  margin: 2px 0;
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: calc(50% - 22px);
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.divider::before {
+  left: 0;
+}
+
+.divider::after {
+  right: 0;
+}
+
+.emailButton {
+  background: rgba(21, 24, 34, 0.8);
+  color: rgba(224, 230, 240, 0.92);
+  text-transform: lowercase;
+}
+
+.emailIcon {
+  color: rgba(224, 230, 240, 0.8);
+  font-size: 17px;
+}
+
+.form {
+  display: grid;
+  gap: 9px;
+}
+
+.input {
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(10, 13, 23, 0.9);
+  color: #f4f7fb;
+  padding: 12px 14px;
+  font-size: 14px;
+}
+
+.input::placeholder {
+  color: rgba(194, 208, 228, 0.58);
+}
+
+.passwordWrap {
+  position: relative;
+}
+
+.toggle {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 0;
+  background: transparent;
+  color: rgba(194, 208, 228, 0.8);
+  font-size: 12px;
+  text-transform: lowercase;
+  cursor: pointer;
+}
+
+.submit {
+  background: linear-gradient(120deg, rgba(120, 171, 255, 0.36), rgba(123, 94, 255, 0.36));
+  color: #f2f7ff;
+  text-transform: lowercase;
+}
+
+.submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.back {
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(210, 220, 235, 0.86);
+  font-size: 14px;
+  padding: 11px 14px;
+  text-transform: lowercase;
+}
+
+.bottomText {
+  margin: 4px 0 0;
+  text-align: center;
+  color: rgba(174, 182, 197, 0.78);
+  font-size: 16px;
+  text-transform: lowercase;
+}
+
+.switchMode {
+  border: 0;
+  background: transparent;
+  color: #f4a445;
+  font-size: inherit;
+  text-transform: lowercase;
+  cursor: pointer;
+  padding: 0;
+}
+
+.switchMode:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 640px) {
+  .center {
+    width: 100%;
+  }
+
+  .heading h2 {
+    font-size: 32px;
+  }
+
+  .heading p {
+    font-size: 20px;
+  }
+
+  .googleButton,
+  .emailButton,
+  .submit {
+    font-size: 17px;
+  }
+
+  .bottomText {
+    font-size: 16px;
+  }
+}

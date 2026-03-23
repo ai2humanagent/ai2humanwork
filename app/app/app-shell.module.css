@@ -1,0 +1,317 @@
+.shell {
+  min-height: 100vh;
+  background:
+    radial-gradient(1200px 620px at 5% -8%, rgba(39, 120, 255, 0.2), transparent 58%),
+    radial-gradient(760px 520px at 105% 0%, rgba(255, 146, 57, 0.14), transparent 54%),
+    radial-gradient(820px 640px at 50% 120%, rgba(39, 210, 199, 0.08), transparent 52%),
+    linear-gradient(180deg, #050812 0%, #07101b 38%, #060912 100%);
+  color: var(--ai2h-text-main);
+}
+
+.grid {
+  width: min(1480px, calc(100% - 36px));
+  margin: 0 auto;
+  padding: 20px 0 32px;
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  gap: 20px;
+}
+
+.sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  padding: 8px 0 20px;
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+  gap: 14px;
+}
+
+.brandBlock,
+.sidebarCard,
+.topbar {
+  border: 1px solid rgba(153, 181, 233, 0.16);
+  background:
+    linear-gradient(180deg, rgba(12, 18, 32, 0.96), rgba(9, 14, 26, 0.92)),
+    rgba(11, 17, 30, 0.92);
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.32);
+  backdrop-filter: blur(18px);
+}
+
+.brandBlock {
+  border-radius: 28px;
+  padding: 18px;
+  display: grid;
+  gap: 14px;
+}
+
+.brandLink {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.brandName {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.brandTag {
+  margin: 3px 0 0;
+  font-size: 12px;
+  color: rgba(196, 213, 240, 0.76);
+}
+
+.brandBadge {
+  width: fit-content;
+  border-radius: 999px;
+  padding: 7px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #e9f4ff;
+  background: linear-gradient(135deg, rgba(39, 120, 255, 0.28), rgba(39, 210, 199, 0.16));
+  border: 1px solid rgba(106, 166, 255, 0.4);
+}
+
+.nav {
+  display: grid;
+  gap: 10px;
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px 15px;
+  border-radius: 20px;
+  border: 1px solid rgba(154, 180, 227, 0.1);
+  background: rgba(8, 12, 21, 0.72);
+  color: rgba(227, 235, 248, 0.96);
+  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+
+.navItem:hover {
+  transform: translateY(-1px);
+  border-color: rgba(105, 162, 255, 0.32);
+  background: rgba(13, 20, 35, 0.92);
+}
+
+.navItemActive {
+  border-color: rgba(116, 173, 255, 0.46);
+  background:
+    radial-gradient(320px 120px at 0% 0%, rgba(58, 138, 255, 0.22), transparent 72%),
+    rgba(13, 21, 37, 0.96);
+  box-shadow: inset 0 0 0 1px rgba(116, 173, 255, 0.14);
+}
+
+.navLabel {
+  display: block;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.navHint {
+  display: block;
+  margin-top: 3px;
+  font-size: 12px;
+  color: rgba(190, 206, 232, 0.72);
+}
+
+.navArrow {
+  font-size: 14px;
+  color: rgba(182, 206, 243, 0.7);
+}
+
+.sidebarCard {
+  border-radius: 28px;
+  padding: 18px;
+  align-self: end;
+}
+
+.sidebarKicker,
+.routeEyebrow {
+  margin: 0;
+  text-transform: uppercase;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  color: #ffb25b;
+}
+
+.sidebarCard h2 {
+  margin: 10px 0 0;
+  font-size: 22px;
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+}
+
+.sidebarCard p {
+  margin: 10px 0 0;
+  line-height: 1.6;
+  color: rgba(194, 211, 240, 0.82);
+}
+
+.stackDots {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.stackDots span {
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #2f87ff, #ff8f2a);
+  opacity: 0.85;
+}
+
+.main {
+  min-width: 0;
+  display: grid;
+  gap: 18px;
+}
+
+.topbar {
+  border-radius: 30px;
+  padding: 22px 24px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  background:
+    radial-gradient(560px 220px at 0% -10%, rgba(45, 129, 255, 0.18), transparent 70%),
+    radial-gradient(440px 220px at 110% 10%, rgba(255, 146, 57, 0.14), transparent 72%),
+    rgba(10, 15, 28, 0.92);
+}
+
+.routeMeta h1 {
+  margin: 8px 0 0;
+  font-size: clamp(28px, 3.2vw, 42px);
+  line-height: 1.02;
+  letter-spacing: -0.04em;
+}
+
+.routeMeta p:last-child {
+  margin: 9px 0 0;
+  max-width: 720px;
+  line-height: 1.55;
+  color: rgba(197, 213, 238, 0.82);
+}
+
+.topActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.secondaryLink,
+.primaryLink,
+.mobileItem {
+  border-radius: 999px;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  border: 1px solid rgba(158, 185, 232, 0.14);
+  color: rgba(230, 238, 250, 0.95);
+}
+
+.secondaryLink {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.primaryLink {
+  border-color: rgba(255, 176, 92, 0.36);
+  background: linear-gradient(135deg, rgba(255, 146, 57, 0.28), rgba(58, 129, 255, 0.2));
+}
+
+.content {
+  min-width: 0;
+  padding-bottom: 50px;
+}
+
+.mobileNav {
+  display: none;
+}
+
+@media (max-width: 1160px) {
+  .grid {
+    grid-template-columns: 1fr;
+    width: min(1480px, calc(100% - 28px));
+  }
+
+  .sidebar {
+    position: static;
+    height: auto;
+    grid-template-rows: auto;
+  }
+
+  .sidebarCard {
+    display: none;
+  }
+}
+
+@media (max-width: 760px) {
+  .grid {
+    width: min(1480px, calc(100% - 20px));
+    padding-top: 12px;
+  }
+
+  .sidebar {
+    display: none;
+  }
+
+  .topbar {
+    padding: 18px;
+    border-radius: 24px;
+    flex-direction: column;
+  }
+
+  .topActions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .mobileNav {
+    position: fixed;
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+    z-index: 30;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+    padding: 10px;
+    border-radius: 22px;
+    border: 1px solid rgba(153, 181, 233, 0.16);
+    background: rgba(9, 14, 26, 0.88);
+    backdrop-filter: blur(18px);
+    box-shadow: 0 18px 45px rgba(0, 0, 0, 0.35);
+  }
+
+  .mobileItem {
+    text-align: center;
+    background: rgba(255, 255, 255, 0.04);
+    color: rgba(201, 214, 236, 0.78);
+  }
+
+  .mobileItemActive {
+    color: #eef5ff;
+    border-color: rgba(105, 162, 255, 0.42);
+    background: linear-gradient(135deg, rgba(49, 129, 255, 0.24), rgba(255, 146, 57, 0.14));
+  }
+}

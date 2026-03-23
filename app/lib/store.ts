@@ -7,6 +7,12 @@ import {
   type Human,
   type HumanService
 } from "./humanMarketplace";
+import {
+  DEFAULT_TARGET_URL,
+  DEFAULT_REPLY_TARGET_URL,
+  buildOfficialCampaignTask,
+  getOfficialCampaignTemplates
+} from "./officialCampaignTasks.js";
 
 export type TaskStatus =
   | "created"
@@ -32,12 +38,24 @@ export type Task = {
   budget: string;
   deadline: string;
   acceptance: string;
+  campaign?: {
+    requesterName: string;
+    requesterHandle?: string;
+    platform: "x";
+    action: "post" | "quote" | "reply" | "repost";
+    targetUrl?: string;
+    proofPhrase?: string;
+    brief?: string;
+    proofRequirements: string[];
+    verificationChecks: string[];
+  };
   status: TaskStatus;
   createdAt: string;
   updatedAt: string;
   assignee?: {
     type: "ai" | "human";
     name: string;
+    walletAddress?: string;
   };
   evidence: EvidenceItem[];
 };
@@ -56,9 +74,17 @@ export type PaymentEntry = {
   idempotencyKey?: string;
   amount: string;
   receiver: string;
-  method: "mock_x402";
+  receiverAddress?: string;
+  payerAddress?: string;
+  method: "mock_x402" | "xlayer_erc20" | "x402_exact";
   status: "paid";
-  source?: "task" | "fallback_order";
+  source?: "task" | "fallback_order" | "x402_access";
+  network?: "xlayer-mainnet" | "xlayer-testnet" | "xlayer-custom";
+  chainId?: number;
+  tokenSymbol?: string;
+  tokenAddress?: string;
+  txHash?: string;
+  explorerUrl?: string;
   createdAt: string;
 };
 
@@ -138,28 +164,16 @@ type Db = {
 };
 
 export function makeSeedTasks(count: number): Task[] {
-  const titles = [
-    "Scrape Upwork gigs (Next.js) + daily report",
-    "Monitor Amazon price + alert when drops",
-    "On-site check: inventory + timestamped photos",
-    "Competitor launch monitor: scrape + dedupe + email summary",
-    "Captcha-heavy signup flow: needs human fallback",
-    "Cross-app sync: Notion → Sheets → Slack",
-    "Find 50 leads + evidence links",
-    "Local courier: pickup + handoff (same city)",
-    "Compliance scan: infringing links + screenshots",
-    "Compare 20 vendor quotes + structured table"
+  const templates = getOfficialCampaignTemplates();
+  const budgets = ["18 USDT", "24 USDT", "35 USDT", "48 USDT", "60 USDT", "80 USDT"];
+  const deadlines = ["2h", "4h", "6h", "12h", "24h", "48h"];
+  const humanWallets = [
+    "0x1111111111111111111111111111111111111111",
+    "0x2222222222222222222222222222222222222222",
+    "0x3333333333333333333333333333333333333333",
+    "0x4444444444444444444444444444444444444444"
   ];
-
-  const acceptances = [
-    "Provide evidence/logs",
-    "Screenshots + links + key fields table",
-    "Store photos + timestamp + address",
-    "CSV + report + reproducible steps"
-  ];
-
-  const budgets = ["$35", "$49", "$80", "$120", "$220", "$399", "$750", "$999"];
-  const deadlines = ["30m", "2h", "4h", "6h", "12h", "24h", "3d"];
+  const targetUrls = [DEFAULT_TARGET_URL, DEFAULT_REPLY_TARGET_URL];
 
   const statuses: TaskStatus[] = [
     "created",
@@ -182,6 +196,23 @@ export function makeSeedTasks(count: number): Task[] {
     const createdAt = new Date(now - i * 1000 * 60 * 17).toISOString();
     const updatedAt = new Date(now - i * 1000 * 60 * 5).toISOString();
     const id = crypto.randomUUID();
+    const template = templates[i % templates.length];
+    const campaignTask = buildOfficialCampaignTask({
+      templateId: template.id,
+      requesterName: "ai2human Official",
+      requesterHandle: "@ai2humanwork",
+      targetUrl: targetUrls[i % targetUrls.length],
+      budget: budgets[i % budgets.length],
+      deadline: deadlines[i % deadlines.length],
+      brief:
+        template.action === "repost"
+          ? "Make the repost visible on your timeline so the reviewer can verify it quickly."
+          : "Use your own X account, keep the post live, and include the requested campaign CTA."
+    });
+    const proofPhrase = campaignTask.campaign?.proofPhrase;
+    const executorHandle = `@operator${(i % 8) + 1}`;
+    const postUrl = `https://x.com/${executorHandle.slice(1)}/status/${1902000000000000000 + i}`;
+    const profileUrl = `https://x.com/${executorHandle.slice(1)}`;
 
     const evidence: EvidenceItem[] = [];
     const addEvidence = (by: EvidenceItem["by"], type: EvidenceItem["type"], content: string) => {
@@ -194,30 +225,71 @@ export function makeSeedTasks(count: number): Task[] {
       });
     };
 
-    if (status === "ai_running") addEvidence("ai", "log", "AI running: marketplace scan + bid");
-    if (status === "ai_failed") addEvidence("ai", "log", "AI failed: anti-bot / requires physical verification");
-    if (status === "ai_done") addEvidence("ai", "note", "AI delivered: report + links");
-    if (status === "human_assigned") addEvidence("system", "log", "Human assigned: Demo Human");
-    if (status === "human_done") addEvidence("human", "photo", "Uploaded photos + timestamp");
-    if (status === "verified") addEvidence("system", "log", "Verified by reviewer");
+    if (status === "ai_running") {
+      addEvidence(
+        "ai",
+        "log",
+        "AI running: evaluating whether this official X campaign task can be completed without a human executor"
+      );
+    }
+    if (status === "ai_failed") {
+      addEvidence(
+        "ai",
+        "log",
+        "AI failed: social distribution action requires a human-owned X account before settlement can clear"
+      );
+    }
+    if (status === "ai_done") {
+      addEvidence(
+        "ai",
+        "note",
+        `AI note: campaign brief prepared for ${campaignTask.campaign?.requesterHandle || "@official"}`
+      );
+    }
+    if (status === "human_assigned") {
+      addEvidence("system", "log", `Human assigned: ${executorHandle}`);
+    }
+    if (status === "human_done" || status === "verified" || status === "paid") {
+      addEvidence("human", "note", `executor_handle: ${executorHandle}`);
+      if (campaignTask.campaign?.action === "repost") {
+        addEvidence("human", "note", `profile_url: ${profileUrl}`);
+      } else {
+        addEvidence("human", "note", `post_url: ${postUrl}`);
+      }
+      addEvidence("human", "photo", `/brand/ai2human-social-${(i % 3) + 1}.png`);
+      if (proofPhrase) {
+        addEvidence("human", "note", `proof_phrase: ${proofPhrase}`);
+      }
+      addEvidence(
+        "human",
+        "note",
+        `summary: Completed ${campaignTask.campaign?.action || "campaign"} task for ${campaignTask.campaign?.requesterHandle || "@official"} and kept the result live for review.`
+      );
+    }
+    if (status === "verified") addEvidence("system", "log", "Verification checklist passed");
     if (status === "paid") {
-      addEvidence("system", "log", "Verified by reviewer");
-      addEvidence("system", "log", "Payment settled (mock)");
+      addEvidence("system", "log", "Verification checklist passed");
+      addEvidence("system", "log", "Payment settled in demo mode");
     }
 
     const assignee =
       status === "human_assigned" || status === "human_done"
-        ? { type: "human" as const, name: "Demo Human" }
+        ? {
+            type: "human" as const,
+            name: "X Layer Operator",
+            walletAddress: humanWallets[i % humanWallets.length]
+          }
         : status === "ai_running" || status === "ai_done" || status === "ai_failed"
           ? { type: "ai" as const, name: "Demo Agent" }
           : undefined;
 
     tasks.push({
       id,
-      title: titles[i % titles.length],
-      budget: budgets[i % budgets.length],
-      deadline: deadlines[i % deadlines.length],
-      acceptance: acceptances[i % acceptances.length],
+      title: campaignTask.title,
+      budget: campaignTask.budget,
+      deadline: campaignTask.deadline,
+      acceptance: campaignTask.acceptance,
+      campaign: campaignTask.campaign as Task["campaign"],
       status,
       createdAt,
       updatedAt,
@@ -240,7 +312,7 @@ export function makeSeedFallbackOrders(count: number): FallbackOrder[] {
     "verified",
     "paid"
   ];
-  const budgets = ["$55", "$75", "$120", "$150", "$220"];
+  const budgets = ["55 USDC", "75 USDC", "120 USDC", "150 USDC", "220 USDC"];
   const deadlines = ["1h", "2h", "4h", "6h", "12h"];
   const locations = ["Shanghai", "Austin", "Berlin", "Singapore", "Tokyo"];
 
@@ -287,7 +359,7 @@ export function makeSeedFallbackOrders(count: number): FallbackOrder[] {
         id: crypto.randomUUID(),
         by: "human",
         type: "photo",
-        content: "https://example.com/proof.jpg",
+        content: "https://example.com/xlayer-proof.jpg",
         createdAt: updatedAt
       });
     }

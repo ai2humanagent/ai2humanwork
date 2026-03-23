@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { updateDb } from "../../../../lib/store";
 import { checkAdminAuth } from "../../../../lib/adminAuth";
 import { canTransition, explainInvalidTransition } from "../../../../lib/taskStateMachine";
-import { appendTransitionEvidence } from "../../../../lib/taskEvidence";
+import { appendEvidence, appendTransitionEvidence } from "../../../../lib/taskEvidence";
+import { isValidWalletAddress } from "../../../../lib/xlayerSettlement";
 
 export const runtime = "nodejs";
 
@@ -17,9 +18,17 @@ export async function POST(
 
   const body = await request.json();
   const name = String(body.name || "Human").trim() || "Human";
+  const walletAddress = String(body.walletAddress || "").trim();
 
   let updated: unknown = null;
   let transitionError = "";
+
+  if (walletAddress && !isValidWalletAddress(walletAddress)) {
+    return NextResponse.json(
+      { error: "walletAddress must be a valid EVM address." },
+      { status: 400 }
+    );
+  }
 
   await updateDb((db) => {
     const task = db.tasks.find((item) => item.id === params.id);
@@ -33,7 +42,11 @@ export async function POST(
     }
 
     const previousStatus = task.status;
-    task.assignee = { type: "human", name };
+    task.assignee = {
+      type: "human",
+      name,
+      walletAddress: walletAddress || undefined
+    };
     task.status = "human_assigned";
     task.updatedAt = new Date().toISOString();
     appendTransitionEvidence(task, {
@@ -41,6 +54,13 @@ export async function POST(
       from: previousStatus,
       to: "human_assigned",
       action: `Human assigned (${name})`
+    });
+    appendEvidence(task, {
+      by: "system",
+      type: "note",
+      content: `agent_event: dispatcher_agent | Routed the task to ${name}${
+        walletAddress ? ` with payout wallet ${walletAddress}` : ""
+      }.`
     });
     updated = task;
   });

@@ -11,16 +11,21 @@
     "smoke:day7": "node scripts/smoke-day7.mjs"
   },
   "dependencies": {
+    "@next/swc-darwin-arm64": "^14.2.33",
+    "@next/swc-wasm-nodejs": "^14.2.33",
+    "@privy-io/react-auth": "^3.15.0",
+    "@privy-io/server-auth": "^1.32.4",
     "@supabase/supabase-js": "^2.95.3",
     "next": "^14.2.5",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "viem": "^2.46.1"
   },
   "devDependencies": {
+    "@resvg/resvg-js": "^2.6.2",
     "@types/node": "^20.11.30",
     "@types/react": "^18.2.66",
     "@types/react-dom": "^18.2.22",
-    "@resvg/resvg-js": "^2.6.2",
     "eslint": "^8.57.0",
     "eslint-config-next": "^14.2.5",
     "typescript": "^5.4.5"

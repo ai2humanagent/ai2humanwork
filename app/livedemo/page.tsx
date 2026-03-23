@@ -1,6 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { getTaskVerificationStatus } from "../lib/officialCampaignTasks.js";
+import { getTaskAgentArchitecture } from "../lib/agentArchitecture.js";
+import X402VerificationUnlockCard from "../components/X402VerificationUnlockCard";
 
 type EvidenceItem = {
   id: string;
@@ -16,6 +19,17 @@ type Task = {
   budget: string;
   deadline: string;
   acceptance: string;
+  campaign?: {
+    requesterName: string;
+    requesterHandle?: string;
+    platform: "x";
+    action: "post" | "quote" | "reply" | "repost";
+    targetUrl?: string;
+    proofPhrase?: string;
+    brief?: string;
+    proofRequirements: string[];
+    verificationChecks: string[];
+  };
   status:
     | "created"
     | "ai_running"
@@ -30,6 +44,7 @@ type Task = {
   assignee?: {
     type: "ai" | "human";
     name: string;
+    walletAddress?: string;
   };
   evidence: EvidenceItem[];
 };
@@ -74,30 +89,22 @@ const formatMoney = (value: string) => {
 
 const pick = (items: string[], index: number) => items[index % items.length];
 
-const taskLocations = [
-  "Austin",
-  "Berlin",
-  "Tokyo",
-  "Seoul",
-  "Singapore",
-  "Dubai",
-  "London",
-  "NYC"
-];
+const taskLocations = ["Campaign", "Social", "Launch", "Growth", "Community", "Review"];
 
-const taskTypes = [
-  "On-site verification",
-  "Price monitoring",
-  "Compliance scan",
-  "Pickup & delivery",
-  "Data scraping",
-  "Cross-app sync"
-];
+const taskTypes = ["Quote Post", "Reply", "Repost", "Standalone Post"];
 
 const urgencyLevels = ["Urgent", "High", "Normal"];
 
 const MAX_VISIBLE_TASKS = 12;
 const DEMO_ADMIN_TOKEN = process.env.NEXT_PUBLIC_DEMO_ADMIN_TOKEN || "";
+const DEMO_OPERATOR_WALLET = process.env.NEXT_PUBLIC_XLAYER_DEMO_OPERATOR_WALLET || "";
+const agentStateStyles: Record<string, string> = {
+  waiting: "status-created",
+  active: "status-ai_running",
+  blocked: "status-ai_failed",
+  ready: "status-human_done",
+  done: "status-verified"
+};
 
 export default function LiveDemoPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -206,11 +213,14 @@ export default function LiveDemoPage() {
     return headers;
   };
 
-  const assignHuman = async (id: string, name = "Demo Human") => {
+  const assignHuman = async (id: string, name = "X Layer Operator") => {
     const res = await fetch(`/api/tasks/${id}/human`, {
       method: "POST",
       headers: protectedHeaders(),
-      body: JSON.stringify({ name })
+      body: JSON.stringify({
+        name,
+        walletAddress: DEMO_OPERATOR_WALLET || undefined
+      })
     });
     if (!res.ok) {
       const payload = (await res.json().catch(() => ({}))) as { error?: string };
@@ -219,15 +229,26 @@ export default function LiveDemoPage() {
     await loadTasks();
   };
 
-  const submitEvidence = async (id: string) => {
-    const res = await fetch(`/api/tasks/${id}/evidence`, {
+  const submitEvidence = async (task: Task) => {
+    const executorHandle = `@demooperator${task.id.replace(/-/g, "").slice(0, 4)}`;
+    const postUrl = `https://x.com/${executorHandle.slice(1)}/status/${task.id.replace(/-/g, "").slice(0, 18)}`;
+    const profileUrl = `https://x.com/${executorHandle.slice(1)}`;
+    const screenshotUrl = `/brand/ai2human-social-${(task.id.charCodeAt(0) % 3) + 1}.png`;
+    const summary =
+      task.campaign?.action === "repost"
+        ? `Reposted the official campaign update from ${task.campaign.requesterHandle || "@official"} and kept it visible on profile.`
+        : `Completed ${task.campaign?.action || "campaign"} task for ${task.campaign?.requesterHandle || "@official"} and kept the result live for review.`;
+    const res = await fetch(`/api/tasks/${task.id}/evidence`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         by: "human",
-        type: "note",
-        note: "Photo + timestamp uploaded",
-        url: ""
+        executorHandle,
+        postUrl: task.campaign?.action === "repost" ? "" : postUrl,
+        profileUrl: task.campaign?.action === "repost" ? profileUrl : "",
+        proofPhrase: task.campaign?.proofPhrase || "",
+        summary,
+        screenshotUrl
       })
     });
     if (!res.ok) {
@@ -258,7 +279,13 @@ export default function LiveDemoPage() {
       const payload = (await res.json().catch(() => ({}))) as { error?: string };
       throw new Error(payload.error || "Settle failed");
     }
+    const payload = await res.json().catch(() => ({}));
     await loadTasks();
+    return payload as {
+      payment?: {
+        method?: "mock_x402" | "xlayer_erc20";
+      };
+    };
   };
 
   const runFullDemo = async (task: Task) => {
@@ -271,12 +298,14 @@ export default function LiveDemoPage() {
       setLastEvent("AI failed, dispatching human");
       await assignHuman(task.id);
       setLastEvent("Human assigned, collecting evidence");
-      await submitEvidence(task.id);
+      await submitEvidence(task);
       setLastEvent("Evidence submitted, verifying");
       await verifyTask(task.id);
-      setLastEvent("Verified, settling");
-      await settleTask(task.id);
-      setLastEvent("Settled");
+      setLastEvent("Verified, releasing settlement");
+      const payload = await settleTask(task.id);
+      setLastEvent(
+        payload?.payment?.method === "xlayer_erc20" ? "Settled on X Layer" : "Settled in demo mode"
+      );
     } catch (error) {
       const message = error instanceof Error ? error.message : "Demo run failed";
       setDemoError(message);
@@ -292,8 +321,8 @@ export default function LiveDemoPage() {
       return {
         ...task,
         budgetValue,
-        location: pick(taskLocations, index),
-        type: pick(taskTypes, index),
+        location: task.campaign?.requesterHandle || pick(taskLocations, index),
+        type: task.campaign ? `X ${task.campaign.action}` : pick(taskTypes, index),
         urgency: pick(urgencyLevels, index),
         avatarSeed: (index % 6) + 1
       };
@@ -354,33 +383,52 @@ export default function LiveDemoPage() {
   );
 
   const selectedTask = tasks.find((task) => task.id === selectedId) || null;
+  const x402ReadyTask = useMemo(() => {
+    if (selectedTask && ["human_done", "verified", "paid"].includes(selectedTask.status)) {
+      return selectedTask;
+    }
+    return (
+      tasks.find((task) => ["human_done", "verified", "paid"].includes(task.status)) || null
+    );
+  }, [selectedTask, tasks]);
+  const selectedVerificationStatus = useMemo(
+    () =>
+      selectedTask
+        ? getTaskVerificationStatus(selectedTask)
+        : { ok: true, checks: [], missing: [] as string[] },
+    [selectedTask]
+  );
+  const selectedAgentArchitecture = useMemo(
+    () => (selectedTask ? getTaskAgentArchitecture(selectedTask) : []),
+    [selectedTask]
+  );
   const stageIndex = selectedTask ? getStageIndex(selectedTask.status) : 0;
   const stageProgress = Math.min(100, Math.round((stageIndex / 4) * 100));
   const stageLabels = [
-    "Task received",
-    "AI executing",
+    "Task posted",
+    "Agent blocked",
     "Human dispatched",
-    "Verified",
+    "Proof verified",
     "Settled"
   ];
 
   return (
     <div className="page mvp live-demo">
       <header className="market-hero">
-        <div>
-          <div className="auto-banner">
-            <span className="auto-pill">
-              <span className="auto-dot" aria-hidden />
-              AUTO-RUNNING DEMO
-            </span>
-            <span className="auto-tag">hands-free playback</span>
-          </div>
-          <p className="eyebrow">Live Demo</p>
-          <h1>Auto-running loop: task → AI → human → verify → settle</h1>
-          <p className="mvp-lead">
-            Read-only live demo. Tasks are auto-seeded, executed by AI, routed to humans when needed,
-            verified, and settled on repeat.
-          </p>
+          <div>
+            <div className="auto-banner">
+              <span className="auto-pill">
+                <span className="auto-dot" aria-hidden />
+                AUTO-RUNNING DEMO
+              </span>
+              <span className="auto-tag">judge walkthrough</span>
+            </div>
+            <p className="eyebrow">X Layer Submission Demo</p>
+            <h1>Agent blocked → human fallback → proof → verify → settle on X Layer</h1>
+            <p className="mvp-lead">
+              Single-scenario playback for judges. The agent hits a real-world blocker, a local operator
+              uploads proof, verification clears, then settlement is released on X Layer when configured.
+            </p>
           <div className="mvp-steps">
             {flowSteps.map((step, index) => (
               <div key={step} className="step-card">
@@ -412,7 +460,7 @@ export default function LiveDemoPage() {
             <div>
               <h2>Auto loop status</h2>
               <p className="mvp-muted">
-                The demo cycles continuously — no clicks or manual inputs required.
+                Continuous state-machine replay. No manual clicks required.
               </p>
             </div>
             <span className={`status-pill ${demoRunningId ? "status-ai_running" : "status-ai_done"}`}>
@@ -423,23 +471,23 @@ export default function LiveDemoPage() {
             <span style={{ width: `${stageProgress}%` }} />
           </div>
           <div className="auto-status">
-            <div>
-              <span>Mode</span>
-              <strong>Read-only</strong>
-            </div>
+              <div>
+                <span>Mode</span>
+                <strong>Submission</strong>
+              </div>
             <div>
               <span>Cycle</span>
               <strong>~12s</strong>
             </div>
-            <div>
-              <span>Admin auth</span>
-              <strong>{adminToken ? "Configured" : "Missing"}</strong>
+              <div>
+                <span>Admin auth</span>
+                <strong>{adminToken ? "Configured" : "Missing"}</strong>
+              </div>
+              <div>
+                <span>X Layer wallet</span>
+                <strong>{DEMO_OPERATOR_WALLET ? "Bound" : "Demo fallback"}</strong>
+              </div>
             </div>
-            <div>
-              <span>Seed size</span>
-              <strong>{MAX_VISIBLE_TASKS}</strong>
-            </div>
-          </div>
           <p className="mvp-muted">Last event: {lastEvent}</p>
           <div className="demo-auth">
             <label htmlFor="demo-admin-token">Demo admin token</label>
@@ -447,7 +495,7 @@ export default function LiveDemoPage() {
               id="demo-admin-token"
               className="mvp-input"
               type="password"
-              placeholder="Optional in dev, required in protected prod"
+              placeholder="Optional in dev, required in protected environments"
               value={adminToken}
               onChange={(event) => setAdminToken(event.target.value)}
             />
@@ -460,6 +508,9 @@ export default function LiveDemoPage() {
               <span className={`status-pill status-${selectedTask.status}`}>
                 {statusLabels[selectedTask.status]}
               </span>
+            )}
+            {selectedTask?.assignee?.walletAddress && (
+              <span className="mvp-muted">{selectedTask.assignee.walletAddress}</span>
             )}
           </div>
           <div className="auto-timeline">
@@ -480,8 +531,8 @@ export default function LiveDemoPage() {
         <div className="market-card feed">
           <div id="market" className="block-header">
             <div>
-              <h2>Task market</h2>
-              <p className="mvp-muted">Auto-refreshing task queue.</p>
+              <h2>Execution market</h2>
+              <p className="mvp-muted">Fallback tasks queued for a proof-first X Layer settlement flow.</p>
             </div>
           </div>
 
@@ -515,6 +566,9 @@ export default function LiveDemoPage() {
                   </div>
                   <div className="task-meta">
                     <span>Acceptance: {task.acceptance}</span>
+                    {task.campaign?.requesterHandle && (
+                      <span>Requester: {task.campaign.requesterHandle}</span>
+                    )}
                     {task.assignee && (
                       <span>
                         Assignee: {task.assignee.name} ({task.assignee.type})
@@ -537,7 +591,7 @@ export default function LiveDemoPage() {
           <div className="block-header">
             <div>
               <h2>Task detail</h2>
-              <p className="mvp-muted">Loop state updates automatically.</p>
+              <p className="mvp-muted">One blocked step, one proof package, one settlement result.</p>
             </div>
           </div>
           {!selectedTask && <div className="market-empty">Waiting for tasks...</div>}
@@ -567,14 +621,90 @@ export default function LiveDemoPage() {
                   </div>
                 ))}
               </div>
+
+              <div className="mvp-evidence">
+                <h4>Multi-agent architecture</h4>
+                <div className="reviewer-metric-grid">
+                  {selectedAgentArchitecture.map((role) => (
+                    <div key={role.id}>
+                      <span>{role.kind === "human" ? "human" : "agent"}</span>
+                      <strong>{role.title}</strong>
+                      <span
+                        className={`status-pill ${agentStateStyles[role.state] || "status-created"}`}
+                      >
+                        {role.state}
+                      </span>
+                      <p className="mvp-muted">{role.message}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               <div className="detail-meta">
                 <span>Acceptance: {selectedTask.acceptance}</span>
+                {selectedTask.campaign?.requesterName && (
+                  <span>
+                    Requester: {selectedTask.campaign.requesterName}
+                    {selectedTask.campaign.requesterHandle
+                      ? ` (${selectedTask.campaign.requesterHandle})`
+                      : ""}
+                  </span>
+                )}
+                {selectedTask.campaign?.targetUrl && <span>Target: {selectedTask.campaign.targetUrl}</span>}
                 {selectedTask.assignee && (
                   <span>
                     Executor: {selectedTask.assignee.name} ({selectedTask.assignee.type})
                   </span>
                 )}
+                {selectedTask.assignee?.walletAddress && (
+                  <span>Wallet: {selectedTask.assignee.walletAddress}</span>
+                )}
               </div>
+
+              {selectedTask.campaign?.brief && (
+                <div className="mvp-evidence">
+                  <h4>Campaign brief</h4>
+                  <div className="mvp-evidence-item">
+                    <p>{selectedTask.campaign.brief}</p>
+                    {selectedTask.campaign.proofPhrase && (
+                      <p className="mvp-muted">
+                        Required phrase: <strong>{selectedTask.campaign.proofPhrase}</strong>
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {selectedTask.campaign?.proofRequirements?.length ? (
+                <div className="mvp-evidence">
+                  <h4>Proof requirements</h4>
+                  {selectedTask.campaign.proofRequirements.map((item) => (
+                    <div key={item} className="mvp-evidence-item">
+                      <p>{item}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+
+              {selectedTask.campaign?.verificationChecks?.length ? (
+                <div className="mvp-evidence">
+                  <h4>Verification checklist</h4>
+                  {selectedTask.campaign.verificationChecks.map((item) => {
+                    const matched = selectedVerificationStatus.checks.find(
+                      (check: { label: string; passed: boolean }) => check.label === item
+                    );
+                    return (
+                      <div key={item} className="mvp-evidence-item">
+                        <div className="evidence-meta">
+                          <span>check</span>
+                          <span>{matched?.passed ? "passed" : "waiting"}</span>
+                        </div>
+                        <p>{item}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : null}
 
               <div className="mvp-evidence">
                 <h4>Evidence / Logs</h4>
@@ -589,7 +719,8 @@ export default function LiveDemoPage() {
                       <span>{new Date(item.createdAt).toLocaleString()}</span>
                     </div>
                     <p>{item.content}</p>
-                    {item.type === "photo" && item.content.startsWith("http") && (
+                    {item.type === "photo" &&
+                      (item.content.startsWith("http") || item.content.startsWith("/")) && (
                       <img className="evidence-photo" src={item.content} alt="evidence" />
                     )}
                   </div>
@@ -600,12 +731,16 @@ export default function LiveDemoPage() {
         </div>
       </section>
 
+      <section className="market-detail">
+        <X402VerificationUnlockCard task={x402ReadyTask} />
+      </section>
+
       <section className="market-human">
         <div className="market-card">
           <div className="block-header">
             <div>
               <h2>Human pool</h2>
-              <p className="mvp-muted">Humans are auto-dispatched when AI hits reality.</p>
+              <p className="mvp-muted">Pre-screened fallback operators for real-world X Layer tasks.</p>
             </div>
           </div>
           <div className="human-grid">

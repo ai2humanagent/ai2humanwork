@@ -14,6 +14,25 @@
   --accent-warm: #ffb347;
   --border: rgba(255, 255, 255, 0.12);
   --shadow: 0 30px 70px rgba(0, 0, 0, 0.5);
+
+  /* ai2human app design tokens */
+  --ai2h-bg-0: #060a13;
+  --ai2h-bg-1: #070d1a;
+  --ai2h-bg-2: #060912;
+  --ai2h-surface-1: rgba(15, 21, 37, 0.95);
+  --ai2h-surface-2: rgba(14, 19, 30, 0.9);
+  --ai2h-border-soft: rgba(133, 164, 221, 0.2);
+  --ai2h-border-strong: rgba(121, 180, 255, 0.46);
+  --ai2h-text-main: #ecf3ff;
+  --ai2h-text-muted: rgba(193, 211, 242, 0.84);
+  --ai2h-brand-blue: #2a8dff;
+  --ai2h-brand-cyan: #28d2c6;
+  --ai2h-brand-orange: #ff8f2a;
+  --ai2h-success: #32e798;
+  --ai2h-warning: #ff9f45;
+  --ai2h-radius-lg: 20px;
+  --ai2h-radius-md: 12px;
+  --ai2h-shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.35);
 }
 
 * {

@@ -6,77 +6,79 @@ import styles from "./landing.module.css";
 
 const copy = {
   nav: {
-    demo: "Join waitlist"
+    demo: "Get Updates",
+    app: "Open Demo"
   },
   hero: {
-    eyebrow: "Agentic Work Market",
-    titleA: "People can hire AI to take jobs.",
-    titleB: "AI can hire humans to work.",
+    eyebrow: "X Layer Human Fallback Infra",
+    titleA: "Agents hit reality.",
+    titleB: "ai2human closes the loop.",
     lead:
-      "A two-way labor market: AI bids and executes automation; when it gets stuck, humans take over. Verifiable delivery, auditable settlement.",
+      "When an agent needs a storefront check, signature, pickup, or in-person confirmation, ai2human dispatches a human operator, collects structured proof, verifies completion, and settles on X Layer.",
     ctaPrimary: "Open Live Demo",
-    ctaSecondary: "Join waitlist"
+    ctaSecondary: "Open Reviewer",
+    ctaTertiary: "Get Build Updates"
   },
-  meta: ["Verifiable output", "Human fallback network", "Auditable settlement"],
+  meta: ["human fallback infra", "proof-first execution", "x layer settlement"],
   section: {
     stackTitle: "Core Stack",
     stackDesc:
-      "The execution market runs on verifiable identity, real-world execution, and instant settlement.",
+      "Dispatch, proof, verification, and settlement stay inside one auditable loop.",
     stackItems: [
       {
-        name: "erc-8004",
-        label: "Identity + reputation",
-        desc: "Portable, verifiable agent identity. Every task has a traceable executor."
+        name: "dispatch",
+        label: "Human Dispatch",
+        desc: "Route a blocked agent task to a local operator who can complete the real-world step."
       },
       {
-        name: "openclaw",
-        label: "Execution hands",
-        desc: "Real web actions: discover gigs, bid, operate flows, and deliver proof."
+        name: "proof",
+        label: "Proof Bundle",
+        desc: "Capture structured evidence: photos, timestamps, signed receipts, and operator notes."
       },
       {
-        name: "x402",
-        label: "Instant settlement",
-        desc: "Proof unlocks payment. Automated settlement after verification."
+        name: "x-layer",
+        label: "X Layer Settlement",
+        desc: "Payment follows verification. When configured, settlement writes a real X Layer transaction hash."
       }
     ],
-    liveTitle: "Live Market (Concept)",
+    liveTitle: "Submission Walkthrough",
     liveDesc:
-      "We use task cards + human pool cards to make the loop obvious: tasks enter → AI executes → humans take over when needed.",
-    loopTitle: "The Loop: task → settlement",
+      "One blocked agent task flows through dispatch, proof, verification, and X Layer settlement.",
+    loopTitle: "The Loop: Task → Human fallback → Proof → Verify → Settle",
     loopDesc:
-      "It should feel real: AI executes first; when stuck it hires humans; evidence is replayable; settlement is auditable.",
+      "The agent handles what it can. When reality is involved, ai2human dispatches a human, returns proof, verifies the result, and only then settles.",
     loopBoards: {
-      intake: "Intake",
-      console: "Agent Console",
+      intake: "Blocked Task",
+      console: "Proof Review",
       proof: "Proof + Settlement"
     },
-    caseTitle: "Best-Fit Work",
+    caseTitle: "Best-Fit Scenarios",
     caseDesc:
-      "Tasks that need execution + trust: perfect for an AI-first flow with human fallback.",
-    entryTitle: "Three Entrances = Closed Loop",
-    entryDesc: "Hire AI, publish AI, or get hired by AI.",
+      "Real-world steps that agents cannot finish alone: signatures, pickups, local checks, and photo-based verification.",
+    entryTitle: "Three Roles, One Closed Loop",
+    entryDesc: "Buyer, operator, and reviewer stay inside the same auditable flow.",
     entries: [
-      { title: "Hire AI", desc: "Let AI find work and execute it." },
-      { title: "Publish AI", desc: "List your agent and start earning." },
-      { title: "Human Pool", desc: "When AI needs the real world, you deliver." }
+      { title: "Task Buyer", desc: "Post a blocked agent step and define the proof required for settlement." },
+      { title: "Reviewer", desc: "Approve proof packages and release payment only after verification." },
+      { title: "Operator Pool", desc: "Dispatch local humans for signatures, pickups, audits, and on-site proof." }
     ],
     entryKickers: {
-      hire: "for buyers",
-      publish: "for builders",
-      human: "for humans"
+      hire: "task source",
+      publish: "verification",
+      human: "execution"
     },
     entryPanels: {
-      hireTitle: "Treat AI like a job-taking employee",
-      hireDesc: "You post intent; AI finds gigs in real markets and executes. Humans take over when needed.",
-      publishTitle: "Publish your agent (Soon)",
-      publishDesc: "Define boundaries, pricing, and deliverables. Let your agent earn.",
-      humanTitle: "Join the meatspace fallback (Soon)",
-      humanDesc: "When AI needs reality: photos, pickups, signatures, meetings, field notes."
+      hireTitle: "Post one blocked step with a proof rule",
+      hireDesc: "Define the real-world action, the evidence bundle, and the condition that must clear before payment is released.",
+      publishTitle: "Review proof and release payment",
+      publishDesc: "The reviewer sees the proof package, verifies completion, and only then clears settlement.",
+      humanTitle: "Dispatch an operator for reality-bound work",
+      humanDesc: "Operators handle store visits, signed receipts, identity checks, and handoffs that agents cannot do alone."
     }
   },
   footer: {
-    tag: "ai2human — Two-way labor market (Live Demo)",
-    links: ["Live Demo", "Workflow", "Human Pool"]
+    tag: "ai2human — Human fallback infrastructure for agents on X Layer",
+    links: ["Live Demo", "Proof Flow", "Operator Pool"]
   }
 } as const;
 
@@ -102,32 +104,32 @@ export default function HomePage() {
   const taskFeed = useMemo(() => {
     const tasks = [
       {
-        title: "Scan freelance markets (keyword: Next.js)",
-        meta: "source: public market · $80 · 2h",
-        badge: "AI bidding",
-        tags: ["scan", "claw", "proof"]
+        title: "Storefront stock check before merchant payout",
+        meta: "Shanghai · 80 USDC · 2h",
+        badge: "blocked",
+        tags: ["store", "proof", "verify"]
       },
       {
-        title: "Price monitor + auto-buy trigger",
-        meta: "24/7 · $220 · 6h",
-        badge: "running",
-        tags: ["pricing", "alerts", "ops"]
+        title: "Signed receipt capture for high-value handoff",
+        meta: "Hong Kong · 220 USDC · 6h",
+        badge: "needs human",
+        tags: ["receipt", "handoff", "proof"]
       },
       {
-        title: "Compliance scan: links + screenshots",
-        meta: "batch · $399 · 12h",
-        badge: "AI executing",
-        tags: ["compliance", "proof", "review"]
+        title: "Retail shelf audit with timestamped photos",
+        meta: "Singapore · 399 USDC · 12h",
+        badge: "review",
+        tags: ["audit", "photo", "review"]
       },
       {
-        title: "Cross-app sync: Notion → Sheets → Slack",
-        meta: "automation · $99 · 2h",
-        badge: "AI bidding",
-        tags: ["ops", "automation", "proof"]
+        title: "Pickup handoff with receiver confirmation",
+        meta: "Dubai · 99 USDC · 2h",
+        badge: "settled",
+        tags: ["pickup", "confirm", "settle"]
       },
       {
-        title: "On-site inventory check (photos needed)",
-        meta: "needs human · $120 · 4h",
+        title: "On-site inventory check with receipt image",
+        meta: "Seoul · 120 USDC · 4h",
         badge: "needs human",
         tags: ["offline", "photo", "verify"]
       }
@@ -139,32 +141,32 @@ export default function HomePage() {
   const humanFeed = useMemo(() => {
     const humans = [
       {
-        title: "Austin · verification / errands",
-        meta: "$55/hr · ready in 2 hours",
+        title: "Shanghai · store visit / receipt capture",
+        meta: "55 USDC · ready in 2 hours",
         badge: "available",
         tags: ["photo", "proof", "fast"]
       },
       {
-        title: "Tokyo · field research / interview",
-        meta: "$68/hr · EN/JP",
+        title: "Hong Kong · handoff / recipient verification",
+        meta: "68 USDC · same day",
         badge: "available",
-        tags: ["research", "report", "proof"]
+        tags: ["receipt", "verify", "proof"]
       },
       {
-        title: "Berlin · pickup/delivery",
-        meta: "$40/hr · same day",
+        title: "Singapore · shelf audit / photo evidence",
+        meta: "40 USDC · same day",
         badge: "available",
         tags: ["pickup", "delivery", "proof"]
       },
       {
-        title: "Singapore · photo verification",
-        meta: "$75/hr · high priority",
+        title: "Dubai · signature / pickup",
+        meta: "75 USDC · high priority",
         badge: "available",
         tags: ["verify", "photo", "proof"]
       },
       {
-        title: "Dubai · sign/confirm/receive",
-        meta: "$90/hr · video ok",
+        title: "Seoul · identity check / handoff",
+        meta: "90 USDC · video ok",
         badge: "available",
         tags: ["sign", "proof", "urgent"]
       }
@@ -176,29 +178,29 @@ export default function HomePage() {
   const agentFeed = useMemo(() => {
     const agents = [
       {
-        title: "Claw Scout · market radar",
-        meta: "$0.08 / task · scan + bid",
-        tags: ["scan", "bid", "proof"]
+        title: "Review queue · storefront task",
+        meta: "waiting for proof package",
+        tags: ["verify", "proof", "approve"]
       },
       {
-        title: "Compliance Sniper · compliance",
-        meta: "$0.12 / page · screenshot",
-        tags: ["proof", "review", "deliver"]
+        title: "Payment release gate · signed receipt",
+        meta: "verified before settle",
+        tags: ["settle", "review", "x-layer"]
       },
       {
-        title: "Ops Automator · automation",
-        meta: "$0.10 / run · cross-app",
-        tags: ["ops", "automation", "proof"]
+        title: "Dispute check · missing timestamp",
+        meta: "re-review proof bundle",
+        tags: ["proof", "review", "retry"]
       },
       {
-        title: "Human Router · fallback routing",
-        meta: "$0.05 / dispatch · hire humans",
-        tags: ["human", "photo", "timestamp"]
+        title: "Settlement ledger · latest tx hash",
+        meta: "linked to X Layer explorer",
+        tags: ["ledger", "tx", "proof"]
       },
       {
-        title: "Report Writer · deliverables",
-        meta: "$0.06 / report · pdf + links",
-        tags: ["deliver", "proof", "settle"]
+        title: "Operator payout check · ready",
+        meta: "release after verification pass",
+        tags: ["review", "proof", "settle"]
       }
     ];
     return [...agents, ...agents];
@@ -215,24 +217,22 @@ export default function HomePage() {
 
   const consoleLines = useMemo(() => {
     return [
-      "[scan] crawling freelance listings…",
-      "[bid] matched: Next.js landing + deploy ($220)",
-      "[plan] split: scrape → draft → verify → settle",
-      "[run] claw executing browser automation…",
-      "[warn] anti-bot: needs human to touch reality",
-      "[dispatch] hiring human operator near Austin",
-      "[proof] evidence uploaded: photos + timestamp",
-      "[verify] reviewer approved",
-      "[settle] payment recorded (mock)"
+      "[task] storefront verification posted on X Layer flow",
+      "[agent] policy check completed, physical visit required",
+      "[dispatch] routing to operator in Shanghai",
+      "[proof] evidence uploaded: photos + signed receipt",
+      "[verify] reviewer approved the bundle",
+      "[settle] payment released after verification",
+      "[ledger] tx hash attached to settlement record"
     ];
   }, []);
 
   const ledgerLines = useMemo(() => {
     const rows = [
       { label: "task", value: "T-18F2" },
-      { label: "payee", value: "Demo Human" },
-      { label: "amount", value: "$120.00" },
-      { label: "method", value: "x402 (mock)" },
+      { label: "payee", value: "X Layer Operator" },
+      { label: "amount", value: "120.00 USDC" },
+      { label: "method", value: "xlayer_erc20" },
       { label: "status", value: "paid" }
     ];
     return [...rows, ...rows];
@@ -241,18 +241,18 @@ export default function HomePage() {
   const caseCards = useMemo(() => {
     return [
       {
-        title: "Work From Real Markets",
-        desc: "AI scans freelance markets: discover → bid → execute → deliver.",
-        tags: ["scan", "bid", "deliver"]
+        title: "Storefront Verification",
+        desc: "The agent reaches a real store visit and dispatches a local operator for proof.",
+        tags: ["store", "proof", "verify"]
       },
       {
-        title: "Human Fallback",
-        desc: "Captcha/offline tasks: AI hires humans and receives evidence.",
-        tags: ["human", "photo", "timestamp"]
+        title: "Signed Handoff",
+        desc: "A human captures receipt, identity confirmation, and timestamp before payment clears.",
+        tags: ["receipt", "human", "timestamp"]
       },
       {
-        title: "Proof + Compliance",
-        desc: "Screenshots/links/logs become an auditable evidence chain.",
+        title: "Proof + Settlement",
+        desc: "Proof artifacts become an auditable bundle, then settlement is linked to an X Layer transaction.",
         tags: ["proof", "review", "settle"]
       }
     ];
@@ -272,6 +272,9 @@ export default function HomePage() {
         </div>
 
         <div className={styles.navActions}>
+          <Link className={styles.navAppLink} href="/livedemo">
+            {t.nav.app}
+          </Link>
           <form
             id="waitlist"
             className={styles.waitlist}
@@ -356,8 +359,11 @@ export default function HomePage() {
               <Link className={`${styles.button} ${styles.buttonPrimary}`} href="/livedemo">
                 {t.hero.ctaPrimary}
               </Link>
-              <a className={styles.button} href="#waitlist">
+              <Link className={`${styles.button} ${styles.buttonGhost}`} href="/reviewer">
                 {t.hero.ctaSecondary}
+              </Link>
+              <a className={styles.button} href="#waitlist">
+                {t.hero.ctaTertiary}
               </a>
             </div>
 
@@ -581,7 +587,7 @@ export default function HomePage() {
                 </div>
                 <div className={styles.stampPay}>
                   <span>{"settled"}</span>
-                  <strong>x402 (mock)</strong>
+                  <strong>xlayer_erc20</strong>
                 </div>
               </div>
               <div className={styles.ledger} aria-hidden>
@@ -671,7 +677,7 @@ export default function HomePage() {
               >
                 <div className={styles.entranceTop}>
                   <span className={styles.entranceKicker}>{t.section.entryKickers.human}</span>
-                  <span className={`${styles.badge} ${styles.badgeHuman}`}>{"meatspace"}</span>
+                  <span className={`${styles.badge} ${styles.badgeHuman}`}>{"field ops"}</span>
                 </div>
                 <h3 className={styles.entryTitle}>{t.section.entries[2].title}</h3>
                 <p className={styles.entryDesc}>{t.section.entries[2].desc}</p>
@@ -683,10 +689,10 @@ export default function HomePage() {
                 <div>
                   <p className={styles.previewEyebrow}>
                     {entrance === "hire"
-                      ? ("Hire AI")
+                      ? "Task buyer"
                       : entrance === "publish"
-                        ? ("Publish")
-                        : ("Human pool")}
+                        ? "Reviewer"
+                        : "Operator pool"}
                   </p>
                   <h3 className={styles.previewTitle}>
                     {entrance === "hire"
@@ -706,9 +712,9 @@ export default function HomePage() {
                 <div className={styles.previewActions}>
                   {entrance === "hire" && (
                     <>
-                      <a className={`${styles.button} ${styles.buttonPrimary}`} href="#waitlist">
-                        {"Join waitlist"}
-                      </a>
+                      <Link className={`${styles.button} ${styles.buttonPrimary}`} href="/livedemo">
+                        {"Open live demo"}
+                      </Link>
                       <a className={styles.button} href="#loop">
                         {"See loop"}
                       </a>
@@ -716,18 +722,18 @@ export default function HomePage() {
                   )}
                   {entrance === "publish" && (
                     <>
-                      <button className={`${styles.button} ${styles.buttonPrimary}`} disabled>
-                        {"Publish (Soon)"}
-                      </button>
+                      <Link className={`${styles.button} ${styles.buttonPrimary}`} href="/reviewer">
+                        {"Open reviewer"}
+                      </Link>
                       <a className={styles.button} href="#loop">
-                        {"See loop"}
+                        {"See proof"}
                       </a>
                     </>
                   )}
                   {entrance === "human" && (
                     <>
                       <button className={`${styles.button} ${styles.buttonPrimary}`} disabled>
-                        {"Join (Soon)"}
+                        {"Operator onboarding"}
                       </button>
                       <a className={styles.button} href="#loop">
                         {"See proof"}
@@ -741,10 +747,10 @@ export default function HomePage() {
                 <div className={styles.previewTop}>
                   <span className={styles.widgetTitle}>
                     {entrance === "hire"
-                      ? ("Task queue")
+                      ? "Blocked tasks"
                       : entrance === "publish"
-                        ? ("Agents listed")
-                        : ("Humans on-call")}
+                        ? "Review queue"
+                        : "Operators on-call"}
                   </span>
                   <span className={styles.pill}>{"live"}</span>
                 </div>
@@ -800,9 +806,9 @@ export default function HomePage() {
                 </div>
               </div>
               <div className={styles.footerMeta}>
-                <span>{"Two-way work market"}</span>
-                <span>AI ↔ Human</span>
-                <span>{"Verifiable delivery"}</span>
+                <span>{"Human fallback infra"}</span>
+                <span>{"Proof → verify → settle"}</span>
+                <span>{"X Layer settlement"}</span>
               </div>
             </div>
             <div className={styles.footerCols}>
@@ -818,8 +824,8 @@ export default function HomePage() {
                 <p className={styles.footerTitle}>{"Entrances"}</p>
                 <div className={styles.footerLinks}>
                   <a href="#entrances">{t.footer.links[2]}</a>
-                  <a href="#entrances">{"Publish AI"}</a>
-                  <a href="#entrances">{"Human pool"}</a>
+                  <a href="#entrances">{"Reviewer"}</a>
+                  <a href="#entrances">{"Task buyer"}</a>
                 </div>
               </div>
             </div>
@@ -840,7 +846,7 @@ export default function HomePage() {
             <div className={styles.waitlistModalBadges}>
               <span>Early access</span>
               <span>Priority updates</span>
-              <span>Agent + human pilots</span>
+              <span>X Layer submission updates</span>
             </div>
             <button
               className={`${styles.button} ${styles.buttonPrimary}`}

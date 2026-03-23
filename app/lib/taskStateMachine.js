@@ -1,5 +1,5 @@
 export const ALLOWED_TRANSITIONS = Object.freeze({
-  created: Object.freeze(["ai_running", "ai_done", "ai_failed"]),
+  created: Object.freeze(["ai_running", "ai_done", "ai_failed", "human_assigned"]),
   ai_running: Object.freeze(["ai_done", "ai_failed"]),
   ai_failed: Object.freeze(["human_assigned"]),
   ai_done: Object.freeze(["verified", "ai_failed"]),
@@ -21,4 +21,3 @@ export function explainInvalidTransition(from, to) {
   }
   return `Invalid transition: ${from} -> ${to}. Allowed: ${allowed.join(", ")}.`;
 }
-
