@@ -90,6 +90,12 @@ type PaymentResult = {
   explorerUrl?: string;
 };
 
+type AlternateClaimTask = {
+  id: string;
+  deadline: string;
+  status: "created" | "ai_failed";
+};
+
 type VerificationCheck = {
   id: string;
   label: string;
@@ -132,15 +138,20 @@ function shortValue(value: string, start = 8, end = 6) {
 
 export default function TaskDetailClient({
   initialTask,
-  initialPayment
+  initialPayment,
+  initialAlternateClaimTask
 }: {
   initialTask: Task;
   initialPayment: PaymentResult | null;
+  initialAlternateClaimTask: AlternateClaimTask | null;
 }) {
   const router = useRouter();
   const { ready, authenticated, login } = usePrivy();
   const [task, setTask] = useState(initialTask);
   const [latestPayment, setLatestPayment] = useState<PaymentResult | null>(initialPayment);
+  const [alternateClaimTask, setAlternateClaimTask] = useState<AlternateClaimTask | null>(
+    initialAlternateClaimTask
+  );
   const [auth, setAuth] = useState<AuthPayload | null>(null);
   const [loading, setLoading] = useState(false);
   const [claiming, setClaiming] = useState(false);
@@ -167,6 +178,7 @@ export default function TaskDetailClient({
         error?: string;
         task?: Task;
         payment?: PaymentResult | null;
+        alternateClaimTask?: AlternateClaimTask | null;
       };
       if (!response.ok) {
         throw new Error(payload.error || "Unable to load task.");
@@ -176,6 +188,7 @@ export default function TaskDetailClient({
       }
       setTask(payload.task);
       setLatestPayment(payload.payment || null);
+      setAlternateClaimTask(payload.alternateClaimTask || null);
       if (payload.task.campaign?.proofPhrase) {
         setProofPhrase((current) => current || payload.task?.campaign?.proofPhrase || "");
       }
@@ -239,6 +252,7 @@ export default function TaskDetailClient({
     : "One-line summary of what you checked, picked up, or verified on site.";
   const canEditProof =
     claimedByMe && (task.status === "human_assigned" || task.status === "human_done");
+  const isClosedProofRecord = ["human_done", "verified", "paid"].includes(task.status);
 
   useEffect(() => {
     const values = (evidenceFields.values || {}) as Record<string, string>;
@@ -546,7 +560,17 @@ export default function TaskDetailClient({
 
           <article className={styles.card}>
             <h2>Take task</h2>
-            {!authenticated ? (
+            {isClosedProofRecord && alternateClaimTask ? (
+              <div className={styles.form}>
+                <div className={styles.notice}>
+                  This task record is already closed and kept as public proof. To execute the same
+                  template with another account, claim a fresh live slot instead.
+                </div>
+                <Link href={`/tasks/${alternateClaimTask.id}`} className={styles.button}>
+                  Claim Another Live Slot ({alternateClaimTask.deadline})
+                </Link>
+              </div>
+            ) : !authenticated ? (
               <div className={styles.form}>
                 <div className={styles.notice}>Connect your Privy wallet before claiming the task.</div>
                 <button type="button" className={styles.button} onClick={() => login()}>
