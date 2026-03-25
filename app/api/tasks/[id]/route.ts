@@ -3,24 +3,37 @@ import { readDb } from "../../../lib/store";
 
 export const runtime = "nodejs";
 
+type AlternateClaimTask = {
+  id: string;
+  deadline: string;
+  status: "created" | "ai_failed";
+};
+
 function findAlternateClaimTask(
   tasks: Awaited<ReturnType<typeof readDb>>["tasks"],
   currentTaskId: string
-) {
+): AlternateClaimTask | null {
   const currentTask = tasks.find((item) => item.id === currentTaskId);
   if (!currentTask) return null;
 
-  return (
-    tasks.find((candidate) => {
+  const candidate = tasks.find((candidate) => {
       if (candidate.id === currentTask.id) return false;
-      if (!["created", "ai_failed"].includes(candidate.status)) return false;
+      if (candidate.status !== "created" && candidate.status !== "ai_failed") return false;
       return (
         candidate.title === currentTask.title &&
         candidate.campaign?.platform === currentTask.campaign?.platform &&
         candidate.campaign?.action === currentTask.campaign?.action
       );
-    }) || null
-  );
+    });
+
+  if (!candidate) return null;
+  if (candidate.status !== "created" && candidate.status !== "ai_failed") return null;
+
+  return {
+    id: candidate.id,
+    deadline: candidate.deadline,
+    status: candidate.status
+  };
 }
 
 export async function GET(
