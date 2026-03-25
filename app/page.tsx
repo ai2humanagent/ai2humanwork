@@ -7,8 +7,7 @@ import styles from "./landing.module.css";
 
 const copy = {
   nav: {
-    demo: "Get Updates",
-    app: "Open Demo"
+    app: "Open Tasks"
   },
   hero: {
     eyebrow: "X Layer Human Fallback Infra",
@@ -17,7 +16,7 @@ const copy = {
     lead:
       "When an agent needs a storefront check, signature, pickup, or in-person confirmation, ai2human dispatches a human operator, collects structured proof, verifies completion, and settles on X Layer.",
     ctaPrimary: "Open Live Demo",
-    ctaSecondary: "Open Reviewer",
+    ctaSecondary: "Open Task Board",
     ctaTertiary: "Open Submission Proof"
   },
   meta: ["human fallback infra", "proof-first execution", "x layer settlement"],
@@ -87,18 +86,8 @@ function repeat<T>(items: T[], times: number): T[] {
   return Array.from({ length: times }).flatMap(() => items);
 }
 
-const WAITLIST_START = 2333;
-
 export default function HomePage() {
   const [entrance, setEntrance] = useState<"hire" | "publish" | "human">("hire");
-  const [waitlistEmail, setWaitlistEmail] = useState("");
-  const [waitlistJoined, setWaitlistJoined] = useState(false);
-  const [waitlistStatus, setWaitlistStatus] = useState<"idle" | "loading" | "done" | "error">(
-    "idle"
-  );
-  const [waitlistError, setWaitlistError] = useState("");
-  const [waitlistCount, setWaitlistCount] = useState<number | null>(null);
-  const [showWaitlistModal, setShowWaitlistModal] = useState(false);
 
   const t = copy;
 
@@ -259,11 +248,6 @@ export default function HomePage() {
     ];
   }, []);
 
-  const displayWaitlistNumber =
-    typeof waitlistCount === "number"
-      ? Math.max(WAITLIST_START, WAITLIST_START + waitlistCount - 1)
-      : null;
-
   return (
     <div className={styles.page}>
       <header className={styles.nav}>
@@ -272,73 +256,17 @@ export default function HomePage() {
           <span>ai2human</span>
         </div>
 
+        <nav className={styles.navLinks} aria-label="Primary">
+          <Link href="/tasks">Tasks</Link>
+          <Link href="/submission">Submission</Link>
+          <Link href="/livedemo">Live Demo</Link>
+          <Link href="/reviewer">Reviewer</Link>
+        </nav>
+
         <div className={styles.navActions}>
-          <Link className={styles.navAppLink} href="/livedemo">
+          <Link className={styles.navAppLink} href="/tasks">
             {t.nav.app}
           </Link>
-          <form
-            id="waitlist"
-            className={styles.waitlist}
-            onSubmit={(event) => {
-              event.preventDefault();
-              if (!waitlistEmail.trim()) return;
-              setWaitlistStatus("loading");
-              setWaitlistError("");
-              fetch("/api/waitlist", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email: waitlistEmail, source: "landing" })
-              })
-                .then(async (res) => {
-                  const data = await res.json();
-                  if (!res.ok) {
-                    throw new Error(data?.error || "Unable to join waitlist.");
-                  }
-                  setWaitlistJoined(true);
-                  setWaitlistStatus("done");
-                  setWaitlistCount(typeof data?.count === "number" ? data.count : null);
-                  setShowWaitlistModal(true);
-                })
-                .catch((err) => {
-                  setWaitlistJoined(false);
-                  setWaitlistStatus("error");
-                  setWaitlistError(err instanceof Error ? err.message : "Unable to join waitlist.");
-                });
-            }}
-          >
-            <input
-              className={styles.waitlistInput}
-              type="email"
-              required
-              placeholder="you@company.com"
-              value={waitlistEmail}
-              onChange={(event) => {
-                setWaitlistEmail(event.target.value);
-                if (waitlistJoined) setWaitlistJoined(false);
-                if (waitlistStatus !== "idle") setWaitlistStatus("idle");
-              }}
-            />
-            <button
-              className={`${styles.button} ${styles.buttonPrimary}`}
-              type="submit"
-              disabled={waitlistStatus === "loading"}
-            >
-              {waitlistStatus === "loading"
-                ? "Joining..."
-                : waitlistJoined
-                  ? "Joined"
-                  : t.nav.demo}
-            </button>
-            {waitlistStatus === "done" && (
-              <span className={styles.waitlistNote}>
-                {"You're in"}
-                {displayWaitlistNumber ? ` · #${displayWaitlistNumber}` : ""}
-              </span>
-            )}
-            {waitlistStatus === "error" && (
-              <span className={styles.waitlistError}>{waitlistError}</span>
-            )}
-          </form>
         </div>
       </header>
 
@@ -360,7 +288,7 @@ export default function HomePage() {
               <Link className={`${styles.button} ${styles.buttonPrimary}`} href="/livedemo">
                 {t.hero.ctaPrimary}
               </Link>
-              <Link className={`${styles.button} ${styles.buttonGhost}`} href="/reviewer">
+              <Link className={`${styles.button} ${styles.buttonGhost}`} href="/tasks">
                 {t.hero.ctaSecondary}
               </Link>
               <Link className={styles.button} href="/submission">
@@ -834,30 +762,6 @@ export default function HomePage() {
         </section>
       </main>
 
-      {showWaitlistModal && (
-        <div className={styles.waitlistModalBackdrop} role="dialog" aria-modal="true">
-          <div className={styles.waitlistModal}>
-            <div className={styles.waitlistModalGlow} aria-hidden />
-            <p className={styles.waitlistModalEyebrow}>Waitlist confirmed</p>
-            <h3>Welcome to ai2human</h3>
-            <p>
-              You are officially on the list.
-              {displayWaitlistNumber ? ` Your spot: #${displayWaitlistNumber}.` : ""}
-            </p>
-            <div className={styles.waitlistModalBadges}>
-              <span>Early access</span>
-              <span>Priority updates</span>
-              <span>X Layer submission updates</span>
-            </div>
-            <button
-              className={`${styles.button} ${styles.buttonPrimary}`}
-              onClick={() => setShowWaitlistModal(false)}
-            >
-              Let’s go
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
