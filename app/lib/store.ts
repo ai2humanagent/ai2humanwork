@@ -1,6 +1,7 @@
 import { promises as fs } from "fs";
 import path from "path";
 import crypto from "crypto";
+import bundledDbSnapshot from "../../data/db.json";
 import {
   seedHumans,
   seedServices,
@@ -485,7 +486,6 @@ function getDbPath(): string {
 }
 
 const DB_PATH = getDbPath();
-const BUNDLED_DB_PATH = path.join(process.cwd(), "data", "db.json");
 
 function makeInitialDb(): Db {
   return {
@@ -517,13 +517,8 @@ function mergeById<T extends { id: string }>(primary: T[], fallback: T[]): T[] {
   return merged;
 }
 
-async function readBundledDb(): Promise<Db | null> {
-  try {
-    const raw = await fs.readFile(BUNDLED_DB_PATH, "utf-8");
-    return JSON.parse(raw) as Db;
-  } catch {
-    return null;
-  }
+function getBundledDb(): Db {
+  return JSON.parse(JSON.stringify(bundledDbSnapshot)) as Db;
 }
 
 async function ensureDb(): Promise<void> {
@@ -531,7 +526,7 @@ async function ensureDb(): Promise<void> {
     await fs.access(DB_PATH);
   } catch {
     await fs.mkdir(path.dirname(DB_PATH), { recursive: true });
-    const initial = (await readBundledDb()) ?? makeInitialDb();
+    const initial = getBundledDb();
     await fs.writeFile(DB_PATH, JSON.stringify(initial, null, 2), "utf-8");
   }
 }
@@ -540,7 +535,7 @@ export async function readDb(): Promise<Db> {
   await ensureDb();
   const raw = await fs.readFile(DB_PATH, "utf-8");
   const parsed = JSON.parse(raw) as Db;
-  const bundled = await readBundledDb();
+  const bundled = getBundledDb();
 
   const tasks = mergeById(
     Array.isArray(parsed.tasks) ? parsed.tasks : [],
