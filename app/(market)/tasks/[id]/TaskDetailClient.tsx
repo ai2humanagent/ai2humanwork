@@ -140,6 +140,14 @@ function shortValue(value: string, start = 8, end = 6) {
   return `${value.slice(0, start)}...${value.slice(-end)}`;
 }
 
+function settlementExplorerLabel(payment: PaymentResult) {
+  const network = String(payment.network || "").toLowerCase();
+  if (network.includes("bnb")) return "View BNB transaction on BscScan";
+  if (network.includes("xlayer")) return "View X Layer transaction";
+  if (network.includes("solana")) return "View Solana transaction";
+  return "View onchain transaction";
+}
+
 export default function TaskDetailClient({
   initialTask,
   initialPayment,
@@ -575,7 +583,7 @@ export default function TaskDetailClient({
                 {latestPayment.explorerUrl ? (
                   <div className={styles.settlementActions}>
                     <a href={latestPayment.explorerUrl} target="_blank" rel="noreferrer">
-                      View on explorer
+                      {settlementExplorerLabel(latestPayment)}
                     </a>
                   </div>
                 ) : (
