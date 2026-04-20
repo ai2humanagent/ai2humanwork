@@ -43,7 +43,7 @@ export async function POST(
   request: Request,
   { params }: { params: { id: string } }
 ) {
-  const body = await request.json();
+  const body = await request.json().catch(() => ({}));
   const note = String(body.note || "Evidence submitted").trim();
   const url = String(body.url || body.screenshotUrl || "").trim();
   const executorHandle = String(body.executorHandle || "").trim();

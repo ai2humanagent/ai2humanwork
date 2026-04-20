@@ -16,7 +16,7 @@ export async function POST(
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
 
-  const body = await request.json();
+  const body = await request.json().catch(() => ({}));
   const name = String(body.name || "Human").trim() || "Human";
   const walletAddress = String(body.walletAddress || "").trim();
 

@@ -293,7 +293,16 @@ export default function LiveDemoPage() {
       const payload = (await res.json().catch(() => ({}))) as { error?: string };
       throw new Error(payload.error || "Evidence submission failed");
     }
+    const payload = (await res.json().catch(() => ({}))) as {
+      payment?: {
+        method?: "mock_x402" | "bnb_erc20" | "xlayer_erc20" | "solana_native";
+      } | null;
+      verification?: {
+        ok?: boolean;
+      };
+    };
     await loadTasks();
+    return payload;
   };
 
   const verifyTask = async (id: string) => {
@@ -337,19 +346,18 @@ export default function LiveDemoPage() {
       setLastEvent("Precheck blocked the autonomous path, handing off to dispatcher");
       await assignHuman(task.id);
       setLastEvent("Dispatcher assigned a fallback operator");
-      await submitEvidence(task);
-      setLastEvent("Structured proof submitted, verifying");
-      await verifyTask(task.id);
-      setLastEvent("Verifier cleared proof, releasing settlement");
-      const payload = await settleTask(task.id, demoSettlementRail);
+      setLastEvent("Structured proof submitted, verifier reviewing");
+      const payload = await submitEvidence(task);
       setLastEvent(
         payload?.payment?.method === "solana_native"
           ? "Settled on Solana"
           : payload?.payment?.method === "bnb_erc20"
             ? "Settled on BNB Chain"
-          : payload?.payment?.method === "xlayer_erc20"
+            : payload?.payment?.method === "xlayer_erc20"
             ? "Settled on X Layer"
-            : "Settled in demo mode"
+            : payload?.verification?.ok
+              ? "Verified and settled in demo mode"
+              : "Structured proof submitted"
       );
     } catch (error) {
       const message = error instanceof Error ? error.message : "Demo run failed";
