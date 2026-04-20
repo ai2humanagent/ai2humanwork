@@ -69,6 +69,24 @@ export const SUBMISSION_REAL_SETTLEMENT = {
   settledAt: "2026-03-24T10:57:41.334Z"
 };
 
+export const SUBMISSION_BNB_SETTLEMENT = {
+  label: "Live BNB Chain settlement proof",
+  payerAddress: "0x3f665386b41Fa15c5ccCeE983050a236E6a10108",
+  operatorAddress: "0x81009cc711e5e0285dd8f703aab1af69fa4a4390",
+  amount: "0.01",
+  tokenSymbol: "USDT",
+  tokenAddress: "0x55d398326f99059fF775485246999027B3197955",
+  network: "bnb-mainnet",
+  chainId: 56,
+  swapTxHash: "0xd9e53df924f464a0b40593341a6116158b08118bf2b292176caab6aba3dd1080",
+  swapExplorerUrl:
+    "https://bscscan.com/tx/0xd9e53df924f464a0b40593341a6116158b08118bf2b292176caab6aba3dd1080",
+  txHash: "0x9739bff25473e14db16409124648f99536d863e82a4ffcde50356289b09b80a2",
+  explorerUrl:
+    "https://bscscan.com/tx/0x9739bff25473e14db16409124648f99536d863e82a4ffcde50356289b09b80a2",
+  settledAt: "2026-04-20T11:15:15.000Z"
+};
+
 export const SUBMISSION_X402_STATUS = {
   integrated: true,
   provenOnchain: false,

@@ -76,6 +76,11 @@ Use this exact story in the video:
   - `/submission`
   - `/livedemo`
   - `/reviewer`
+- Live BNB Chain proof:
+  - settlement tx: `0x9739bff25473e14db16409124648f99536d863e82a4ffcde50356289b09b80a2`
+  - explorer: `https://bscscan.com/tx/0x9739bff25473e14db16409124648f99536d863e82a4ffcde50356289b09b80a2`
+  - funding swap tx: `0xd9e53df924f464a0b40593341a6116158b08118bf2b292176caab6aba3dd1080`
+  - asset: `0.01 USDT` on BNB Chain mainnet
 - Historical onchain proof:
   - `0x9c01ad8dac5f2fa1d77da8e9b3f2a3afbfe539ea68af7f3929d7bf9a5f3f5d67`
 

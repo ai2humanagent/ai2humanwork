@@ -11,9 +11,10 @@ import {
 import { privateKeyToAccount } from "viem/accounts";
 import type { SettlementNetwork, SettlementReceipt } from "./settlementTypes";
 
-const DEFAULT_BNB_RPC_URL = "https://bsc-dataseed.binance.org";
+const DEFAULT_BNB_RPC_URL = "https://bsc-dataseed.bnbchain.org";
 const DEFAULT_BNB_EXPLORER_URL = "https://bscscan.com";
 const DEFAULT_BNB_CHAIN_ID = 56;
+const DEFAULT_TOKEN_ADDRESS = "0x55d398326f99059fF775485246999027B3197955";
 const DEFAULT_TOKEN_SYMBOL = "USDT";
 const DEFAULT_TOKEN_DECIMALS = 18;
 
@@ -71,9 +72,13 @@ function getConfig() {
     (process.env.BNB_EXPLORER_BASE_URL || DEFAULT_BNB_EXPLORER_URL).trim()
   );
   const privateKey = String(
-    process.env.BNB_SETTLEMENT_PRIVATE_KEY || process.env.BNB_PRIVATE_KEY || ""
+    process.env.BNB_SETTLEMENT_PRIVATE_KEY ||
+      process.env.BNB_PRIVATE_KEY ||
+      process.env.EVM_SETTLEMENT_PRIVATE_KEY ||
+      process.env.XLAYER_SETTLEMENT_PRIVATE_KEY ||
+      ""
   ).trim();
-  const tokenAddress = String(process.env.BNB_SETTLEMENT_TOKEN_ADDRESS || "").trim();
+  const tokenAddress = String(process.env.BNB_SETTLEMENT_TOKEN_ADDRESS || DEFAULT_TOKEN_ADDRESS).trim();
   const defaultReceiverAddress = String(process.env.BNB_SETTLEMENT_TO_ADDRESS || "").trim();
   const tokenSymbol = String(process.env.BNB_SETTLEMENT_TOKEN_SYMBOL || DEFAULT_TOKEN_SYMBOL).trim();
   const tokenDecimals = resolveTokenDecimals(process.env.BNB_SETTLEMENT_TOKEN_DECIMALS);

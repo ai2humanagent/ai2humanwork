@@ -4,6 +4,7 @@ import {
   SUBMISSION_PRIMARY_RAIL,
   SUBMISSION_CHAIN_NATIVE_FRAMING,
   SUBMISSION_CORE_LOOP,
+  SUBMISSION_BNB_SETTLEMENT,
   SUBMISSION_ONCHAIN_OS_PRECHECK,
   SUBMISSION_PROJECT,
   SUBMISSION_REAL_SETTLEMENT,
@@ -13,7 +14,7 @@ import {
 export const metadata = {
   title: "ai2human Submission Proof",
   description:
-    "Hackathon submission surface for ai2human, including the BNB Chain demo rail, historical X Layer settlement proof, and live product routes."
+    "Hackathon submission surface for ai2human, including live BNB Chain settlement proof, historical X Layer settlement proof, and live product routes."
 };
 
 const scenarios = [
@@ -28,7 +29,7 @@ const checks = [
   "Live demo showing the closed loop",
   "Planner path starts with wallet / market / trade precheck",
   "Reviewer console with proof and settlement history",
-  "BNB Chain settlement rail wired into the product",
+  "A live BNB Chain USDT settlement transaction hash",
   "A real historical X Layer settlement transaction hash",
   "Structured proof tied to one completed task"
 ];
@@ -91,6 +92,15 @@ export default function SubmissionPage() {
     second: "2-digit",
     hour12: false
   });
+  const bnbSettledAt = new Date(SUBMISSION_BNB_SETTLEMENT.settledAt).toLocaleString("en-US", {
+    timeZone: "Asia/Shanghai",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false
+  });
 
   return (
     <div className="page">
@@ -124,7 +134,7 @@ export default function SubmissionPage() {
             </div>
             <div>
               <span>Proof status</span>
-              <strong>BNB live rail + 1 historical tx</strong>
+              <strong>BNB mainnet tx + historical X Layer tx</strong>
             </div>
           </div>
 
@@ -142,12 +152,20 @@ export default function SubmissionPage() {
               Open GitHub
             </a>
             <a
+              href={SUBMISSION_BNB_SETTLEMENT.explorerUrl}
+              target="_blank"
+              rel="noreferrer"
+              style={buttonStyle}
+            >
+              Open BNB tx
+            </a>
+            <a
               href={SUBMISSION_REAL_SETTLEMENT.explorerUrl}
               target="_blank"
               rel="noreferrer"
               style={buttonStyle}
             >
-              Open explorer tx
+              Open X Layer tx
             </a>
           </div>
         </section>
@@ -250,9 +268,82 @@ export default function SubmissionPage() {
         <section className="market-card">
           <div className="block-header">
             <div>
+              <h2>Live BNB Rail Proof</h2>
+              <p className="mvp-muted">
+                This branch now has a fresh BNB Chain mainnet USDT settlement proving the current sprint rail is not mock-only.
+              </p>
+            </div>
+            <span className="status-pill status-verified">{SUBMISSION_BNB_SETTLEMENT.network}</span>
+          </div>
+
+          <div className="reviewer-metric-grid">
+            <div>
+              <span>Amount</span>
+              <strong>
+                {SUBMISSION_BNB_SETTLEMENT.amount} {SUBMISSION_BNB_SETTLEMENT.tokenSymbol}
+              </strong>
+            </div>
+            <div>
+              <span>Chain ID</span>
+              <strong>{SUBMISSION_BNB_SETTLEMENT.chainId}</strong>
+            </div>
+            <div>
+              <span>Token</span>
+              <strong>{SUBMISSION_BNB_SETTLEMENT.tokenSymbol}</strong>
+            </div>
+            <div>
+              <span>Settled at</span>
+              <strong>{bnbSettledAt} UTC+8</strong>
+            </div>
+          </div>
+
+          <div style={cardGridStyle}>
+            <div className="mvp-evidence">
+              <h4>Funding proof</h4>
+              <div className="mvp-evidence-item">
+                <div className="evidence-meta">
+                  <span>swap</span>
+                  <span>confirmed</span>
+                </div>
+                <p style={{ wordBreak: "break-all" }}>{SUBMISSION_BNB_SETTLEMENT.swapTxHash}</p>
+                <p className="mvp-muted">
+                  <a href={SUBMISSION_BNB_SETTLEMENT.swapExplorerUrl} target="_blank" rel="noreferrer">
+                    View BNB to USDT swap on BscScan
+                  </a>
+                </p>
+              </div>
+            </div>
+
+            <div className="mvp-evidence">
+              <h4>Settlement receipt</h4>
+              <div className="mvp-evidence-item">
+                <div className="evidence-meta">
+                  <span>tx hash</span>
+                  <span>confirmed</span>
+                </div>
+                <p style={{ wordBreak: "break-all" }}>{SUBMISSION_BNB_SETTLEMENT.txHash}</p>
+                <p className="mvp-muted">
+                  payer: {SUBMISSION_BNB_SETTLEMENT.payerAddress}
+                </p>
+                <p className="mvp-muted">
+                  operator: {SUBMISSION_BNB_SETTLEMENT.operatorAddress}
+                </p>
+                <p className="mvp-muted">
+                  <a href={SUBMISSION_BNB_SETTLEMENT.explorerUrl} target="_blank" rel="noreferrer">
+                    View live BNB settlement on BscScan
+                  </a>
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="market-card">
+          <div className="block-header">
+            <div>
               <h2>Historical Onchain Proof</h2>
               <p className="mvp-muted">
-                This prior X Layer mainnet settlement remains the strongest public proof that the loop closes onchain after verification.
+                This prior X Layer mainnet settlement proves the full task-to-proof-to-settlement loop closes onchain after verification.
               </p>
             </div>
             <span className="status-pill status-verified">{SUBMISSION_REAL_SETTLEMENT.network}</span>

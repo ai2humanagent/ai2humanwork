@@ -17,7 +17,7 @@ import { privateKeyToAccount } from "viem/accounts";
 
 const SETTLEMENT_RAILS = {
   bnb: {
-    rpcUrl: "https://bsc-dataseed.binance.org",
+    rpcUrl: "https://bsc-dataseed.bnbchain.org",
     explorerUrl: "https://bscscan.com",
     chainId: 56,
     tokenDecimals: 18,
@@ -152,13 +152,21 @@ const explorerBaseUrl = String(
 ).trim();
 const chainId = resolveChainId(process.env[`${prefix}_CHAIN_ID`] || railConfig.chainId);
 const privateKey = String(
-  process.env[`${prefix}_SETTLEMENT_PRIVATE_KEY`] || process.env[`${prefix}_PRIVATE_KEY`] || ""
+  process.env[`${prefix}_SETTLEMENT_PRIVATE_KEY`] ||
+    process.env[`${prefix}_PRIVATE_KEY`] ||
+    process.env.EVM_SETTLEMENT_PRIVATE_KEY ||
+    (rail === "bnb" ? process.env.XLAYER_SETTLEMENT_PRIVATE_KEY : "") ||
+    ""
 ).trim();
-const tokenAddress = String(process.env[`${prefix}_SETTLEMENT_TOKEN_ADDRESS`] || "").trim();
+const tokenAddress = String(
+  process.env[`${prefix}_SETTLEMENT_TOKEN_ADDRESS`] ||
+    (rail === "bnb" ? "0x55d398326f99059fF775485246999027B3197955" : "")
+).trim();
 const tokenSymbol = String(process.env[`${prefix}_SETTLEMENT_TOKEN_SYMBOL`] || railConfig.symbol).trim();
 const tokenDecimals = resolveDecimals(
   process.env[`${prefix}_SETTLEMENT_TOKEN_DECIMALS`] || railConfig.tokenDecimals
 );
+const nativeSymbol = rail === "bnb" ? "BNB" : "OKB";
 
 if (!privateKey) exitWith(`missing ${prefix}_SETTLEMENT_PRIVATE_KEY`);
 if (!tokenAddress || !isAddress(tokenAddress)) exitWith(`invalid ${prefix}_SETTLEMENT_TOKEN_ADDRESS`);
@@ -177,8 +185,8 @@ const chain = defineChain({
   id: chainId,
   name: rail === "bnb" ? "BNB Chain" : "X Layer",
   nativeCurrency: {
-    name: rail === "bnb" ? "BNB" : "OKB",
-    symbol: rail === "bnb" ? "BNB" : "OKB",
+    name: nativeSymbol,
+    symbol: nativeSymbol,
     decimals: 18
   },
   rpcUrls: {
@@ -227,7 +235,7 @@ async function main() {
   ]);
 
   const tokenBalance = BigInt(tokenBalanceRaw);
-  console.log(`[batch-transfer] okbBalance=${formatEther(nativeBalance)}`);
+  console.log(`[batch-transfer] ${nativeSymbol}Balance=${formatEther(nativeBalance)}`);
   console.log(`[batch-transfer] ${tokenSymbol}Balance=${formatUnits(tokenBalance, tokenDecimals)}`);
 
   if (nativeBalance <= 0n) exitWith(`signer has no ${rail === "bnb" ? "BNB" : "OKB"} for gas`);
