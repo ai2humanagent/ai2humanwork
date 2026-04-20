@@ -148,6 +148,25 @@ function settlementExplorerLabel(payment: PaymentResult) {
   return "View onchain transaction";
 }
 
+function getCachedPayment(taskId: string): PaymentResult | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(`ai2human:task-payment:${taskId}`);
+    return raw ? (JSON.parse(raw) as PaymentResult) : null;
+  } catch {
+    return null;
+  }
+}
+
+function cachePayment(taskId: string, payment: PaymentResult) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(`ai2human:task-payment:${taskId}`, JSON.stringify(payment));
+  } catch {
+    // Ignore storage failures; the live response still renders the receipt.
+  }
+}
+
 export default function TaskDetailClient({
   initialTask,
   initialPayment,
@@ -205,7 +224,7 @@ export default function TaskDetailClient({
         throw new Error("Task payload missing.");
       }
       setTask(payload.task);
-      setLatestPayment(payload.payment || null);
+      setLatestPayment((current) => payload.payment || current || getCachedPayment(initialTask.id));
       setAlternateClaimTask(payload.alternateClaimTask || null);
       if (payload.task.campaign?.proofPhrase) {
         setProofPhrase((current) => current || payload.task?.campaign?.proofPhrase || "");
@@ -236,6 +255,13 @@ export default function TaskDetailClient({
   useEffect(() => {
     loadAuth();
   }, []);
+
+  useEffect(() => {
+    const cachedPayment = getCachedPayment(initialTask.id);
+    if (cachedPayment) {
+      setLatestPayment((current) => current || cachedPayment);
+    }
+  }, [initialTask.id]);
 
   useEffect(() => {
     loadTask();
@@ -400,6 +426,7 @@ export default function TaskDetailClient({
       }
       if (payload.payment) {
         setLatestPayment(payload.payment);
+        cachePayment(task.id, payload.payment);
         setMessage(
           `Proof verified and ${payload.payment.amount} ${
             payload.payment.tokenSymbol || DEFAULT_SETTLEMENT_TOKEN_SYMBOL
