@@ -238,6 +238,10 @@ export default function TaskDetailClient({
   }, []);
 
   useEffect(() => {
+    loadTask();
+  }, []);
+
+  useEffect(() => {
     if (!ready || !authenticated) return;
     loadAuth();
   }, [ready, authenticated, getAccessToken, connectedWallet]);
