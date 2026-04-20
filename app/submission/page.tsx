@@ -1,5 +1,7 @@
 import Link from "next/link";
 import {
+  SUBMISSION_SPRINT,
+  SUBMISSION_PRIMARY_RAIL,
   SUBMISSION_CHAIN_NATIVE_FRAMING,
   SUBMISSION_CORE_LOOP,
   SUBMISSION_ONCHAIN_OS_PRECHECK,
@@ -11,43 +13,42 @@ import {
 export const metadata = {
   title: "ai2human Submission Proof",
   description:
-    "Hackathon submission surface for ai2human, including the real X Layer settlement transaction, proof post, and live product routes."
+    "Hackathon submission surface for ai2human, including the BNB Chain demo rail, historical X Layer settlement proof, and live product routes."
 };
 
 const scenarios = [
-  "Storefront open / closed verification",
-  "Shelf and product availability checks",
-  "Front-desk signature pickup",
-  "Locker or counter pickup confirmation",
-  "Menu and live price verification",
-  "Venue queue and entrance-status checks"
+  "Identity-bound community replies and campaign amplification",
+  "Merchant onboarding or compliance checkpoints that require a human action",
+  "Growth missions that need a live account, screenshot, and structured proof",
+  "Local verification, signature, pickup, or in-person confirmation when software alone cannot finish the task"
 ];
 
 const checks = [
   "Public GitHub repository",
   "Live demo showing the closed loop",
-  "Planner path starts with an OnchainOS precheck",
+  "Planner path starts with wallet / market / trade precheck",
   "Reviewer console with proof and settlement history",
-  "A real X Layer settlement transaction hash",
+  "BNB Chain settlement rail wired into the product",
+  "A real historical X Layer settlement transaction hash",
   "Structured proof tied to one completed task"
 ];
 
 const collaborationRoles = [
   {
     label: "Planner agent",
-    description: "Owns route selection after the OnchainOS precheck completes."
+    description: "Reads the precheck output, decides autonomous vs fallback, and writes the execution plan."
   },
   {
     label: "Dispatcher agent",
-    description: "Only takes over when the planner explicitly escalates to last-resort human fallback."
+    description: "Only takes over when the planner explicitly escalates and then routes the task to a payout-ready operator."
   },
   {
     label: "Verifier agent",
-    description: "Checks proof integrity and settlement conditions before money moves."
+    description: "Checks proof integrity, duplicate evidence risk, and payout readiness before money moves."
   },
   {
     label: "Settlement agent",
-    description: "Releases payment on X Layer only after verification clears."
+    description: "Releases payment on the selected chain only after verification clears."
   }
 ];
 
@@ -97,7 +98,7 @@ export default function SubmissionPage() {
         <section className="market-card">
           <div className="block-header">
             <div>
-              <p className="mvp-muted">X Layer AI Hackathon Submission</p>
+              <p className="mvp-muted">{SUBMISSION_SPRINT.name}</p>
               <h1 style={{ margin: "0 0 10px", fontSize: "clamp(34px, 6vw, 56px)" }}>
                 ai2human keeps blocked agent work inside one auditable line.
               </h1>
@@ -114,16 +115,16 @@ export default function SubmissionPage() {
               <strong>Human fallback infra</strong>
             </div>
             <div>
-              <span>Network</span>
-              <strong>X Layer mainnet</strong>
+              <span>Primary rail</span>
+              <strong>{SUBMISSION_PRIMARY_RAIL.label}</strong>
             </div>
             <div>
-              <span>Settlement asset</span>
-              <strong>{SUBMISSION_REAL_SETTLEMENT.tokenDisplayName}</strong>
+              <span>Track</span>
+              <strong>{SUBMISSION_SPRINT.track}</strong>
             </div>
             <div>
               <span>Proof status</span>
-              <strong>1 real tx hash</strong>
+              <strong>BNB live rail + 1 historical tx</strong>
             </div>
           </div>
 
@@ -196,9 +197,9 @@ export default function SubmissionPage() {
           <div className="market-card">
             <div className="block-header">
               <div>
-                <h2>OnchainOS Main Path</h2>
+                <h2>Planner Main Path</h2>
                 <p className="mvp-muted">
-                  X Layer is part of route selection, not only the payout layer.
+                  Chain-aware precheck is part of route selection, not only the payout layer.
                 </p>
               </div>
             </div>
@@ -249,9 +250,9 @@ export default function SubmissionPage() {
         <section className="market-card">
           <div className="block-header">
             <div>
-              <h2>Proven X Layer Settlement</h2>
+              <h2>Historical Onchain Proof</h2>
               <p className="mvp-muted">
-                This is the submission-grade proof that the loop closes onchain after verification.
+                This prior X Layer mainnet settlement remains the strongest public proof that the loop closes onchain after verification.
               </p>
             </div>
             <span className="status-pill status-verified">{SUBMISSION_REAL_SETTLEMENT.network}</span>
@@ -314,7 +315,7 @@ export default function SubmissionPage() {
                 </p>
                 <p className="mvp-muted">
                   <a href={SUBMISSION_REAL_SETTLEMENT.explorerUrl} target="_blank" rel="noreferrer">
-                    View on OKLink
+                    View historical proof on OKLink
                   </a>
                 </p>
               </div>
@@ -328,7 +329,7 @@ export default function SubmissionPage() {
               <div>
                 <h2>Why This Matters</h2>
                 <p className="mvp-muted">
-                  Agents can do online work, but many still fail when reality is involved.
+                  Agents can do online work, but many still fail when identity, growth execution, or reality is involved.
                 </p>
               </div>
             </div>
@@ -372,7 +373,9 @@ export default function SubmissionPage() {
                 <div className="evidence-meta">
                   <span>focus</span>
                 </div>
-                <p>The primary submission proof remains the verified task settlement transaction above.</p>
+                <p>
+                  {"The primary sprint story is planner precheck -> fallback -> proof -> verify -> settle, with BNB Chain as the live demo rail."}
+                </p>
               </div>
             </div>
           </div>

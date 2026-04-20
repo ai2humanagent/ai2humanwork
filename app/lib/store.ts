@@ -8,6 +8,7 @@ import {
   type Human,
   type HumanService
 } from "./humanMarketplace";
+import type { SettlementMethod, SettlementNetwork } from "./settlementTypes";
 import {
   DEFAULT_X_TASK_BUDGET,
   DEFAULT_TARGET_URL,
@@ -85,10 +86,10 @@ export type PaymentEntry = {
   receiver: string;
   receiverAddress?: string;
   payerAddress?: string;
-  method: "mock_x402" | "xlayer_erc20" | "x402_exact";
+  method: SettlementMethod;
   status: "paid";
   source?: "task" | "fallback_order" | "x402_access";
-  network?: "xlayer-mainnet" | "xlayer-testnet" | "xlayer-custom";
+  network?: SettlementNetwork;
   chainId?: number;
   tokenSymbol?: string;
   tokenAddress?: string;
@@ -301,7 +302,7 @@ export function makeSeedTasks(count: number): Task[] {
       addEvidence(
         "ai",
         "note",
-        "agent_event: onchainos_precheck | Checking Wallet API, Market API, and Trade API on X Layer before escalation."
+        "agent_event: onchainos_precheck | Checking wallet, market, and trade routes before escalation."
       );
     }
     if (status === "ai_failed") {
@@ -316,8 +317,8 @@ export function makeSeedTasks(count: number): Task[] {
         "ai",
         "note",
         scenario.kind === "x"
-          ? "agent_event: onchainos_precheck | Queried Wallet API, Market API, and Trade API on X Layer, but a human-owned X identity and live post are still required."
-          : "agent_event: onchainos_precheck | Queried Wallet API, Market API, and Trade API on X Layer, but the task still requires an on-site check, signature, pickup, or physical proof collection."
+          ? "agent_event: onchainos_precheck | Queried wallet, market, and trade routes, but a human-owned X identity and live post are still required."
+          : "agent_event: onchainos_precheck | Queried wallet, market, and trade routes, but the task still requires an on-site check, signature, pickup, or physical proof collection."
       );
       addEvidence(
         "ai",
@@ -330,13 +331,13 @@ export function makeSeedTasks(count: number): Task[] {
         "ai",
         "note",
         scenario.kind === "x"
-          ? `AI note: campaign brief prepared for ${campaignTask.campaign?.requesterHandle || "@official"} after autonomous X Layer prechecks cleared.`
-          : `AI note: visit brief prepared for ${campaignTask.campaign?.requesterName || "ops desk"} after autonomous X Layer prechecks cleared.`
+          ? `AI note: campaign brief prepared for ${campaignTask.campaign?.requesterHandle || "@official"} after autonomous planner prechecks cleared.`
+          : `AI note: visit brief prepared for ${campaignTask.campaign?.requesterName || "ops desk"} after autonomous planner prechecks cleared.`
       );
       addEvidence(
         "ai",
         "note",
-        "agent_event: onchainos_precheck | Queried Wallet API, Market API, and Trade API on X Layer and cleared the task for autonomous execution."
+        "agent_event: onchainos_precheck | Queried wallet, market, and trade routes and cleared the task for autonomous execution."
       );
       addEvidence(
         "ai",
@@ -399,7 +400,7 @@ export function makeSeedTasks(count: number): Task[] {
       status === "human_assigned" || status === "human_done"
         ? {
             type: "human" as const,
-            name: scenario.kind === "x" ? "X Layer Operator" : "Field Operator",
+            name: scenario.kind === "x" ? "Growth Operator" : "Field Operator",
             walletAddress: humanWallets[i % humanWallets.length]
           }
         : status === "ai_running" || status === "ai_done" || status === "ai_failed"
@@ -482,7 +483,7 @@ export function makeSeedFallbackOrders(count: number): FallbackOrder[] {
         id: crypto.randomUUID(),
         by: "human",
         type: "photo",
-        content: "https://example.com/xlayer-proof.jpg",
+        content: "https://example.com/campaign-proof.jpg",
         createdAt: updatedAt
       });
     }

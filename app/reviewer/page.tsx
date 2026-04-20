@@ -5,7 +5,8 @@ import { getTaskVerificationStatus } from "../lib/officialCampaignTasks.js";
 import { getTaskAgentArchitecture } from "../lib/agentArchitecture.js";
 import {
   DEFAULT_SETTLEMENT_TOKEN_SYMBOL,
-  formatBudgetLabel
+  formatBudgetLabel,
+  stripBudgetAmount
 } from "../lib/assetLabels.js";
 
 type EvidenceItem = {
@@ -73,10 +74,19 @@ type Payment = {
   receiver: string;
   receiverAddress?: string;
   payerAddress?: string;
-  method: "mock_x402" | "xlayer_erc20" | "x402_exact";
+  method: "mock_x402" | "bnb_erc20" | "xlayer_erc20" | "solana_native" | "x402_exact";
   status: "paid";
   source?: "task" | "fallback_order" | "x402_access";
-  network?: "xlayer-mainnet" | "xlayer-testnet" | "xlayer-custom";
+  network?:
+    | "bnb-mainnet"
+    | "bnb-testnet"
+    | "bnb-custom"
+    | "xlayer-mainnet"
+    | "xlayer-testnet"
+    | "xlayer-custom"
+    | "solana-mainnet"
+    | "solana-devnet"
+    | "solana-custom";
   chainId?: number;
   tokenSymbol?: string;
   tokenAddress?: string;
@@ -162,6 +172,10 @@ export default function ReviewerPage() {
   const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [humans, setHumans] = useState<HumanDirectoryRow[]>([]);
+  const [settlementNetwork, setSettlementNetwork] = useState<"bnb" | "xlayer" | "solana">("bnb");
+  const [settlementReceiverAddress, setSettlementReceiverAddress] = useState("");
+  const [settlementAmount, setSettlementAmount] = useState("");
+  const [settlementDraftTaskId, setSettlementDraftTaskId] = useState("");
 
   const loadTasks = async () => {
     const res = await fetch("/api/tasks", { cache: "no-store" });
@@ -217,6 +231,22 @@ export default function ReviewerPage() {
     }
   }, [tasks, selectedId]);
 
+  const selectedTask = tasks.find((task) => task.id === selectedId) ?? null;
+
+  useEffect(() => {
+    if (!selectedTask) return;
+    if (selectedTask.id === settlementDraftTaskId) return;
+    setSettlementDraftTaskId(selectedTask.id);
+    setSettlementReceiverAddress(selectedTask.assignee?.walletAddress || "");
+    setSettlementAmount(stripBudgetAmount(selectedTask.budget));
+    setSettlementNetwork(
+      selectedTask.assignee?.walletAddress &&
+        !selectedTask.assignee.walletAddress.startsWith("0x")
+        ? "solana"
+        : "bnb"
+    );
+  }, [selectedTask, settlementDraftTaskId]);
+
   const kpis = useMemo(() => {
     return {
       pendingReview: tasks.filter((task) => task.status === "ai_done" || task.status === "human_done")
@@ -226,7 +256,6 @@ export default function ReviewerPage() {
     };
   }, [tasks]);
 
-  const selectedTask = tasks.find((task) => task.id === selectedId) ?? null;
   const payoutReadyHumans = humans.filter((row) => row.walletAddress);
   const verificationStatus = useMemo(
     () =>
@@ -536,7 +565,7 @@ export default function ReviewerPage() {
                   )}
                   {!selectedTask.assignee?.walletAddress && (
                     <p className="mvp-muted">
-                      Select an operator with a connected Privy wallet to auto-route settlement.
+                      Select an operator with a payout address, or override the receiver at settle time.
                     </p>
                   )}
                 </div>
@@ -560,13 +589,73 @@ export default function ReviewerPage() {
                 )}
 
                 {selectedTask.status === "verified" && (
-                  <button
-                    className="button buttonPrimary"
-                    disabled={Boolean(working)}
-                    onClick={() => runAction("settle", `/api/tasks/${selectedTask.id}/settle`)}
-                  >
-                    {working === "settle" ? "Settling..." : "Settle"}
-                  </button>
+                  <>
+                    <select
+                      className="mvp-input"
+                      value={settlementNetwork}
+                      onChange={(event) =>
+                        setSettlementNetwork(event.target.value as "bnb" | "xlayer" | "solana")
+                      }
+                    >
+                      <option value="bnb">Settle on BNB Chain</option>
+                      <option value="xlayer">Settle on X Layer</option>
+                      <option value="solana">Settle on Solana</option>
+                    </select>
+                    <input
+                      className="mvp-input"
+                      value={settlementReceiverAddress}
+                      onChange={(event) => setSettlementReceiverAddress(event.target.value)}
+                      placeholder={
+                        settlementNetwork === "solana"
+                          ? "Solana receiver address (optional override)"
+                          : settlementNetwork === "bnb"
+                            ? "BNB Chain receiver address (optional override)"
+                            : "X Layer receiver address (optional override)"
+                      }
+                    />
+                    <input
+                      className="mvp-input"
+                      value={settlementAmount}
+                      onChange={(event) => setSettlementAmount(event.target.value)}
+                      placeholder={settlementNetwork === "solana" ? "Amount in SOL" : "Amount"}
+                    />
+                    <p className="mvp-muted">
+                      {settlementNetwork === "solana"
+                        ? "Solana settlement currently sends native SOL. Override the amount if the task budget is denominated in a different asset."
+                        : settlementNetwork === "bnb"
+                          ? "Leave the amount unchanged to settle the task budget on BNB Chain."
+                          : "Leave the amount unchanged to settle the task budget on X Layer."}
+                    </p>
+                    <button
+                      className="button buttonPrimary"
+                      disabled={Boolean(working)}
+                      onClick={() =>
+                        runAction("settle", `/api/tasks/${selectedTask.id}/settle`, {
+                          body: {
+                            network: settlementNetwork,
+                            receiverAddress: settlementReceiverAddress || undefined,
+                            amount: settlementAmount || undefined
+                          }
+                        })
+                      }
+                    >
+                      {working === "settle"
+                        ? `Settling on ${
+                            settlementNetwork === "solana"
+                              ? "Solana"
+                              : settlementNetwork === "bnb"
+                                ? "BNB Chain"
+                                : "X Layer"
+                          }...`
+                        : `Settle on ${
+                            settlementNetwork === "solana"
+                              ? "Solana"
+                              : settlementNetwork === "bnb"
+                                ? "BNB Chain"
+                                : "X Layer"
+                          }`}
+                    </button>
+                  </>
                 )}
 
                 {selectedTask.status === "ai_failed" && (
@@ -602,7 +691,7 @@ export default function ReviewerPage() {
                         setSelectedHumanId("");
                         setHumanWalletAddress(event.target.value);
                       }}
-                      placeholder="Human operator wallet (optional)"
+                      placeholder="Human operator wallet (EVM or Solana, optional)"
                     />
                     <button
                       className="button"
@@ -670,7 +759,7 @@ export default function ReviewerPage() {
           <div>
             <h2>Settlement ledger</h2>
             <p className="mvp-muted">
-              Latest settlement records, including X Layer transaction proof when configured.
+              Latest settlement records, including BNB Chain, X Layer, or Solana transaction proof when configured.
             </p>
           </div>
         </div>

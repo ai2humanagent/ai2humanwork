@@ -109,7 +109,9 @@ const urgencyLevels = ["Urgent", "High", "Normal"];
 
 const MAX_VISIBLE_TASKS = 12;
 const DEMO_ADMIN_TOKEN = process.env.NEXT_PUBLIC_DEMO_ADMIN_TOKEN || "";
+const DEMO_BNB_OPERATOR_WALLET = process.env.NEXT_PUBLIC_BNB_DEMO_OPERATOR_WALLET || "";
 const DEMO_OPERATOR_WALLET = process.env.NEXT_PUBLIC_XLAYER_DEMO_OPERATOR_WALLET || "";
+const DEMO_SOLANA_OPERATOR_WALLET = process.env.NEXT_PUBLIC_SOLANA_DEMO_OPERATOR_WALLET || "";
 const agentStateStyles: Record<string, string> = {
   waiting: "status-created",
   active: "status-ai_running",
@@ -126,6 +128,7 @@ export default function LiveDemoPage() {
   const [adminToken, setAdminToken] = useState("");
   const [demoError, setDemoError] = useState("");
   const [lastEvent, setLastEvent] = useState("Idle");
+  const [demoSettlementRail, setDemoSettlementRail] = useState<"bnb" | "xlayer" | "solana">("bnb");
 
   const stats = useMemo(() => {
     const total = tasks.length;
@@ -225,13 +228,19 @@ export default function LiveDemoPage() {
     return headers;
   };
 
-  const assignHuman = async (id: string, name = "X Layer Operator") => {
+  const assignHuman = async (id: string, name = "Fallback Operator") => {
+    const walletAddress =
+      demoSettlementRail === "solana"
+        ? DEMO_SOLANA_OPERATOR_WALLET
+        : demoSettlementRail === "bnb"
+          ? DEMO_BNB_OPERATOR_WALLET
+          : DEMO_OPERATOR_WALLET;
     const res = await fetch(`/api/tasks/${id}/human`, {
       method: "POST",
       headers: protectedHeaders(),
       body: JSON.stringify({
         name,
-        walletAddress: DEMO_OPERATOR_WALLET || undefined
+        walletAddress: walletAddress || undefined
       })
     });
     if (!res.ok) {
@@ -299,10 +308,11 @@ export default function LiveDemoPage() {
     await loadTasks();
   };
 
-  const settleTask = async (id: string) => {
+  const settleTask = async (id: string, network: "bnb" | "xlayer" | "solana") => {
     const res = await fetch(`/api/tasks/${id}/settle`, {
       method: "POST",
-      headers: protectedHeaders()
+      headers: protectedHeaders(),
+      body: JSON.stringify({ network })
     });
     if (!res.ok) {
       const payload = (await res.json().catch(() => ({}))) as { error?: string };
@@ -312,7 +322,7 @@ export default function LiveDemoPage() {
     await loadTasks();
     return payload as {
       payment?: {
-        method?: "mock_x402" | "xlayer_erc20";
+        method?: "mock_x402" | "bnb_erc20" | "xlayer_erc20" | "solana_native";
       };
     };
   };
@@ -331,9 +341,15 @@ export default function LiveDemoPage() {
       setLastEvent("Structured proof submitted, verifying");
       await verifyTask(task.id);
       setLastEvent("Verifier cleared proof, releasing settlement");
-      const payload = await settleTask(task.id);
+      const payload = await settleTask(task.id, demoSettlementRail);
       setLastEvent(
-        payload?.payment?.method === "xlayer_erc20" ? "Settled on X Layer" : "Settled in demo mode"
+        payload?.payment?.method === "solana_native"
+          ? "Settled on Solana"
+          : payload?.payment?.method === "bnb_erc20"
+            ? "Settled on BNB Chain"
+          : payload?.payment?.method === "xlayer_erc20"
+            ? "Settled on X Layer"
+            : "Settled in demo mode"
       );
     } catch (error) {
       const message = error instanceof Error ? error.message : "Demo run failed";
@@ -446,6 +462,18 @@ export default function LiveDemoPage() {
     "Proof verified",
     "Settled"
   ];
+  const settlementLabel =
+    demoSettlementRail === "solana"
+      ? "Solana"
+      : demoSettlementRail === "bnb"
+        ? "BNB Chain"
+        : "X Layer";
+  const demoOperatorWallet =
+    demoSettlementRail === "solana"
+      ? DEMO_SOLANA_OPERATOR_WALLET
+      : demoSettlementRail === "bnb"
+        ? DEMO_BNB_OPERATOR_WALLET
+        : DEMO_OPERATOR_WALLET;
 
   return (
     <div className="page mvp live-demo">
@@ -458,13 +486,13 @@ export default function LiveDemoPage() {
               </span>
               <span className="auto-tag">judge walkthrough</span>
             </div>
-            <p className="eyebrow">X Layer Submission Demo</p>
-            <h1>Planner precheck → human fallback → proof → verify → settle on X Layer</h1>
+            <p className="eyebrow">BNB Hackathon Demo</p>
+            <h1>{`Planner precheck → human fallback → proof → verify → settle on ${settlementLabel}`}</h1>
             <p className="mvp-lead">
               Single-scenario playback for judges. The planner queries Wallet API, Market API, and
-              Trade API on X Layer first. If the task is still blocked by real-world constraints or
+              Trade API first. If the task is still blocked by real-world constraints or
               compliance gates, ai2human dispatches a local operator, verifies proof, and releases
-              settlement on X Layer.
+              settlement on {settlementLabel}.
             </p>
           <div className="mvp-steps">
             {flowSteps.map((step, index) => (
@@ -517,12 +545,12 @@ export default function LiveDemoPage() {
               <strong>~12s</strong>
             </div>
               <div>
-                <span>Planner gate</span>
-                <strong>Wallet + Market + Trade</strong>
+              <span>Planner gate</span>
+              <strong>Wallet + Market + Trade</strong>
               </div>
               <div>
                 <span>Fallback policy</span>
-                <strong>{DEMO_OPERATOR_WALLET ? "Payout-ready" : "Demo fallback"}</strong>
+                <strong>{demoOperatorWallet ? "Payout-ready" : "Demo fallback"}</strong>
               </div>
             </div>
           <p className="mvp-muted">Last event: {lastEvent}</p>
@@ -536,6 +564,26 @@ export default function LiveDemoPage() {
               value={adminToken}
               onChange={(event) => setAdminToken(event.target.value)}
             />
+            <label htmlFor="demo-settlement-rail">Settlement rail</label>
+            <select
+              id="demo-settlement-rail"
+              className="mvp-input"
+              value={demoSettlementRail}
+              onChange={(event) =>
+                setDemoSettlementRail(event.target.value as "bnb" | "xlayer" | "solana")
+              }
+            >
+              <option value="bnb">BNB Chain</option>
+              <option value="xlayer">X Layer</option>
+              <option value="solana">Solana</option>
+            </select>
+            <p className="mvp-muted">
+              {demoSettlementRail === "solana"
+                ? `Demo payouts will target Solana. Operator wallet: ${demoOperatorWallet || "not configured"}`
+                : demoSettlementRail === "bnb"
+                  ? `Demo payouts will target BNB Chain. Operator wallet: ${demoOperatorWallet || "not configured"}`
+                  : `Demo payouts will target X Layer. Operator wallet: ${demoOperatorWallet || "not configured"}`}
+            </p>
           </div>
           {demoError && <p className="demo-error">Loop paused: {demoError}</p>}
           <div className="auto-highlight">
@@ -631,7 +679,7 @@ export default function LiveDemoPage() {
             <div>
               <h2>Task detail</h2>
               <p className="mvp-muted">
-                Planner queries X Layer first. Human fallback only appears when the onchain path stays blocked.
+                Planner queries wallet, market, and trade routes first. Human fallback only appears when the onchain path stays blocked.
               </p>
             </div>
           </div>
@@ -819,7 +867,7 @@ export default function LiveDemoPage() {
           <div className="block-header">
             <div>
               <h2>Human pool</h2>
-              <p className="mvp-muted">Pre-screened fallback operators for real-world X Layer tasks.</p>
+              <p className="mvp-muted">Pre-screened fallback operators for community growth, merchant ops, and proof collection.</p>
             </div>
           </div>
           <div className="human-grid">

@@ -7,7 +7,12 @@ import {
   explainInvalidFallbackTransition
 } from "../../../../lib/fallbackOrderState";
 import { appendEvidence } from "../../../../lib/taskEvidence";
-import { executeXLayerSettlement } from "../../../../lib/xlayerSettlement";
+import {
+  DEFAULT_SETTLEMENT_RAIL,
+  executeSettlement,
+  inferSettlementRailFromAddress,
+  parseSettlementRail
+} from "../../../../lib/settlement";
 
 export const runtime = "nodejs";
 
@@ -23,6 +28,13 @@ export async function POST(
   const idempotencyHeader = request.headers.get("idempotency-key");
   const idempotencyKey =
     String(idempotencyHeader || "").trim() || `fallback-settle:${params.id}`;
+  const body = await request.json().catch(() => ({}));
+  const requestedRail = parseSettlementRail(body.network);
+  if (body.network && !requestedRail) {
+    return NextResponse.json({ error: "network must be bnb, xlayer or solana." }, { status: 400 });
+  }
+  const receiverAddress = String(body.receiverAddress || "").trim() || undefined;
+  const amountOverride = String(body.amount || "").trim() || undefined;
 
   let updated: unknown = null;
   let payment: unknown = null;
@@ -65,8 +77,10 @@ export async function POST(
         return;
       }
 
-      const settlement = await executeXLayerSettlement({
-        amount: order.budget
+      const settlement = await executeSettlement({
+        rail: requestedRail || inferSettlementRailFromAddress(receiverAddress || "") || DEFAULT_SETTLEMENT_RAIL,
+        amount: amountOverride || order.budget,
+        receiverAddress
       });
 
       order.status = "paid";

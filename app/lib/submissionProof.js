@@ -1,8 +1,8 @@
 export const SUBMISSION_PROJECT = {
   name: "ai2human",
-  tagline: "Human fallback infrastructure for agents on X Layer",
+  tagline: "Human fallback infrastructure for AI agents",
   oneLiner:
-    "ai2human inserts an OnchainOS precheck before fallback: the planner queries Wallet API, Market API, and Trade API on X Layer, keeps work autonomous when possible, and dispatches a human operator only when reality or compliance still blocks the task.",
+    "ai2human inserts a planner precheck before fallback: the system queries wallet, market, and trade routes, keeps work autonomous when possible, and dispatches a human operator only when identity, compliance, growth execution, or real-world constraints still block the task.",
   githubUrl: "https://github.com/richard7463/ai2humanwork",
   demoPath: "/livedemo",
   reviewerPath: "/reviewer",
@@ -10,20 +10,32 @@ export const SUBMISSION_PROJECT = {
   submissionPath: "/submission"
 };
 
+export const SUBMISSION_SPRINT = {
+  name: "Four.meme AI Sprint",
+  track: "AI x Web3 / growth ops"
+};
+
+export const SUBMISSION_PRIMARY_RAIL = {
+  label: "BNB Chain",
+  network: "bnb-mainnet",
+  tokenSymbol: "USDT",
+  status: "configured for live settlement demo"
+};
+
 export const SUBMISSION_CORE_LOOP = [
   "Task posted with proof requirements",
-  "Planner queries Wallet API, Market API, and Trade API on X Layer",
+  "Planner queries wallet, market, and trade routes",
   "If the task is still blocked, the planner escalates to dispatcher-led human fallback",
   "Human operator claims and executes the last-resort real-world step",
   "Structured proof is submitted and verified",
-  "Settlement is released on X Layer"
+  "Settlement is released on BNB Chain"
 ];
 
 export const SUBMISSION_ONCHAIN_OS_PRECHECK = [
   {
     label: "Wallet API",
     description:
-      "Checks signer control, payout readiness, and whether the agent can keep execution inside an X Layer wallet."
+      "Checks signer control, payout readiness, and whether the agent can keep execution inside a connected wallet."
   },
   {
     label: "Market API",
@@ -32,7 +44,7 @@ export const SUBMISSION_ONCHAIN_OS_PRECHECK = [
   },
   {
     label: "Trade API",
-    description: "Checks whether settlement and asset movement can stay autonomous on X Layer."
+    description: "Checks whether settlement and asset movement can stay autonomous on the configured onchain rail."
   }
 ];
 
@@ -61,5 +73,5 @@ export const SUBMISSION_X402_STATUS = {
   integrated: true,
   provenOnchain: false,
   summary:
-    "An x402-gated verification bundle flow is integrated as a bonus proof-access layer, but the submission centers on the proven task settlement transaction above."
+    "An x402-gated verification bundle flow is integrated as a bonus proof-access layer. It is not the primary scoring claim for this sprint."
 };

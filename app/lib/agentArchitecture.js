@@ -5,20 +5,20 @@ const AGENT_ROLE_CONFIG = [
     id: "planner_agent",
     title: "Planner Agent",
     kind: "agent",
-    description: "Owns route selection after the OnchainOS precheck completes."
+    description: "Owns route selection, turns the request into an execution plan, and decides whether the task stays autonomous or escalates."
   },
   {
     id: "onchainos_precheck",
-    title: "OnchainOS Precheck",
+    title: "Precheck Agent",
     kind: "infra",
     description:
-      "Queries Wallet API, Market API, and Trade API on X Layer before the planner decides whether to stay autonomous or escalate."
+      "Runs wallet, market, and trade checks before the planner decides whether to stay autonomous or escalate."
   },
   {
     id: "dispatcher_agent",
     title: "Dispatcher Agent",
     kind: "agent",
-    description: "Routes blocked work to a payout-ready operator."
+    description: "Matches blocked work to a payout-ready operator and writes the execution brief, proof rules, and payout target."
   },
   {
     id: "human_operator",
@@ -30,13 +30,13 @@ const AGENT_ROLE_CONFIG = [
     id: "verifier_agent",
     title: "Verifier Agent",
     kind: "agent",
-    description: "Checks proof structure, handle/URL integrity, and duplicate submissions."
+    description: "Checks proof structure, field integrity, and duplicate submissions before payout can move."
   },
   {
     id: "settlement_agent",
     title: "Settlement Agent",
     kind: "agent",
-    description: "Releases payout only after verification clears."
+    description: "Releases payout only after the verifier marks the task payable."
   },
   {
     id: "x402_gate_agent",
@@ -125,10 +125,10 @@ function getFallbackMessage(task, roleId) {
       return "Waiting to inspect the task.";
     case "onchainos_precheck":
       if (task?.status === "ai_running") {
-        return "Checking Wallet API, Market API, and Trade API routes on X Layer before escalation.";
+        return "Checking wallet, market, and trade routes before escalation.";
       }
       if (task?.status === "ai_done") {
-        return "Cleared the task for autonomous execution after the X Layer precheck passed.";
+        return "Cleared the task for autonomous execution after the precheck passed.";
       }
       if (["ai_failed", "human_assigned", "human_done", "verified", "paid"].includes(task?.status)) {
         return CHAIN_NATIVE_FALLBACK_FRAMING;
@@ -151,7 +151,7 @@ function getFallbackMessage(task, roleId) {
       if (["verified", "paid"].includes(task?.status)) return "Proof passed verification.";
       return "Waiting for human evidence.";
     case "settlement_agent":
-      if (task?.status === "verified") return "Ready to release payment on X Layer.";
+      if (task?.status === "verified") return "Ready to release payment on the selected settlement rail.";
       if (task?.status === "paid") return "Recorded the settlement receipt.";
       return "Locked until verification passes.";
     case "x402_gate_agent":

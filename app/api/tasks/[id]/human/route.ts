@@ -3,7 +3,7 @@ import { updateDb } from "../../../../lib/store";
 import { checkAdminAuth } from "../../../../lib/adminAuth";
 import { canTransition, explainInvalidTransition } from "../../../../lib/taskStateMachine";
 import { appendEvidence, appendTransitionEvidence } from "../../../../lib/taskEvidence";
-import { isValidWalletAddress } from "../../../../lib/xlayerSettlement";
+import { isValidSettlementAddress } from "../../../../lib/settlement";
 
 export const runtime = "nodejs";
 
@@ -23,9 +23,9 @@ export async function POST(
   let updated: unknown = null;
   let transitionError = "";
 
-  if (walletAddress && !isValidWalletAddress(walletAddress)) {
+  if (walletAddress && !isValidSettlementAddress(walletAddress)) {
     return NextResponse.json(
-      { error: "walletAddress must be a valid EVM address." },
+      { error: "walletAddress must be a valid EVM or Solana address." },
       { status: 400 }
     );
   }

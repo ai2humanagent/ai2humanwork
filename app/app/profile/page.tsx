@@ -230,7 +230,7 @@ export default function ProfilePage() {
             <ul className={authStyles.featureList}>
               <li>Your connected wallet becomes your payout destination.</li>
               <li>Reviewer can assign you directly from the operator list.</li>
-              <li>Settlement follows proof and verification on X Layer.</li>
+              <li>Settlement follows proof and verification on the configured chain.</li>
             </ul>
           </div>
         </div>

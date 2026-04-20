@@ -215,7 +215,7 @@ export default function TaskListClient({ justCreated }: { justCreated: boolean }
         <h1>Tasks</h1>
         <p className={styles.pageLead}>
           Live fallback tasks across social distribution and real-world execution. Connect a
-          wallet, claim a task, then submit proof for reviewer approval and X Layer settlement.
+          wallet, claim a task, then submit proof for reviewer approval and onchain settlement.
         </p>
       </header>
 

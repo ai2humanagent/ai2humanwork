@@ -5,18 +5,31 @@ import { canTransition, explainInvalidTransition } from "../../../../lib/taskSta
 import { appendEvidence, appendTransitionEvidence } from "../../../../lib/taskEvidence";
 import crypto from "crypto";
 import { DEFAULT_SETTLEMENT_TOKEN_SYMBOL } from "../../../../lib/assetLabels.js";
-import { executeXLayerSettlement } from "../../../../lib/xlayerSettlement";
+import {
+  DEFAULT_SETTLEMENT_RAIL,
+  executeSettlement,
+  inferSettlementRailFromAddress,
+  parseSettlementRail
+} from "../../../../lib/settlement";
 
 export const runtime = "nodejs";
 
 export async function POST(
-  _request: Request,
+  request: Request,
   { params }: { params: { id: string } }
 ) {
-  const auth = checkAdminAuth(_request);
+  const auth = checkAdminAuth(request);
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
+
+  const body = await request.json().catch(() => ({}));
+  const requestedRail = parseSettlementRail(body.network);
+  if (body.network && !requestedRail) {
+    return NextResponse.json({ error: "network must be bnb, xlayer or solana." }, { status: 400 });
+  }
+  const receiverAddress = String(body.receiverAddress || "").trim() || undefined;
+  const amountOverride = String(body.amount || "").trim() || undefined;
 
   let updated: unknown = null;
   let payment: unknown = null;
@@ -38,9 +51,13 @@ export async function POST(
       const previousStatus = task.status;
       const receiver =
         task.assignee?.name || (previousStatus === "verified" ? "Verified Executor" : "Unknown");
-      const settlement = await executeXLayerSettlement({
-        amount: task.budget?.trim() || "0",
-        receiverAddress: task.assignee?.walletAddress
+      const resolvedReceiverAddress = receiverAddress || task.assignee?.walletAddress;
+      const settlementRail =
+        requestedRail || inferSettlementRailFromAddress(resolvedReceiverAddress || "") || DEFAULT_SETTLEMENT_RAIL;
+      const settlement = await executeSettlement({
+        rail: settlementRail,
+        amount: amountOverride || task.budget?.trim() || "0",
+        receiverAddress: resolvedReceiverAddress
       });
 
       task.status = "paid";
@@ -50,9 +67,13 @@ export async function POST(
         from: previousStatus,
         to: "paid",
         action:
-          settlement.method === "xlayer_erc20"
+          settlement.method === "bnb_erc20"
+            ? "Payment settled on BNB Chain"
+            : settlement.method === "xlayer_erc20"
             ? "Payment settled on X Layer"
-            : "Payment settled in demo mode"
+            : settlement.method === "solana_native"
+              ? "Payment settled on Solana"
+              : "Payment settled in demo mode"
       });
       appendEvidence(task, {
         by: "system",

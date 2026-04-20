@@ -8,7 +8,12 @@ import {
   getTaskVerificationStatus
 } from "../../../../lib/officialCampaignTasks.js";
 import { DEFAULT_SETTLEMENT_TOKEN_SYMBOL } from "../../../../lib/assetLabels.js";
-import { executeXLayerSettlement } from "../../../../lib/xlayerSettlement";
+import {
+  DEFAULT_SETTLEMENT_RAIL,
+  executeSettlement,
+  inferSettlementRailFromAddress,
+  parseSettlementRail
+} from "../../../../lib/settlement";
 
 export const runtime = "nodejs";
 
@@ -50,6 +55,12 @@ export async function POST(
   const summary = String(body.summary || note || "").trim();
   const by = body.by === "human" ? "human" : "system";
   const type = body.type === "photo" ? "photo" : "note";
+  const requestedRail = parseSettlementRail(body.network);
+  if (body.network && !requestedRail) {
+    return NextResponse.json({ error: "network must be bnb, xlayer or solana." }, { status: 400 });
+  }
+  const receiverAddress = String(body.receiverAddress || "").trim() || undefined;
+  const amountOverride = String(body.amount || "").trim() || undefined;
 
   let updated: Task | null = null;
   let transitionError = "";
@@ -251,10 +262,14 @@ export async function POST(
         content:
           "agent_event: verifier_agent | Approved structured proof after handle/URL integrity and duplicate-proof checks passed."
       });
+      const resolvedReceiverAddress = receiverAddress || task.assignee?.walletAddress;
+      const settlementRail =
+        requestedRail || inferSettlementRailFromAddress(resolvedReceiverAddress || "") || DEFAULT_SETTLEMENT_RAIL;
 
-      const settlement = await executeXLayerSettlement({
-        amount: task.budget?.trim() || "0",
-        receiverAddress: task.assignee?.walletAddress
+      const settlement = await executeSettlement({
+        rail: settlementRail,
+        amount: amountOverride || task.budget?.trim() || "0",
+        receiverAddress: resolvedReceiverAddress
       });
 
       task.status = "paid";
@@ -264,9 +279,13 @@ export async function POST(
         from: "verified",
         to: "paid",
         action:
-          settlement.method === "xlayer_erc20"
+          settlement.method === "bnb_erc20"
+            ? "Payment settled on BNB Chain"
+            : settlement.method === "xlayer_erc20"
             ? "Payment settled on X Layer"
-            : "Payment settled in demo mode"
+            : settlement.method === "solana_native"
+              ? "Payment settled on Solana"
+              : "Payment settled in demo mode"
       });
       appendEvidence(task, {
         by: "system",

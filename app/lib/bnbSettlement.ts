@@ -11,11 +11,11 @@ import {
 import { privateKeyToAccount } from "viem/accounts";
 import type { SettlementNetwork, SettlementReceipt } from "./settlementTypes";
 
-const DEFAULT_XLAYER_RPC_URL = "https://xlayer.drpc.org";
-const DEFAULT_XLAYER_EXPLORER_URL = "https://www.oklink.com/xlayer";
-const DEFAULT_XLAYER_CHAIN_ID = 196;
-const DEFAULT_TOKEN_SYMBOL = "USDT0";
-const DEFAULT_TOKEN_DECIMALS = 6;
+const DEFAULT_BNB_RPC_URL = "https://bsc-dataseed.binance.org";
+const DEFAULT_BNB_EXPLORER_URL = "https://bscscan.com";
+const DEFAULT_BNB_CHAIN_ID = 56;
+const DEFAULT_TOKEN_SYMBOL = "USDT";
+const DEFAULT_TOKEN_DECIMALS = 18;
 
 function normalizePrivateKey(value: string): `0x${string}` {
   return (value.startsWith("0x") ? value : `0x${value}`) as `0x${string}`;
@@ -51,32 +51,32 @@ function resolveTokenDecimals(raw: string | undefined): number {
 }
 
 function resolveChainId(raw: string | undefined): number {
-  const parsed = Number(raw || DEFAULT_XLAYER_CHAIN_ID);
+  const parsed = Number(raw || DEFAULT_BNB_CHAIN_ID);
   if (!Number.isFinite(parsed) || parsed <= 0 || !Number.isInteger(parsed)) {
-    return DEFAULT_XLAYER_CHAIN_ID;
+    return DEFAULT_BNB_CHAIN_ID;
   }
   return parsed;
 }
 
 function resolveNetwork(chainId: number): SettlementNetwork {
-  if (chainId === 196) return "xlayer-mainnet";
-  if (chainId === 195 || chainId === 1952) return "xlayer-testnet";
-  return "xlayer-custom";
+  if (chainId === 56) return "bnb-mainnet";
+  if (chainId === 97) return "bnb-testnet";
+  return "bnb-custom";
 }
 
 function getConfig() {
-  const chainId = resolveChainId(process.env.XLAYER_CHAIN_ID);
-  const rpcUrl = (process.env.XLAYER_RPC_URL || DEFAULT_XLAYER_RPC_URL).trim();
+  const chainId = resolveChainId(process.env.BNB_CHAIN_ID);
+  const rpcUrl = (process.env.BNB_RPC_URL || DEFAULT_BNB_RPC_URL).trim();
   const explorerBaseUrl = normalizeExplorerBaseUrl(
-    (process.env.XLAYER_EXPLORER_BASE_URL || DEFAULT_XLAYER_EXPLORER_URL).trim()
+    (process.env.BNB_EXPLORER_BASE_URL || DEFAULT_BNB_EXPLORER_URL).trim()
   );
   const privateKey = String(
-    process.env.XLAYER_SETTLEMENT_PRIVATE_KEY || process.env.XLAYER_PRIVATE_KEY || ""
+    process.env.BNB_SETTLEMENT_PRIVATE_KEY || process.env.BNB_PRIVATE_KEY || ""
   ).trim();
-  const tokenAddress = String(process.env.XLAYER_SETTLEMENT_TOKEN_ADDRESS || "").trim();
-  const defaultReceiverAddress = String(process.env.XLAYER_SETTLEMENT_TO_ADDRESS || "").trim();
-  const tokenSymbol = String(process.env.XLAYER_SETTLEMENT_TOKEN_SYMBOL || DEFAULT_TOKEN_SYMBOL).trim();
-  const tokenDecimals = resolveTokenDecimals(process.env.XLAYER_SETTLEMENT_TOKEN_DECIMALS);
+  const tokenAddress = String(process.env.BNB_SETTLEMENT_TOKEN_ADDRESS || "").trim();
+  const defaultReceiverAddress = String(process.env.BNB_SETTLEMENT_TO_ADDRESS || "").trim();
+  const tokenSymbol = String(process.env.BNB_SETTLEMENT_TOKEN_SYMBOL || DEFAULT_TOKEN_SYMBOL).trim();
+  const tokenDecimals = resolveTokenDecimals(process.env.BNB_SETTLEMENT_TOKEN_DECIMALS);
   const network = resolveNetwork(chainId);
   const enabled =
     Boolean(privateKey) &&
@@ -98,19 +98,19 @@ function getConfig() {
   };
 }
 
-export function isValidWalletAddress(value: string): boolean {
+export function isValidBnbWalletAddress(value: string): boolean {
   return isAddress(value);
 }
 
-export function getSettlementConfigurationHint(): string {
+export function getBnbSettlementConfigurationHint(): string {
   const config = getConfig();
   if (config.enabled) {
     return `Configured for ${config.network} using ${config.tokenSymbol}.`;
   }
-  return "Configure XLAYER_RPC_URL, XLAYER_SETTLEMENT_PRIVATE_KEY, and XLAYER_SETTLEMENT_TOKEN_ADDRESS for real X Layer settlement. XLAYER_SETTLEMENT_TO_ADDRESS is only a fallback receiver.";
+  return "Configure BNB_RPC_URL, BNB_SETTLEMENT_PRIVATE_KEY, and BNB_SETTLEMENT_TOKEN_ADDRESS for real BNB Chain settlement. BNB_SETTLEMENT_TO_ADDRESS is only a fallback receiver.";
 }
 
-export async function executeXLayerSettlement(input: {
+export async function executeBnbSettlement(input: {
   amount: string;
   receiverAddress?: string;
 }): Promise<SettlementReceipt> {
@@ -129,20 +129,20 @@ export async function executeXLayerSettlement(input: {
       tokenSymbol: config.tokenSymbol,
       tokenAddress: config.tokenAddress || undefined,
       evidenceLabel: `Payment settled in demo mode (${config.tokenSymbol}).`,
-      configurationHint: getSettlementConfigurationHint()
+      configurationHint: getBnbSettlementConfigurationHint()
     };
   }
 
   if (!receiverAddress || !isAddress(receiverAddress)) {
-    throw new Error("A valid X Layer receiver wallet address is required for settlement.");
+    throw new Error("A valid BNB Chain receiver wallet address is required for settlement.");
   }
 
   const chain = defineChain({
     id: config.chainId,
-    name: "X Layer",
+    name: "BNB Chain",
     nativeCurrency: {
-      name: "OKB",
-      symbol: "OKB",
+      name: "BNB",
+      symbol: "BNB",
       decimals: 18
     },
     rpcUrls: {
@@ -152,7 +152,7 @@ export async function executeXLayerSettlement(input: {
     },
     blockExplorers: {
       default: {
-        name: "X Layer Explorer",
+        name: "BscScan",
         url: config.explorerBaseUrl
       }
     }
@@ -179,7 +179,7 @@ export async function executeXLayerSettlement(input: {
 
   const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
   if (receipt.status !== "success") {
-    throw new Error("X Layer settlement transaction did not succeed.");
+    throw new Error("BNB Chain settlement transaction did not succeed.");
   }
 
   const normalizedAmount = formatUnits(value, config.tokenDecimals);
@@ -189,7 +189,7 @@ export async function executeXLayerSettlement(input: {
     amount: normalizedAmount,
     receiverAddress,
     payerAddress: account.address,
-    method: "xlayer_erc20",
+    method: "bnb_erc20",
     status: "paid",
     network: config.network,
     chainId: config.chainId,
@@ -197,6 +197,6 @@ export async function executeXLayerSettlement(input: {
     tokenAddress: config.tokenAddress,
     txHash,
     explorerUrl,
-    evidenceLabel: `Payment settled on X Layer (${config.tokenSymbol}) · tx ${txHash.slice(0, 10)}…`
+    evidenceLabel: `Payment settled on BNB Chain (${config.tokenSymbol}) · tx ${txHash.slice(0, 10)}…`
   };
 }

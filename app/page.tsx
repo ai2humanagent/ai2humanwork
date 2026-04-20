@@ -10,25 +10,25 @@ const copy = {
     app: "Open Tasks"
   },
   hero: {
-    eyebrow: "X Layer Human Fallback Infra",
+    eyebrow: "BNB Chain Agent Fallback Infra",
     titleA: "Agents hit reality.",
     titleB: "ai2human closes the loop.",
     lead:
-      "The planner runs Wallet API, Market API, and Trade API prechecks on X Layer first. If a storefront check, signature, pickup, or in-person confirmation still blocks the task, ai2human dispatches a human operator, collects structured proof, verifies completion, and settles on X Layer.",
+      "The planner runs wallet, market, and trade prechecks first. If campaign growth, merchant onboarding, compliance, or real-world execution still blocks the task, ai2human dispatches a human operator, collects structured proof, verifies completion, and settles on BNB Chain.",
     ctaPrimary: "Open Live Demo",
     ctaSecondary: "Open Task Board",
     ctaTertiary: "Open Submission Proof"
   },
-  meta: ["human fallback infra", "onchainos precheck", "x layer settlement"],
+  meta: ["human fallback infra", "planner precheck", "bnb chain settlement"],
   section: {
-    stackTitle: "OnchainOS + Fallback Stack",
+    stackTitle: "Planner + Fallback Stack",
     stackDesc:
       "Wallet, market, and trade prechecks happen before fallback. Dispatch, proof, verification, and settlement stay inside one auditable loop.",
     stackItems: [
       {
         name: "precheck",
-        label: "OnchainOS Precheck",
-        desc: "The planner queries Wallet API, Market API, and Trade API on X Layer before deciding whether to stay autonomous."
+        label: "Planner Precheck",
+        desc: "The planner queries wallet, market, and trade routes before deciding whether to stay autonomous."
       },
       {
         name: "dispatch",
@@ -41,14 +41,14 @@ const copy = {
         desc: "Capture structured evidence: photos, timestamps, signed receipts, and operator notes."
       },
       {
-        name: "x-layer",
-        label: "X Layer Settlement",
-        desc: "Payment follows verification. When configured, settlement writes a real X Layer transaction hash."
+        name: "settlement",
+        label: "BNB Chain Settlement",
+        desc: "Payment follows verification. When configured, settlement writes a real BNB Chain transaction hash."
       }
     ],
     liveTitle: "Submission Walkthrough",
     liveDesc:
-      "One blocked agent task flows through OnchainOS precheck, human fallback, proof, verification, and X Layer settlement.",
+      "One blocked AI task flows through planner precheck, human fallback, proof, verification, and BNB Chain settlement.",
     loopTitle: "The Loop: Precheck → Human fallback → Proof → Verify → Settle",
     loopDesc:
       "The agent handles what it can. Human fallback is the last-resort execution layer when onchain agents hit real-world constraints or compliance gates.",
@@ -59,7 +59,7 @@ const copy = {
     },
     caseTitle: "Best-Fit Scenarios",
     caseDesc:
-      "Real-world steps and compliance gates that agents cannot finish alone: signatures, pickups, local checks, and photo-based verification.",
+      "Campaign growth, merchant ops, and compliance gates that agents cannot finish alone: identity-bound posts, merchant checks, screenshots, signatures, and proof-based verification.",
     entryTitle: "Three Roles, One Closed Loop",
     entryDesc: "Buyer, operator, and reviewer stay inside the same auditable flow.",
     entries: [
@@ -82,7 +82,7 @@ const copy = {
     }
   },
   footer: {
-    tag: "ai2human — Human fallback infrastructure for agents on X Layer",
+    tag: "ai2human — Human fallback infrastructure for AI agents",
     links: ["Live Demo", "Submission Proof", "Reviewer Console"]
   }
 } as const;
@@ -99,34 +99,34 @@ export default function HomePage() {
   const taskFeed = useMemo(() => {
     const tasks = [
       {
-        title: "Storefront stock check before merchant payout",
-        meta: `Shanghai · ${formatSettlementBudget("80")} · 2h`,
+        title: "Reply under the launch thread with a localized CTA",
+        meta: `X campaign · ${formatSettlementBudget("0.01")} · 2h`,
         badge: "blocked",
-        tags: ["store", "proof", "verify"]
+        tags: ["reply", "proof", "verify"]
       },
       {
-        title: "Signed receipt capture for high-value handoff",
-        meta: `Hong Kong · ${formatSettlementBudget("220")} · 6h`,
+        title: "Quote-post the campaign update with your market take",
+        meta: `X campaign · ${formatSettlementBudget("0.02")} · 6h`,
         badge: "needs human",
-        tags: ["receipt", "handoff", "proof"]
+        tags: ["quote", "growth", "proof"]
       },
       {
-        title: "Retail shelf audit with timestamped photos",
-        meta: `Singapore · ${formatSettlementBudget("399")} · 12h`,
+        title: "Repost the launch thread and keep it live for review",
+        meta: `X campaign · ${formatSettlementBudget("0.01")} · 12h`,
         badge: "review",
-        tags: ["audit", "photo", "review"]
+        tags: ["repost", "timeline", "review"]
       },
       {
-        title: "Pickup handoff with receiver confirmation",
-        meta: `Dubai · ${formatSettlementBudget("99")} · 2h`,
+        title: "Capture a merchant onboarding proof screenshot and summary",
+        meta: `Merchant ops · ${formatSettlementBudget("10")} · 2h`,
         badge: "settled",
-        tags: ["pickup", "confirm", "settle"]
+        tags: ["merchant", "proof", "settle"]
       },
       {
-        title: "On-site inventory check with receipt image",
-        meta: `Seoul · ${formatSettlementBudget("120")} · 4h`,
+        title: "Publish a standalone campaign recap post with CTA",
+        meta: `Community growth · ${formatSettlementBudget("0.03")} · 4h`,
         badge: "needs human",
-        tags: ["offline", "photo", "verify"]
+        tags: ["post", "cta", "verify"]
       }
     ];
 
@@ -136,32 +136,32 @@ export default function HomePage() {
   const humanFeed = useMemo(() => {
     const humans = [
       {
-        title: "Shanghai · store visit / receipt capture",
-        meta: `${formatSettlementBudget("55")} · ready in 2 hours`,
+        title: "Shanghai · bilingual X reply / proof capture",
+        meta: `${formatSettlementBudget("0.02")} · ready in 2 hours`,
         badge: "available",
         tags: ["photo", "proof", "fast"]
       },
       {
-        title: "Hong Kong · handoff / recipient verification",
-        meta: `${formatSettlementBudget("68")} · same day`,
+        title: "Hong Kong · campaign quote-post / thread support",
+        meta: `${formatSettlementBudget("0.03")} · same day`,
         badge: "available",
         tags: ["receipt", "verify", "proof"]
       },
       {
-        title: "Singapore · shelf audit / photo evidence",
-        meta: `${formatSettlementBudget("40")} · same day`,
+        title: "Singapore · merchant onboarding check / screenshot proof",
+        meta: `${formatSettlementBudget("8")} · same day`,
         badge: "available",
         tags: ["pickup", "delivery", "proof"]
       },
       {
-        title: "Dubai · signature / pickup",
-        meta: `${formatSettlementBudget("75")} · high priority`,
+        title: "Dubai · growth recap / localized CTA",
+        meta: `${formatSettlementBudget("0.03")} · high priority`,
         badge: "available",
         tags: ["verify", "photo", "proof"]
       },
       {
-        title: "Seoul · identity check / handoff",
-        meta: `${formatSettlementBudget("90")} · video ok`,
+        title: "Seoul · merchant confirmation / follow-up proof",
+        meta: `${formatSettlementBudget("12")} · video ok`,
         badge: "available",
         tags: ["sign", "proof", "urgent"]
       }
@@ -173,17 +173,17 @@ export default function HomePage() {
   const agentFeed = useMemo(() => {
     const agents = [
       {
-        title: "Review queue · storefront task",
+        title: "Review queue · campaign reply task",
         meta: "waiting for proof package",
         tags: ["verify", "proof", "approve"]
       },
       {
-        title: "Payment release gate · signed receipt",
+        title: "Payment release gate · growth task",
         meta: "verified before settle",
-        tags: ["settle", "review", "x-layer"]
+        tags: ["settle", "review", "bnb"]
       },
       {
-        title: "Dispute check · missing timestamp",
+        title: "Dispute check · missing screenshot",
         meta: "re-review proof bundle",
         tags: ["proof", "review", "retry"]
       },
@@ -212,13 +212,13 @@ export default function HomePage() {
 
   const consoleLines = useMemo(() => {
     return [
-      "[task] storefront verification posted on X Layer flow",
-      "[precheck] wallet, market, and trade routes queried on X Layer",
-      "[planner] physical visit still required, escalating to dispatcher",
+      "[task] campaign reply mission posted with proof requirements",
+      "[precheck] wallet, market, and trade routes queried before escalation",
+      "[planner] identity-bound post still required, escalating to dispatcher",
       "[dispatch] routing to operator in Shanghai as last-resort fallback",
-      "[proof] evidence uploaded: photos + signed receipt",
+      "[proof] evidence uploaded: live post url + screenshot + summary",
       "[verify] reviewer approved the bundle",
-      "[settle] payment released after verification",
+      "[settle] payment released on BNB Chain after verification",
       "[ledger] tx hash attached to settlement record"
     ];
   }, []);
@@ -226,9 +226,9 @@ export default function HomePage() {
   const ledgerLines = useMemo(() => {
     const rows = [
       { label: "task", value: "T-18F2" },
-      { label: "payee", value: "X Layer Operator" },
-      { label: "amount", value: formatSettlementBudget("120.00") },
-      { label: "method", value: "xlayer_erc20" },
+      { label: "payee", value: "Growth Operator" },
+      { label: "amount", value: formatSettlementBudget("12.00") },
+      { label: "method", value: "bnb_erc20" },
       { label: "status", value: "paid" }
     ];
     return [...rows, ...rows];
@@ -237,19 +237,19 @@ export default function HomePage() {
   const caseCards = useMemo(() => {
     return [
       {
-        title: "Storefront Verification",
-        desc: "The planner cannot clear the route onchain, so ai2human dispatches a local operator for proof.",
-        tags: ["store", "proof", "verify"]
+        title: "Campaign Reply Execution",
+        desc: "The planner cannot clear an identity-bound social action onchain, so ai2human dispatches a human operator for the post and proof.",
+        tags: ["growth", "proof", "verify"]
       },
       {
-        title: "Signed Handoff",
-        desc: "A human captures receipt, identity confirmation, and timestamp before payment clears.",
-        tags: ["receipt", "human", "timestamp"]
+        title: "Merchant Proof Collection",
+        desc: "A human captures merchant evidence, onboarding confirmation, and timestamp before payment clears.",
+        tags: ["merchant", "human", "timestamp"]
       },
       {
-        title: "OnchainOS + Settlement",
-        desc: "Wallet, market, and trade prechecks decide the route before proof artifacts are settled on X Layer.",
-        tags: ["precheck", "x-layer", "settle"]
+        title: "Planner + Settlement",
+        desc: "Wallet, market, and trade prechecks decide the route before proof artifacts are settled on BNB Chain.",
+        tags: ["precheck", "bnb", "settle"]
       }
     ];
   }, []);
@@ -422,12 +422,12 @@ export default function HomePage() {
 
           <div className={styles.liveStats}>
             <div className={styles.stat}>
-              <p>{"Proven X Layer tx"}</p>
-              <strong>1</strong>
+              <p>{"Primary rail"}</p>
+              <strong>BNB Chain</strong>
             </div>
             <div className={styles.stat}>
-              <p>{"Auditable loop stages"}</p>
-              <strong>5</strong>
+              <p>{"Historical proof"}</p>
+              <strong>1 X Layer tx</strong>
             </div>
             <div className={styles.stat}>
               <p>{"Bonus proof layer"}</p>
@@ -522,7 +522,7 @@ export default function HomePage() {
                 </div>
                 <div className={styles.stampPay}>
                   <span>{"settled"}</span>
-                  <strong>xlayer_erc20</strong>
+                  <strong>bnb_erc20</strong>
                 </div>
               </div>
               <div className={styles.ledger} aria-hidden>
@@ -743,7 +743,7 @@ export default function HomePage() {
               <div className={styles.footerMeta}>
                 <span>{"Human fallback infra"}</span>
                 <span>{"Proof → verify → settle"}</span>
-                <span>{"X Layer settlement"}</span>
+                <span>{"BNB Chain settlement"}</span>
               </div>
             </div>
             <div className={styles.footerCols}>

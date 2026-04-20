@@ -21,7 +21,7 @@ function makeTaskWithEvidence(templateId, extraEvidence = []) {
       { id: "1", by: "human", type: "note", content: "executor_handle: @operator1" },
       { id: "2", by: "human", type: "note", content: "post_url: https://x.com/operator1/status/1902" },
       { id: "3", by: "human", type: "photo", content: "/brand/ai2human-social-1.png" },
-      { id: "4", by: "human", type: "note", content: "proof_phrase: human fallback on x layer" },
+      { id: "4", by: "human", type: "note", content: "proof_phrase: human fallback for agents" },
       {
         id: "5",
         by: "human",
@@ -94,7 +94,7 @@ test("campaign verification fails when the submitted URL does not match the exec
         id: "4",
         by: "human",
         type: "note",
-        content: "proof_phrase: human fallback on x layer"
+        content: "proof_phrase: human fallback for agents"
       },
       {
         id: "5",

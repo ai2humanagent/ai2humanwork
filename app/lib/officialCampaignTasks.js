@@ -13,12 +13,12 @@ export const DEFAULT_REAL_WORLD_TASK_BUDGET = formatSettlementBudget("45");
 const X_CAMPAIGN_TEMPLATES = [
   {
     id: "x_quote_launch",
-    label: "Quote Official Post",
+    label: "Quote Campaign Post",
     action: "quote",
-    title: "Quote-post the official launch update with your own commentary",
+    title: "Quote-post the campaign update with your own market take and CTA",
     defaultBrief:
-      "Amplify the launch update from your own X account and include the requested CTA.",
-    defaultProofPhrase: "human fallback on x layer",
+      "Amplify the campaign update from your own X account, add your own angle, and include the requested CTA.",
+    defaultProofPhrase: "human fallback for agents",
     proofRequirements: [
       "Attach your X handle.",
       "Attach the live quote-post URL.",
@@ -41,9 +41,9 @@ const X_CAMPAIGN_TEMPLATES = [
     id: "x_reply_thread",
     label: "Reply To Thread",
     action: "reply",
-    title: "Reply to the official thread with a localized summary and CTA",
+    title: "Reply under the official thread with a localized summary, CTA, and community context",
     defaultBrief:
-      "Post a reply under the official thread that helps a new audience understand the announcement.",
+      "Post a reply under the official thread that helps a new audience understand the launch and tells them what to do next.",
     defaultProofPhrase: "proof -> verify -> settle",
     proofRequirements: [
       "Attach your X handle.",
@@ -65,11 +65,11 @@ const X_CAMPAIGN_TEMPLATES = [
   },
   {
     id: "x_repost_update",
-    label: "Repost Official Post",
+    label: "Repost Campaign Post",
     action: "repost",
-    title: "Repost the official campaign tweet from your X account",
+    title: "Repost the campaign thread from your X account and keep it visible on your timeline",
     defaultBrief:
-      "Repost the official campaign post from your account and make the repost visible on your profile.",
+      "Repost the campaign post from your account and make the repost visible on your profile for fast reviewer verification.",
     defaultProofPhrase: "",
     proofRequirements: [
       "Attach your X handle.",
@@ -91,10 +91,10 @@ const X_CAMPAIGN_TEMPLATES = [
     id: "x_post_recap",
     label: "Publish Standalone Post",
     action: "post",
-    title: "Publish a standalone X post that links back to the official update",
+    title: "Publish a standalone X post that recaps the campaign and links back to the official update",
     defaultBrief:
-      "Write a short recap post from your own X account and link back to the official announcement.",
-    defaultProofPhrase: "#ai2human",
+      "Write a short recap post from your own X account, link back to the official announcement, and make the CTA easy to follow.",
+    defaultProofPhrase: "#fourmeme",
     proofRequirements: [
       "Attach your X handle.",
       "Attach the live post URL.",
