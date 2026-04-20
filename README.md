@@ -64,6 +64,7 @@ Fresh BNB Chain proof:
 - Settlement tx: [BscScan transaction](https://bscscan.com/tx/0x9739bff25473e14db16409124648f99536d863e82a4ffcde50356289b09b80a2)
 - Funding swap tx: [BscScan transaction](https://bscscan.com/tx/0xd9e53df924f464a0b40593341a6116158b08118bf2b292176caab6aba3dd1080)
 - Asset: `0.01 USDT` on BNB Chain mainnet
+- Detailed proof log: [`docs/bnb-live-settlement-proof.md`](docs/bnb-live-settlement-proof.md)
 
 ## Historical Onchain Proof
 
