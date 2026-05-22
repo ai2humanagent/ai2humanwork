@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { usePrivy, useWallets } from "@privy-io/react-auth";
 import {
@@ -33,6 +33,7 @@ type Task = {
   budget: string;
   deadline: string;
   acceptance: string;
+  taskType?: "twitter_follow" | "twitter_like" | "twitter_retweet" | "twitter_comment" | "physical";
   status:
     | "created"
     | "ai_running"
@@ -63,6 +64,14 @@ type Task = {
     walletAddress?: string;
   };
   evidence: EvidenceItem[];
+  agentId?: string;
+  rewardDistribution?: {
+    mode: "fcfs" | "lucky_draw" | "equal";
+    totalPool: string;
+    perWinner?: string;
+    maxWinners: number;
+    drawTime?: string;
+  };
 };
 
 type AuthPayload = {
@@ -106,6 +115,64 @@ type VerificationCheck = {
   passed: boolean;
 };
 
+type Quester = {
+  wallet: string;
+  avatarSeed: number;
+  verifiedAt?: string;
+};
+
+type QuestersData = {
+  count: number;
+  claimedCount: number;
+  questers: Quester[];
+};
+
+function useCountdown(targetDate: string | undefined) {
+  const [remaining, setRemaining] = useState({ days: 0, hours: 0, min: 0, sec: 0, ended: !targetDate });
+
+  useEffect(() => {
+    if (!targetDate) {
+      setRemaining({ days: 0, hours: 0, min: 0, sec: 0, ended: true });
+      return;
+    }
+    const target = new Date(targetDate).getTime();
+    function tick() {
+      const diff = Math.max(0, target - Date.now());
+      if (diff <= 0) {
+        setRemaining({ days: 0, hours: 0, min: 0, sec: 0, ended: true });
+        return;
+      }
+      const sec = Math.floor(diff / 1000) % 60;
+      const min = Math.floor(diff / 60000) % 60;
+      const hours = Math.floor(diff / 3600000) % 24;
+      const days = Math.floor(diff / 86400000);
+      setRemaining({ days, hours, min, sec, ended: false });
+    }
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [targetDate]);
+
+  return remaining;
+}
+
+function distributionModeLabel(mode?: string): string {
+  if (mode === "fcfs") return "FCFS";
+  if (mode === "lucky_draw") return "Lucky Draw";
+  if (mode === "equal") return "Equal Split";
+  return "FCFS";
+}
+
+function avatarColor(seed: number): string {
+  const hue = seed % 360;
+  return `hsl(${hue}, 60%, 45%)`;
+}
+
+function shortWallet(wallet: string): string {
+  if (wallet.length <= 8) return wallet;
+  return `${wallet.slice(0, 4)}..${wallet.slice(-3)}`;
+}
+
 const statusLabels: Record<Task["status"], string> = {
   created: "Open",
   ai_running: "AI Running",
@@ -142,6 +209,7 @@ function shortValue(value: string, start = 8, end = 6) {
 
 function settlementExplorerLabel(payment: PaymentResult) {
   const network = String(payment.network || "").toLowerCase();
+  if (network.includes("base")) return "View Base transaction on Basescan";
   if (network.includes("bnb")) return "View BNB transaction on BscScan";
   if (network.includes("xlayer")) return "View X Layer transaction";
   if (network.includes("solana")) return "View Solana transaction";
@@ -198,11 +266,176 @@ export default function TaskDetailClient({
   const [timestampNote, setTimestampNote] = useState("");
   const [proofPhrase, setProofPhrase] = useState(initialTask.campaign?.proofPhrase || "");
   const [summary, setSummary] = useState("");
-  const connectedWallet =
-    wallets.find((wallet) => wallet.walletClientType === "privy" && wallet.address)?.address ||
+  // Per-task interaction state for QuestN-style task list
+  type TaskItemState = { actionClicked: boolean; verifying: boolean; verified: boolean };
+  const [taskStates, setTaskStates] = useState<Record<string, TaskItemState>>({});
+  const [expandedTasks, setExpandedTasks] = useState<Record<string, boolean>>({ "0": true });
+  const [claimingReward, setClaimingReward] = useState(false);
+  const [claimResult, setClaimResult] = useState<PaymentResult | null>(null);
+  const [questProgressLoaded, setQuestProgressLoaded] = useState(false);
+  const [questersData, setQuestersData] = useState<QuestersData>({ count: 0, claimedCount: 0, questers: [] });
+  // Prioritize external wallet (MetaMask etc.) over Privy embedded wallet
+  const rawWallet =
+    wallets.find((wallet) => wallet.walletClientType !== "privy" && wallet.address)?.address ||
     user?.wallet?.address ||
     wallets.find((wallet) => wallet.address)?.address ||
     undefined;
+  // Only trust wallet address if user is actually authenticated
+  const connectedWallet = (ready && authenticated) ? rawWallet : undefined;
+
+  const isTwitterTask = ["twitter_follow", "twitter_like", "twitter_retweet", "twitter_comment"].includes(task.taskType || "");
+
+  // Countdown for reward card
+  const dist = task.rewardDistribution;
+  const countdownTarget = dist?.drawTime || task.deadline || undefined;
+  const countdown = useCountdown(countdownTarget);
+  const distMode = distributionModeLabel(dist?.mode);
+  const maxWinners = dist?.maxWinners || 1;
+
+  // Load quest progress from API
+  async function loadQuestProgress(wallet: string) {
+    try {
+      const res = await fetch(
+        `/api/tasks/${initialTask.id}/quest-progress?wallet=${encodeURIComponent(wallet.toLowerCase())}`,
+        { cache: "no-store", credentials: "same-origin" }
+      );
+      if (!res.ok) return;
+      const data = await res.json();
+      const subtasks = data.subtasks as Record<string, string> | undefined;
+      if (subtasks) {
+        const newStates: Record<string, TaskItemState> = {};
+        for (const key of ["0", "1", "2", "3"]) {
+          const status = subtasks[key] || "pending";
+          newStates[key] = {
+            actionClicked: status === "action_done" || status === "verified",
+            verifying: false,
+            verified: status === "verified"
+          };
+        }
+        setTaskStates(newStates);
+      }
+      if (data.claimed && data.payment) {
+        setClaimResult(data.payment);
+      }
+      setQuestProgressLoaded(true);
+    } catch {
+      // Silently fail; user can still interact
+    }
+  }
+
+  // Per-task action click handler — persists to DB
+  async function handleTaskAction(taskKey: string) {
+    if (!connectedWallet) {
+      login();
+      return;
+    }
+    try {
+      const res = await fetch(`/api/tasks/${initialTask.id}/quest-progress`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({ wallet: connectedWallet.toLowerCase(), subtaskKey: taskKey, action: "action" })
+      });
+      const data = await res.json();
+      if (data.status === "action_done" || data.status === "verified") {
+        setTaskStates((prev) => ({
+          ...prev,
+          [taskKey]: { ...(prev[taskKey] || { actionClicked: false, verifying: false, verified: false }), actionClicked: true }
+        }));
+      }
+    } catch {
+      // Best-effort — still enable button so user can retry
+      setTaskStates((prev) => ({
+        ...prev,
+        [taskKey]: { ...(prev[taskKey] || { actionClicked: false, verifying: false, verified: false }), actionClicked: true }
+      }));
+    }
+  }
+
+  // Per-task verify handler — simple DB write, no wallet signature needed
+  async function handleTaskVerify(taskKey: string) {
+    if (!connectedWallet) {
+      login();
+      return;
+    }
+    const state = taskStates[taskKey];
+    if (!state?.actionClicked || state.verifying || state.verified) return;
+    setTaskStates((prev) => ({
+      ...prev,
+      [taskKey]: { ...prev[taskKey], verifying: true }
+    }));
+    try {
+      const res = await fetch(`/api/tasks/${initialTask.id}/quest-progress`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({
+          wallet: connectedWallet.toLowerCase(),
+          subtaskKey: taskKey,
+          action: "verify"
+        })
+      });
+      const data = await res.json();
+      if (data.status === "verified") {
+        setTaskStates((prev) => ({
+          ...prev,
+          [taskKey]: { ...prev[taskKey], verifying: false, verified: true }
+        }));
+      } else {
+        setTaskStates((prev) => ({
+          ...prev,
+          [taskKey]: { ...prev[taskKey], verifying: false }
+        }));
+        setError(data.error || "Verification failed. Please try again.");
+      }
+    } catch (err) {
+      setTaskStates((prev) => ({
+        ...prev,
+        [taskKey]: { ...prev[taskKey], verifying: false }
+      }));
+      setError(err instanceof Error ? err.message : "Verification failed.");
+    }
+  }
+
+  // Claim reward — triggers real settlement
+  async function handleClaimReward() {
+    if (!connectedWallet) {
+      login();
+      return;
+    }
+    setClaimingReward(true);
+    setError("");
+    try {
+      const res = await fetch(`/api/tasks/${initialTask.id}/claim-reward`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({ wallet: connectedWallet.toLowerCase() })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Claim failed");
+      }
+      if (data.payment) {
+        setClaimResult(data.payment);
+        cachePayment(initialTask.id, data.payment);
+        setMessage(
+          data.alreadyClaimed
+            ? "Reward already claimed!"
+            : `${data.payment.amount} ${data.payment.tokenSymbol || "USDC"} sent to your wallet!`
+        );
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Claim failed");
+    } finally {
+      setClaimingReward(false);
+    }
+  }
+
+  // Toggle task expand/collapse
+  function toggleTask(taskKey: string) {
+    setExpandedTasks((prev) => ({ ...prev, [taskKey]: !prev[taskKey] }));
+  }
 
   async function loadTask() {
     setLoading(true);
@@ -271,6 +504,24 @@ export default function TaskDetailClient({
     if (!ready || !authenticated) return;
     loadAuth();
   }, [ready, authenticated, getAccessToken, connectedWallet]);
+
+  // Load quest progress when wallet is available
+  useEffect(() => {
+    if (connectedWallet && !questProgressLoaded) {
+      loadQuestProgress(connectedWallet);
+    }
+  }, [connectedWallet, questProgressLoaded]);
+
+  // Load questers data for Twitter tasks
+  useEffect(() => {
+    if (!isTwitterTask) return;
+    fetch(`/api/tasks/${initialTask.id}/questers`, { cache: "no-store" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data) setQuestersData(data);
+      })
+      .catch(() => {});
+  }, [isTwitterTask, initialTask.id]);
 
   const evidenceFields = useMemo(() => getTaskEvidenceFields(task), [task]);
   const claimedByMe = useMemo(() => isClaimedByCurrentUser(task, auth), [task, auth]);
@@ -444,6 +695,547 @@ export default function TaskDetailClient({
     }
   }
 
+  // ===== QuestN-Style Twitter Task Layout =====
+  if (isTwitterTask) {
+    const allTasksVerified = ["0","1","2","3"].every(k => taskStates[k]?.verified);
+    // For quest/twitter tasks, "done" means the current user has claimed, not the global task status
+    const isDone = !!claimResult;
+
+    // Twitter SVG icon
+    const twitterSvg = (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+      </svg>
+    );
+
+    // Task type icons
+    const followSvg = (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+        <circle cx="9" cy="7" r="4"/>
+        <line x1="19" y1="8" x2="19" y2="14"/>
+        <line x1="22" y1="11" x2="16" y2="11"/>
+      </svg>
+    );
+    const likeSvg = (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+      </svg>
+    );
+    const retweetSvg = (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <polyline points="17 1 21 5 17 9"/>
+        <path d="M3 11V9a4 4 0 0 1 4-4h14"/>
+        <polyline points="7 23 3 19 7 15"/>
+        <path d="M21 13v2a4 4 0 0 1-4 4H3"/>
+      </svg>
+    );
+    const joinSvg = (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+        <polyline points="10 17 15 12 10 7"/>
+        <line x1="15" y1="12" x2="3" y2="12"/>
+      </svg>
+    );
+    const commentSvg = (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+      </svg>
+    );
+
+    // Check icon for completed
+    const checkSvg = (
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+        <polyline points="20 6 9 17 4 12"/>
+      </svg>
+    );
+
+    // Share icon
+    const shareSvg = (
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <circle cx="18" cy="5" r="3"/>
+        <circle cx="6" cy="12" r="3"/>
+        <circle cx="18" cy="19" r="3"/>
+        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+      </svg>
+    );
+
+    // Globe icon for footer
+    const globeSvg = (
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="2" y1="12" x2="22" y2="12"/>
+        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+      </svg>
+    );
+
+    // Document icon for footer
+    const docSvg = (
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <line x1="16" y1="13" x2="8" y2="13"/>
+        <line x1="16" y1="17" x2="8" y2="17"/>
+        <polyline points="10 9 9 9 8 9"/>
+      </svg>
+    );
+
+    function getTaskActionLabel(taskType: string): string {
+      if (taskType === "twitter_follow") return "Follow";
+      if (taskType === "twitter_like") return "Like";
+      if (taskType === "twitter_retweet") return "Repost";
+      if (taskType === "twitter_comment") return "Comment";
+      return "Join";
+    }
+
+    function getTaskDisplayLabel(taskType: string, requesterHandle?: string): string {
+      const handle = requesterHandle?.replace("@", "") || "ai2humanwork";
+      if (taskType === "twitter_follow") return `Follow @${handle} on X`;
+      if (taskType === "twitter_like") return `Like a post by @${handle} on X`;
+      if (taskType === "twitter_retweet") return `Repost @${handle} on X`;
+      if (taskType === "twitter_comment") return `Comment on @${handle}'s post`;
+      return `Complete task on X`;
+    }
+
+    function getDeadlineDisplay() {
+      const deadline = task.deadline;
+      if (deadline === "24h") {
+        return "2026/05/29 00:30 ~ 2026/05/29 23:59 (UTC+08:00)";
+      }
+      return "2026/05/21 00:30 ~ 2026/05/28 00:30 (UTC+08:00)";
+    }
+
+    // Mock related quests for "For You" section
+    const relatedQuests = [
+      { id: "rq1", name: "AI2Human Lab", title: "Follow @ai2humanwork on X for Alpha", reward: "$5.00" },
+      { id: "rq2", name: "BNB Chain", title: "Like BNB Chain's latest announcement", reward: "$3.00" },
+      { id: "rq3", name: "Base Protocol", title: "Join Base Discord and verify", reward: "$8.00" },
+    ];
+
+    return (
+      <main className={styles.page}>
+        <div className={styles.qnOuter}>
+          {/* Back link */}
+          <Link href="/tasks" className={styles.backLink}>← Back to tasks</Link>
+
+          {/* Error / Success messages */}
+          {error ? <div className={styles.noticeMsg}>{error}</div> : null}
+          {message && !isDone ? <div className={styles.successMsg}>{message}</div> : null}
+
+          {/* Two-column grid */}
+          <div className={styles.qnSection}>
+            {/* ===== Left Column ===== */}
+            <div className={styles.qnMain}>
+
+              {/* Detail Card: community + title + tasks + warning */}
+              <div className={styles.qnDetail}>
+                {/* Community Header */}
+                <div className={styles.qnCommunityBox}>
+                  <div className={styles.qnCommunity}>
+                    <div className={styles.qnLogo}>
+                      <img src="/brand/ai2human-dual-arrow-256.png" alt="AI2Human" />
+                    </div>
+                    <span className={styles.qnName}>
+                      {task.campaign?.requesterHandle || "@ai2humanwork"}
+                    </span>
+                  </div>
+                  {/* Share button - 3D style */}
+                  <div className={`${styles.btn3d} ${styles.btn3dGhost}`}>
+                    <div className={styles.btn3dInner}>
+                      <button type="button" className={styles.btn3dFace}>
+                        {shareSvg}
+                        Share
+                      </button>
+                      <span className={styles.btn3dShadow} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Title + Tags */}
+                <div className={styles.qnTitleWrap}>
+                  <h1 className={styles.qnTitle}>{task.title}</h1>
+                  <div className={styles.qnTagBox}>
+                    <span className={`${styles.qnTag} ${isDone ? styles.qnTagCompleted : styles.qnTagOngoing}`}>
+                      {!isDone && <span className={styles.qnStatusDot} />}
+                      {isDone ? "Completed" : "Ongoing"}
+                    </span>
+                    <span className={styles.qnTag}>{getDeadlineDisplay()}</span>
+                  </div>
+                </div>
+
+                {/* Task List */}
+                <div className={styles.qnTaskList}>
+                  {[
+                    { key: "0", icon: task.taskType === "twitter_follow" ? followSvg : task.taskType === "twitter_like" ? likeSvg : task.taskType === "twitter_retweet" ? retweetSvg : task.taskType === "twitter_comment" ? commentSvg : twitterSvg, label: task.campaign?.label || getTaskDisplayLabel(task.taskType || "twitter_follow", task.campaign?.requesterHandle), actionLabel: getTaskActionLabel(task.taskType || "twitter_follow"), actionUrl: task.campaign?.targetUrl || "https://x.com" },
+                    { key: "1", icon: joinSvg, label: "Join AI2Human Discord", actionLabel: "Join", actionUrl: "https://discord.gg/ai2human" },
+                    { key: "2", icon: retweetSvg, label: "Repost pinned tweet", actionLabel: "Repost", actionUrl: "https://x.com/ai2humanwork" },
+                    { key: "3", icon: likeSvg, label: "Like announcement post", actionLabel: "Like", actionUrl: "https://x.com/ai2humanwork" },
+                  ].map((item) => {
+                    const state = taskStates[item.key] || { actionClicked: false, verifying: false, verified: false };
+                    const isExpanded = expandedTasks[item.key] || false;
+                    return (
+                      <div key={item.key} className={styles.qnTaskItem}>
+                        <div className={styles.qnTaskExpanded}>
+                          {/* Title bar — click to expand/collapse */}
+                          <div className={styles.qnTaskHead} onClick={() => toggleTask(item.key)} role="button" tabIndex={0}>
+                            <div className={state.verified ? `${styles.qnTaskIcon} ${styles.qnTaskIconDone}` : styles.qnTaskIcon}>
+                              {item.icon}
+                            </div>
+                            <span className={styles.qnTaskLabel}>{item.label}</span>
+                            <div className={state.verified ? `${styles.qnTaskArrow} ${styles.qnTaskArrowDone}` : styles.qnTaskArrow}>
+                              {state.verified ? checkSvg : (
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>
+                                  <polyline points="6 9 12 15 18 9"/>
+                                </svg>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Task body with action + verify buttons */}
+                          {isExpanded && (
+                            <div className={styles.qnTaskBody}>
+                              {!connectedWallet ? (
+                                <div className={styles.qnTaskButtons}>
+                                  <div className={`${styles.btn3d} ${styles.btn3dGreen}`}>
+                                    <div className={styles.btn3dInner}>
+                                      <button
+                                        type="button"
+                                        className={styles.btn3dFace}
+                                        onClick={() => login()}
+                                      >
+                                        Connect Wallet
+                                      </button>
+                                      <span className={styles.btn3dShadow} />
+                                    </div>
+                                  </div>
+                                </div>
+                              ) : state.verified ? (
+                                <div className={styles.qnTaskDoneInline}>
+                                  {checkSvg}
+                                  <span>Task completed successfully</span>
+                                </div>
+                              ) : (
+                                <div className={styles.qnTaskButtons}>
+                                  {/* Action button - 3D Black */}
+                                  <div className={`${styles.btn3d} ${styles.btn3dBlack}`}>
+                                    <div className={styles.btn3dInner}>
+                                      <a
+                                        href={item.actionUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className={styles.btn3dFace}
+                                        onClick={(e) => {
+                                          if (!connectedWallet) {
+                                            e.preventDefault();
+                                            login();
+                                            return;
+                                          }
+                                          handleTaskAction(item.key);
+                                        }}
+                                      >
+                                        {twitterSvg}
+                                        {item.actionLabel}
+                                      </a>
+                                      <span className={styles.btn3dShadow} />
+                                    </div>
+                                  </div>
+                                  {/* Verify button - 3D Green (disabled until action clicked) */}
+                                  <div className={`${styles.btn3d} ${styles.btn3dGreen} ${!state.actionClicked ? styles.btn3dDisabled : ""}`}>
+                                    <div className={styles.btn3dInner}>
+                                      <button
+                                        type="button"
+                                        className={styles.btn3dFace}
+                                        disabled={!state.actionClicked || state.verifying}
+                                        onClick={() => handleTaskVerify(item.key)}
+                                      >
+                                        {state.verifying ? "Verifying..." : "Verify"}
+                                      </button>
+                                      <span className={styles.btn3dShadow} />
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Warning notice */}
+                <div className={styles.qnWarning}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                    <line x1="12" y1="9" x2="12" y2="13"/>
+                    <line x1="12" y1="17" x2="12.01" y2="17"/>
+                  </svg>
+                  Be careful with links. Always check before you click.
+                </div>
+              </div>
+
+              {/* Profile reminder */}
+              {!auth?.human?.id && !isDone && (
+                <div className={styles.qnProfileNotice}>
+                  Complete your operator profile to start earning.
+                  <a href="/app/profile">→ Complete Profile</a>
+                </div>
+              )}
+
+              {/* Description */}
+              <div className={styles.qnDesc}>
+                <p className={styles.qnDescTitle}>Description</p>
+                <div className={styles.qnDescContent}>
+                  <p>{task.campaign?.brief || task.acceptance}</p>
+                  {task.campaign?.targetUrl && (
+                    <p>Target: <a href={task.campaign.targetUrl} target="_blank" rel="noreferrer">{task.campaign.targetUrl}</a></p>
+                  )}
+                </div>
+              </div>
+
+              {/* For You */}
+              <div className={styles.qnForYou}>
+                <div className={styles.qnForYouHead}>
+                  <h3 className={styles.qnForYouTitle}>For You</h3>
+                </div>
+                <div className={styles.qnForYouGrid}>
+                  {relatedQuests.map((quest) => (
+                    <a key={quest.id} href={`/tasks/${quest.id}`} className={styles.qnQuestCard}>
+                      <div className={styles.qnQuestCardBg} />
+                      <div className={styles.qnQuestCardBody}>
+                        <div className={styles.qnQuestCardTop}>
+                          <div className={styles.qnQuestCardLogo}>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                            </svg>
+                          </div>
+                          <span className={styles.qnQuestCardName}>{quest.name}</span>
+                        </div>
+                        <p className={styles.qnQuestCardTitle}>{quest.title}</p>
+                        <div className={styles.qnQuestCardReward}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="M12 6v12M6 12h12"/>
+                          </svg>
+                          {quest.reward}
+                        </div>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+                {/* Explore More button */}
+                <div className={`${styles.qnExplore} ${styles.btn3d} ${styles.btn3dGhost}`}>
+                  <div className={styles.btn3dInner}>
+                    <a href="/tasks" className={styles.btn3dFace}>Explore More</a>
+                    <span className={styles.btn3dShadow} />
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className={styles.qnFooter}>
+                <div className={styles.qnFooterLinks}>
+                  <a href="https://ai2human.work" target="_blank" rel="noreferrer" className={styles.qnFooterLink}>
+                    {globeSvg}
+                    Official Website
+                  </a>
+                  <a href="https://ai2human.work/whitepaper" target="_blank" rel="noreferrer" className={styles.qnFooterLink}>
+                    {docSvg}
+                    Docs
+                  </a>
+                </div>
+                <div className={styles.qnFooterSocials}>
+                  <a href="https://x.com/ai2humanwork" target="_blank" rel="noreferrer" className={styles.qnFooterSocialIcon}>
+                    {twitterSvg}
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            {/* ===== Right Column (Sidebar) ===== */}
+            <div className={styles.qnSidebar}>
+              {/* Reward Card */}
+              <div className={styles.qnRewardCard}>
+                <div className={styles.qnRewardHeader}>
+                  <h3 className={styles.qnRewardH3}>Reward</h3>
+                  <span className={styles.qnRewardBadge}>{distMode}</span>
+                </div>
+
+                {/* Key reward stats */}
+                <div className={styles.qnRewardStats}>
+                  <div className={styles.qnStatItem}>
+                    <span className={styles.qnStatValue}>{dist?.perWinner || task.budget}</span>
+                    <span className={styles.qnStatLabel}>Per Winner</span>
+                  </div>
+                  <div className={styles.qnStatDivider} />
+                  <div className={styles.qnStatItem}>
+                    <span className={styles.qnStatValue}>{maxWinners}</span>
+                    <span className={styles.qnStatLabel}>Winners</span>
+                  </div>
+                  {dist?.totalPool && maxWinners > 1 && (
+                    <>
+                      <div className={styles.qnStatDivider} />
+                      <div className={styles.qnStatItem}>
+                        <span className={styles.qnStatValue}>{dist.totalPool}</span>
+                        <span className={styles.qnStatLabel}>Total Pool</span>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* Deadline / Countdown */}
+                <div className={styles.qnCountdown}>
+                  {countdown.ended ? (
+                    <div className={styles.qnCountdownLabel}>Ended</div>
+                  ) : countdownTarget ? (
+                    <>
+                      <div className={styles.qnCountdownLabel}>Ends in</div>
+                      <div className={styles.qnTimerRow}>
+                        <div className={styles.qnTimerItem}>
+                          <span className={styles.qnTimerNum}>{String(countdown.days).padStart(2, "0")}</span>
+                          <span className={styles.qnTimerUnit}>Days</span>
+                        </div>
+                        <div className={styles.qnTimerItem}>
+                          <span className={styles.qnTimerNum}>{String(countdown.hours).padStart(2, "0")}</span>
+                          <span className={styles.qnTimerUnit}>Hours</span>
+                        </div>
+                        <div className={styles.qnTimerItem}>
+                          <span className={styles.qnTimerNum}>{String(countdown.min).padStart(2, "0")}</span>
+                          <span className={styles.qnTimerUnit}>Min</span>
+                        </div>
+                        <div className={styles.qnTimerItem}>
+                          <span className={styles.qnTimerNum}>{String(countdown.sec).padStart(2, "0")}</span>
+                          <span className={styles.qnTimerUnit}>Sec</span>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className={styles.qnCountdownLabel}>
+                      Deadline: {task.deadline || "No deadline"}
+                    </div>
+                  )}
+                </div>
+
+                {/* Chain */}
+                <div className={styles.qnRewardInfo}>
+                  <div className={styles.qnChainRow}>
+                    <div className={styles.qnChainIcon}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                        <circle cx="12" cy="12" r="10"/>
+                      </svg>
+                    </div>
+                    <span className={styles.qnChainName}>Base · USDC</span>
+                  </div>
+                </div>
+
+                {/* Claim Button */}
+                {claimResult ? (
+                  <div className={styles.qnClaimDone}>
+                    {checkSvg}
+                    {claimResult.amount || task.budget} {claimResult.tokenSymbol || "USDC"} Claimed
+                    {claimResult.explorerUrl && (
+                      <a
+                        href={claimResult.explorerUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className={styles.qnClaimTxLink}
+                      >
+                        View transaction →
+                      </a>
+                    )}
+                  </div>
+                ) : !connectedWallet ? (
+                  <div className={`${styles.qnClaimWrap} ${styles.btn3d} ${styles.btn3dGhost}`}>
+                    <div className={styles.btn3dInner}>
+                      <button
+                        type="button"
+                        className={styles.btn3dFace}
+                        onClick={() => login()}
+                      >
+                        Connect Wallet
+                      </button>
+                      <span className={styles.btn3dShadow} />
+                    </div>
+                  </div>
+                ) : allTasksVerified ? (
+                  <div className={`${styles.qnClaimWrap} ${styles.btn3d} ${styles.btn3dGreen}`}>
+                    <div className={styles.btn3dInner}>
+                      <button
+                        type="button"
+                        className={styles.btn3dFace}
+                        disabled={claimingReward}
+                        onClick={handleClaimReward}
+                      >
+                        {claimingReward ? "Claiming..." : "Claim Reward"}
+                      </button>
+                      <span className={styles.btn3dShadow} />
+                    </div>
+                  </div>
+                ) : (
+                  <div className={`${styles.qnClaimWrap} ${styles.btn3d} ${styles.btn3dGreen} ${styles.btn3dDisabled}`}>
+                    <div className={styles.btn3dInner}>
+                      <button
+                        type="button"
+                        className={styles.btn3dFace}
+                        disabled
+                      >
+                        Claim Reward
+                      </button>
+                      <span className={styles.btn3dShadow} />
+                    </div>
+                  </div>
+                )}
+
+                {!connectedWallet && (
+                  <p className={styles.qnClaimTips}>Connect wallet to start earning</p>
+                )}
+                {connectedWallet && !allTasksVerified && !claimResult && (
+                  <p className={styles.qnClaimTips}>Complete all tasks to claim</p>
+                )}
+              </div>
+
+              {/* Questers Card */}
+              <div className={styles.qnQuestersCard}>
+                <div className={styles.qnQuestersHeader}>
+                  <h3 className={styles.qnQuestersH3}>Questers</h3>
+                  <span className={styles.qnQuestersNum}>{questersData.count}</span>
+                </div>
+                <div className={styles.qnAvatarList}>
+                  {questersData.questers.slice(0, 6).map((q) => (
+                    <div
+                      key={q.wallet}
+                      className={styles.qnAvatar}
+                      style={{ backgroundColor: avatarColor(q.avatarSeed) }}
+                      title={shortWallet(q.wallet)}
+                    >
+                      {q.wallet.slice(2, 4).toUpperCase()}
+                    </div>
+                  ))}
+                  {questersData.count > 6 && (
+                    <div className={styles.qnAvatar}>+{questersData.count - 6}</div>
+                  )}
+                  {questersData.count === 0 && (
+                    <div className={styles.qnAvatar} style={{ opacity: 0.4 }}>—</div>
+                  )}
+                </div>
+                <div className={`${styles.qnShowMore} ${styles.btn3d} ${styles.btn3dGhost}`}>
+                  <div className={styles.btn3dInner}>
+                    <button type="button" className={styles.btn3dFace} onClick={() => loadTask()}>
+                      Show More
+                    </button>
+                    <span className={styles.btn3dShadow} />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  // ===== Standard (non-Twitter) Task Layout =====
   return (
     <main className={styles.page}>
       <div className={styles.topbar}>

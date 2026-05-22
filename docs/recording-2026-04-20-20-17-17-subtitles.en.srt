@@ -1,0 +1,55 @@
+1
+00:00:00,000 --> 00:00:08,000
+This is ai2human,
+a human fallback infrastructure layer for AI agents.
+
+2
+00:00:08,000 --> 00:00:16,000
+When an agent gets stuck on a real-world step,
+the task moves to the market for human execution.
+
+3
+00:00:16,000 --> 00:00:24,000
+Here I open a reply task,
+with the reward, deadline, execution brief, and proof requirements.
+
+4
+00:00:24,000 --> 00:00:32,000
+First I claim the task.
+Once claimed, payout is tied to this operator and wallet.
+
+5
+00:00:32,000 --> 00:00:40,000
+Then I switch to X, open the official thread,
+and prepare a real, verifiable reply.
+
+6
+00:00:40,000 --> 00:00:48,000
+I post the reply and keep it live,
+so it can serve as public proof for verification.
+
+7
+00:00:48,000 --> 00:00:58,000
+Back on the task page, I submit the execution proof:
+the account, the reply URL, the required phrase, and a short summary.
+
+8
+00:00:58,000 --> 00:01:08,000
+The system checks that the proof is complete,
+confirms the URL matches the executor handle, and verifies the evidence structure.
+
+9
+00:01:08,000 --> 00:01:18,000
+Once verification passes, the task moves to paid
+and immediately generates an onchain settlement proof.
+
+10
+00:01:18,000 --> 00:01:28,000
+Here you can see the real BNB Chain transaction hash,
+the receiver address, the token, and the settlement rail.
+
+11
+00:01:28,000 --> 00:01:40,000
+Finally, we open the block explorer and confirm that
+0.01 USDT was transferred from the payer wallet to the executor wallet.
+That is the full ai2human loop: task, proof, verify, and settle.

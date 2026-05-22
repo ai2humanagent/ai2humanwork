@@ -1,20 +1,22 @@
 import Link from "next/link";
 import {
-  SUBMISSION_SPRINT,
-  SUBMISSION_PRIMARY_RAIL,
+  SUBMISSION_BASE_ROLLOUT,
+  SUBMISSION_BASE_SETTLEMENT,
+  SUBMISSION_BNB_SETTLEMENT,
   SUBMISSION_CHAIN_NATIVE_FRAMING,
   SUBMISSION_CORE_LOOP,
-  SUBMISSION_BNB_SETTLEMENT,
   SUBMISSION_ONCHAIN_OS_PRECHECK,
+  SUBMISSION_PRIMARY_RAIL,
   SUBMISSION_PROJECT,
   SUBMISSION_REAL_SETTLEMENT,
+  SUBMISSION_SPRINT,
   SUBMISSION_X402_STATUS
 } from "../lib/submissionProof.js";
 
 export const metadata = {
   title: "ai2human Submission Proof",
   description:
-    "Hackathon submission surface for ai2human, including live BNB Chain settlement proof, historical X Layer settlement proof, and live product routes."
+    "Base-first submission surface for ai2human, including the active Base rollout, archived BNB and X Layer receipts, and live product routes."
 };
 
 const scenarios = [
@@ -29,8 +31,9 @@ const checks = [
   "Live demo showing the closed loop",
   "Planner path starts with wallet / market / trade precheck",
   "Reviewer console with proof and settlement history",
-  "A live BNB Chain USDT settlement transaction hash",
-  "A real historical X Layer settlement transaction hash",
+  "Base is the default settlement rail across wallet, demo, reviewer, and task detail",
+  "A live Base USDC settlement transaction hash",
+  "Archived BNB Chain and X Layer settlement hashes remain linked for historical proof",
   "Structured proof tied to one completed task"
 ];
 
@@ -116,7 +119,7 @@ export default function SubmissionPage() {
                 {SUBMISSION_PROJECT.oneLiner}
               </p>
             </div>
-            <span className="status-pill status-paid">Proven Onchain</span>
+            <span className="status-pill status-paid">Base-first</span>
           </div>
 
           <div className="reviewer-metric-grid">
@@ -134,7 +137,7 @@ export default function SubmissionPage() {
             </div>
             <div>
               <span>Proof status</span>
-              <strong>BNB mainnet tx + historical X Layer tx</strong>
+              <strong>Live Base tx + archived BNB/X Layer receipts</strong>
             </div>
           </div>
 
@@ -146,10 +149,21 @@ export default function SubmissionPage() {
               Open reviewer console
             </Link>
             <Link href={SUBMISSION_REAL_SETTLEMENT.taskPath} style={buttonStyle}>
-              Open settled task
+              Open archived paid task
             </Link>
             <a href={SUBMISSION_PROJECT.githubUrl} target="_blank" rel="noreferrer" style={buttonStyle}>
               Open GitHub
+            </a>
+            <a href={SUBMISSION_BASE_ROLLOUT.explorerUrl} target="_blank" rel="noreferrer" style={buttonStyle}>
+              Open Base explorer
+            </a>
+            <a
+              href={SUBMISSION_BASE_SETTLEMENT.explorerUrl}
+              target="_blank"
+              rel="noreferrer"
+              style={buttonStyle}
+            >
+              Open live Base tx
             </a>
             <a
               href={SUBMISSION_BNB_SETTLEMENT.explorerUrl}
@@ -157,7 +171,7 @@ export default function SubmissionPage() {
               rel="noreferrer"
               style={buttonStyle}
             >
-              Open BNB tx
+              Open archived BNB tx
             </a>
             <a
               href={SUBMISSION_REAL_SETTLEMENT.explorerUrl}
@@ -165,7 +179,7 @@ export default function SubmissionPage() {
               rel="noreferrer"
               style={buttonStyle}
             >
-              Open X Layer tx
+              Open archived X Layer tx
             </a>
           </div>
         </section>
@@ -268,47 +282,119 @@ export default function SubmissionPage() {
         <section className="market-card">
           <div className="block-header">
             <div>
-              <h2>Live BNB Rail Proof</h2>
+              <h2>{SUBMISSION_BASE_ROLLOUT.label}</h2>
               <p className="mvp-muted">
-                This branch now has a fresh BNB Chain mainnet USDT settlement proving the current sprint rail is not mock-only.
+                Base is now the default wallet, demo, reviewer, and settlement rail across the app.
               </p>
             </div>
-            <span className="status-pill status-verified">{SUBMISSION_BNB_SETTLEMENT.network}</span>
+            <span className="status-pill status-created">{SUBMISSION_BASE_ROLLOUT.network}</span>
+          </div>
+
+          <div className="reviewer-metric-grid">
+            <div>
+              <span>Chain ID</span>
+              <strong>{SUBMISSION_BASE_ROLLOUT.chainId}</strong>
+            </div>
+            <div>
+              <span>Settlement asset</span>
+              <strong>{SUBMISSION_BASE_ROLLOUT.tokenSymbol}</strong>
+            </div>
+            <div>
+              <span>Wallet rail</span>
+              <strong>Privy → Base</strong>
+            </div>
+            <div>
+              <span>Explorer</span>
+              <strong>Basescan</strong>
+            </div>
+          </div>
+
+          <div style={cardGridStyle}>
+            <div className="mvp-evidence">
+              <h4>Runtime defaults</h4>
+              <div className="mvp-evidence-item">
+                <div className="evidence-meta">
+                  <span>wallet</span>
+                  <span>base</span>
+                </div>
+                <p>{SUBMISSION_BASE_ROLLOUT.walletRail}</p>
+              </div>
+              <div className="mvp-evidence-item">
+                <div className="evidence-meta">
+                  <span>settlement</span>
+                  <span>base</span>
+                </div>
+                <p>{SUBMISSION_BASE_ROLLOUT.settlementRail}</p>
+              </div>
+            </div>
+
+            <div className="mvp-evidence">
+              <h4>Launch and proof posture</h4>
+              <div className="mvp-evidence-item">
+                <div className="evidence-meta">
+                  <span>token path</span>
+                  <span>base</span>
+                </div>
+                <p>{SUBMISSION_BASE_ROLLOUT.launchRail}</p>
+              </div>
+              <div className="mvp-evidence-item">
+                <div className="evidence-meta">
+                  <span>next receipt</span>
+                  <span>pending</span>
+                </div>
+                <p>{SUBMISSION_BASE_ROLLOUT.proofStatus}</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="market-card">
+          <div className="block-header">
+            <div>
+              <h2>{SUBMISSION_BASE_SETTLEMENT.label}</h2>
+              <p className="mvp-muted">
+                This is the current live receipt for Base USDC settlement on the product treasury path.
+              </p>
+            </div>
+            <span className="status-pill status-verified">{SUBMISSION_BASE_SETTLEMENT.network}</span>
           </div>
 
           <div className="reviewer-metric-grid">
             <div>
               <span>Amount</span>
               <strong>
-                {SUBMISSION_BNB_SETTLEMENT.amount} {SUBMISSION_BNB_SETTLEMENT.tokenSymbol}
+                {SUBMISSION_BASE_SETTLEMENT.amount} {SUBMISSION_BASE_SETTLEMENT.tokenSymbol}
               </strong>
             </div>
             <div>
               <span>Chain ID</span>
-              <strong>{SUBMISSION_BNB_SETTLEMENT.chainId}</strong>
+              <strong>{SUBMISSION_BASE_SETTLEMENT.chainId}</strong>
             </div>
             <div>
               <span>Token</span>
-              <strong>{SUBMISSION_BNB_SETTLEMENT.tokenSymbol}</strong>
+              <strong>{SUBMISSION_BASE_SETTLEMENT.tokenSymbol}</strong>
             </div>
             <div>
-              <span>Settled at</span>
-              <strong>{bnbSettledAt} UTC+8</strong>
+              <span>Status</span>
+              <strong>Confirmed on Base</strong>
             </div>
           </div>
 
           <div style={cardGridStyle}>
             <div className="mvp-evidence">
-              <h4>Funding proof</h4>
+              <h4>Treasury top-up</h4>
               <div className="mvp-evidence-item">
                 <div className="evidence-meta">
-                  <span>swap</span>
+                  <span>funding</span>
                   <span>confirmed</span>
                 </div>
-                <p style={{ wordBreak: "break-all" }}>{SUBMISSION_BNB_SETTLEMENT.swapTxHash}</p>
+                <p style={{ wordBreak: "break-all" }}>{SUBMISSION_BASE_SETTLEMENT.fundingTxHash}</p>
                 <p className="mvp-muted">
-                  <a href={SUBMISSION_BNB_SETTLEMENT.swapExplorerUrl} target="_blank" rel="noreferrer">
-                    View BNB to USDT swap on BscScan
+                  Bankr wallet topped up the settlement wallet with Base USDC before payout.
+                </p>
+                <p className="mvp-muted">
+                  <a href={SUBMISSION_BASE_SETTLEMENT.fundingExplorerUrl} target="_blank" rel="noreferrer">
+                    View Base funding tx on Basescan
                   </a>
                 </p>
               </div>
@@ -321,16 +407,16 @@ export default function SubmissionPage() {
                   <span>tx hash</span>
                   <span>confirmed</span>
                 </div>
-                <p style={{ wordBreak: "break-all" }}>{SUBMISSION_BNB_SETTLEMENT.txHash}</p>
+                <p style={{ wordBreak: "break-all" }}>{SUBMISSION_BASE_SETTLEMENT.txHash}</p>
                 <p className="mvp-muted">
-                  payer: {SUBMISSION_BNB_SETTLEMENT.payerAddress}
+                  payer: {SUBMISSION_BASE_SETTLEMENT.payerAddress}
                 </p>
                 <p className="mvp-muted">
-                  operator: {SUBMISSION_BNB_SETTLEMENT.operatorAddress}
+                  operator: {SUBMISSION_BASE_SETTLEMENT.operatorAddress}
                 </p>
                 <p className="mvp-muted">
-                  <a href={SUBMISSION_BNB_SETTLEMENT.explorerUrl} target="_blank" rel="noreferrer">
-                    View live BNB settlement on BscScan
+                  <a href={SUBMISSION_BASE_SETTLEMENT.explorerUrl} target="_blank" rel="noreferrer">
+                    View live Base settlement on Basescan
                   </a>
                 </p>
               </div>
@@ -341,38 +427,50 @@ export default function SubmissionPage() {
         <section className="market-card">
           <div className="block-header">
             <div>
-              <h2>Historical Onchain Proof</h2>
+              <h2>Historical Onchain Proofs</h2>
               <p className="mvp-muted">
-                This prior X Layer mainnet settlement proves the full task-to-proof-to-settlement loop closes onchain after verification.
+                The product path is now Base-first. These receipts stay linked as archived proof that the full
+                task-to-proof-to-settlement loop has already closed onchain.
               </p>
             </div>
-            <span className="status-pill status-verified">{SUBMISSION_REAL_SETTLEMENT.network}</span>
-          </div>
-
-          <div className="reviewer-metric-grid">
-            <div>
-              <span>Task</span>
-              <strong>{SUBMISSION_REAL_SETTLEMENT.taskId.slice(0, 8)}</strong>
-            </div>
-            <div>
-              <span>Amount</span>
-              <strong>
-                {SUBMISSION_REAL_SETTLEMENT.amount} {SUBMISSION_REAL_SETTLEMENT.tokenSymbol}
-              </strong>
-            </div>
-            <div>
-              <span>Chain ID</span>
-              <strong>{SUBMISSION_REAL_SETTLEMENT.chainId}</strong>
-            </div>
-            <div>
-              <span>Settled at</span>
-              <strong>{settledAt} UTC+8</strong>
-            </div>
+            <span className="status-pill status-verified">archive</span>
           </div>
 
           <div style={cardGridStyle}>
             <div className="mvp-evidence">
-              <h4>Task proof</h4>
+              <h4>{SUBMISSION_BNB_SETTLEMENT.label}</h4>
+              <div className="mvp-evidence-item">
+                <div className="evidence-meta">
+                  <span>swap</span>
+                  <span>confirmed</span>
+                </div>
+                <p style={{ wordBreak: "break-all" }}>{SUBMISSION_BNB_SETTLEMENT.swapTxHash}</p>
+                <p className="mvp-muted">
+                  <a href={SUBMISSION_BNB_SETTLEMENT.swapExplorerUrl} target="_blank" rel="noreferrer">
+                    View archived BNB funding swap
+                  </a>
+                </p>
+              </div>
+              <div className="mvp-evidence-item">
+                <div className="evidence-meta">
+                  <span>settlement</span>
+                  <span>{SUBMISSION_BNB_SETTLEMENT.network}</span>
+                </div>
+                <p style={{ wordBreak: "break-all" }}>{SUBMISSION_BNB_SETTLEMENT.txHash}</p>
+                <p className="mvp-muted">
+                  {SUBMISSION_BNB_SETTLEMENT.amount} {SUBMISSION_BNB_SETTLEMENT.tokenSymbol} · chain{" "}
+                  {SUBMISSION_BNB_SETTLEMENT.chainId} · {bnbSettledAt} UTC+8
+                </p>
+                <p className="mvp-muted">
+                  <a href={SUBMISSION_BNB_SETTLEMENT.explorerUrl} target="_blank" rel="noreferrer">
+                    View archived BNB settlement on BscScan
+                  </a>
+                </p>
+              </div>
+            </div>
+
+            <div className="mvp-evidence">
+              <h4>Archived X Layer settlement proof</h4>
               <div className="mvp-evidence-item">
                 <div className="evidence-meta">
                   <span>task</span>
@@ -385,28 +483,22 @@ export default function SubmissionPage() {
                   </a>
                 </p>
                 <p className="mvp-muted">
-                  <Link href={SUBMISSION_REAL_SETTLEMENT.taskPath}>Open task detail</Link>
+                  <Link href={SUBMISSION_REAL_SETTLEMENT.taskPath}>Open archived task detail</Link>
                 </p>
               </div>
-            </div>
-
-            <div className="mvp-evidence">
-              <h4>Onchain receipt</h4>
               <div className="mvp-evidence-item">
                 <div className="evidence-meta">
-                  <span>tx hash</span>
-                  <span>accepted on l2</span>
+                  <span>settlement</span>
+                  <span>{SUBMISSION_REAL_SETTLEMENT.network}</span>
                 </div>
                 <p style={{ wordBreak: "break-all" }}>{SUBMISSION_REAL_SETTLEMENT.txHash}</p>
                 <p className="mvp-muted">
-                  payer: {SUBMISSION_REAL_SETTLEMENT.payerAddress}
-                </p>
-                <p className="mvp-muted">
-                  operator: {SUBMISSION_REAL_SETTLEMENT.operatorAddress}
+                  {SUBMISSION_REAL_SETTLEMENT.amount} {SUBMISSION_REAL_SETTLEMENT.tokenSymbol} · chain{" "}
+                  {SUBMISSION_REAL_SETTLEMENT.chainId} · {settledAt} UTC+8
                 </p>
                 <p className="mvp-muted">
                   <a href={SUBMISSION_REAL_SETTLEMENT.explorerUrl} target="_blank" rel="noreferrer">
-                    View historical proof on OKLink
+                    View archived X Layer proof on OKLink
                   </a>
                 </p>
               </div>
@@ -446,17 +538,17 @@ export default function SubmissionPage() {
             <div className="block-header">
               <div>
                 <h2>x402 Status</h2>
-                <p className="mvp-muted">Bonus capability, framed honestly.</p>
+                <p className="mvp-muted">Archived capability, framed honestly.</p>
               </div>
               <span className={`status-pill ${SUBMISSION_X402_STATUS.integrated ? "status-verified" : "status-created"}`}>
-                {SUBMISSION_X402_STATUS.integrated ? "Integrated" : "Pending"}
+                {SUBMISSION_X402_STATUS.integrated ? "Archived" : "Pending"}
               </span>
             </div>
             <div className="mvp-evidence" style={{ borderTop: "none", paddingTop: 0 }}>
               <div className="mvp-evidence-item">
                 <div className="evidence-meta">
                   <span>x402</span>
-                  <span>{SUBMISSION_X402_STATUS.provenOnchain ? "proven" : "bonus"}</span>
+                  <span>{SUBMISSION_X402_STATUS.provenOnchain ? "proven" : "archived"}</span>
                 </div>
                 <p>{SUBMISSION_X402_STATUS.summary}</p>
               </div>
@@ -465,7 +557,7 @@ export default function SubmissionPage() {
                   <span>focus</span>
                 </div>
                 <p>
-                  {"The primary sprint story is planner precheck -> fallback -> proof -> verify -> settle, with BNB Chain as the live demo rail."}
+                  {"The primary story is planner precheck -> fallback -> proof -> verify -> settle, with Base as the active product rail."}
                 </p>
               </div>
             </div>

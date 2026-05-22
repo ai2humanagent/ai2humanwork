@@ -31,7 +31,7 @@ export async function POST(
   const body = await request.json().catch(() => ({}));
   const requestedRail = parseSettlementRail(body.network);
   if (body.network && !requestedRail) {
-    return NextResponse.json({ error: "network must be bnb, xlayer or solana." }, { status: 400 });
+    return NextResponse.json({ error: "network must be base, bnb, xlayer or solana." }, { status: 400 });
   }
   const receiverAddress = String(body.receiverAddress || "").trim() || undefined;
   const amountOverride = String(body.amount || "").trim() || undefined;

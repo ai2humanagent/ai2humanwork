@@ -74,10 +74,13 @@ type Payment = {
   receiver: string;
   receiverAddress?: string;
   payerAddress?: string;
-  method: "mock_x402" | "bnb_erc20" | "xlayer_erc20" | "solana_native" | "x402_exact";
+  method: "mock_x402" | "base_erc20" | "bnb_erc20" | "xlayer_erc20" | "solana_native" | "x402_exact";
   status: "paid";
   source?: "task" | "fallback_order" | "x402_access";
   network?:
+    | "base-mainnet"
+    | "base-sepolia"
+    | "base-custom"
     | "bnb-mainnet"
     | "bnb-testnet"
     | "bnb-custom"
@@ -172,7 +175,7 @@ export default function ReviewerPage() {
   const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [humans, setHumans] = useState<HumanDirectoryRow[]>([]);
-  const [settlementNetwork, setSettlementNetwork] = useState<"bnb" | "xlayer" | "solana">("bnb");
+  const [settlementNetwork, setSettlementNetwork] = useState<"base">("base");
   const [settlementReceiverAddress, setSettlementReceiverAddress] = useState("");
   const [settlementAmount, setSettlementAmount] = useState("");
   const [settlementDraftTaskId, setSettlementDraftTaskId] = useState("");
@@ -239,12 +242,7 @@ export default function ReviewerPage() {
     setSettlementDraftTaskId(selectedTask.id);
     setSettlementReceiverAddress(selectedTask.assignee?.walletAddress || "");
     setSettlementAmount(stripBudgetAmount(selectedTask.budget));
-    setSettlementNetwork(
-      selectedTask.assignee?.walletAddress &&
-        !selectedTask.assignee.walletAddress.startsWith("0x")
-        ? "solana"
-        : "bnb"
-    );
+    setSettlementNetwork("base");
   }, [selectedTask, settlementDraftTaskId]);
 
   const kpis = useMemo(() => {
@@ -265,7 +263,10 @@ export default function ReviewerPage() {
     [selectedTask]
   );
   const agentArchitecture = useMemo(
-    () => (selectedTask ? getTaskAgentArchitecture(selectedTask) : []),
+    () =>
+      selectedTask
+        ? getTaskAgentArchitecture(selectedTask).filter((role) => role.id !== "x402_gate_agent")
+        : [],
     [selectedTask]
   );
 
@@ -593,38 +594,25 @@ export default function ReviewerPage() {
                     <select
                       className="mvp-input"
                       value={settlementNetwork}
-                      onChange={(event) =>
-                        setSettlementNetwork(event.target.value as "bnb" | "xlayer" | "solana")
-                      }
+                      disabled
+                      onChange={() => setSettlementNetwork("base")}
                     >
-                      <option value="bnb">Settle on BNB Chain</option>
-                      <option value="xlayer">Settle on X Layer</option>
-                      <option value="solana">Settle on Solana</option>
+                      <option value="base">Settle on Base</option>
                     </select>
                     <input
                       className="mvp-input"
                       value={settlementReceiverAddress}
                       onChange={(event) => setSettlementReceiverAddress(event.target.value)}
-                      placeholder={
-                        settlementNetwork === "solana"
-                          ? "Solana receiver address (optional override)"
-                          : settlementNetwork === "bnb"
-                            ? "BNB Chain receiver address (optional override)"
-                            : "X Layer receiver address (optional override)"
-                      }
+                      placeholder="Base receiver address (optional override)"
                     />
                     <input
                       className="mvp-input"
                       value={settlementAmount}
                       onChange={(event) => setSettlementAmount(event.target.value)}
-                      placeholder={settlementNetwork === "solana" ? "Amount in SOL" : "Amount"}
+                      placeholder="Amount"
                     />
                     <p className="mvp-muted">
-                      {settlementNetwork === "solana"
-                        ? "Solana settlement currently sends native SOL. Override the amount if the task budget is denominated in a different asset."
-                        : settlementNetwork === "bnb"
-                          ? "Leave the amount unchanged to settle the task budget on BNB Chain."
-                          : "Leave the amount unchanged to settle the task budget on X Layer."}
+                      Leave the amount unchanged to settle the task budget on Base.
                     </p>
                     <button
                       className="button buttonPrimary"
@@ -639,21 +627,7 @@ export default function ReviewerPage() {
                         })
                       }
                     >
-                      {working === "settle"
-                        ? `Settling on ${
-                            settlementNetwork === "solana"
-                              ? "Solana"
-                              : settlementNetwork === "bnb"
-                                ? "BNB Chain"
-                                : "X Layer"
-                          }...`
-                        : `Settle on ${
-                            settlementNetwork === "solana"
-                              ? "Solana"
-                              : settlementNetwork === "bnb"
-                                ? "BNB Chain"
-                                : "X Layer"
-                          }`}
+                      {working === "settle" ? "Settling on Base..." : "Settle on Base"}
                     </button>
                   </>
                 )}
@@ -759,7 +733,7 @@ export default function ReviewerPage() {
           <div>
             <h2>Settlement ledger</h2>
             <p className="mvp-muted">
-              Latest settlement records, including BNB Chain, X Layer, or Solana transaction proof when configured.
+              Latest settlement records, with Base transaction proof shown first and historical rails preserved in the ledger.
             </p>
           </div>
         </div>

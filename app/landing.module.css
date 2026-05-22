@@ -107,6 +107,56 @@
   color: var(--ln-text);
 }
 
+.mobileMenuBtn {
+  display: none;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  color: var(--ln-text);
+  font-size: 18px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.mobileMenuBtn:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.mobileMenu {
+  display: none;
+  flex-direction: column;
+  gap: 8px;
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  top: 78px;
+  padding: 14px;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(8, 10, 16, 0.95);
+  box-shadow: var(--ln-shadow);
+  z-index: 19;
+}
+
+.mobileMenu a,
+.mobileMenu link {
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.9);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: 12px;
+  text-decoration: none;
+  text-align: center;
+}
+
+.mobileMenu a:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
 .navActions {
   display: flex;
   gap: 10px;
@@ -1935,61 +1985,14 @@
     display: none;
   }
 
-  .navMvp,
-  .navDemo {
-    display: none;
-  }
-
-  .menuButton {
-    display: inline-flex;
+  .mobileMenuBtn {
+    display: flex;
     align-items: center;
     justify-content: center;
   }
 
-  .mobileBackdrop {
-    display: block;
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.48);
-    backdrop-filter: blur(2px);
-    border: 0;
-    z-index: 18;
-  }
-
   .mobileMenu {
-    display: grid;
-    gap: 10px;
-    position: fixed;
-    left: 16px;
-    right: 16px;
-    top: 78px;
-    padding: 14px;
-    border-radius: 22px;
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    background: rgba(8, 10, 16, 0.82);
-    box-shadow: var(--ln-shadow);
-    z-index: 19;
-    transform: translateY(-10px);
-    opacity: 0;
-    pointer-events: none;
-    transition: transform 0.18s ease, opacity 0.18s ease;
-  }
-
-  .mobileMenuOpen {
-    transform: translateY(0);
-    opacity: 1;
-    pointer-events: auto;
-  }
-
-  .mobileMenu a {
-    padding: 12px 12px;
-    border-radius: 14px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    background: rgba(255, 255, 255, 0.04);
-    color: rgba(255, 255, 255, 0.9);
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    font-size: 12px;
+    display: flex;
   }
 
   .title {

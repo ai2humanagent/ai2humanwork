@@ -57,7 +57,7 @@ export async function POST(
   const type = body.type === "photo" ? "photo" : "note";
   const requestedRail = parseSettlementRail(body.network);
   if (body.network && !requestedRail) {
-    return NextResponse.json({ error: "network must be bnb, xlayer or solana." }, { status: 400 });
+    return NextResponse.json({ error: "network must be base, bnb, xlayer or solana." }, { status: 400 });
   }
   const receiverAddress = String(body.receiverAddress || "").trim() || undefined;
   const amountOverride = String(body.amount || "").trim() || undefined;
@@ -279,7 +279,9 @@ export async function POST(
         from: "verified",
         to: "paid",
         action:
-          settlement.method === "bnb_erc20"
+          settlement.method === "base_erc20"
+            ? "Payment settled on Base"
+            : settlement.method === "bnb_erc20"
             ? "Payment settled on BNB Chain"
             : settlement.method === "xlayer_erc20"
             ? "Payment settled on X Layer"

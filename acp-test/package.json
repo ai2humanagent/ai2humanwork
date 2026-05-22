@@ -1,0 +1,10 @@
+{
+  "name": "acp-buyer-test",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@virtuals-protocol/acp-node": "^0.2.0-beta.10",
+    "dotenv": "^16.4.5"
+  }
+}

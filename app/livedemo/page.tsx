@@ -10,7 +10,6 @@ import {
   CHAIN_NATIVE_FALLBACK_FRAMING,
   getOnchainOsPrecheck
 } from "../lib/onchainOs.js";
-import X402VerificationUnlockCard from "../components/X402VerificationUnlockCard";
 import { formatBudgetLabel } from "../lib/assetLabels.js";
 
 type EvidenceItem = {
@@ -109,8 +108,11 @@ const urgencyLevels = ["Urgent", "High", "Normal"];
 
 const MAX_VISIBLE_TASKS = 12;
 const DEMO_ADMIN_TOKEN = process.env.NEXT_PUBLIC_DEMO_ADMIN_TOKEN || "";
-const DEMO_BNB_OPERATOR_WALLET = process.env.NEXT_PUBLIC_BNB_DEMO_OPERATOR_WALLET || "";
-const DEMO_OPERATOR_WALLET = process.env.NEXT_PUBLIC_XLAYER_DEMO_OPERATOR_WALLET || "";
+const DEMO_BASE_OPERATOR_WALLET =
+  process.env.NEXT_PUBLIC_BASE_DEMO_OPERATOR_WALLET ||
+  process.env.NEXT_PUBLIC_BNB_DEMO_OPERATOR_WALLET ||
+  process.env.NEXT_PUBLIC_XLAYER_DEMO_OPERATOR_WALLET ||
+  "";
 const DEMO_SOLANA_OPERATOR_WALLET = process.env.NEXT_PUBLIC_SOLANA_DEMO_OPERATOR_WALLET || "";
 const agentStateStyles: Record<string, string> = {
   waiting: "status-created",
@@ -128,7 +130,7 @@ export default function LiveDemoPage() {
   const [adminToken, setAdminToken] = useState("");
   const [demoError, setDemoError] = useState("");
   const [lastEvent, setLastEvent] = useState("Idle");
-  const [demoSettlementRail, setDemoSettlementRail] = useState<"bnb" | "xlayer" | "solana">("bnb");
+  const [demoSettlementRail, setDemoSettlementRail] = useState<"base">("base");
 
   const stats = useMemo(() => {
     const total = tasks.length;
@@ -230,11 +232,7 @@ export default function LiveDemoPage() {
 
   const assignHuman = async (id: string, name = "Fallback Operator") => {
     const walletAddress =
-      demoSettlementRail === "solana"
-        ? DEMO_SOLANA_OPERATOR_WALLET
-        : demoSettlementRail === "bnb"
-          ? DEMO_BNB_OPERATOR_WALLET
-          : DEMO_OPERATOR_WALLET;
+      demoSettlementRail === "base" ? DEMO_BASE_OPERATOR_WALLET : DEMO_SOLANA_OPERATOR_WALLET;
     const res = await fetch(`/api/tasks/${id}/human`, {
       method: "POST",
       headers: protectedHeaders(),
@@ -295,7 +293,7 @@ export default function LiveDemoPage() {
     }
     const payload = (await res.json().catch(() => ({}))) as {
       payment?: {
-        method?: "mock_x402" | "bnb_erc20" | "xlayer_erc20" | "solana_native";
+        method?: "mock_x402" | "base_erc20" | "bnb_erc20" | "xlayer_erc20" | "solana_native";
       } | null;
       verification?: {
         ok?: boolean;
@@ -317,7 +315,7 @@ export default function LiveDemoPage() {
     await loadTasks();
   };
 
-  const settleTask = async (id: string, network: "bnb" | "xlayer" | "solana") => {
+  const settleTask = async (id: string, network: "base" | "bnb" | "xlayer" | "solana") => {
     const res = await fetch(`/api/tasks/${id}/settle`, {
       method: "POST",
       headers: protectedHeaders(),
@@ -331,7 +329,7 @@ export default function LiveDemoPage() {
     await loadTasks();
     return payload as {
       payment?: {
-        method?: "mock_x402" | "bnb_erc20" | "xlayer_erc20" | "solana_native";
+        method?: "mock_x402" | "base_erc20" | "bnb_erc20" | "xlayer_erc20" | "solana_native";
       };
     };
   };
@@ -350,11 +348,13 @@ export default function LiveDemoPage() {
       const payload = await submitEvidence(task);
       setLastEvent(
         payload?.payment?.method === "solana_native"
-          ? "Settled on Solana"
+          ? "Settled on archived Solana rail"
+          : payload?.payment?.method === "base_erc20"
+            ? "Settled on Base"
           : payload?.payment?.method === "bnb_erc20"
-            ? "Settled on BNB Chain"
+            ? "Settled on archived BNB rail"
             : payload?.payment?.method === "xlayer_erc20"
-            ? "Settled on X Layer"
+            ? "Settled on archived X Layer rail"
             : payload?.verification?.ok
               ? "Verified and settled in demo mode"
               : "Structured proof submitted"
@@ -436,14 +436,6 @@ export default function LiveDemoPage() {
   );
 
   const selectedTask = tasks.find((task) => task.id === selectedId) || null;
-  const x402ReadyTask = useMemo(() => {
-    if (selectedTask && ["human_done", "verified", "paid"].includes(selectedTask.status)) {
-      return selectedTask;
-    }
-    return (
-      tasks.find((task) => ["human_done", "verified", "paid"].includes(task.status)) || null
-    );
-  }, [selectedTask, tasks]);
   const selectedVerificationStatus = useMemo(
     () =>
       selectedTask
@@ -452,7 +444,10 @@ export default function LiveDemoPage() {
     [selectedTask]
   );
   const selectedAgentArchitecture = useMemo(
-    () => (selectedTask ? getTaskAgentArchitecture(selectedTask) : []),
+    () =>
+      selectedTask
+        ? getTaskAgentArchitecture(selectedTask).filter((role) => role.id !== "x402_gate_agent")
+        : [],
     [selectedTask]
   );
   const selectedPrecheck = useMemo(() => {
@@ -470,18 +465,8 @@ export default function LiveDemoPage() {
     "Proof verified",
     "Settled"
   ];
-  const settlementLabel =
-    demoSettlementRail === "solana"
-      ? "Solana"
-      : demoSettlementRail === "bnb"
-        ? "BNB Chain"
-        : "X Layer";
-  const demoOperatorWallet =
-    demoSettlementRail === "solana"
-      ? DEMO_SOLANA_OPERATOR_WALLET
-      : demoSettlementRail === "bnb"
-        ? DEMO_BNB_OPERATOR_WALLET
-        : DEMO_OPERATOR_WALLET;
+  const settlementLabel = "Base";
+  const demoOperatorWallet = DEMO_BASE_OPERATOR_WALLET;
 
   return (
     <div className="page mvp live-demo">
@@ -494,7 +479,7 @@ export default function LiveDemoPage() {
               </span>
               <span className="auto-tag">judge walkthrough</span>
             </div>
-            <p className="eyebrow">BNB Hackathon Demo</p>
+            <p className="eyebrow">Base Agent Demo</p>
             <h1>{`Planner precheck → human fallback → proof → verify → settle on ${settlementLabel}`}</h1>
             <p className="mvp-lead">
               Single-scenario playback for judges. The planner queries Wallet API, Market API, and
@@ -577,20 +562,13 @@ export default function LiveDemoPage() {
               id="demo-settlement-rail"
               className="mvp-input"
               value={demoSettlementRail}
-              onChange={(event) =>
-                setDemoSettlementRail(event.target.value as "bnb" | "xlayer" | "solana")
-              }
+              disabled
+              onChange={() => setDemoSettlementRail("base")}
             >
-              <option value="bnb">BNB Chain</option>
-              <option value="xlayer">X Layer</option>
-              <option value="solana">Solana</option>
+              <option value="base">Base</option>
             </select>
             <p className="mvp-muted">
-              {demoSettlementRail === "solana"
-                ? `Demo payouts will target Solana. Operator wallet: ${demoOperatorWallet || "not configured"}`
-                : demoSettlementRail === "bnb"
-                  ? `Demo payouts will target BNB Chain. Operator wallet: ${demoOperatorWallet || "not configured"}`
-                  : `Demo payouts will target X Layer. Operator wallet: ${demoOperatorWallet || "not configured"}`}
+              {`Demo payouts will target Base. Operator wallet: ${demoOperatorWallet || "not configured"}`}
             </p>
           </div>
           {demoError && <p className="demo-error">Loop paused: {demoError}</p>}
@@ -864,10 +842,6 @@ export default function LiveDemoPage() {
             </div>
           )}
         </div>
-      </section>
-
-      <section className="market-detail">
-        <X402VerificationUnlockCard task={x402ReadyTask} />
       </section>
 
       <section className="market-human">

@@ -3,7 +3,7 @@ export const SUBMISSION_PROJECT = {
   tagline: "Human fallback infrastructure for AI agents",
   oneLiner:
     "ai2human inserts a planner precheck before fallback: the system queries wallet, market, and trade routes, keeps work autonomous when possible, and dispatches a human operator only when identity, compliance, growth execution, or real-world constraints still block the task.",
-  githubUrl: "https://github.com/richard7463/ai2humanwork",
+  githubUrl: "https://github.com/ai2humanagent/ai2humanwork",
   demoPath: "/livedemo",
   reviewerPath: "/reviewer",
   tasksPath: "/tasks",
@@ -11,15 +11,15 @@ export const SUBMISSION_PROJECT = {
 };
 
 export const SUBMISSION_SPRINT = {
-  name: "Four.meme AI Sprint",
-  track: "AI x Web3 / growth ops"
+  name: "Base-first rollout",
+  track: "Base agent commerce"
 };
 
 export const SUBMISSION_PRIMARY_RAIL = {
-  label: "BNB Chain",
-  network: "bnb-mainnet",
-  tokenSymbol: "USDT",
-  status: "configured for live settlement demo"
+  label: "Base",
+  network: "base-mainnet",
+  tokenSymbol: "USDC",
+  status: "default product rail"
 };
 
 export const SUBMISSION_CORE_LOOP = [
@@ -28,7 +28,7 @@ export const SUBMISSION_CORE_LOOP = [
   "If the task is still blocked, the planner escalates to dispatcher-led human fallback",
   "Human operator claims and executes the last-resort real-world step",
   "Structured proof is submitted and verified",
-  "Settlement is released on BNB Chain"
+  "Settlement is released on Base"
 ];
 
 export const SUBMISSION_ONCHAIN_OS_PRECHECK = [
@@ -51,6 +51,35 @@ export const SUBMISSION_ONCHAIN_OS_PRECHECK = [
 export const SUBMISSION_CHAIN_NATIVE_FRAMING =
   "Human fallback is the last-resort execution layer when onchain agents hit real-world constraints or compliance gates.";
 
+export const SUBMISSION_BASE_ROLLOUT = {
+  label: "Base-first product path",
+  network: "base-mainnet",
+  chainId: 8453,
+  tokenSymbol: "USDC",
+  explorerUrl: "https://basescan.org",
+  walletRail: "Privy defaults to Base",
+  launchRail: "Bankr token launch flow points to Base",
+  settlementRail: "Reviewer, live demo, and task settlement now default to Base",
+  proofStatus: "A live Base USDC settlement receipt is now recorded; archived BNB and X Layer receipts remain below."
+};
+
+export const SUBMISSION_BASE_SETTLEMENT = {
+  label: "Live Base settlement proof",
+  payerAddress: "0x3f665386b41Fa15c5ccCeE983050a236E6a10108",
+  operatorAddress: "0x81009cc711e5e0285dd8f703aab1af69fa4a4390",
+  amount: "0.01",
+  tokenSymbol: "USDC",
+  tokenAddress: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+  network: "base-mainnet",
+  chainId: 8453,
+  fundingTxHash: "0x3fe5b99b2af4934c3b30d3087a703157e4f7cfcb8fc5dc58cecb48e249788f5e",
+  fundingExplorerUrl:
+    "https://basescan.org/tx/0x3fe5b99b2af4934c3b30d3087a703157e4f7cfcb8fc5dc58cecb48e249788f5e",
+  txHash: "0xee543bc107b411edd0202131b82172eb6efaf29c10457e33d2900ae890a72cf0",
+  explorerUrl:
+    "https://basescan.org/tx/0xee543bc107b411edd0202131b82172eb6efaf29c10457e33d2900ae890a72cf0"
+};
+
 export const SUBMISSION_REAL_SETTLEMENT = {
   taskId: "7bde6365-9e4a-4fa9-a2f4-e79657b354b3",
   taskPath: "/tasks/7bde6365-9e4a-4fa9-a2f4-e79657b354b3",
@@ -70,7 +99,7 @@ export const SUBMISSION_REAL_SETTLEMENT = {
 };
 
 export const SUBMISSION_BNB_SETTLEMENT = {
-  label: "Live BNB Chain settlement proof",
+  label: "Archived BNB Chain settlement proof",
   payerAddress: "0x3f665386b41Fa15c5ccCeE983050a236E6a10108",
   operatorAddress: "0x81009cc711e5e0285dd8f703aab1af69fa4a4390",
   amount: "0.01",
@@ -91,5 +120,5 @@ export const SUBMISSION_X402_STATUS = {
   integrated: true,
   provenOnchain: false,
   summary:
-    "An x402-gated verification bundle flow is integrated as a bonus proof-access layer. It is not the primary scoring claim for this sprint."
+    "The x402 verification bundle remains archived as an earlier X Layer add-on. It is no longer part of the primary Base product path."
 };

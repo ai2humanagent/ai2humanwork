@@ -42,7 +42,7 @@ const AGENT_ROLE_CONFIG = [
     id: "x402_gate_agent",
     title: "x402 Gate Agent",
     kind: "agent",
-    description: "Payment-gates the verification bundle and unlocks it on X Layer."
+    description: "Archived payment-gated proof bundle flow kept as a secondary capability."
   }
 ];
 
@@ -157,7 +157,7 @@ function getFallbackMessage(task, roleId) {
     case "x402_gate_agent":
       if (hasEvidence(task, "x402_bundle_paid:")) return "Unlocked the verification bundle with an onchain payment.";
       if (["human_done", "verified", "paid"].includes(task?.status)) {
-        return "Verification bundle can now be unlocked via x402.";
+        return "Archived proof bundle can still be unlocked via x402 if needed.";
       }
       return "Hidden until there is proof to unlock.";
     default:

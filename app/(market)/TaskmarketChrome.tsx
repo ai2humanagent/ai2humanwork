@@ -8,11 +8,13 @@ import styles from "./market.module.css";
 
 const primaryNav = [
   { href: "/tasks", label: "Browse Tasks" },
+  { href: "/tasks/twitter", label: "Twitter Tasks" },
   { href: "/tasks/new", label: "Create Task" }
 ];
 
 const secondaryNav = [
   { href: "/agents", label: "Agent Directory" },
+  { href: "/agent-dashboard", label: "Agent Dashboard" },
   { href: "/leaderboard", label: "Rankings" },
   { href: "/protocol", label: "Protocol" }
 ];

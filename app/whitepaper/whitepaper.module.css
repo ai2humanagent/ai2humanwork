@@ -1,0 +1,528 @@
+.page {
+  --wp-bg: #070812;
+  --wp-card: rgba(10, 12, 20, 0.72);
+  --wp-border: rgba(255, 255, 255, 0.1);
+  --wp-text: rgba(255, 255, 255, 0.92);
+  --wp-muted: rgba(255, 255, 255, 0.66);
+  --wp-a: #80ffea;
+  --wp-b: #7c5cff;
+  --wp-c: #ffb347;
+  --wp-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+  min-height: 100vh;
+  width: 100%;
+  background: var(--wp-bg);
+  position: relative;
+  overflow-x: clip;
+}
+
+.page::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(900px 520px at 18% 14%, rgba(124, 92, 255, 0.22), transparent 60%),
+    radial-gradient(700px 500px at 84% 12%, rgba(128, 255, 234, 0.18), transparent 62%),
+    radial-gradient(740px 560px at 68% 82%, rgba(255, 179, 71, 0.14), transparent 64%),
+    linear-gradient(180deg, rgba(7, 8, 18, 0.9), rgba(7, 8, 18, 0.98));
+  z-index: -3;
+}
+
+.page::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 84px 84px;
+  opacity: 0.08;
+  mask-image: radial-gradient(circle at 50% 15%, rgba(0, 0, 0, 1), transparent 70%);
+  z-index: -2;
+}
+
+/* Navigation */
+.nav {
+  position: sticky;
+  top: 18px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 14px;
+  margin: 24px clamp(16px, 4vw, 72px);
+  border-radius: 999px;
+  border: 1px solid var(--wp-border);
+  background: rgba(8, 10, 16, 0.62);
+  backdrop-filter: blur(18px);
+  box-shadow: var(--wp-shadow);
+}
+
+.navLeft { display: flex; align-items: center; }
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--wp-text);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.brandMark {
+  width: 36px;
+  height: 36px;
+  border-radius: 14px;
+  background: radial-gradient(circle at 30% 30%, rgba(128, 255, 234, 0.9), rgba(124, 92, 255, 0.65));
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12), 0 18px 40px rgba(124, 92, 255, 0.25);
+}
+
+.navRight { display: flex; gap: 18px; }
+
+.navLink {
+  color: var(--wp-muted);
+  text-decoration: none;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 8px 10px;
+  transition: color 0.2s;
+}
+
+.navLink:hover { color: var(--wp-text); }
+
+.navLinkActive {
+  color: var(--wp-a);
+  text-decoration: none;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 8px 10px;
+}
+
+/* Language Switch */
+.langSwitch {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: 12px;
+}
+
+.langBtn {
+  background: none;
+  border: none;
+  color: var(--wp-muted);
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.langBtn:hover {
+  color: var(--wp-text);
+}
+
+.langBtnActive {
+  color: var(--wp-a);
+  background: rgba(128, 255, 234, 0.1);
+}
+
+.langDivider {
+  color: var(--wp-border);
+  font-size: 12px;
+}
+
+/* Sub Section Title */
+.subSectionTitle {
+  color: var(--wp-text);
+  font-size: 18px;
+  font-weight: 600;
+  margin-top: 32px;
+  margin-bottom: 16px;
+}
+
+/* Container */
+.container {
+  display: flex;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 clamp(16px, 4vw, 72px);
+  gap: 80px;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 200px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 100px;
+  height: fit-content;
+  padding-top: 24px;
+}
+
+.sidebarContent { padding: 16px 0; }
+
+.sidebarLabel {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--wp-muted);
+  margin-bottom: 16px;
+  padding-left: 16px;
+}
+
+.sidebarList { list-style: none; margin: 0; padding: 0; }
+
+.sidebarItem { margin: 0; }
+
+.sidebarLink {
+  display: block;
+  padding: 6px 16px;
+  color: var(--wp-muted);
+  text-decoration: none;
+  font-size: 13px;
+  border-left: 2px solid transparent;
+  transition: all 0.2s;
+}
+
+.sidebarLink:hover {
+  color: var(--wp-text);
+  border-left-color: var(--wp-b);
+}
+
+/* Main Content */
+.main {
+  flex: 1;
+  min-width: 0;
+  padding: 48px 0 120px;
+}
+
+/* Hero */
+.hero { margin-bottom: 80px; }
+
+.heroMeta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.heroEyebrow {
+  font-size: 12px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--wp-a);
+}
+
+.heroDot { color: var(--wp-muted); }
+
+.heroUpdated { font-size: 12px; color: var(--wp-muted); }
+
+.heroTitle {
+  font-size: clamp(42px, 8vw, 72px);
+  font-weight: 700;
+  color: var(--wp-text);
+  margin: 0 0 16px;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.heroSubtitle {
+  font-size: 18px;
+  color: var(--wp-muted);
+  margin: 0;
+  max-width: 600px;
+  line-height: 1.6;
+}
+
+/* Sections */
+.section { margin-bottom: 80px; }
+
+.sectionLabel {
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--wp-b);
+  margin-bottom: 16px;
+}
+
+.sectionTitle {
+  font-size: clamp(28px, 5vw, 40px);
+  font-weight: 700;
+  color: var(--wp-text);
+  margin: 0 0 24px;
+  letter-spacing: -0.01em;
+}
+
+.sectionContent { max-width: 720px; }
+
+.paragraph {
+  font-size: 16px;
+  line-height: 1.8;
+  color: var(--wp-muted);
+  margin: 0 0 20px;
+}
+
+/* Highlight Box */
+.highlight {
+  background: var(--wp-card);
+  border: 1px solid var(--wp-border);
+  border-radius: 16px;
+  padding: 24px 28px;
+  margin: 32px 0;
+}
+
+.highlightLabel {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--wp-a);
+  margin-bottom: 12px;
+}
+
+.highlightContent {
+  font-size: 18px;
+  color: var(--wp-text);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+/* How It Works Grid */
+.howItWorksGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+
+.howItWorksItem {
+  background: var(--wp-card);
+  border: 1px solid var(--wp-border);
+  border-radius: 16px;
+  padding: 28px;
+  transition: border-color 0.2s;
+}
+
+.howItWorksItem:hover { border-color: var(--wp-b); }
+
+.hiwName {
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--wp-c);
+  margin-bottom: 12px;
+}
+
+.hiwTitle {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--wp-text);
+  margin: 0 0 12px;
+}
+
+.hiwContent {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--wp-muted);
+  margin: 0;
+}
+
+/* Subsection */
+.subsection { margin-bottom: 48px; }
+
+.subsection:last-child { margin-bottom: 0; }
+
+.subsectionTitle {
+  font-size: clamp(24px, 4vw, 32px);
+  font-weight: 700;
+  color: var(--wp-text);
+  margin: 0 0 20px;
+}
+
+/* Bullet List */
+.bulletList { list-style: none; margin: 0; padding: 0; }
+
+.bulletItem {
+  position: relative;
+  padding-left: 24px;
+  margin-bottom: 16px;
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--wp-muted);
+}
+
+.bulletItem::before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  color: var(--wp-a);
+}
+
+/* Token Grid */
+.tokenGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.tokenCard {
+  background: var(--wp-card);
+  border: 1px solid var(--wp-border);
+  border-radius: 16px;
+  padding: 24px;
+  transition: all 0.2s;
+}
+
+.tokenCard:hover {
+  border-color: var(--wp-a);
+  transform: translateY(-2px);
+}
+
+.tokenIcon {
+  font-size: 24px;
+  margin-bottom: 12px;
+  color: var(--wp-b);
+}
+
+.tokenLabel {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--wp-text);
+  margin-bottom: 8px;
+}
+
+.tokenDesc {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--wp-muted);
+}
+
+/* Roadmap */
+.roadmapGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.roadmapItem {
+  background: var(--wp-card);
+  border: 1px solid var(--wp-border);
+  border-radius: 16px;
+  padding: 24px 28px;
+  position: relative;
+  padding-left: 36px;
+  transition: border-color 0.2s;
+}
+
+.roadmapItem:hover { border-color: var(--wp-b); }
+
+.roadmapItem::before {
+  content: "";
+  position: absolute;
+  left: 14px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(180deg, var(--wp-b), var(--wp-a));
+  border-radius: 1px;
+}
+
+.roadmapPeriod {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--wp-c);
+  margin-bottom: 8px;
+}
+
+.roadmapTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--wp-text);
+  margin: 0 0 8px;
+}
+
+.roadmapDesc {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--wp-muted);
+  margin: 0;
+}
+
+/* Links */
+.linksList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.linkItem {
+  display: inline-block;
+  padding: 12px 20px;
+  background: var(--wp-card);
+  border: 1px solid var(--wp-border);
+  border-radius: 12px;
+  color: var(--wp-text);
+  text-decoration: none;
+  font-size: 14px;
+  transition: all 0.2s;
+  width: fit-content;
+}
+
+.linkItem:hover {
+  border-color: var(--wp-a);
+  color: var(--wp-a);
+}
+
+/* CTA Button */
+.ctaButton {
+  display: inline-block;
+  padding: 14px 32px;
+  background: linear-gradient(135deg, var(--wp-b), var(--wp-a));
+  border: none;
+  border-radius: 12px;
+  color: #fff;
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  transition: all 0.2s;
+  box-shadow: 0 8px 24px rgba(124, 92, 255, 0.3);
+}
+
+.ctaButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(124, 92, 255, 0.4);
+  color: #fff;
+}
+
+/* Tokenomics */
+.tokenStat {
+  background: var(--wp-card);
+  border: 1px solid var(--wp-border);
+  border-radius: 16px;
+  padding: 28px;
+  text-align: center;
+}
+
+.tokenStatValue {
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--wp-a);
+  margin-bottom: 8px;
+}
+
+.tokenStatLabel {
+  font-size: 13px;
+  color: var(--wp-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .container { flex-direction: column; gap: 0; }
+  .sidebar { display: none; }
+  .howItWorksGrid, .tokenGrid { grid-template-columns: 1fr; }
+}

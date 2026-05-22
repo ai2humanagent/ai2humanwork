@@ -80,7 +80,7 @@ export default function X402VerificationUnlockCard({ task }: { task: UnlockTask 
   } | null>(null);
 
   const wallet =
-    wallets.find((item) => item.walletClientType === "privy" && item.address) ||
+    wallets.find((item) => item.walletClientType !== "privy" && item.address) ||
     wallets.find((item) => item.address) ||
     null;
 

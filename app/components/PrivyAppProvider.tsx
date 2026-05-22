@@ -2,7 +2,7 @@
 
 import { ReactNode, useEffect } from "react";
 import { PrivyProvider, usePrivy, useWallets } from "@privy-io/react-auth";
-import { xLayer } from "viem/chains";
+import { base } from "viem/chains";
 
 const privyAppId = process.env.NEXT_PUBLIC_PRIVY_APP_ID || "";
 const privyClientId =
@@ -12,8 +12,9 @@ const privyClientId =
 function SessionSync() {
   const { ready, authenticated, getAccessToken, user } = usePrivy();
   const { wallets } = useWallets();
+  // Prioritize external wallet (MetaMask etc.) over Privy embedded wallet
   const walletAddress =
-    wallets.find((wallet) => wallet.walletClientType === "privy" && wallet.address)?.address ||
+    wallets.find((wallet) => wallet.walletClientType !== "privy" && wallet.address)?.address ||
     user?.wallet?.address ||
     wallets.find((wallet) => wallet.address)?.address ||
     undefined;
@@ -53,8 +54,8 @@ export default function PrivyAppProvider({ children }: { children: ReactNode }) 
       appId={privyAppId}
       clientId={privyClientId}
       config={{
-        defaultChain: xLayer,
-        supportedChains: [xLayer],
+        defaultChain: base,
+        supportedChains: [base],
         loginMethods: ["wallet"],
         appearance: {
           theme: "light",

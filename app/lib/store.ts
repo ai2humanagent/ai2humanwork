@@ -8,6 +8,7 @@ import {
   type Human,
   type HumanService
 } from "./humanMarketplace";
+import { seedAgents, type AIAgent } from "./agentRegistry";
 import type { SettlementMethod, SettlementNetwork } from "./settlementTypes";
 import {
   DEFAULT_X_TASK_BUDGET,
@@ -20,6 +21,13 @@ import {
   getRealWorldTaskTemplates
 } from "./officialCampaignTasks.js";
 import { formatSettlementBudget } from "./assetLabels.js";
+
+export type TaskType =
+  | "twitter_follow"
+  | "twitter_like"
+  | "twitter_retweet"
+  | "twitter_comment"
+  | "physical";
 
 export type TaskStatus =
   | "created"
@@ -45,6 +53,7 @@ export type Task = {
   budget: string;
   deadline: string;
   acceptance: string;
+  taskType?: TaskType; // 'twitter_follow' | 'twitter_like' | 'twitter_retweet' | 'twitter_comment' | 'physical'
   campaign?: {
     requesterName: string;
     requesterHandle?: string;
@@ -59,6 +68,8 @@ export type Task = {
     verificationChecks: string[];
     submissionFields?: string[];
   };
+  agentId?: string;
+  rewardDistribution?: RewardDistribution;
   status: TaskStatus;
   createdAt: string;
   updatedAt: string;
@@ -68,6 +79,7 @@ export type Task = {
     walletAddress?: string;
   };
   evidence: EvidenceItem[];
+  verifyCooldownHours?: number; // Twitter task cooldown
 };
 
 export type WaitlistEntry = {
@@ -88,7 +100,7 @@ export type PaymentEntry = {
   payerAddress?: string;
   method: SettlementMethod;
   status: "paid";
-  source?: "task" | "fallback_order" | "x402_access";
+  source?: "task" | "fallback_order" | "x402_access" | "twitter_task";
   network?: SettlementNetwork;
   chainId?: number;
   tokenSymbol?: string;
@@ -161,16 +173,40 @@ export type AuthSession = {
   expiresAt: string;
 };
 
+export type QuestProgressStatus = "pending" | "action_done" | "verified";
+
+export type QuestProgress = {
+  id: string;
+  walletAddress: string;
+  taskId: string;
+  subtaskKey: string;
+  status: QuestProgressStatus;
+  verifiedAt?: string;
+  createdAt: string;
+};
+
+export type RewardDistributionMode = "fcfs" | "lucky_draw" | "equal";
+
+export type RewardDistribution = {
+  mode: RewardDistributionMode;
+  totalPool: string;
+  perWinner?: string;
+  maxWinners: number;
+  drawTime?: string;
+};
+
 type Db = {
   tasks: Task[];
   waitlist: WaitlistEntry[];
   payments: PaymentEntry[];
   humans: Human[];
   services: HumanService[];
+  agents: AIAgent[];
   fallbackOrders: FallbackOrder[];
   fallbackSubscriptions: FallbackSubscription[];
   users: UserAccount[];
   sessions: AuthSession[];
+  questProgress: QuestProgress[];
 };
 
 export function makeSeedTasks(count: number): Task[] {
@@ -529,10 +565,12 @@ function makeInitialDb(): Db {
     payments: [],
     humans: seedHumans,
     services: seedServices,
+    agents: seedAgents.map((a) => ({ ...a })),
     fallbackOrders: makeSeedFallbackOrders(12),
     fallbackSubscriptions: [],
     users: [],
-    sessions: []
+    sessions: [],
+    questProgress: []
   };
 }
 
@@ -598,10 +636,14 @@ export async function readDb(): Promise<Db> {
     payments,
     humans,
     services,
+    agents: Array.isArray(parsed.agents) && parsed.agents.length > 0
+      ? parsed.agents
+      : seedAgents.map((a) => ({ ...a })),
     fallbackOrders: fallbackOrders.length > 0 ? fallbackOrders : makeSeedFallbackOrders(12),
     fallbackSubscriptions: parsed.fallbackSubscriptions ?? [],
     users: parsed.users ?? [],
-    sessions: parsed.sessions ?? []
+    sessions: parsed.sessions ?? [],
+    questProgress: Array.isArray(parsed.questProgress) ? parsed.questProgress : []
   };
 }
 
@@ -609,11 +651,22 @@ export async function writeDb(db: Db): Promise<void> {
   await fs.writeFile(DB_PATH, JSON.stringify(db, null, 2), "utf-8");
 }
 
+// Simple in-process mutex to prevent concurrent updateDb from corrupting db.json
+let _dbLock: Promise<void> = Promise.resolve();
+
 export async function updateDb<T>(
   updater: (db: Db) => T | Promise<T>
 ): Promise<T> {
-  const db = await readDb();
-  const result = await updater(db);
-  await writeDb(db);
-  return result;
+  let resolve: () => void;
+  const prev = _dbLock;
+  _dbLock = new Promise<void>((r) => { resolve = r; });
+  await prev;
+  try {
+    const db = await readDb();
+    const result = await updater(db);
+    await writeDb(db);
+    return result;
+  } finally {
+    resolve!();
+  }
 }

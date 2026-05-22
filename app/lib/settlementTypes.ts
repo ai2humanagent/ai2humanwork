@@ -1,13 +1,17 @@
-export type SettlementRail = "bnb" | "xlayer" | "solana";
+export type SettlementRail = "base" | "bnb" | "xlayer" | "solana";
 
 export type SettlementMethod =
   | "mock_x402"
+  | "base_erc20"
   | "bnb_erc20"
   | "xlayer_erc20"
   | "solana_native"
   | "x402_exact";
 
 export type SettlementNetwork =
+  | "base-mainnet"
+  | "base-sepolia"
+  | "base-custom"
   | "bnb-mainnet"
   | "bnb-testnet"
   | "bnb-custom"

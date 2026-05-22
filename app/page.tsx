@@ -5,21 +5,30 @@ import { useMemo, useState } from "react";
 import { formatSettlementBudget } from "./lib/assetLabels.js";
 import styles from "./landing.module.css";
 
+const navItems = [
+  { href: "/tasks", label: "Tasks" },
+  { href: "/submission", label: "Submission" },
+  { href: "/livedemo", label: "Live Demo" },
+  { href: "/reviewer", label: "Reviewer" },
+  { href: "/whitepaper", label: "Whitepaper" },
+  { href: "https://bankr.bot/launches/0xc46C41005A1A88B0C1491F2B542A4831D6d1EbA3", label: "CA", external: true },
+];
+
 const copy = {
   nav: {
     app: "Open Tasks"
   },
   hero: {
-    eyebrow: "BNB Chain Agent Fallback Infra",
+    eyebrow: "Base Agent Fallback Infra",
     titleA: "Agents hit reality.",
     titleB: "ai2human closes the loop.",
     lead:
-      "The planner runs wallet, market, and trade prechecks first. If campaign growth, merchant onboarding, compliance, or real-world execution still blocks the task, ai2human dispatches a human operator, collects structured proof, verifies completion, and settles on BNB Chain.",
+      "The planner runs wallet, market, and trade prechecks first. If campaign growth, merchant onboarding, compliance, or real-world execution still blocks the task, ai2human dispatches a human operator, collects structured proof, verifies completion, and settles on Base.",
     ctaPrimary: "Open Live Demo",
     ctaSecondary: "Open Task Board",
     ctaTertiary: "Open Submission Proof"
   },
-  meta: ["human fallback infra", "planner precheck", "bnb chain settlement"],
+  meta: ["human fallback infra", "planner precheck", "base settlement"],
   section: {
     stackTitle: "Planner + Fallback Stack",
     stackDesc:
@@ -42,13 +51,13 @@ const copy = {
       },
       {
         name: "settlement",
-        label: "BNB Chain Settlement",
-        desc: "Payment follows verification. When configured, settlement writes a real BNB Chain transaction hash."
+        label: "Base Settlement",
+        desc: "Payment follows verification. When configured, settlement writes a real Base transaction hash."
       }
     ],
     liveTitle: "Submission Walkthrough",
     liveDesc:
-      "One blocked AI task flows through planner precheck, human fallback, proof, verification, and BNB Chain settlement.",
+      "One blocked AI task flows through planner precheck, human fallback, proof, verification, and Base settlement.",
     loopTitle: "The Loop: Precheck → Human fallback → Proof → Verify → Settle",
     loopDesc:
       "The agent handles what it can. Human fallback is the last-resort execution layer when onchain agents hit real-world constraints or compliance gates.",
@@ -59,7 +68,7 @@ const copy = {
     },
     caseTitle: "Best-Fit Scenarios",
     caseDesc:
-      "Campaign growth, merchant ops, and compliance gates that agents cannot finish alone: identity-bound posts, merchant checks, screenshots, signatures, and proof-based verification.",
+      "Campaign growth, merchant ops, and compliance gates that agents cannot finish alone: identity-bound posts, merchant checks, screenshots, signatures, and proof-based verification on Base.",
     entryTitle: "Three Roles, One Closed Loop",
     entryDesc: "Buyer, operator, and reviewer stay inside the same auditable flow.",
     entries: [
@@ -93,6 +102,7 @@ function repeat<T>(items: T[], times: number): T[] {
 
 export default function HomePage() {
   const [entrance, setEntrance] = useState<"hire" | "publish" | "human">("hire");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const t = copy;
 
@@ -180,7 +190,7 @@ export default function HomePage() {
       {
         title: "Payment release gate · growth task",
         meta: "verified before settle",
-        tags: ["settle", "review", "bnb"]
+        tags: ["settle", "review", "base"]
       },
       {
         title: "Dispute check · missing screenshot",
@@ -218,7 +228,7 @@ export default function HomePage() {
       "[dispatch] routing to operator in Shanghai as last-resort fallback",
       "[proof] evidence uploaded: live post url + screenshot + summary",
       "[verify] reviewer approved the bundle",
-      "[settle] payment released on BNB Chain after verification",
+      "[settle] payment released on Base after verification",
       "[ledger] tx hash attached to settlement record"
     ];
   }, []);
@@ -228,7 +238,7 @@ export default function HomePage() {
       { label: "task", value: "T-18F2" },
       { label: "payee", value: "Growth Operator" },
       { label: "amount", value: formatSettlementBudget("12.00") },
-      { label: "method", value: "bnb_erc20" },
+      { label: "method", value: "base_erc20" },
       { label: "status", value: "paid" }
     ];
     return [...rows, ...rows];
@@ -248,8 +258,8 @@ export default function HomePage() {
       },
       {
         title: "Planner + Settlement",
-        desc: "Wallet, market, and trade prechecks decide the route before proof artifacts are settled on BNB Chain.",
-        tags: ["precheck", "bnb", "settle"]
+        desc: "Wallet, market, and trade prechecks decide the route before proof artifacts are settled on Base.",
+        tags: ["precheck", "base", "settle"]
       }
     ];
   }, []);
@@ -267,14 +277,39 @@ export default function HomePage() {
           <Link href="/submission">Submission</Link>
           <Link href="/livedemo">Live Demo</Link>
           <Link href="/reviewer">Reviewer</Link>
+          <Link href="/whitepaper">Whitepaper</Link>
+          <a href="https://bankr.bot/launches/0xc46C41005A1A88B0C1491F2B542A4831D6d1EbA3" target="_blank" rel="noopener noreferrer">CA</a>
         </nav>
 
         <div className={styles.navActions}>
           <Link className={styles.navAppLink} href="/tasks">
             {t.nav.app}
           </Link>
+          <button 
+            className={styles.mobileMenuBtn}
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle menu"
+          >
+            {mobileMenuOpen ? "✕" : "☰"}
+          </button>
         </div>
       </header>
+
+      {mobileMenuOpen && (
+        <div className={styles.mobileMenu}>
+          {navItems.map((item) => (
+            item.external ? (
+              <a key={item.href} href={item.href} target="_blank" rel="noopener noreferrer" onClick={() => setMobileMenuOpen(false)}>
+                {item.label}
+              </a>
+            ) : (
+              <Link key={item.href} href={item.href} onClick={() => setMobileMenuOpen(false)}>
+                {item.label}
+              </Link>
+            )
+          ))}
+        </div>
+      )}
 
       <main>
         <section className={styles.hero}>
@@ -423,15 +458,15 @@ export default function HomePage() {
           <div className={styles.liveStats}>
             <div className={styles.stat}>
               <p>{"Primary rail"}</p>
-              <strong>BNB Chain</strong>
+              <strong>Base</strong>
             </div>
             <div className={styles.stat}>
-              <p>{"Historical proof"}</p>
-              <strong>1 X Layer tx</strong>
+              <p>{"Onchain proof"}</p>
+              <strong>Base live + archives</strong>
             </div>
             <div className={styles.stat}>
-              <p>{"Bonus proof layer"}</p>
-              <strong>x402-ready</strong>
+              <p>{"Launch path"}</p>
+              <strong>Bankr launch path</strong>
             </div>
           </div>
 
@@ -522,7 +557,7 @@ export default function HomePage() {
                 </div>
                 <div className={styles.stampPay}>
                   <span>{"settled"}</span>
-                  <strong>bnb_erc20</strong>
+                  <strong>base_erc20</strong>
                 </div>
               </div>
               <div className={styles.ledger} aria-hidden>
@@ -743,7 +778,7 @@ export default function HomePage() {
               <div className={styles.footerMeta}>
                 <span>{"Human fallback infra"}</span>
                 <span>{"Proof → verify → settle"}</span>
-                <span>{"BNB Chain settlement"}</span>
+                <span>{"Base settlement"}</span>
               </div>
             </div>
             <div className={styles.footerCols}>

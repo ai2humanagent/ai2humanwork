@@ -1,10 +1,26 @@
 import { NextResponse } from "next/server";
-import { readDb, updateDb, type Task } from "../../lib/store";
+import { readDb, updateDb, type Task, type RewardDistribution, type RewardDistributionMode } from "../../lib/store";
 import { appendEvidence } from "../../lib/taskEvidence";
 import { buildOfficialCampaignTask } from "../../lib/officialCampaignTasks.js";
 import { sortTasksForBoard } from "../../lib/taskBoard.js";
 
 export const runtime = "nodejs";
+
+const VALID_DISTRIBUTION_MODES: RewardDistributionMode[] = ["fcfs", "lucky_draw", "equal"];
+
+function parseRewardDistribution(raw: unknown, fallbackBudget: string): RewardDistribution | undefined {
+  if (!raw || typeof raw !== "object") return undefined;
+  const obj = raw as Record<string, unknown>;
+  const mode = String(obj.mode || "").trim() as RewardDistributionMode;
+  if (!VALID_DISTRIBUTION_MODES.includes(mode)) return undefined;
+  return {
+    mode,
+    totalPool: String(obj.totalPool || fallbackBudget).trim(),
+    perWinner: obj.perWinner ? String(obj.perWinner).trim() : undefined,
+    maxWinners: Math.max(1, Math.floor(Number(obj.maxWinners) || 1)),
+    drawTime: obj.drawTime ? String(obj.drawTime).trim() : undefined
+  };
+}
 
 export async function GET() {
   const db = await readDb();
@@ -23,9 +39,17 @@ export async function POST(request: Request) {
   const targetUrl = String(body.targetUrl || "").trim();
   const proofPhrase = String(body.proofPhrase || "").trim();
   const brief = String(body.brief || "").trim();
+  const agentId = String(body.agentId || "").trim() || undefined;
 
   if (!title && !templateId) {
     return NextResponse.json({ error: "Title is required" }, { status: 400 });
+  }
+
+  const db = await readDb();
+
+  // Validate agentId if provided
+  if (agentId && !db.agents.some((a) => a.id === agentId)) {
+    return NextResponse.json({ error: "Agent not found" }, { status: 400 });
   }
 
   const now = new Date().toISOString();
@@ -42,13 +66,19 @@ export async function POST(request: Request) {
         brief: brief || undefined
       })
     : null;
+
+  const finalBudget = campaignTask?.budget || budget || "TBD";
+  const rewardDistribution = parseRewardDistribution(body.rewardDistribution, finalBudget);
+
   const task: Task = {
     id: crypto.randomUUID(),
     title: campaignTask?.title || title,
-    budget: campaignTask?.budget || budget || "TBD",
+    budget: finalBudget,
     deadline: campaignTask?.deadline || deadline || "TBD",
     acceptance: campaignTask?.acceptance || acceptance || "Provide evidence/logs",
     campaign: campaignTask?.campaign as Task["campaign"],
+    agentId,
+    rewardDistribution,
     status: "created" as const,
     createdAt: now,
     updatedAt: now,
@@ -72,6 +102,10 @@ export async function POST(request: Request) {
 
   await updateDb((db) => {
     db.tasks.unshift(task);
+    if (agentId) {
+      const agent = db.agents.find((a) => a.id === agentId);
+      if (agent) agent.tasksPublished += 1;
+    }
   });
 
   return NextResponse.json(task, { status: 201 });

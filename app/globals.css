@@ -33,6 +33,25 @@
   --ai2h-radius-lg: 20px;
   --ai2h-radius-md: 12px;
   --ai2h-shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.35);
+
+  /* Task market CSS tokens (QuestN style) */
+  --tm-bg: #070812;
+  --tm-panel: rgba(10, 12, 20, 0.72);
+  --tm-panel-strong: rgba(13, 17, 27, 0.9);
+  --tm-sidebar: rgba(8, 10, 16, 0.72);
+  --tm-border: rgba(255, 255, 255, 0.1);
+  --tm-border-strong: rgba(121, 180, 255, 0.32);
+  --tm-text: rgba(255, 255, 255, 0.92);
+  --tm-muted: rgba(255, 255, 255, 0.66);
+  --tm-orange: #ff8f2a;
+  --tm-orange-soft: rgba(255, 143, 42, 0.18);
+  --tm-orange-pale: rgba(255, 143, 42, 0.12);
+  --tm-yellow: #ffcf63;
+  --tm-yellow-soft: rgba(255, 207, 99, 0.18);
+  --tm-green: #32e798;
+  --tm-green-soft: rgba(50, 231, 152, 0.16);
+  --tm-cyan: #80ffea;
+  --tm-shadow: 0 24px 60px rgba(0, 0, 0, 0.42);
 }
 
 * {

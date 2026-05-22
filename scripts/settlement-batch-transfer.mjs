@@ -16,6 +16,14 @@ import {
 import { privateKeyToAccount } from "viem/accounts";
 
 const SETTLEMENT_RAILS = {
+  base: {
+    rpcUrl: "https://mainnet.base.org",
+    explorerUrl: "https://basescan.org",
+    chainId: 8453,
+    tokenDecimals: 6,
+    symbol: "USDC",
+    prefix: "BASE"
+  },
   bnb: {
     rpcUrl: "https://bsc-dataseed.bnbchain.org",
     explorerUrl: "https://bscscan.com",
@@ -59,17 +67,17 @@ function normalizeRecipient(value) {
 }
 
 function resolveChainId(value) {
-  const parsed = Number(value || DEFAULT_CHAIN_ID);
+  const parsed = Number(value || railConfig.chainId);
   return Number.isFinite(parsed) && Number.isInteger(parsed) && parsed > 0
     ? parsed
-    : DEFAULT_CHAIN_ID;
+    : railConfig.chainId;
 }
 
 function resolveDecimals(value) {
-  const parsed = Number(value || DEFAULT_TOKEN_DECIMALS);
+  const parsed = Number(value || railConfig.tokenDecimals);
   return Number.isFinite(parsed) && Number.isInteger(parsed) && parsed >= 0
     ? parsed
-    : DEFAULT_TOKEN_DECIMALS;
+    : railConfig.tokenDecimals;
 }
 
 function normalizeExplorerBaseUrl(value) {
@@ -85,16 +93,16 @@ function buildExplorerUrl(baseUrl, txHash) {
 function usage() {
   return [
     "Usage:",
-    "  node scripts/settlement-batch-transfer.mjs --rail=bnb <amount> <recipient1> <recipient2> ...",
+    "  node scripts/settlement-batch-transfer.mjs --rail=base <amount> <recipient1> <recipient2> ...",
     "",
     "Simulation only (default):",
-    "  node scripts/settlement-batch-transfer.mjs --rail=bnb 0.01 0x... 0x...",
+    "  node scripts/settlement-batch-transfer.mjs --rail=base 0.01 0x... 0x...",
     "",
     "Broadcast real transactions (requires explicit confirmation):",
-    "  node scripts/settlement-batch-transfer.mjs --rail=bnb 0.01 0x... 0x... --broadcast --confirm=SEND",
+    "  node scripts/settlement-batch-transfer.mjs --rail=base 0.01 0x... 0x... --broadcast --confirm=SEND",
     "",
     "Notes:",
-    "  - Reads settlement config from .env.local (BNB_* or XLAYER_* vars).",
+    "  - Reads settlement config from .env.local (BASE_*, BNB_* or XLAYER_* vars).",
     "  - Recipients may be 0x... or XKO<hex> on the X Layer rail.",
     "  - --no-wait will submit txs without waiting for receipts."
   ].join("\n");
@@ -137,7 +145,7 @@ for (const arg of argv) {
 if (positional.length < 2) exitWith(usage());
 
 const railConfig = SETTLEMENT_RAILS[rail];
-if (!railConfig) exitWith("unsupported rail. Use --rail=bnb or --rail=xlayer");
+if (!railConfig) exitWith("unsupported rail. Use --rail=base, --rail=bnb or --rail=xlayer");
 
 const amountDisplay = String(positional[0] || "").trim();
 const recipients = positional.slice(1).map(normalizeRecipient).filter(Boolean);
@@ -155,18 +163,20 @@ const privateKey = String(
   process.env[`${prefix}_SETTLEMENT_PRIVATE_KEY`] ||
     process.env[`${prefix}_PRIVATE_KEY`] ||
     process.env.EVM_SETTLEMENT_PRIVATE_KEY ||
+    (rail === "base" ? process.env.XLAYER_SETTLEMENT_PRIVATE_KEY : "") ||
     (rail === "bnb" ? process.env.XLAYER_SETTLEMENT_PRIVATE_KEY : "") ||
     ""
 ).trim();
 const tokenAddress = String(
   process.env[`${prefix}_SETTLEMENT_TOKEN_ADDRESS`] ||
+    (rail === "base" ? "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913" : "") ||
     (rail === "bnb" ? "0x55d398326f99059fF775485246999027B3197955" : "")
 ).trim();
 const tokenSymbol = String(process.env[`${prefix}_SETTLEMENT_TOKEN_SYMBOL`] || railConfig.symbol).trim();
 const tokenDecimals = resolveDecimals(
   process.env[`${prefix}_SETTLEMENT_TOKEN_DECIMALS`] || railConfig.tokenDecimals
 );
-const nativeSymbol = rail === "bnb" ? "BNB" : "OKB";
+const nativeSymbol = rail === "base" ? "ETH" : rail === "bnb" ? "BNB" : "OKB";
 
 if (!privateKey) exitWith(`missing ${prefix}_SETTLEMENT_PRIVATE_KEY`);
 if (!tokenAddress || !isAddress(tokenAddress)) exitWith(`invalid ${prefix}_SETTLEMENT_TOKEN_ADDRESS`);
@@ -183,7 +193,7 @@ if (broadcast && confirm !== "SEND") {
 
 const chain = defineChain({
   id: chainId,
-  name: rail === "bnb" ? "BNB Chain" : "X Layer",
+  name: rail === "base" ? "Base" : rail === "bnb" ? "BNB Chain" : "X Layer",
   nativeCurrency: {
     name: nativeSymbol,
     symbol: nativeSymbol,
@@ -196,7 +206,7 @@ const chain = defineChain({
   },
   blockExplorers: {
       default: {
-        name: rail === "bnb" ? "BscScan" : "X Layer Explorer",
+        name: rail === "base" ? "BaseScan" : rail === "bnb" ? "BscScan" : "X Layer Explorer",
         url: normalizeExplorerBaseUrl(explorerBaseUrl || railConfig.explorerUrl)
       }
   }
@@ -238,7 +248,7 @@ async function main() {
   console.log(`[batch-transfer] ${nativeSymbol}Balance=${formatEther(nativeBalance)}`);
   console.log(`[batch-transfer] ${tokenSymbol}Balance=${formatUnits(tokenBalance, tokenDecimals)}`);
 
-  if (nativeBalance <= 0n) exitWith(`signer has no ${rail === "bnb" ? "BNB" : "OKB"} for gas`);
+  if (nativeBalance <= 0n) exitWith(`signer has no ${nativeSymbol} for gas`);
   if (tokenBalance < totalNeeded) exitWith(`insufficient ${tokenSymbol} balance for requested batch`);
 
   // Always simulate first to catch obvious failures without sending transactions.

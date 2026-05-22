@@ -12,8 +12,9 @@ function shortAddress(address?: string) {
 export default function WalletButton() {
   const { ready, authenticated, login, logout, user } = usePrivy();
   const { wallets } = useWallets();
+  // Prioritize external wallet (MetaMask etc.) over Privy embedded wallet
   const walletAddress =
-    wallets.find((wallet) => wallet.walletClientType === "privy" && wallet.address)?.address ||
+    wallets.find((wallet) => wallet.walletClientType !== "privy" && wallet.address)?.address ||
     user?.wallet?.address ||
     wallets.find((wallet) => wallet.address)?.address ||
     undefined;

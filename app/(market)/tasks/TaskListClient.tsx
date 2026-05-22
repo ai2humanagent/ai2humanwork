@@ -117,7 +117,7 @@ export default function TaskListClient({ justCreated }: { justCreated: boolean }
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const connectedWallet =
-    wallets.find((wallet) => wallet.walletClientType === "privy" && wallet.address)?.address ||
+    wallets.find((wallet) => wallet.walletClientType !== "privy" && wallet.address)?.address ||
     user?.wallet?.address ||
     wallets.find((wallet) => wallet.address)?.address ||
     undefined;
