@@ -5,7 +5,7 @@ import {
 
 const DEFAULT_REQUESTER_NAME = "ai2human Official";
 const DEFAULT_REQUESTER_HANDLE = "@ai2humanwork";
-export const DEFAULT_TARGET_URL = "https://x.com/ai2humanwork/status/2023556314602016768";
+export const DEFAULT_TARGET_URL = "https://x.com/ai2humanwork/status/2057669148281651651";
 export const DEFAULT_REPLY_TARGET_URL = "https://x.com/ai2humanwork/status/2021889560729321898";
 export const DEFAULT_X_TASK_BUDGET = formatSettlementBudget("0.01");
 export const DEFAULT_REAL_WORLD_TASK_BUDGET = formatSettlementBudget("45");

@@ -732,7 +732,6 @@
 }
 
 .questBadge {
-  margin-left: auto;
   font-size: 10px;
   font-weight: 700;
   color: var(--tm-cyan);
@@ -741,6 +740,13 @@
   padding: 2px 8px;
   border-radius: 999px;
   letter-spacing: 0.02em;
+}
+
+.questDispatchTime {
+  margin-left: auto;
+  font-size: 10px;
+  color: var(--tm-muted);
+  opacity: 0.6;
 }
 
 .questTitle {
@@ -835,7 +841,8 @@
 
 .questStatusMini {
   font-size: 11px;
-  color: var(--tm-muted);
+  font-weight: 700;
+  letter-spacing: 0.02em;
 }
 
 .loadMoreRow {

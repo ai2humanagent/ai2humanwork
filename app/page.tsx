@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { usePrivy } from "@privy-io/react-auth";
 import { formatSettlementBudget } from "./lib/assetLabels.js";
 import styles from "./landing.module.css";
 
@@ -16,7 +17,7 @@ const navItems = [
 
 const copy = {
   nav: {
-    app: "Open Tasks"
+    app: "Open App"
   },
   hero: {
     eyebrow: "Base Agent Fallback Infra",
@@ -101,8 +102,14 @@ function repeat<T>(items: T[], times: number): T[] {
 }
 
 export default function HomePage() {
+  const { ready, authenticated } = usePrivy();
   const [entrance, setEntrance] = useState<"hire" | "publish" | "human">("hire");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const appHref = useMemo(() => {
+    if (ready && authenticated) return "/tasks";
+    return "/app/profile";
+  }, [ready, authenticated]);
 
   const t = copy;
 
@@ -282,7 +289,7 @@ export default function HomePage() {
         </nav>
 
         <div className={styles.navActions}>
-          <Link className={styles.navAppLink} href="/tasks">
+          <Link className={styles.navAppLink} href={appHref}>
             {t.nav.app}
           </Link>
           <button 

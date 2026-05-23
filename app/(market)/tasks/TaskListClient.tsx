@@ -52,6 +52,7 @@ type Task = {
     maxWinners?: number;
     mode?: string;
   };
+  taskState?: "open" | "full" | "closed" | "refunded";
 };
 
 type AuthPayload = {
@@ -91,6 +92,7 @@ function actionLabel(task: Task) {
 
 function canClaim(task: Task, auth: AuthPayload | null) {
   if (!["created", "ai_failed"].includes(task.status)) return false;
+  if (task.taskState === "full" || task.taskState === "closed" || task.taskState === "refunded") return false;
   if (!auth?.human?.id || !auth?.user?.walletAddress) return false;
   return true;
 }
@@ -99,6 +101,38 @@ function isClaimedByCurrentUser(task: Task, auth: AuthPayload | null) {
   if (!auth?.human?.name) return false;
   return task.assignee?.type === "human" && task.assignee.name === auth.human.name;
 }
+
+function timeAgo(dateStr: string) {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${Math.floor(hrs / 24)}d ago`;
+}
+
+const STATUS_LABELS: Record<Task["status"], string> = {
+  created: "Open",
+  ai_running: "In Progress",
+  ai_failed: "Pending",
+  ai_done: "Ready",
+  human_assigned: "Accepted",
+  human_done: "Proof Submitted",
+  verified: "Confirmed",
+  paid: "Settled"
+};
+
+const STATUS_COLORS: Record<Task["status"], string> = {
+  created: "#80ffea",      // cyan — available
+  ai_running: "#ff8f2a",   // orange — in progress
+  ai_failed: "#ffcf63",    // yellow — pending
+  ai_done: "#32e798",      // green — ready
+  human_assigned: "#32e798", // green — accepted
+  human_done: "#80ffea",   // cyan — proof submitted
+  verified: "#80ffea",     // cyan — confirmed
+  paid: "#32e798"          // green — settled
+};
 
 export default function TaskListClient({ justCreated, searchQuery }: { justCreated: boolean; searchQuery?: string }) {
   const router = useRouter();
@@ -287,7 +321,18 @@ export default function TaskListClient({ justCreated, searchQuery }: { justCreat
         </div>
       </div>
 
-      {loading ? <div className={styles.placeholderCard}><p>Loading live tasks...</p></div> : null}
+      {loading ? (
+        <div className={styles.placeholderCard} style={{ display: "flex", justifyContent: "center", alignItems: "center", padding: "60px 0" }}>
+          <div style={{
+            width: 32, height: 32,
+            border: "3px solid rgba(128,255,234,0.2)",
+            borderTopColor: "#80ffea",
+            borderRadius: "50%",
+            animation: "spin 0.8s linear infinite"
+          }} />
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        </div>
+      ) : null}
       {!loading && filtered.length === 0 ? (
         <div className={styles.placeholderCard}>
           <h1>No tasks found</h1>
@@ -306,9 +351,10 @@ export default function TaskListClient({ justCreated, searchQuery }: { justCreat
                   <div className={styles.questCardMeta}>
                     <img className={styles.questLogo} src="/icon.png" alt="" />
                     <span className={styles.questRequester}>
-                      {task.campaign?.requesterName || "Official"}
+                      {task.campaign?.requesterName || "AI Executor"}
                     </span>
                     <span className={styles.questBadge}>{actionLabel(task)}</span>
+                    <span className={styles.questDispatchTime}>{timeAgo(task.updatedAt)}</span>
                   </div>
                   <h3 className={styles.questTitle}>{task.title}</h3>
                 </div>
@@ -335,9 +381,20 @@ export default function TaskListClient({ justCreated, searchQuery }: { justCreat
                       {claimingId === task.id ? "..." : "Claim"}
                     </button>
                   ) : claimedByMe ? (
-                    <span className={styles.questClaimedBadge}>Yours</span>
+                    <span className={styles.questClaimedBadge}>Accepted</span>
                   ) : (
-                    <span className={styles.questStatusMini}>{statusLabels[task.status]}</span>
+                    <span
+                      className={styles.questStatusMini}
+                      style={{
+                        color: (task.taskState === "full" || task.taskState === "closed" || task.taskState === "refunded")
+                          ? "rgba(255,255,255,0.4)"
+                          : STATUS_COLORS[task.status]
+                      }}
+                    >
+                      {task.taskState === "full" || task.taskState === "closed" || task.taskState === "refunded"
+                        ? "Ended"
+                        : STATUS_LABELS[task.status]}
+                    </span>
                   )}
                 </div>
               </div>

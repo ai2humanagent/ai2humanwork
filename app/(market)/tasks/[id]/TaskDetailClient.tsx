@@ -72,6 +72,7 @@ type Task = {
     maxWinners: number;
     drawTime?: string;
   };
+  taskState?: "open" | "full" | "closed" | "refunded";
 };
 
 type AuthPayload = {
@@ -274,6 +275,7 @@ export default function TaskDetailClient({
   const [claimResult, setClaimResult] = useState<PaymentResult | null>(null);
   const [questProgressLoaded, setQuestProgressLoaded] = useState(false);
   const [questersData, setQuestersData] = useState<QuestersData>({ count: 0, claimedCount: 0, questers: [] });
+  const [relatedTasks, setRelatedTasks] = useState<Task[]>([]);
   // Prioritize external wallet (MetaMask etc.) over Privy embedded wallet
   const rawWallet =
     wallets.find((wallet) => wallet.walletClientType !== "privy" && wallet.address)?.address ||
@@ -523,6 +525,19 @@ export default function TaskDetailClient({
       .catch(() => {});
   }, [isTwitterTask, initialTask.id]);
 
+  // Load related tasks from API
+  useEffect(() => {
+    fetch("/api/tasks", { cache: "no-store" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: Task[] | null) => {
+        if (!data) return;
+        // Show up to 3 other tasks, excluding current one
+        const others = data.filter((t) => t.id !== initialTask.id).slice(0, 3);
+        setRelatedTasks(others);
+      })
+      .catch(() => {});
+  }, [initialTask.id]);
+
   const evidenceFields = useMemo(() => getTaskEvidenceFields(task), [task]);
   const claimedByMe = useMemo(() => isClaimedByCurrentUser(task, auth), [task, auth]);
   const claimable = useMemo(() => canClaim(task, auth), [task, auth]);
@@ -695,11 +710,15 @@ export default function TaskDetailClient({
     }
   }
 
-  // ===== QuestN-Style Twitter Task Layout =====
-  if (isTwitterTask) {
+  // ===== QuestN Layout (all tasks) =====
+  {
     const allTasksVerified = ["0","1","2","3"].every(k => taskStates[k]?.verified);
     // For quest/twitter tasks, "done" means the current user has claimed, not the global task status
-    const isDone = !!claimResult;
+    // Also treat taskState as ended when pool is exhausted
+    const isDone = !!claimResult || task.taskState === "full" || task.taskState === "closed" || task.taskState === "refunded";
+    // Tag label: show "Ended" only when task pool is exhausted (all winners claimed / refunded / closed)
+    // Otherwise show "Completed" if current user claimed, "Ongoing" if not
+    const isGloballyEnded = task.taskState === "full" || task.taskState === "closed" || task.taskState === "refunded";
 
     // Twitter SVG icon
     const twitterSvg = (
@@ -789,6 +808,35 @@ export default function TaskDetailClient({
       return "Join";
     }
 
+    function buildTwitterIntentUrl(taskType: string, campaign?: Task["campaign"]): string {
+      const DEFAULT_HANDLE = "ai2humanwork";
+      const DEFAULT_TWEET_URL = "https://x.com/ai2humanwork/status/2057669148281651651";
+
+      const handle = campaign?.requesterHandle?.replace("@", "") || DEFAULT_HANDLE;
+      if (taskType === "twitter_follow") {
+        return `https://x.com/intent/follow?screen_name=${handle}`;
+      }
+
+      // Extract tweet ID from targetUrl (e.g. https://x.com/ai2humanwork/status/123456789)
+      const targetUrl = campaign?.targetUrl || DEFAULT_TWEET_URL;
+      const tweetIdMatch = targetUrl.match(/status\/(\d+)/);
+      const tweetId = tweetIdMatch ? tweetIdMatch[1] : "";
+
+      if (taskType === "twitter_like" && tweetId) {
+        return `https://x.com/intent/like?tweet_id=${tweetId}`;
+      }
+      if (taskType === "twitter_retweet" && tweetId) {
+        return `https://x.com/intent/retweet?tweet_id=${tweetId}`;
+      }
+      if (taskType === "twitter_comment" && tweetId) {
+        const text = encodeURIComponent(campaign?.label || "Check this out!");
+        const url = encodeURIComponent(targetUrl);
+        return `https://x.com/intent/tweet?text=${text}&url=${url}`;
+      }
+      // Fallback for like/retweet without tweetId — open the tweet directly
+      return targetUrl;
+    }
+
     function getTaskDisplayLabel(taskType: string, requesterHandle?: string): string {
       const handle = requesterHandle?.replace("@", "") || "ai2humanwork";
       if (taskType === "twitter_follow") return `Follow @${handle} on X`;
@@ -813,12 +861,7 @@ export default function TaskDetailClient({
       }
     }
 
-    // Mock related tasks for "For You" section
-    const relatedTasks = [
-      { id: "rq1", name: "AI2Human Lab", title: "Follow @ai2humanwork on X for Alpha", reward: "$5.00" },
-      { id: "rq2", name: "BNB Chain", title: "Like BNB Chain's latest announcement", reward: "$3.00" },
-      { id: "rq3", name: "Base Protocol", title: "Join Base Discord and verify", reward: "$8.00" },
-    ];
+    // relatedTasks now comes from API state
 
     return (
       <main className={styles.page}>
@@ -865,7 +908,7 @@ export default function TaskDetailClient({
                   <div className={styles.qnTagBox}>
                     <span className={`${styles.qnTag} ${isDone ? styles.qnTagCompleted : styles.qnTagOngoing}`}>
                       {!isDone && <span className={styles.qnStatusDot} />}
-                      {isDone ? "Completed" : "Ongoing"}
+                      {isGloballyEnded ? "Ended" : isDone ? "Completed" : "Ongoing"}
                     </span>
                     <span className={styles.qnTag}>{getDeadlineDisplay()}</span>
                   </div>
@@ -874,10 +917,10 @@ export default function TaskDetailClient({
                 {/* Task List */}
                 <div className={styles.qnTaskList}>
                   {[
-                    { key: "0", icon: task.taskType === "twitter_follow" ? followSvg : task.taskType === "twitter_like" ? likeSvg : task.taskType === "twitter_retweet" ? retweetSvg : task.taskType === "twitter_comment" ? commentSvg : twitterSvg, label: task.campaign?.label || getTaskDisplayLabel(task.taskType || "twitter_follow", task.campaign?.requesterHandle), actionLabel: getTaskActionLabel(task.taskType || "twitter_follow"), actionUrl: task.campaign?.targetUrl || "https://x.com" },
-                    { key: "1", icon: joinSvg, label: "Join AI2Human Discord", actionLabel: "Join", actionUrl: "https://discord.gg/ai2human" },
-                    { key: "2", icon: retweetSvg, label: "Repost pinned tweet", actionLabel: "Repost", actionUrl: "https://x.com/ai2humanwork" },
-                    { key: "3", icon: likeSvg, label: "Like announcement post", actionLabel: "Like", actionUrl: "https://x.com/ai2humanwork" },
+                    { key: "0", icon: followSvg, label: task.campaign?.label || getTaskDisplayLabel("twitter_follow", task.campaign?.requesterHandle), actionLabel: getTaskActionLabel("twitter_follow"), intentUrl: "https://x.com/intent/follow?screen_name=ai2humanwork" },
+                    { key: "1", icon: joinSvg, label: "Join AI2Human Discord", actionLabel: "Join", intentUrl: "https://discord.gg/ai2human" },
+                    { key: "2", icon: retweetSvg, label: "Repost pinned tweet", actionLabel: "Repost", intentUrl: "https://x.com/intent/retweet?tweet_id=2057669148281651651" },
+                    { key: "3", icon: likeSvg, label: "Like announcement post", actionLabel: "Like", intentUrl: "https://x.com/intent/like?tweet_id=2057669148281651651" },
                   ].map((item) => {
                     const state = taskStates[item.key] || { actionClicked: false, verifying: false, verified: false };
                     const isExpanded = expandedTasks[item.key] || false;
@@ -927,23 +970,21 @@ export default function TaskDetailClient({
                                   {/* Action button - 3D Black */}
                                   <div className={`${styles.btn3d} ${styles.btn3dBlack}`}>
                                     <div className={styles.btn3dInner}>
-                                      <a
-                                        href={item.actionUrl}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
+                                      <button
+                                        type="button"
                                         className={styles.btn3dFace}
-                                        onClick={(e) => {
+                                        onClick={() => {
                                           if (!connectedWallet) {
-                                            e.preventDefault();
                                             login();
                                             return;
                                           }
+                                          window.open(item.intentUrl, "_blank", "width=600,height=400,toolbar=no,menubar=no");
                                           handleTaskAction(item.key);
                                         }}
                                       >
                                         {twitterSvg}
                                         {item.actionLabel}
-                                      </a>
+                                      </button>
                                       <span className={styles.btn3dShadow} />
                                     </div>
                                   </div>
@@ -1007,29 +1048,31 @@ export default function TaskDetailClient({
                   <h3 className={styles.qnForYouTitle}>For You</h3>
                 </div>
                 <div className={styles.qnForYouGrid}>
-                  {relatedTasks.map((item) => (
-                    <a key={item.id} href={`/tasks/${item.id}`} className={styles.qnQuestCard}>
-                      <div className={styles.qnQuestCardBg} />
-                      <div className={styles.qnQuestCardBody}>
-                        <div className={styles.qnQuestCardTop}>
-                          <div className={styles.qnQuestCardLogo}>
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-                            </svg>
+                  {relatedTasks.length === 0 ? (
+                    <p className={styles.qnEmptyRelated}>No other tasks available yet.</p>
+                  ) : (
+                    relatedTasks.map((item) => (
+                      <a key={item.id} href={`/tasks/${item.id}`} className={styles.qnQuestCard}>
+                        <div className={styles.qnQuestCardBg} />
+                        <div className={styles.qnQuestCardBody}>
+                          <div className={styles.qnQuestCardTop}>
+                            <img className={styles.questLogo} src="/icon.png" alt="" style={{ width: 14, height: 14, borderRadius: "50%" }} />
+                            <span className={styles.qnQuestCardName}>
+                              {item.campaign?.requesterName || "AI Executor"}
+                            </span>
                           </div>
-                          <span className={styles.qnQuestCardName}>{item.name}</span>
+                          <p className={styles.qnQuestCardTitle}>{item.title}</p>
+                          <div className={styles.qnQuestCardReward}>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <circle cx="12" cy="12" r="10"/>
+                              <path d="M12 6v12M6 12h12"/>
+                            </svg>
+                            {item.rewardDistribution?.totalPool ?? item.budget}
+                          </div>
                         </div>
-                        <p className={styles.qnQuestCardTitle}>{item.title}</p>
-                        <div className={styles.qnQuestCardReward}>
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <circle cx="12" cy="12" r="10"/>
-                            <path d="M12 6v12M6 12h12"/>
-                          </svg>
-                          {item.reward}
-                        </div>
-                      </div>
-                    </a>
-                  ))}
+                      </a>
+                    ))
+                  )}
                 </div>
                 {/* Explore More button */}
                 <div className={`${styles.qnExplore} ${styles.btn3d} ${styles.btn3dGhost}`}>
@@ -1093,7 +1136,7 @@ export default function TaskDetailClient({
 
                 {/* Deadline / Countdown */}
                 <div className={styles.qnCountdown}>
-                  {countdown.ended ? (
+                  {countdown.ended || task.taskState === "full" || task.taskState === "closed" || task.taskState === "refunded" ? (
                     <div className={styles.qnCountdownLabel}>Ended</div>
                   ) : countdownTarget ? (
                     <>
@@ -1161,6 +1204,15 @@ export default function TaskDetailClient({
                         onClick={() => login()}
                       >
                         Connect Wallet
+                      </button>
+                      <span className={styles.btn3dShadow} />
+                    </div>
+                  </div>
+                ) : isGloballyEnded ? (
+                  <div className={`${styles.qnClaimWrap} ${styles.btn3d} ${styles.btn3dDisabled}`}>
+                    <div className={styles.btn3dInner}>
+                      <button type="button" className={styles.btn3dFace} disabled>
+                        Ended
                       </button>
                       <span className={styles.btn3dShadow} />
                     </div>
@@ -1241,391 +1293,4 @@ export default function TaskDetailClient({
       </main>
     );
   }
-
-  // ===== Standard (non-Twitter) Task Layout =====
-  return (
-    <main className={styles.page}>
-      <div className={styles.topbar}>
-        <div className={styles.topbarLinks}>
-          <Link href="/tasks">← Back to tasks</Link>
-          <Link href="/app/profile">Operator profile</Link>
-          <Link href="/reviewer">Reviewer console</Link>
-        </div>
-        <span>{loading ? "Refreshing..." : `Updated ${new Date(task.updatedAt).toLocaleString()}`}</span>
-      </div>
-
-      <section className={styles.hero}>
-        <div className={styles.heroHead}>
-          <div>
-            <p className={styles.eyebrow}>Task Execution</p>
-            <h1 className={styles.title}>{task.title}</h1>
-            <p className={styles.lead}>
-              {task.campaign?.brief || task.acceptance}
-            </p>
-          </div>
-          <div className={styles.badgeRow}>
-            <span className={`${styles.badge} ${styles.badgeAccent}`}>{actionLabel(task)}</span>
-            <span className={styles.badge}>{statusLabels[task.status]}</span>
-          </div>
-        </div>
-
-        <div className={styles.metaGrid}>
-          <div className={styles.metaCard}>
-            <span>Reward</span>
-            <strong>{rewardLabel}</strong>
-          </div>
-          <div className={styles.metaCard}>
-            <span>Deadline</span>
-            <strong>{task.deadline}</strong>
-          </div>
-          <div className={styles.metaCard}>
-            <span>Requester</span>
-            <strong>{task.campaign?.requesterHandle || task.campaign?.requesterName || "Official campaign"}</strong>
-          </div>
-          <div className={styles.metaCard}>
-            <span>Payout target</span>
-            <strong>{task.assignee?.walletAddress || auth?.user?.walletAddress || "Connect wallet first"}</strong>
-          </div>
-        </div>
-      </section>
-
-      {error ? <div className={styles.warning}>{error}</div> : null}
-      {message ? <div className={styles.success}>{message}</div> : null}
-
-      <section className={styles.layout}>
-        <div className={styles.stack}>
-          <article className={styles.card}>
-            <h2>Execution brief</h2>
-            <div className={styles.mutedList}>
-              <p>{task.acceptance}</p>
-              {task.campaign?.targetUrl ? (
-                <p>
-                  {targetLabel}:{" "}
-                  <a href={task.campaign.targetUrl} target="_blank" rel="noreferrer">
-                    {task.campaign.targetUrl}
-                  </a>
-                </p>
-              ) : null}
-              {task.campaign?.proofPhrase ? <p>{proofPhraseLabel}: {task.campaign.proofPhrase}</p> : null}
-            </div>
-          </article>
-
-          <article className={styles.card}>
-            <h2>Proof requirements</h2>
-            <ul className={styles.list}>
-              {(task.campaign?.proofRequirements || [task.acceptance]).map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-          </article>
-
-          <article className={styles.card}>
-            <h2>Automated proof check</h2>
-            <div className={styles.verificationSummary}>
-              <div className={verificationStatus.ok ? styles.success : styles.warning}>
-                {verificationStatus.ok
-                  ? "The current proof package passes automated checks and is ready for reviewer approval."
-                  : "The current proof package is incomplete or inconsistent. Fix the failed items below and resubmit proof."}
-              </div>
-            </div>
-            <div className={styles.checkList}>
-              {verificationStatus.checks.map((check: VerificationCheck) => (
-                <div key={check.id} className={styles.checkItem}>
-                  <span className={check.passed ? styles.checkPassed : styles.checkFailed}>
-                    {check.passed ? "Passed" : "Missing"}
-                  </span>
-                  <strong>{check.label}</strong>
-                </div>
-              ))}
-            </div>
-          </article>
-
-          <article className={styles.card}>
-            <h2>Evidence timeline</h2>
-            <div className={styles.timeline}>
-              {task.evidence.length === 0 ? <p>No proof submitted yet.</p> : null}
-              {task.evidence.map((item) => (
-                <div key={item.id} className={styles.timelineItem}>
-                  <div className={styles.timelineMeta}>
-                    <span>{item.by}</span>
-                    <span>{item.type}</span>
-                    <span>{new Date(item.createdAt).toLocaleString()}</span>
-                  </div>
-                  <p>{item.content}</p>
-                </div>
-              ))}
-            </div>
-          </article>
-        </div>
-
-        <aside className={styles.stack}>
-          {latestPayment ? (
-            <article className={styles.card}>
-              <h2>Settlement proof</h2>
-              <div className={styles.settlementGrid}>
-                <div className={styles.settlementItem}>
-                  <span>Amount</span>
-                  <strong>{latestPayment.amount}</strong>
-                </div>
-                <div className={styles.settlementItem}>
-                  <span>Token</span>
-                  <strong>{latestPayment.tokenSymbol || DEFAULT_SETTLEMENT_TOKEN_SYMBOL}</strong>
-                </div>
-                <div className={styles.settlementItem}>
-                  <span>Method</span>
-                  <strong>{latestPayment.method || "unknown"}</strong>
-                </div>
-                <div className={styles.settlementItem}>
-                  <span>Network</span>
-                  <strong>{latestPayment.network || "demo"}</strong>
-                </div>
-              </div>
-
-              <div className={styles.settlementStack}>
-                {latestPayment.payerAddress ? (
-                  <div className={styles.settlementRow}>
-                    <span>Payer</span>
-                    <strong title={latestPayment.payerAddress}>
-                      {shortValue(latestPayment.payerAddress)}
-                    </strong>
-                  </div>
-                ) : null}
-                {(latestPayment.receiverAddress || latestPayment.receiver) ? (
-                  <div className={styles.settlementRow}>
-                    <span>Receiver</span>
-                    <strong
-                      title={latestPayment.receiverAddress || latestPayment.receiver}
-                    >
-                      {latestPayment.receiverAddress
-                        ? shortValue(latestPayment.receiverAddress)
-                        : latestPayment.receiver}
-                    </strong>
-                  </div>
-                ) : null}
-                {latestPayment.txHash ? (
-                  <div className={styles.settlementRow}>
-                    <span>Transaction hash</span>
-                    <strong className={styles.hashValue} title={latestPayment.txHash}>
-                      {latestPayment.txHash}
-                    </strong>
-                  </div>
-                ) : null}
-                {latestPayment.explorerUrl ? (
-                  <div className={styles.settlementActions}>
-                    <a href={latestPayment.explorerUrl} target="_blank" rel="noreferrer">
-                      {settlementExplorerLabel(latestPayment)}
-                    </a>
-                  </div>
-                ) : (
-                  <div className={styles.notice}>
-                    This settlement was recorded without an onchain explorer link.
-                  </div>
-                )}
-              </div>
-            </article>
-          ) : null}
-
-          <article className={styles.card}>
-            <h2>Take task</h2>
-            {isClosedProofRecord && alternateClaimTask ? (
-              <div className={styles.form}>
-                <div className={styles.notice}>
-                  This task record is already closed and kept as public proof. To execute the same
-                  template with another account, claim a fresh live slot instead.
-                </div>
-                <Link href={`/tasks/${alternateClaimTask.id}`} className={styles.button}>
-                  Claim Another Live Slot ({alternateClaimTask.deadline})
-                </Link>
-              </div>
-            ) : !authenticated ? (
-              <div className={styles.form}>
-                <div className={styles.notice}>Connect your Privy wallet before claiming the task.</div>
-                <button type="button" className={styles.button} onClick={() => login()}>
-                  Connect Wallet
-                </button>
-              </div>
-            ) : !auth?.human?.id || !auth?.user?.walletAddress ? (
-              <div className={styles.form}>
-                <div className={styles.notice}>
-                  Finish your operator profile first. Claiming requires both an operator identity and a payout wallet.
-                </div>
-                <Link href="/app/profile" className={styles.button}>
-                  Complete Operator Profile
-                </Link>
-              </div>
-            ) : claimable ? (
-              <div className={styles.form}>
-                <div className={styles.notice}>
-                  You are payout-ready as {auth.human?.name}. Claiming this task will bind settlement to your connected wallet.
-                </div>
-                <button
-                  type="button"
-                  className={styles.button}
-                  disabled={claiming}
-                  onClick={claimTask}
-                >
-                  {claiming ? "Claiming..." : "Accept Task"}
-                </button>
-              </div>
-            ) : claimedByMe ? (
-              <div className={styles.form}>
-                <div className={styles.success}>This task is already claimed by you.</div>
-                <div className={styles.notice}>Submit proof below. If the proof passes validation, settlement will be released automatically.</div>
-              </div>
-            ) : task.assignee?.type === "human" ? (
-              <div className={styles.form}>
-                <div className={styles.notice}>This task is currently assigned to {task.assignee.name}.</div>
-              </div>
-            ) : (
-              <div className={styles.form}>
-                <div className={styles.notice}>This task is not claimable in its current state.</div>
-              </div>
-            )}
-          </article>
-
-          <article className={styles.card}>
-            <h2>Submit proof</h2>
-            {!claimedByMe ? (
-              <div className={styles.notice}>Claim this task with your operator account to unlock proof submission.</div>
-            ) : !canEditProof ? (
-              <div className={styles.notice}>
-                Proof editing is closed for this task. Current status: {statusLabels[task.status]}.
-              </div>
-            ) : (
-              <div className={styles.form}>
-                {task.status === "human_done" ? (
-                  <div className={verificationStatus.ok ? styles.success : styles.warning}>
-                    {verificationStatus.ok
-                      ? "Proof is already submitted and passes automated checks. You can still resubmit if you need to replace the evidence."
-                      : "Proof is already submitted, but the automated check is failing. Update the fields below and resubmit."}
-                  </div>
-                ) : null}
-                {requiresExecutorHandle ? (
-                  <div className={styles.field}>
-                    <label htmlFor="executorHandle">X Handle</label>
-                    <input
-                      id="executorHandle"
-                      className={styles.input}
-                      value={executorHandle}
-                      onChange={(event) => setExecutorHandle(event.target.value)}
-                      placeholder="@yourhandle"
-                    />
-                  </div>
-                ) : null}
-
-                <div className={styles.row2}>
-                  {requiresPostUrl ? (
-                    <div className={styles.field}>
-                      <label htmlFor="postUrl">Live Post URL</label>
-                      <input
-                        id="postUrl"
-                        className={styles.input}
-                        value={postUrl}
-                        onChange={(event) => setPostUrl(event.target.value)}
-                        placeholder="https://x.com/yourhandle/status/..."
-                      />
-                    </div>
-                  ) : null}
-
-                  {requiresProfileUrl ? (
-                    <div className={styles.field}>
-                      <label htmlFor="profileUrl">Profile URL</label>
-                      <input
-                        id="profileUrl"
-                        className={styles.input}
-                        value={profileUrl}
-                        onChange={(event) => setProfileUrl(event.target.value)}
-                        placeholder="https://x.com/yourhandle"
-                      />
-                    </div>
-                  ) : null}
-                </div>
-
-                {requiresPhoto ? (
-                  <div className={styles.field}>
-                    <label htmlFor="screenshotUrl">{photoLabel}</label>
-                    <input
-                      id="screenshotUrl"
-                      className={styles.input}
-                      value={screenshotUrl}
-                      onChange={(event) => setScreenshotUrl(event.target.value)}
-                      placeholder={photoPlaceholder}
-                    />
-                    {task.campaign?.platform === "x" ? (
-                      <p className={styles.fieldHelp}>
-                        You can reuse the same live X post/profile URL here. A separate image is optional for demo flow.
-                      </p>
-                    ) : null}
-                  </div>
-                ) : null}
-
-                {requiresLocationNote ? (
-                  <div className={styles.field}>
-                    <label htmlFor="locationNote">Location Note</label>
-                    <input
-                      id="locationNote"
-                      className={styles.input}
-                      value={locationNote}
-                      onChange={(event) => setLocationNote(event.target.value)}
-                      placeholder="Store name, entrance, desk, or pickup point"
-                    />
-                  </div>
-                ) : null}
-
-                {requiresTimestampNote ? (
-                  <div className={styles.field}>
-                    <label htmlFor="timestampNote">Timestamp Note</label>
-                    <input
-                      id="timestampNote"
-                      className={styles.input}
-                      value={timestampNote}
-                      onChange={(event) => setTimestampNote(event.target.value)}
-                      placeholder="Checked at 2026-03-23 19:40 local time"
-                    />
-                  </div>
-                ) : null}
-
-                {requiresProofPhrase ? (
-                  <div className={styles.field}>
-                    <label htmlFor="proofPhrase">{proofPhraseLabel}</label>
-                    <input
-                      id="proofPhrase"
-                      className={styles.input}
-                      value={proofPhrase}
-                      onChange={(event) => setProofPhrase(event.target.value)}
-                    />
-                  </div>
-                ) : null}
-
-                <div className={styles.field}>
-                  <label htmlFor="summary">Execution Summary</label>
-                  <textarea
-                    id="summary"
-                    className={styles.textarea}
-                    value={summary}
-                    onChange={(event) => setSummary(event.target.value)}
-                    placeholder={summaryPlaceholder}
-                  />
-                </div>
-
-                <div className={styles.ctaRow}>
-                  <button
-                    type="button"
-                    className={styles.button}
-                    disabled={submitting}
-                    onClick={submitProof}
-                  >
-                    {submitting ? "Submitting..." : task.status === "human_done" ? "Resubmit Proof" : "Submit Proof"}
-                  </button>
-                  <button type="button" className={styles.buttonGhost} onClick={loadTask}>
-                    Refresh Task
-                  </button>
-                </div>
-              </div>
-            )}
-          </article>
-        </aside>
-      </section>
-    </main>
-  );
 }

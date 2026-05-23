@@ -1,6 +1,153 @@
 {
   "tasks": [
     {
+      "id": "3a877363-6e59-4b7c-8038-6d8b2cffaaf0",
+      "title": "Join ai2human Discord & Introduce Yourself",
+      "budget": "1",
+      "deadline": "2026-06-01T16:00:00Z",
+      "acceptance": "Provide evidence/logs",
+      "agentId": "agent_official",
+      "rewardDistribution": {
+        "mode": "lucky_draw",
+        "totalPool": "1 USDC",
+        "maxWinners": 3,
+        "drawTime": "2026-05-23T18:00:00Z"
+      },
+      "status": "paid",
+      "taskState": "full",
+      "createdAt": "2026-05-23T10:27:40.222Z",
+      "updatedAt": "2026-05-23T10:45:50.665Z",
+      "evidence": [
+        {
+          "id": "8341fbbe-7d8b-4d8a-98da-f4826b7c8995",
+          "by": "system",
+          "type": "log",
+          "content": "Task created: none -> created (escrow funded: 1 USDC)",
+          "createdAt": "2026-05-23T10:27:40.222Z"
+        },
+        {
+          "id": "be1a518b-8ecb-4651-b685-e61e9ca6d024",
+          "by": "system",
+          "type": "note",
+          "content": "escrow_deposit: 1 USDC transferred from 0x3f665386b41Fa15c5ccCeE983050a236E6a10108 to escrow 0x3f665386b41Fa15c5ccCeE983050a236E6a10108. tx: 0x3e7ca1db478270fe88a7452873ca0d36e8f7ecb95bd101be2f0b77226a5334ff",
+          "createdAt": "2026-05-23T10:27:40.222Z"
+        }
+      ],
+      "escrowDepositId": "escrow_abfb3b8d-fc1",
+      "assignee": {
+        "type": "human",
+        "name": "Quest Executor",
+        "walletAddress": "0xb52cedee77ed26ed17e456d26e425a19b3d12365"
+      },
+      "drawResult": {
+        "winners": [
+          {
+            "address": "0x137b8ea786967149499acc55c6808fadea789c20",
+            "amount": "0.088535 USDC"
+          },
+          {
+            "address": "0x107c976917fe61b827d5a82ae22aae1abfba824b",
+            "amount": "0.469685 USDC"
+          },
+          {
+            "address": "0xb52cedee77ed26ed17e456d26e425a19b3d12365",
+            "amount": "0.44178 USDC"
+          }
+        ],
+        "drawnAt": "2026-05-23T10:39:53.517Z"
+      }
+    },
+    {
+      "id": "6af22fbf-f0d2-4141-935f-636cf2c809ab",
+      "title": "Join ai2human Discord & Introduce Yourself",
+      "budget": "2",
+      "deadline": "2026-06-01T16:00:00Z",
+      "acceptance": "Provide evidence/logs",
+      "agentId": "agent_official",
+      "rewardDistribution": {
+        "mode": "lucky_draw",
+        "totalPool": "2 USDC",
+        "perWinner": "0.5 USDC",
+        "maxWinners": 4,
+        "drawTime": "2026-06-01T16:00:00Z"
+      },
+      "status": "created",
+      "taskState": "open",
+      "createdAt": "2026-05-23T10:22:19.675Z",
+      "updatedAt": "2026-05-23T10:22:19.675Z",
+      "evidence": [
+        {
+          "id": "719049d5-3bbc-4e3b-9397-2dba85ea6602",
+          "by": "system",
+          "type": "log",
+          "content": "Task created: none -> created (escrow funded: 2 USDC)",
+          "createdAt": "2026-05-23T10:22:19.675Z"
+        },
+        {
+          "id": "57bcc56b-4e54-4afc-b449-3bb476685206",
+          "by": "system",
+          "type": "note",
+          "content": "escrow_deposit: 2 USDC transferred from 0x3f665386b41Fa15c5ccCeE983050a236E6a10108 to escrow 0x3f665386b41Fa15c5ccCeE983050a236E6a10108. tx: 0xc433c6414c6fe462c2983beea35ac3171a9b5835beea349c16af64e6a2fd3a88",
+          "createdAt": "2026-05-23T10:22:19.675Z"
+        }
+      ],
+      "escrowDepositId": "escrow_b763a65e-5de"
+    },
+    {
+      "id": "9f1c11ae-8d0f-43bb-ae50-1888b954f611",
+      "title": "Follow @ai2humanwork on X",
+      "budget": "0.5",
+      "deadline": "2026-05-30T16:00:00Z",
+      "acceptance": "Provide evidence/logs",
+      "agentId": "agent_official",
+      "rewardDistribution": {
+        "mode": "fcfs",
+        "totalPool": "1 USDC",
+        "perWinner": "0.5 USDC",
+        "maxWinners": 2
+      },
+      "status": "human_assigned",
+      "taskState": "open",
+      "createdAt": "2026-05-23T09:31:18.637Z",
+      "updatedAt": "2026-05-23T09:34:57.946Z",
+      "evidence": [
+        {
+          "id": "d44b97b7-fe8d-47de-a211-6f2687996526",
+          "by": "system",
+          "type": "note",
+          "content": "agent_event: dispatcher_agent | Auto-assigned to rich、 via profile completion.",
+          "createdAt": "2026-05-23T09:34:57.946Z"
+        },
+        {
+          "id": "81062889-9ef4-414a-9fdb-2ee1e9a25313",
+          "by": "system",
+          "type": "log",
+          "content": "Human assigned: rich、 (auto-dispatched)",
+          "createdAt": "2026-05-23T09:34:57.946Z"
+        },
+        {
+          "id": "daa28359-c392-4451-b658-2b87284bcf3d",
+          "by": "system",
+          "type": "log",
+          "content": "Task created: none -> created (escrow funded: 1 USDC)",
+          "createdAt": "2026-05-23T09:31:18.637Z"
+        },
+        {
+          "id": "4e71a1e5-22aa-4ea7-bd2f-16179a908957",
+          "by": "system",
+          "type": "note",
+          "content": "escrow_deposit: 1 USDC transferred from 0x3f665386b41Fa15c5ccCeE983050a236E6a10108 to escrow 0x3f665386b41Fa15c5ccCeE983050a236E6a10108. tx: 0x4b6267cbfdf377997527bcfa3a7d77fc046a8943030fe3743f49cb2b19f5d8e8",
+          "createdAt": "2026-05-23T09:31:18.637Z"
+        }
+      ],
+      "escrowDepositId": "escrow_144ece6e-039",
+      "assignee": {
+        "type": "human",
+        "name": "rich、",
+        "walletAddress": "0x137b8ea786967149499acc55c6808fadea789c20"
+      }
+    },
+    {
       "id": "tw-follow-0e4a2568",
       "title": "Follow @ai2humanwork on X",
       "budget": "0.5",
@@ -13,7 +160,7 @@
         "platform": "x",
         "action": "follow",
         "label": "Follow",
-        "targetUrl": "https://x.com/ai2humanwork",
+        "targetUrl": "https://x.com/ai2humanwork/status/2057669148281651651",
         "targetLabel": "Target account",
         "proofPhrase": "",
         "brief": "Follow @ai2humanwork on X",
@@ -27,12 +174,13 @@
       "status": "paid",
       "verifyCooldownHours": 24,
       "createdAt": "2026-05-21T15:12:01.864Z",
-      "updatedAt": "2026-05-22T20:01:13.511Z",
+      "updatedAt": "2026-05-23T08:20:39.112Z",
       "evidence": [],
+      "agentId": "agent_official",
       "assignee": {
         "type": "human",
         "name": "Quest Executor",
-        "walletAddress": "0xd50c85ff5872323c5b218057a9e4f5f3a0aa2c3f"
+        "walletAddress": "0x3b388c85b745fbdfdc8204878a77192de7c1767d"
       },
       "rewardDistribution": {
         "mode": "fcfs",
@@ -45,6 +193,78 @@
   ],
   "waitlist": [],
   "payments": [
+    {
+      "id": "8f5b967e-22e6-4512-8907-c99e04a9aed6",
+      "taskId": "3a877363-6e59-4b7c-8038-6d8b2cffaaf0",
+      "amount": "0.44178",
+      "receiver": "Quest Executor",
+      "receiverAddress": "0xb52cedee77ed26ed17e456d26e425a19b3d12365",
+      "payerAddress": "0x3f665386b41Fa15c5ccCeE983050a236E6a10108",
+      "method": "base_erc20",
+      "status": "paid",
+      "source": "twitter_task",
+      "network": "base-mainnet",
+      "chainId": 8453,
+      "tokenSymbol": "USDC",
+      "tokenAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      "txHash": "0x0bd7b16840f2e19f518f40ebd2572bd8a9290d441bdd00a7857aeedf7ed73c27",
+      "explorerUrl": "https://basescan.org/tx/0x0bd7b16840f2e19f518f40ebd2572bd8a9290d441bdd00a7857aeedf7ed73c27",
+      "createdAt": "2026-05-23T10:45:50.656Z"
+    },
+    {
+      "id": "0ff3323a-263d-4d41-9ec3-cff4458b8f7a",
+      "taskId": "3a877363-6e59-4b7c-8038-6d8b2cffaaf0",
+      "amount": "0.469685",
+      "receiver": "Quest Executor",
+      "receiverAddress": "0x107c976917fe61b827d5a82ae22aae1abfba824b",
+      "payerAddress": "0x3f665386b41Fa15c5ccCeE983050a236E6a10108",
+      "method": "base_erc20",
+      "status": "paid",
+      "source": "twitter_task",
+      "network": "base-mainnet",
+      "chainId": 8453,
+      "tokenSymbol": "USDC",
+      "tokenAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      "txHash": "0xa3bd085af8814ae1f0123e58b4b0be9dd3d9d93efb8d612b385647b97a55c165",
+      "explorerUrl": "https://basescan.org/tx/0xa3bd085af8814ae1f0123e58b4b0be9dd3d9d93efb8d612b385647b97a55c165",
+      "createdAt": "2026-05-23T10:44:02.258Z"
+    },
+    {
+      "id": "95d4c40d-6c8b-4dc5-b85c-e187a550ee33",
+      "taskId": "3a877363-6e59-4b7c-8038-6d8b2cffaaf0",
+      "amount": "0.088535",
+      "receiver": "Quest Executor",
+      "receiverAddress": "0x137b8ea786967149499acc55c6808fadea789c20",
+      "payerAddress": "0x3f665386b41Fa15c5ccCeE983050a236E6a10108",
+      "method": "base_erc20",
+      "status": "paid",
+      "source": "twitter_task",
+      "network": "base-mainnet",
+      "chainId": 8453,
+      "tokenSymbol": "USDC",
+      "tokenAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      "txHash": "0xb4fe401ab6f526d2ef3ace767c9d693a3f233144a3a5d2fd0bf1fe7fa96ea5b7",
+      "explorerUrl": "https://basescan.org/tx/0xb4fe401ab6f526d2ef3ace767c9d693a3f233144a3a5d2fd0bf1fe7fa96ea5b7",
+      "createdAt": "2026-05-23T10:39:53.511Z"
+    },
+    {
+      "id": "8eedb894-41c6-4477-9897-9b92423c58f1",
+      "taskId": "tw-follow-0e4a2568",
+      "amount": "0.5",
+      "receiver": "Quest Executor",
+      "receiverAddress": "0x3b388c85b745fbdfdc8204878a77192de7c1767d",
+      "payerAddress": "0x3f665386b41Fa15c5ccCeE983050a236E6a10108",
+      "method": "base_erc20",
+      "status": "paid",
+      "source": "twitter_task",
+      "network": "base-mainnet",
+      "chainId": 8453,
+      "tokenSymbol": "USDC",
+      "tokenAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      "txHash": "0x2622d0169cb582ffee7c759f94100920560e5516ff89161fd8c6a48dd939ee92",
+      "explorerUrl": "https://basescan.org/tx/0x2622d0169cb582ffee7c759f94100920560e5516ff89161fd8c6a48dd939ee92",
+      "createdAt": "2026-05-23T08:20:39.105Z"
+    },
     {
       "id": "6ebc656f-3e49-4607-8c3a-dd0f1b28bc17",
       "taskId": "tw-follow-0e4a2568",
@@ -83,6 +303,38 @@
     }
   ],
   "humans": [
+    {
+      "id": "h_07178bae-66d",
+      "name": "rich、",
+      "handle": "rich",
+      "role": "",
+      "location": "",
+      "city": "Unknown",
+      "country": "Unknown",
+      "verified": false,
+      "rating": 4,
+      "completedJobs": 0,
+      "hourlyRate": 30,
+      "skills": [],
+      "languages": [],
+      "avatarSeed": 8
+    },
+    {
+      "id": "h_d2b9230c-34c",
+      "name": "richard",
+      "handle": "richard",
+      "role": "human",
+      "location": "hongkong",
+      "city": "Unknown",
+      "country": "Unknown",
+      "verified": false,
+      "rating": 4,
+      "completedJobs": 0,
+      "hourlyRate": 30,
+      "skills": [],
+      "languages": [],
+      "avatarSeed": 7
+    },
     {
       "id": "h_4d89f531-de6",
       "name": "abb",
@@ -883,7 +1135,7 @@
         "verification"
       ],
       "rating": 100,
-      "tasksPublished": 0,
+      "tasksPublished": 3,
       "totalPaid": "0 USDC",
       "verified": true,
       "createdAt": "2025-01-01T00:00:00.000Z"
@@ -1254,6 +1506,53 @@
   "fallbackSubscriptions": [],
   "users": [
     {
+      "id": "24e5d1c3-4081-4edf-bb7b-cc31aed4b974",
+      "email": "1l5100ip0djmyk1knlmu@privy.local",
+      "passwordHash": "__privy__",
+      "createdAt": "2026-05-23T10:44:35.309Z",
+      "authProvider": "privy",
+      "privyUserId": "did:privy:cmpi81l5100ip0djmyk1knlmu",
+      "walletAddress": "0x74586e10e40818ecd3d0db0e7fd63e72cb4dd80c"
+    },
+    {
+      "id": "a636208e-dc6b-43c8-bbf6-d8829157689c",
+      "email": "ymks00lh0djv0sdbjccs@privy.local",
+      "passwordHash": "__privy__",
+      "createdAt": "2026-05-23T10:42:18.940Z",
+      "authProvider": "privy",
+      "privyUserId": "did:privy:cmpi7ymks00lh0djv0sdbjccs",
+      "walletAddress": "0x107c976917fe61b827d5a82ae22aae1abfba824b"
+    },
+    {
+      "id": "90409c76-e28d-4904-b502-2b4e59348be0",
+      "email": "jdu901bg0cjinvhk8htw@privy.local",
+      "passwordHash": "__privy__",
+      "createdAt": "2026-05-23T09:34:24.594Z",
+      "authProvider": "privy",
+      "privyUserId": "did:privy:cmpi5jdu901bg0cjinvhk8htw",
+      "walletAddress": "0x137b8ea786967149499acc55c6808fadea789c20",
+      "humanId": "h_07178bae-66d"
+    },
+    {
+      "id": "e3c73e0f-e557-4fe5-bad3-c1f242eb6ff0",
+      "email": "dfg100rf0cjulbfcaraz@privy.local",
+      "passwordHash": "__privy__",
+      "createdAt": "2026-05-23T09:01:54.867Z",
+      "authProvider": "privy",
+      "privyUserId": "did:privy:cmpi4dfg100rf0cjulbfcaraz",
+      "walletAddress": "0x4817221e6ca7d48269a29292ef2df6cc2a3cb196",
+      "humanId": "h_d2b9230c-34c"
+    },
+    {
+      "id": "0536183e-5773-44fe-ae05-6b9a51a0fb4a",
+      "email": "gf3c00c00cl7cnt1if7h@privy.local",
+      "passwordHash": "__privy__",
+      "createdAt": "2026-05-23T08:08:17.069Z",
+      "authProvider": "privy",
+      "privyUserId": "did:privy:cmpi2gf3c00c00cl7cnt1if7h",
+      "walletAddress": "0x3b388c85b745fbdfdc8204878a77192de7c1767d"
+    },
+    {
       "id": "9a2efd93-ac69-4197-87b5-b16ee7944270",
       "email": "f1j900040dju9ifeud9k@privy.local",
       "passwordHash": "__privy__",
@@ -1325,11 +1624,46 @@
   ],
   "sessions": [
     {
-      "id": "9f5b0da9-f950-41a2-bb00-474311604ed8",
+      "id": "6ab59340-a10c-411a-afa1-47f725b6099f",
+      "userId": "24e5d1c3-4081-4edf-bb7b-cc31aed4b974",
+      "token": "3b62df512ad1b5b09232cd812497c672185e860c3dd94de5f02f8dfb18897050",
+      "createdAt": "2026-05-23T11:57:07.963Z",
+      "expiresAt": "2026-06-22T11:57:07.959Z"
+    },
+    {
+      "id": "4282af0a-71ce-48e2-b005-563f08044cb0",
+      "userId": "a636208e-dc6b-43c8-bbf6-d8829157689c",
+      "token": "a138952da14eb1b466730a5cdea34f63994302105ec6d9a3798bb966380cbf74",
+      "createdAt": "2026-05-23T10:43:18.405Z",
+      "expiresAt": "2026-06-22T10:43:18.398Z"
+    },
+    {
+      "id": "eebf4734-2414-4854-bf16-9c167c1d8e59",
+      "userId": "90409c76-e28d-4904-b502-2b4e59348be0",
+      "token": "941ffc975330ba108c79b90d19181745ee43f23f420807bf416e2b0d5e7c201b",
+      "createdAt": "2026-05-23T10:39:07.938Z",
+      "expiresAt": "2026-06-22T10:39:07.932Z"
+    },
+    {
+      "id": "22d88018-59df-41b1-adaa-3281ec986969",
+      "userId": "e3c73e0f-e557-4fe5-bad3-c1f242eb6ff0",
+      "token": "21c9fc1cd321b7975fcca8d0020959d92ac13a62cbca8aa89866b2654a580ec1",
+      "createdAt": "2026-05-23T09:33:25.449Z",
+      "expiresAt": "2026-06-22T09:33:25.436Z"
+    },
+    {
+      "id": "c75c3b7d-0224-4aa3-a4c3-53d65b3c3c77",
+      "userId": "0536183e-5773-44fe-ae05-6b9a51a0fb4a",
+      "token": "a88d5a33782ab1af337f546cad9e516b77dc9555c0321baa3c7ba824d027a9e8",
+      "createdAt": "2026-05-23T08:08:17.069Z",
+      "expiresAt": "2026-06-22T08:08:17.047Z"
+    },
+    {
+      "id": "97ebb6dd-d39c-47b2-a591-21ebf85ef32e",
       "userId": "9a2efd93-ac69-4197-87b5-b16ee7944270",
-      "token": "5b7c5411be6d8d4c1b0c5ade8ca55872f413cca4cc20303109814638082b5e1e",
-      "createdAt": "2026-05-23T02:07:31.045Z",
-      "expiresAt": "2026-06-22T02:07:31.036Z"
+      "token": "b8eb2f688e30cd1b50a7321ade32e5da0d645b8c95174b981fe5082252931243",
+      "createdAt": "2026-05-23T05:08:17.001Z",
+      "expiresAt": "2026-06-22T05:08:16.399Z"
     },
     {
       "id": "7b2fbf58-2774-43eb-be6d-038ff8a3ee94",
@@ -1479,6 +1813,241 @@
       "status": "verified",
       "createdAt": "2026-05-22T20:00:36.817Z",
       "verifiedAt": "2026-05-22T20:00:43.418Z"
+    },
+    {
+      "id": "397dc04c-7f70-4cca-a727-30411fe09442",
+      "walletAddress": "0x3b388c85b745fbdfdc8204878a77192de7c1767d",
+      "taskId": "tw-follow-0e4a2568",
+      "subtaskKey": "0",
+      "status": "verified",
+      "createdAt": "2026-05-23T08:08:26.555Z",
+      "verifiedAt": "2026-05-23T08:19:45.480Z"
+    },
+    {
+      "id": "b76c7604-8684-4225-b67c-ca257d6d3c41",
+      "walletAddress": "0x3b388c85b745fbdfdc8204878a77192de7c1767d",
+      "taskId": "tw-follow-0e4a2568",
+      "subtaskKey": "1",
+      "status": "verified",
+      "createdAt": "2026-05-23T08:19:48.401Z",
+      "verifiedAt": "2026-05-23T08:19:56.795Z"
+    },
+    {
+      "id": "57bf298c-619a-41ce-9606-f6d4ed79b53b",
+      "walletAddress": "0x3b388c85b745fbdfdc8204878a77192de7c1767d",
+      "taskId": "tw-follow-0e4a2568",
+      "subtaskKey": "2",
+      "status": "verified",
+      "createdAt": "2026-05-23T08:19:59.491Z",
+      "verifiedAt": "2026-05-23T08:20:03.723Z"
+    },
+    {
+      "id": "1739e9e4-10af-4abf-a7bd-efcb51860aa7",
+      "walletAddress": "0x3b388c85b745fbdfdc8204878a77192de7c1767d",
+      "taskId": "tw-follow-0e4a2568",
+      "subtaskKey": "3",
+      "status": "verified",
+      "createdAt": "2026-05-23T08:20:15.346Z",
+      "verifiedAt": "2026-05-23T08:20:23.098Z"
+    },
+    {
+      "id": "4b5e52f9-6d98-49bf-b288-ce7eecac1dd9",
+      "walletAddress": "0x137b8ea786967149499acc55c6808fadea789c20",
+      "taskId": "3a877363-6e59-4b7c-8038-6d8b2cffaaf0",
+      "subtaskKey": "0",
+      "status": "verified",
+      "createdAt": "2026-05-23T10:34:58.248Z",
+      "verifiedAt": "2026-05-23T10:35:06.185Z"
+    },
+    {
+      "id": "29b001fc-658c-413c-86de-913675c91ee4",
+      "walletAddress": "0x137b8ea786967149499acc55c6808fadea789c20",
+      "taskId": "3a877363-6e59-4b7c-8038-6d8b2cffaaf0",
+      "subtaskKey": "1",
+      "status": "verified",
+      "createdAt": "2026-05-23T10:35:10.569Z",
+      "verifiedAt": "2026-05-23T10:35:15.929Z"
+    },
+    {
+      "id": "59fb7f6c-6038-4ff5-85dd-e9aad17bc804",
+      "walletAddress": "0x137b8ea786967149499acc55c6808fadea789c20",
+      "taskId": "3a877363-6e59-4b7c-8038-6d8b2cffaaf0",
+      "subtaskKey": "2",
+      "status": "verified",
+      "createdAt": "2026-05-23T10:35:27.965Z",
+      "verifiedAt": "2026-05-23T10:35:39.453Z"
+    },
+    {
+      "id": "b1c3aa65-4dbc-4746-9779-d96dbf4c3be3",
+      "walletAddress": "0x137b8ea786967149499acc55c6808fadea789c20",
+      "taskId": "3a877363-6e59-4b7c-8038-6d8b2cffaaf0",
+      "subtaskKey": "3",
+      "status": "verified",
+      "createdAt": "2026-05-23T10:35:45.862Z",
+      "verifiedAt": "2026-05-23T10:35:48.793Z"
+    },
+    {
+      "id": "e73f3295-17ec-4ff6-a207-b18222d39bfd",
+      "walletAddress": "0x107c976917fe61b827d5a82ae22aae1abfba824b",
+      "taskId": "3a877363-6e59-4b7c-8038-6d8b2cffaaf0",
+      "subtaskKey": "1",
+      "status": "verified",
+      "createdAt": "2026-05-23T10:43:03.158Z",
+      "verifiedAt": "2026-05-23T10:43:25.207Z"
+    },
+    {
+      "id": "258ee410-ed11-4bfb-8884-6742c43aad02",
+      "walletAddress": "0x107c976917fe61b827d5a82ae22aae1abfba824b",
+      "taskId": "3a877363-6e59-4b7c-8038-6d8b2cffaaf0",
+      "subtaskKey": "0",
+      "status": "verified",
+      "createdAt": "2026-05-23T10:43:03.276Z",
+      "verifiedAt": "2026-05-23T10:43:18.225Z"
+    },
+    {
+      "id": "0defe995-e82d-47f9-8901-1e40e9f0b844",
+      "walletAddress": "0x107c976917fe61b827d5a82ae22aae1abfba824b",
+      "taskId": "3a877363-6e59-4b7c-8038-6d8b2cffaaf0",
+      "subtaskKey": "2",
+      "status": "verified",
+      "createdAt": "2026-05-23T10:43:25.378Z",
+      "verifiedAt": "2026-05-23T10:43:32.821Z"
+    },
+    {
+      "id": "ca1a383e-2e16-4b04-82ad-354bb62e6d37",
+      "walletAddress": "0x107c976917fe61b827d5a82ae22aae1abfba824b",
+      "taskId": "3a877363-6e59-4b7c-8038-6d8b2cffaaf0",
+      "subtaskKey": "3",
+      "status": "verified",
+      "createdAt": "2026-05-23T10:43:41.376Z",
+      "verifiedAt": "2026-05-23T10:43:45.221Z"
+    },
+    {
+      "id": "44076500-a788-4807-bfb8-0ccee1604234",
+      "walletAddress": "0xb52cedee77ed26ed17e456d26e425a19b3d12365",
+      "taskId": "3a877363-6e59-4b7c-8038-6d8b2cffaaf0",
+      "subtaskKey": "0",
+      "status": "verified",
+      "createdAt": "2026-05-23T10:45:08.001Z",
+      "verifiedAt": "2026-05-23T10:45:11.515Z"
+    },
+    {
+      "id": "1014d776-bffa-4eca-90cf-aa438f7f9d87",
+      "walletAddress": "0xb52cedee77ed26ed17e456d26e425a19b3d12365",
+      "taskId": "3a877363-6e59-4b7c-8038-6d8b2cffaaf0",
+      "subtaskKey": "1",
+      "status": "verified",
+      "createdAt": "2026-05-23T10:45:11.714Z",
+      "verifiedAt": "2026-05-23T10:45:18.403Z"
+    },
+    {
+      "id": "7c8fd714-1749-4082-b189-0c7ec2cdf54c",
+      "walletAddress": "0xb52cedee77ed26ed17e456d26e425a19b3d12365",
+      "taskId": "3a877363-6e59-4b7c-8038-6d8b2cffaaf0",
+      "subtaskKey": "2",
+      "status": "verified",
+      "createdAt": "2026-05-23T10:45:22.746Z",
+      "verifiedAt": "2026-05-23T10:45:26.669Z"
+    },
+    {
+      "id": "7bf092ae-8546-46bb-994a-01d5eb2bc600",
+      "walletAddress": "0xb52cedee77ed26ed17e456d26e425a19b3d12365",
+      "taskId": "3a877363-6e59-4b7c-8038-6d8b2cffaaf0",
+      "subtaskKey": "3",
+      "status": "verified",
+      "createdAt": "2026-05-23T10:45:33.670Z",
+      "verifiedAt": "2026-05-23T10:45:38.625Z"
+    },
+    {
+      "id": "15462e0d-2d9a-42f7-bfee-4ccc2225c918",
+      "walletAddress": "0x74586e10e40818ecd3d0db0e7fd63e72cb4dd80c",
+      "taskId": "6af22fbf-f0d2-4141-935f-636cf2c809ab",
+      "subtaskKey": "0",
+      "status": "action_done",
+      "createdAt": "2026-05-23T11:17:53.746Z"
+    },
+    {
+      "id": "8a0e5412-fbe2-4bd4-bc83-2414974a37a8",
+      "walletAddress": "0x74586e10e40818ecd3d0db0e7fd63e72cb4dd80c",
+      "taskId": "6af22fbf-f0d2-4141-935f-636cf2c809ab",
+      "subtaskKey": "1",
+      "status": "action_done",
+      "createdAt": "2026-05-23T11:20:38.153Z"
+    },
+    {
+      "id": "ab745a19-fa55-492c-b7d7-79f29f86e484",
+      "walletAddress": "0x74586e10e40818ecd3d0db0e7fd63e72cb4dd80c",
+      "taskId": "6af22fbf-f0d2-4141-935f-636cf2c809ab",
+      "subtaskKey": "2",
+      "status": "action_done",
+      "createdAt": "2026-05-23T11:20:45.557Z"
+    },
+    {
+      "id": "a182c674-7c03-4cd9-b403-4e5e747f6e3b",
+      "walletAddress": "0xb52cedee77ed26ed17e456d26e425a19b3d12365",
+      "taskId": "6af22fbf-f0d2-4141-935f-636cf2c809ab",
+      "subtaskKey": "0",
+      "status": "action_done",
+      "createdAt": "2026-05-23T11:49:41.163Z"
+    }
+  ],
+  "notifications": [
+    {
+      "id": "notif_a44b06a5-217",
+      "userId": "90409c76-e28d-4904-b502-2b4e59348be0",
+      "type": "task_assigned",
+      "title": "You have a new task",
+      "body": "AI Executor assigned you: \"Follow @ai2humanwork on X\". Accept it to begin earning.",
+      "taskId": "9f1c11ae-8d0f-43bb-ae50-1888b954f611",
+      "read": true,
+      "createdAt": "2026-05-23T09:34:57.947Z"
+    }
+  ],
+  "escrowDeposits": [
+    {
+      "id": "escrow_abfb3b8d-fc1",
+      "taskId": "3a877363-6e59-4b7c-8038-6d8b2cffaaf0",
+      "agentId": "agent_official",
+      "agentWallet": "0x3f665386b41Fa15c5ccCeE983050a236E6a10108",
+      "totalPool": "1",
+      "amountPaidOut": "1.000000",
+      "amountRefunded": "0",
+      "paidCount": 3,
+      "status": "active",
+      "depositTxHash": "0x3e7ca1db478270fe88a7452873ca0d36e8f7ecb95bd101be2f0b77226a5334ff",
+      "depositExplorerUrl": "https://basescan.org/tx/0x3e7ca1db478270fe88a7452873ca0d36e8f7ecb95bd101be2f0b77226a5334ff",
+      "createdAt": "2026-05-23T10:27:40.222Z",
+      "updatedAt": "2026-05-23T10:45:50.665Z"
+    },
+    {
+      "id": "escrow_b763a65e-5de",
+      "taskId": "6af22fbf-f0d2-4141-935f-636cf2c809ab",
+      "agentId": "agent_official",
+      "agentWallet": "0x3f665386b41Fa15c5ccCeE983050a236E6a10108",
+      "totalPool": "2",
+      "amountPaidOut": "0",
+      "amountRefunded": "0",
+      "paidCount": 0,
+      "status": "active",
+      "depositTxHash": "0xc433c6414c6fe462c2983beea35ac3171a9b5835beea349c16af64e6a2fd3a88",
+      "depositExplorerUrl": "https://basescan.org/tx/0xc433c6414c6fe462c2983beea35ac3171a9b5835beea349c16af64e6a2fd3a88",
+      "createdAt": "2026-05-23T10:22:19.675Z",
+      "updatedAt": "2026-05-23T10:22:19.675Z"
+    },
+    {
+      "id": "escrow_144ece6e-039",
+      "taskId": "9f1c11ae-8d0f-43bb-ae50-1888b954f611",
+      "agentId": "agent_official",
+      "agentWallet": "0x3f665386b41Fa15c5ccCeE983050a236E6a10108",
+      "totalPool": "1",
+      "amountPaidOut": "0",
+      "amountRefunded": "0",
+      "paidCount": 0,
+      "status": "active",
+      "depositTxHash": "0x4b6267cbfdf377997527bcfa3a7d77fc046a8943030fe3743f49cb2b19f5d8e8",
+      "depositExplorerUrl": "https://basescan.org/tx/0x4b6267cbfdf377997527bcfa3a7d77fc046a8943030fe3743f49cb2b19f5d8e8",
+      "createdAt": "2026-05-23T09:31:18.636Z",
+      "updatedAt": "2026-05-23T09:31:18.637Z"
     }
   ]
 }

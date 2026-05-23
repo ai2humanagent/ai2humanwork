@@ -39,6 +39,19 @@ export type TaskStatus =
   | "verified"
   | "paid";
 
+/**
+ * Task-level state — tracks the overall lifecycle of a task's reward pool.
+ *
+ * open     — Task is active, escrow has balance, accepting claims
+ * full     — All winner slots have been paid (paidCount >= maxWinners)
+ * closed   — Task is closed (deadline passed or fully paid)
+ * refunded — Remaining escrow balance has been refunded to agent
+ *
+ * NOTE: paid/verified/etc. are per-human statuses (a specific user's progress).
+ *       taskState is the task-level state (the reward pool's overall status).
+ */
+export type TaskState = "open" | "full" | "closed" | "refunded";
+
 export type EvidenceItem = {
   id: string;
   by: "ai" | "human" | "system";
@@ -80,6 +93,32 @@ export type Task = {
   };
   evidence: EvidenceItem[];
   verifyCooldownHours?: number; // Twitter task cooldown
+  escrowDepositId?: string;
+  /** Task-level state tracking the reward pool lifecycle (open/full/closed/refunded) */
+  taskState?: TaskState;
+  /** Lucky draw result — set after draw is executed (when first winner claims) */
+  drawResult?: LuckyDrawResult;
+};
+
+export type EscrowDepositStatus = "pending" | "active" | "partial_refund" | "refunded" | "failed";
+
+export type EscrowDeposit = {
+  id: string;
+  taskId: string;
+  agentId: string;
+  agentWallet: string;
+  totalPool: string;        // Total USDC deposited for this task
+  amountPaidOut: string;    // Amount already paid to claimers
+  amountRefunded: string;   // Amount refunded to agent
+  paidCount: number;        // Number of winners who have been paid
+  status: EscrowDepositStatus;
+  depositTxHash?: string;
+  depositExplorerUrl?: string;
+  refundTxHash?: string;
+  refundExplorerUrl?: string;
+  errorMessage?: string;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type WaitlistEntry = {
@@ -185,6 +224,29 @@ export type QuestProgress = {
   createdAt: string;
 };
 
+export type NotificationType = "task_assigned" | "task_reminder" | "task_completed" | "system";
+
+export type Notification = {
+  id: string;
+  userId: string;
+  type: NotificationType;
+  title: string;
+  body: string;
+  taskId?: string;
+  read: boolean;
+  createdAt: string;
+};
+
+export type LuckyDrawWinner = {
+  address: string;
+  amount: string; // e.g. "0.5 USDC"
+};
+
+export type LuckyDrawResult = {
+  winners: LuckyDrawWinner[];
+  drawnAt: string;
+};
+
 export type RewardDistributionMode = "fcfs" | "lucky_draw" | "equal";
 
 export type RewardDistribution = {
@@ -207,6 +269,8 @@ type Db = {
   users: UserAccount[];
   sessions: AuthSession[];
   questProgress: QuestProgress[];
+  notifications: Notification[];
+  escrowDeposits: EscrowDeposit[];
 };
 
 export function makeSeedTasks(count: number): Task[] {
@@ -570,7 +634,9 @@ function makeInitialDb(): Db {
     fallbackSubscriptions: [],
     users: [],
     sessions: [],
-    questProgress: []
+    questProgress: [],
+    notifications: [],
+    escrowDeposits: []
   };
 }
 
@@ -643,7 +709,9 @@ export async function readDb(): Promise<Db> {
     fallbackSubscriptions: parsed.fallbackSubscriptions ?? [],
     users: parsed.users ?? [],
     sessions: parsed.sessions ?? [],
-    questProgress: Array.isArray(parsed.questProgress) ? parsed.questProgress : []
+    questProgress: Array.isArray(parsed.questProgress) ? parsed.questProgress : [],
+    notifications: Array.isArray(parsed.notifications) ? parsed.notifications : [],
+    escrowDeposits: Array.isArray(parsed.escrowDeposits) ? parsed.escrowDeposits : []
   };
 }
 
