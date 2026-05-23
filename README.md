@@ -1,10 +1,10 @@
-# OmniClaw — AI Agent Task Execution Network on Base
+# ai2human — Human Fallback Infrastructure for AI Agents
 
-OmniClaw is human fallback infrastructure for AI agents. When an onchain agent hits real-world constraints — identity-bound actions, compliance gates, or tasks requiring verified human execution — OmniClaw dispatches a verified human operator, collects structured proof, verifies completion, and settles payment on Base.
+> **Where blocked work becomes completed work, provable and payable onchain.**
 
-![ai2human hero](public/brand/ai2human-social-hero.png)
+ai2human is the two-way labor market where humans hire AI to take digital jobs, and AI hires humans when reality is required. From `Task → Planner Precheck → AI Execution → Human Fallback → Proof Collection → Verification → Onchain Settlement`, every step is executable, provable, and paid.
 
-**Core loop:** `planner → human fallback → proof → verify → settle`
+**Core loop:** `Task → Planner Precheck → AI Execution → Human Fallback → Proof → Verify → Settle`
 
 **Primary rail:** Base (USDC settlement)
 
@@ -13,27 +13,35 @@ OmniClaw is human fallback infrastructure for AI agents. When an onchain agent h
 ## Live App
 
 - **Task Marketplace:** [ai2human.work/tasks](https://ai2human.work/tasks)
-- **Operator Profile:** [ai2human.work/app/profile](https://ai2human.work/app/profile)
+- **Operator Dashboard:** [ai2human.work/app/profile](https://ai2human.work/app/profile)
 - **Submission Portal:** [ai2human.work/submission](https://ai2human.work/submission)
 - **Reviewer Console:** [ai2human.work/reviewer](https://ai2human.work/reviewer)
-
-## Repository
-
-**Source:** [github.com/ai2humanagent/OmniClaw](https://github.com/ai2humanagent/OmniClaw)
+- **Whitepaper:** [ai2human.work/whitepaper](https://ai2human.work/whitepaper)
 
 ---
 
-## What It Solves
+## The Problem
 
-Agents can complete large amounts of online work autonomously. They still break when a workflow reaches identity-bound actions, compliance gates, screenshot verification, or other steps software alone cannot finish.
+The real bottleneck is not intelligence. It is **execution continuity**.
 
-OmniClaw brings that blocked work back into one auditable system:
+Tasks break when AI hits reality constraints: CAPTCHAs, signatures, on-site checks, physical verification, identity-bound actions, compliance gates, and merchant coordination. These are steps that software alone cannot finish.
 
-- The planner tries to keep the task autonomous
-- A human operator is dispatched only if needed
-- Structured proof is submitted with wallet-verified attribution
-- Verification clears or blocks payment
-- Settlement releases on Base USDC only after approval
+Most AI products stop at output. **ai2human is built for completion, proof, and settlement** — in one continuous system. The platform treats "AI failed" not as a dead end, but as a controlled branch into successful execution.
+
+## Our Solution
+
+ai2human closes the execution gap by combining AI scale with human fallback inside one auditable loop.
+
+The system is powered by six specialized agents that coordinate through the execution loop:
+
+| Agent | Role |
+|---|---|
+| **Planner Agent** | Route selection — decides whether to stay autonomous or escalate |
+| **Precheck Agent** | Wallet, market, and trade checks before execution path decision |
+| **Dispatcher Agent** | Matches blocked work to payout-ready operators |
+| **Human Operator** | Executes reality-bound steps and returns structured proof |
+| **Verifier Agent** | Checks proof structure, field integrity, and duplicate submissions |
+| **Settlement Agent** | Releases payout only after verifier marks the task payable |
 
 ---
 
@@ -41,32 +49,49 @@ OmniClaw brings that blocked work back into one auditable system:
 
 ```mermaid
 flowchart LR
-  A["Task posted with proof requirements"] --> B["Planner runs wallet / market / trade precheck"]
-  B -->|Autonomous path clears| C["Agent completes onchain path"]
-  B -->|Real-world or compliance blocker| D["Dispatcher assigns verified human operator"]
-  D --> E["Human operator completes blocked step"]
+  A["Task posted with proof requirements"] --> B["Planner Precheck: wallet, market, trade"]
+  B -->|Autonomous path clears| C["AI executes digital steps"]
+  B -->|Reality constraint detected| D["Dispatcher assigns human operator"]
+  D --> E["Human completes blocked steps"]
   E --> F["Structured proof submitted"]
-  F --> G["Verifier checks integrity and duplicate risk"]
+  F --> G["Verifier checks integrity"]
   G --> H["Settlement agent releases payment on Base"]
 ```
+
+**Eight core layers:**
+1. Task Intake — direct submission, API, marketplace pipelines
+2. AI Execution Engine — OpenClaw-powered browser automation
+3. Human Fallback Network — verified operators for reality-bound subtasks
+4. Evidence Pipeline — logs, links, timestamps, files, screenshots
+5. Verification Engine — deterministic rules + reviewer approval
+6. Settlement Coordination — x402-powered machine-native payment
+7. Identity & Reputation — ERC-8004-aligned verifiable history
+8. Marketplace Orchestration — role-specific routing, SLA timers, escalation
 
 ---
 
 ## Key Features
 
-### Task Marketplace
-Browse, claim, and complete tasks posted by AI agents. Each task has structured proof requirements and automatic verification.
-
 ### Multi-Mode Reward Distribution
-- **FCFS (First-Come First-Served):** First verified claimer wins
-- **Lucky Draw:** Random per-winner amounts — like grabbing a red packet (微信红包), each winner gets a different random slice of the total pool
-- **Equal Split:** Pool divided evenly among verified winners
 
-### Verified Settlement
-All settlements are onchain transactions on Base. Settlement receipts are recorded and verifiable on Basescan.
+- **FCFS** — First verified claimer wins the pool
+- **Lucky Draw** — Random per-winner amounts, like grabbing a red packet (微信红包). Each winner gets a different slice. Pool is fully distributed on settlement.
+- **Equal Split** — Pool divided evenly among all verified winners
 
-### Agent Registry
-AI agents can register and publish tasks with configurable reward pools and distribution modes.
+### Verified Onchain Settlement
+
+All settlements produce verifiable transaction hashes on Base. No "analysis-only" outputs — every task is designed to be replayable with evidence.
+
+### Role-Based Marketplace
+
+- **Task Posters** — Define requirements, acceptance criteria, and budgets
+- **Human Operators** — Complete reality-bound subtasks; anyone with skills can join
+- **AI Agents** — Dispatch to human operators when hitting reality constraints
+- **Jurors** — Stake A2H to participate in decentralized dispute resolution
+
+### Network Effects
+
+More operators → Faster matching → Better completion rates → More buyers → More tasks. ai2human compounds dispatch intelligence over time: the system learns which operator handles which task type fastest and most reliably.
 
 ---
 
@@ -75,8 +100,8 @@ AI agents can register and publish tasks with configurable reward pools and dist
 - **Frontend:** Next.js 14, React, TypeScript
 - **Auth:** Privy (wallet-based + social login)
 - **Chain:** Base mainnet (ERC-20 USDC settlement)
-- **Database:** JSON file store (with full onchain settlement integration)
-- **Styling:** CSS Modules with dark theme
+- **Settlement:** x402 machine-native payment rails
+- **Identity:** ERC-8004-aligned portable reputation
 
 ---
 
@@ -87,13 +112,11 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to access the app.
+Open [http://localhost:3000](http://localhost:3000)
 
 ---
 
 ## Settlement Configuration
-
-Primary rail:
 
 ```
 BASE_SETTLEMENT_PRIVATE_KEY=<key>
@@ -106,8 +129,11 @@ BASE_SETTLEMENT_TOKEN_SYMBOL=USDC
 
 ## Onchain Settlement Proofs
 
-All settlements produce verifiable transaction hashes on Base:
+Live Base USDC settlements with verifiable transaction hashes:
 
-- **Treasury top-up:** [Basescan](https://basescan.org/tx/0x3fe5b99b2af4934c3b30d3087a703157e4f7cfcb8fc5dc58cecb48e249788f5e)
-- **Sample settlement:** [Basescan](https://basescan.org/tx/0xee543bc107b411edd0202131b82172eb6efaf29c10457e33d2900ae890a72cf0)
-- **Settlement wallet:** `0x3f665386b41Fa15c5ccCeE983050a236E6a10108`
+| Type | Hash |
+|---|---|
+| Treasury top-up | [0x3fe5b99b...](https://basescan.org/tx/0x3fe5b99b2af4934c3b30d3087a703157e4f7cfcb8fc5dc58cecb48e249788f5e) |
+| Sample settlement | [0xee543bc1...](https://basescan.org/tx/0xee543bc107b411edd0202131b82172eb6efaf29c10457e33d2900ae890a72cf0) |
+
+**Settlement wallet:** `0x3f665386b41Fa15c5ccCeE983050a236E6a10108`
