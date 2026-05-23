@@ -185,7 +185,7 @@ const statusLabels: Record<Task["status"], string> = {
 };
 
 function actionLabel(task: Task) {
-  if (!task.campaign) return "fallback";
+  if (!task.campaign) return "Task";
   if (task.campaign.label) return task.campaign.label;
   if (task.campaign.platform === "x") return `x ${task.campaign.action}`;
   return task.campaign.action.replace(/_/g, " ");
@@ -800,14 +800,21 @@ export default function TaskDetailClient({
 
     function getDeadlineDisplay() {
       const deadline = task.deadline;
-      if (deadline === "24h") {
-        return "2026/05/29 00:30 ~ 2026/05/29 23:59 (UTC+08:00)";
+      if (!deadline) return "No deadline";
+      try {
+        const d = new Date(deadline);
+        const start = new Date(d);
+        start.setDate(start.getDate() - 7);
+        const fmt = (date: Date) =>
+          `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, "0")}/${String(date.getDate()).padStart(2, "0")} ${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+        return `${fmt(start)} ~ ${fmt(d)} (UTC+08:00)`;
+      } catch {
+        return deadline;
       }
-      return "2026/05/21 00:30 ~ 2026/05/28 00:30 (UTC+08:00)";
     }
 
-    // Mock related quests for "For You" section
-    const relatedQuests = [
+    // Mock related tasks for "For You" section
+    const relatedTasks = [
       { id: "rq1", name: "AI2Human Lab", title: "Follow @ai2humanwork on X for Alpha", reward: "$5.00" },
       { id: "rq2", name: "BNB Chain", title: "Like BNB Chain's latest announcement", reward: "$3.00" },
       { id: "rq3", name: "Base Protocol", title: "Join Base Discord and verify", reward: "$8.00" },
@@ -897,7 +904,7 @@ export default function TaskDetailClient({
                             <div className={styles.qnTaskBody}>
                               {!connectedWallet ? (
                                 <div className={styles.qnTaskButtons}>
-                                  <div className={`${styles.btn3d} ${styles.btn3dGreen}`}>
+                                  <div className={`${styles.btn3d} ${styles.btn3dCyan}`}>
                                     <div className={styles.btn3dInner}>
                                       <button
                                         type="button"
@@ -1000,8 +1007,8 @@ export default function TaskDetailClient({
                   <h3 className={styles.qnForYouTitle}>For You</h3>
                 </div>
                 <div className={styles.qnForYouGrid}>
-                  {relatedQuests.map((quest) => (
-                    <a key={quest.id} href={`/tasks/${quest.id}`} className={styles.qnQuestCard}>
+                  {relatedTasks.map((item) => (
+                    <a key={item.id} href={`/tasks/${item.id}`} className={styles.qnQuestCard}>
                       <div className={styles.qnQuestCardBg} />
                       <div className={styles.qnQuestCardBody}>
                         <div className={styles.qnQuestCardTop}>
@@ -1010,15 +1017,15 @@ export default function TaskDetailClient({
                               <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
                             </svg>
                           </div>
-                          <span className={styles.qnQuestCardName}>{quest.name}</span>
+                          <span className={styles.qnQuestCardName}>{item.name}</span>
                         </div>
-                        <p className={styles.qnQuestCardTitle}>{quest.title}</p>
+                        <p className={styles.qnQuestCardTitle}>{item.title}</p>
                         <div className={styles.qnQuestCardReward}>
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <circle cx="12" cy="12" r="10"/>
                             <path d="M12 6v12M6 12h12"/>
                           </svg>
-                          {quest.reward}
+                          {item.reward}
                         </div>
                       </div>
                     </a>
@@ -1195,10 +1202,10 @@ export default function TaskDetailClient({
                 )}
               </div>
 
-              {/* Questers Card */}
+              {/* Participants Card */}
               <div className={styles.qnQuestersCard}>
                 <div className={styles.qnQuestersHeader}>
-                  <h3 className={styles.qnQuestersH3}>Questers</h3>
+                  <h3 className={styles.qnQuestersH3}>Participants</h3>
                   <span className={styles.qnQuestersNum}>{questersData.count}</span>
                 </div>
                 <div className={styles.qnAvatarList}>

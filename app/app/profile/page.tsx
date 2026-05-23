@@ -3,8 +3,6 @@
 import { useEffect, useState } from "react";
 import { usePrivy, useWallets } from "@privy-io/react-auth";
 import styles from "./profile.module.css";
-import authStyles from "./auth.module.css";
-import { DEFAULT_SETTLEMENT_TOKEN_SYMBOL } from "../../lib/assetLabels.js";
 
 type SessionUser = {
   id: string;
@@ -73,11 +71,7 @@ export default function ProfilePage() {
   const [message, setMessage] = useState("");
 
   const [name, setName] = useState("");
-  const [city, setCity] = useState("");
-  const [country, setCountry] = useState("");
-  const [hourlyRate, setHourlyRate] = useState("30");
-  const [skills, setSkills] = useState("");
-  const [languages, setLanguages] = useState("");
+  const [email, setEmail] = useState("");
 
   const connectedWallet =
     wallets.find((wallet) => wallet.walletClientType !== "privy" && wallet.address)?.address ||
@@ -138,11 +132,7 @@ export default function ProfilePage() {
 
       setProfile(payload);
       setName(payload.human?.name || getFallbackName(payload.user.email));
-      setCity(payload.human?.city || "");
-      setCountry(payload.human?.country || "");
-      setHourlyRate(String(payload.human?.hourlyRate || 30));
-      setSkills((payload.human?.skills || []).join(", "));
-      setLanguages((payload.human?.languages || []).join(", "));
+      setEmail(payload.user.email || "");
       setLoading(false);
     }
 
@@ -160,12 +150,7 @@ export default function ProfilePage() {
     setMessage("");
     try {
       const payload = {
-        name: name.trim(),
-        city: city.trim(),
-        country: country.trim(),
-        hourlyRate: Number(hourlyRate || 0),
-        skills: splitList(skills),
-        languages: splitList(languages)
+        name: name.trim()
       };
 
       const endpoint = profile.human ? `/api/humans/${profile.human.id}` : "/api/humans";
@@ -211,28 +196,15 @@ export default function ProfilePage() {
 
   if (!authenticated) {
     return (
-      <div className={authStyles.stage}>
-        <div className={authStyles.center}>
-          <p className={authStyles.eyebrow}>Operator identity</p>
-          <div className={authStyles.heading}>
-            <h2>Connect your Privy wallet</h2>
-            <p>
-              Sign in with Privy so ai2human can use your connected wallet as the payout address
-              when you complete fallback tasks.
-            </p>
+      <div className={styles.page}>
+        <div className={styles.profileCard}>
+          <div className={styles.profileInfo}>
+            <h1>Connect your wallet</h1>
+            <p>Sign in to claim tasks and receive onchain settlements.</p>
           </div>
-
-          <div className={authStyles.panel}>
-            <button className={authStyles.googleButton} type="button" onClick={() => login()}>
-              Connect wallet with Privy
-            </button>
-            <div className={authStyles.divider} />
-            <ul className={authStyles.featureList}>
-              <li>Your connected wallet becomes your payout destination.</li>
-              <li>Reviewer can assign you directly from the operator list.</li>
-              <li>Settlement follows proof and verification on the configured chain.</li>
-            </ul>
-          </div>
+          <button className={styles.saveBtn} type="button" onClick={() => login()}>
+            Connect Wallet
+          </button>
         </div>
       </div>
     );
@@ -240,157 +212,55 @@ export default function ProfilePage() {
 
   return (
     <div className={styles.page}>
-      <section className={styles.headerCard}>
-        <div>
-          <p className={styles.kicker}>Privy operator profile</p>
-          <h1>{profile?.human ? "Manage payout-ready identity" : "Create your operator identity"}</h1>
-          <p>
-            Your Privy wallet is used as the payout destination for reviewer-approved fallback
-            work. Update your profile once, then reviewers can dispatch tasks to you directly.
-          </p>
+      <header className={styles.profileHeader}>
+        <img className={styles.avatar} src="/icon.png" alt="" />
+        <div className={styles.profileInfo}>
+          <h1>Edit Profile</h1>
+          <p>{profile?.human?.verified ? "Verified operator" : "Set up your identity"}</p>
         </div>
-        <button className={styles.disconnectButton} type="button" onClick={() => logout()}>
+        <button className={styles.disconnectBtn} type="button" onClick={() => logout()}>
           Disconnect
         </button>
-      </section>
-
-      <section className={styles.summaryGrid}>
-        <article className={styles.summaryCard}>
-          <span>Privy wallet</span>
-          <strong>{shortAddress(connectedWallet || profile?.user.walletAddress)}</strong>
-        </article>
-        <article className={styles.summaryCard}>
-          <span>Wallet address</span>
-          <strong>{connectedWallet || profile?.user.walletAddress || "Connect wallet first"}</strong>
-        </article>
-        <article className={styles.summaryCard}>
-          <span>Profile status</span>
-          <strong>{profile?.human ? "Payout-ready" : "Missing operator profile"}</strong>
-        </article>
-        <article className={styles.summaryCard}>
-          <span>Services</span>
-          <strong>{profile?.services.length || 0}</strong>
-        </article>
-      </section>
-
-      {!walletsReady && (
-        <div className={styles.alertInfo}>Privy wallet state is still syncing.</div>
-      )}
+      </header>
 
       {error && <div className={styles.alertError}>{error}</div>}
-      {message && <div className={styles.alertInfo}>{message}</div>}
+      {message && <div className={styles.alertSuccess}>{message}</div>}
 
-      <section className={styles.formsGrid}>
-        <article className={styles.panel}>
-          <div className={styles.panelHead}>
-            <div>
-              <h2>Operator profile</h2>
-              <p className={styles.panelHint}>
-                Reviewers use this profile plus your connected wallet to route and settle tasks.
-              </p>
-            </div>
-            <span>{profile?.human?.verified ? "Verified" : "Payout identity"}</span>
-          </div>
+      <div className={styles.profileCard}>
+        <div className={styles.field}>
+          <label className={styles.fieldLabel}>Display Name</label>
+          <input
+            className={styles.input}
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            placeholder="Your name"
+          />
+        </div>
 
-          <div className={styles.form}>
-            <label className={styles.label}>
-              Name
-              <input className={styles.input} value={name} onChange={(event) => setName(event.target.value)} />
-            </label>
+        <div className={styles.field}>
+          <label className={styles.fieldLabel}>Email</label>
+          <input
+            className={styles.input}
+            type="email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            placeholder="Email address"
+          />
+        </div>
 
-            <div className={styles.row2}>
-              <label className={styles.label}>
-                City
-                <input className={styles.input} value={city} onChange={(event) => setCity(event.target.value)} />
-              </label>
-              <label className={styles.label}>
-                Country
-                <input className={styles.input} value={country} onChange={(event) => setCountry(event.target.value)} />
-              </label>
-            </div>
+        <div className={styles.field}>
+          <label className={styles.fieldLabel}>Wallet Address</label>
+          <input
+            className={styles.input}
+            value={shortAddress(connectedWallet || profile?.user.walletAddress)}
+            readOnly
+          />
+        </div>
 
-            <label className={styles.label}>
-              {`Hourly rate (${DEFAULT_SETTLEMENT_TOKEN_SYMBOL})`}
-              <input
-                className={styles.input}
-                type="number"
-                min="1"
-                value={hourlyRate}
-                onChange={(event) => setHourlyRate(event.target.value)}
-              />
-            </label>
-
-            <label className={styles.label}>
-              Skills
-              <textarea
-                className={styles.textarea}
-                value={skills}
-                onChange={(event) => setSkills(event.target.value)}
-                placeholder="onsite verification, signed receipt capture, pickup handoff"
-              />
-            </label>
-
-            <label className={styles.label}>
-              Languages
-              <input
-                className={styles.input}
-                value={languages}
-                onChange={(event) => setLanguages(event.target.value)}
-                placeholder="English, Chinese"
-              />
-            </label>
-
-            <button className={styles.primaryButton} type="button" onClick={saveProfile} disabled={saving}>
-              {saving ? "Saving..." : profile?.human ? "Update profile" : "Create profile"}
-            </button>
-          </div>
-        </article>
-
-        <article className={styles.panel}>
-          <div className={styles.panelHead}>
-            <div>
-              <h2>Payout routing</h2>
-              <p className={styles.panelHint}>
-                This is the exact wallet ai2human will use when your completed task is settled.
-              </p>
-            </div>
-            <span>{connectedWallet || profile?.user.walletAddress ? "Connected" : "Missing"}</span>
-          </div>
-
-          <div className={styles.empty}>
-            <p>
-              Connected wallet:{" "}
-              <strong>{connectedWallet || profile?.user.walletAddress || "No wallet connected"}</strong>
-            </p>
-            <p>
-              Session source: <strong>{profile?.user.authProvider || "privy"}</strong>
-            </p>
-            <p>
-              Reviewer assignment will use this wallet automatically once your operator profile is
-              selected from the human list.
-            </p>
-          </div>
-
-          {!!profile?.services.length && (
-            <div className={styles.serviceGrid}>
-              {profile.services.map((service) => (
-                <article key={service.id} className={styles.serviceCard}>
-                  <div className={styles.serviceHead}>
-                    <div>
-                      <h3>{service.title}</h3>
-                      <p className={styles.serviceMeta}>{service.shortDescription}</p>
-                    </div>
-                    <span>{service.category}</span>
-                  </div>
-                  <p className={styles.serviceMeta}>
-                    {service.pricing === "hourly" ? `${service.price}/hr` : `${service.price} fixed`}
-                  </p>
-                </article>
-              ))}
-            </div>
-          )}
-        </article>
-      </section>
+        <button className={styles.saveBtn} type="button" onClick={saveProfile} disabled={saving}>
+          {saving ? "Saving..." : "Save Profile"}
+        </button>
+      </div>
     </div>
   );
 }

@@ -56,13 +56,13 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 10px 12px 14px;
+  padding: 12px 12px 16px;
 }
 
 .sidebarTop {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 16px;
 }
 
 .brand {
@@ -70,19 +70,18 @@
   align-items: center;
   gap: 8px;
   height: 28px;
-  padding: 4px 6px;
+  padding: 4px 8px;
   font-family: var(--font-display), serif;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
   color: var(--tm-text);
 }
 
 .brandMark {
-  width: 12px;
-  height: 12px;
+  width: 22px;
+  height: 22px;
   border-radius: 999px;
-  background: linear-gradient(135deg, var(--tm-cyan), #7c5cff 72%);
-  box-shadow: 0 0 0 2px rgba(124, 92, 255, 0.16);
+  object-fit: cover;
   flex: 0 0 auto;
 }
 
@@ -93,12 +92,13 @@
 }
 
 .navLabel {
-  font-size: 10px;
+  font-size: 11px;
+  font-weight: 600;
   line-height: 1;
   letter-spacing: 0.08em;
   color: var(--tm-muted);
   text-transform: uppercase;
-  padding: 0 8px 6px;
+  padding: 0 8px 8px;
 }
 
 .navLink {
@@ -107,9 +107,9 @@
   align-items: center;
   gap: 8px;
   min-height: 30px;
-  padding: 7px 8px 7px 14px;
+  padding: 8px 8px 8px 16px;
   border-radius: 8px;
-  font-size: 12px;
+  font-size: 13px;
   color: rgba(255, 255, 255, 0.72);
   transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
   border: 1px solid transparent;
@@ -139,28 +139,37 @@
   background: linear-gradient(180deg, var(--tm-cyan), #7c5cff);
 }
 
+.navLinkDisabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 .navIcon {
-  width: 10px;
-  height: 10px;
-  border: 1px solid currentColor;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   opacity: 0.75;
 }
 
 .sidebarFooter {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 
 .themeToggle {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   border: 0;
   background: transparent;
-  padding: 6px 8px;
+  padding: 8px 8px;
   font: inherit;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--tm-muted);
   cursor: default;
 }
@@ -186,7 +195,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 8px 18px;
+  padding: 8px 16px;
   background: rgba(8, 10, 16, 0.62);
   backdrop-filter: blur(18px);
 }
@@ -194,7 +203,7 @@
 .topbarLeft {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   min-width: 0;
 }
 
@@ -205,6 +214,14 @@
   border-radius: 4px;
   background: rgba(255, 255, 255, 0.06);
   box-shadow: var(--tm-shadow);
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+  font: inherit;
+  overflow: hidden;
 }
 
 .searchWrap {
@@ -219,9 +236,9 @@
   border: 1px solid var(--tm-border);
   background: rgba(255, 255, 255, 0.04);
   border-radius: 3px;
-  padding: 0 10px 0 28px;
+  padding: 0 12px 0 32px;
   font: inherit;
-  font-size: 11px;
+  font-size: 13px;
   color: var(--tm-text);
   outline: none;
 }
@@ -234,22 +251,9 @@
   position: absolute;
   left: 10px;
   top: 50%;
-  width: 10px;
-  height: 10px;
-  margin-top: -5px;
-  border: 1px solid rgba(255, 255, 255, 0.42);
-  border-radius: 999px;
-}
-
-.searchIcon::after {
-  content: "";
-  position: absolute;
-  width: 5px;
-  height: 1px;
-  background: rgba(255, 255, 255, 0.42);
-  transform: rotate(45deg);
-  right: -3px;
-  bottom: -1px;
+  transform: translateY(-50%);
+  color: rgba(255, 255, 255, 0.42);
+  pointer-events: none;
 }
 
 .walletButton {
@@ -260,7 +264,7 @@
   border-radius: 3px;
   padding: 0 12px;
   font: inherit;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   cursor: pointer;
   transition: filter 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
@@ -277,19 +281,70 @@
   cursor: default;
 }
 
+.walletDropdownWrap {
+  position: relative;
+}
+
+.walletDropdown {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  margin-top: 6px;
+  min-width: 160px;
+  background: var(--tm-surface-1);
+  border: 1px solid var(--tm-border);
+  border-radius: 8px;
+  padding: 4px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.walletDropdownItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--tm-text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.12s ease;
+}
+
+.walletDropdownItem:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.walletDropdownDanger {
+  color: #ff6b6b;
+}
+
+.walletDropdownDanger:hover {
+  background: rgba(255, 107, 107, 0.1);
+}
+
 .content {
   flex: 1;
-  padding: 28px 34px 42px;
+  padding: 32px 32px 48px;
 }
 
 .pageHeader {
-  margin-bottom: 22px;
+  margin-bottom: 24px;
 }
 
 .pageHeader h1 {
   margin: 0;
   font-family: var(--font-display), serif;
-  font-size: 38px;
+  font-size: 32px;
   line-height: 1.05;
   letter-spacing: -0.03em;
   color: var(--tm-text);
@@ -297,7 +352,7 @@
 
 .pageLead {
   margin: 8px 0 0;
-  font-size: 13px;
+  font-size: 14px;
   color: var(--tm-muted);
   line-height: 1.6;
 }
@@ -305,21 +360,21 @@
 .panel {
   border: 1px solid var(--tm-border);
   background: var(--tm-panel);
-  padding: 14px;
+  padding: 16px;
   border-radius: 20px;
   box-shadow: var(--tm-shadow);
 }
 
 .sectionTitle {
   margin: 0 0 12px;
-  font-size: 28px;
+  font-size: 24px;
   line-height: 1.05;
 }
 
 .filters {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 10px;
+  gap: 12px;
   margin-bottom: 16px;
 }
 
@@ -335,7 +390,7 @@
 .field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 .field label {
@@ -343,6 +398,7 @@
   color: var(--tm-muted);
   letter-spacing: 0.08em;
   text-transform: uppercase;
+  font-weight: 600;
 }
 
 .input,
@@ -353,7 +409,7 @@
   background: rgba(255, 255, 255, 0.04);
   color: var(--tm-text);
   font: inherit;
-  font-size: 12px;
+  font-size: 14px;
   outline: none;
   border-radius: 12px;
 }
@@ -361,17 +417,17 @@
 .input,
 .select {
   height: 34px;
-  padding: 0 10px;
+  padding: 0 12px;
 }
 
 .textarea {
   min-height: 96px;
   resize: vertical;
-  padding: 10px;
+  padding: 12px;
 }
 
 .helper {
-  margin: 6px 0 0;
+  margin: 8px 0 0;
   font-size: 10px;
   color: var(--tm-muted);
 }
@@ -384,14 +440,14 @@
 }
 
 .tableTitle {
-  padding: 18px 16px 10px;
-  font-size: 28px;
+  padding: 16px 16px 12px;
+  font-size: 24px;
   margin: 0;
 }
 
 .tableWrap {
   overflow-x: auto;
-  padding: 0 12px 10px;
+  padding: 0 12px 12px;
 }
 
 .table {
@@ -402,7 +458,7 @@
 .table thead th {
   border-top: 1px solid var(--tm-border);
   border-bottom: 1px solid var(--tm-border);
-  padding: 10px 12px;
+  padding: 12px 12px;
   text-align: left;
   font-size: 10px;
   color: var(--tm-muted);
@@ -413,7 +469,7 @@
   border-bottom: 1px solid var(--tm-border);
   padding: 12px;
   vertical-align: middle;
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .rankCell {
@@ -429,7 +485,7 @@
 .agentCell {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .agentAvatar {
@@ -442,14 +498,14 @@
 }
 
 .agentName {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
   color: var(--tm-orange);
 }
 
 .agentMeta {
-  margin-top: 2px;
-  font-size: 9px;
+  margin-top: 4px;
+  font-size: 11px;
   color: var(--tm-muted);
 }
 
@@ -466,18 +522,18 @@
 .skillList {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px;
 }
 
 .skillPill {
   display: inline-flex;
   align-items: center;
   height: 22px;
-  padding: 0 7px;
+  padding: 0 8px;
   border: 1px solid var(--tm-border-strong);
   background: rgba(255, 255, 255, 0.05);
   color: rgba(255, 255, 255, 0.72);
-  font-size: 9px;
+  font-size: 10px;
   border-radius: 999px;
 }
 
@@ -485,10 +541,10 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 12px;
   border-top: 1px solid var(--tm-border);
-  padding: 10px 12px;
-  font-size: 10px;
+  padding: 12px 12px;
+  font-size: 11px;
   color: var(--tm-muted);
 }
 
@@ -506,7 +562,7 @@
   border-radius: 2px;
   padding: 0 8px;
   font: inherit;
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .subtleButton:disabled {
@@ -519,183 +575,282 @@
   gap: 16px;
 }
 
-.taskCard {
-  position: relative;
-  border: 1px solid var(--tm-border-strong);
-  background: linear-gradient(180deg, rgba(14, 18, 29, 0.92), rgba(10, 13, 22, 0.9));
-  padding: 18px 18px 16px;
-  min-height: 244px;
+/* ===== QuestN-style Sort Row ===== */
+.questSortRow {
   display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  border-radius: 20px;
-  box-shadow: 0 24px 50px rgba(0, 0, 0, 0.34);
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
 }
 
-.taskCardLink {
-  display: block;
-  color: inherit;
+.questSortTabs {
+  display: flex;
+  gap: 4px;
 }
 
-.taskCardLink:hover .taskTitle {
+.questSortTab {
+  height: 32px;
+  padding: 0 14px;
+  border: 1px solid var(--tm-border);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--tm-muted);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.questSortTab:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--tm-text);
+}
+
+.questSortTabActive {
+  background: rgba(128, 255, 234, 0.1);
+  border-color: rgba(128, 255, 234, 0.3);
   color: var(--tm-cyan);
 }
 
-.taskCard::before,
-.taskCard::after {
+.questFilterPills {
+  display: flex;
+  gap: 6px;
+}
+
+.questPill {
+  height: 28px;
+  padding: 0 12px;
+  border: 1px solid var(--tm-border);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--tm-muted);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.questPill:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--tm-text);
+}
+
+.questPillActive {
+  background: rgba(124, 92, 255, 0.2);
+  border-color: rgba(124, 92, 255, 0.4);
+  color: #c4a3ff;
+}
+
+.questStatusFilter {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.questStatusBtn {
+  height: 28px;
+  padding: 0 10px;
+  border: none;
+  background: transparent;
+  color: var(--tm-muted);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.questStatusBtn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--tm-text);
+}
+
+.questStatusBtnActive {
+  background: rgba(50, 231, 152, 0.1);
+  color: var(--tm-green);
+}
+
+/* ===== Task Card (OmniClaw dark style) ===== */
+.questCard {
+  position: relative;
+  border: 1px solid var(--tm-border);
+  background: var(--tm-panel-strong);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  overflow: hidden;
+}
+
+.questCard::before {
   content: "";
   position: absolute;
-  width: 9px;
-  height: 9px;
-  border-color: var(--tm-cyan);
-  pointer-events: none;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--tm-cyan);
+  opacity: 0.6;
+  border-radius: 12px 0 0 12px;
 }
 
-.taskCard::before {
-  top: -1px;
-  left: -1px;
-  border-top: 1px solid var(--tm-cyan);
-  border-left: 1px solid var(--tm-cyan);
+.questCard:hover {
+  border-color: rgba(128, 255, 234, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
-.taskCard::after {
-  right: -1px;
-  bottom: -1px;
-  border-right: 1px solid var(--tm-orange);
-  border-bottom: 1px solid var(--tm-orange);
+.questCardLink {
+  display: block;
+  color: inherit;
+  flex: 1;
+  padding: 16px 16px 12px;
 }
 
-.badgeRow {
+.questCardMeta {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 8px;
   margin-bottom: 12px;
 }
 
-.badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 3px 8px;
+.questLogo {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
   border-radius: 999px;
-  font-size: 10px;
-  line-height: 1;
-  border: 1px solid transparent;
+  object-fit: cover;
 }
 
-.badgeModeBounty {
-  background: var(--tm-orange-soft);
-  color: var(--tm-orange);
-}
-
-.badgeModeClaim {
-  background: var(--tm-yellow-soft);
-  color: var(--tm-yellow);
-}
-
-.badgeModeDefault {
-  background: rgba(255, 255, 255, 0.08);
+.questRequester {
+  font-size: 12px;
+  font-weight: 600;
   color: var(--tm-muted);
 }
 
-.badgeStatus {
-  background: var(--tm-yellow-soft);
-  color: var(--tm-yellow);
+.questBadge {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--tm-cyan);
+  background: rgba(128, 255, 234, 0.1);
+  border: 1px solid rgba(128, 255, 234, 0.25);
+  padding: 2px 8px;
+  border-radius: 999px;
+  letter-spacing: 0.02em;
 }
 
-.badgeStatusClaimed {
-  background: var(--tm-yellow-soft);
-  color: var(--tm-yellow);
-}
-
-.badgeStatusOpen {
-  background: var(--tm-green-soft);
-  color: var(--tm-green);
-}
-
-.taskTitle {
+.questTitle {
   margin: 0 0 10px;
   font-family: var(--font-display), serif;
-  font-size: 17px;
-  line-height: 1.32;
-  letter-spacing: -0.02em;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
   color: var(--tm-text);
   display: -webkit-box;
-  -webkit-line-clamp: 4;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
-.taskTags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0;
-  margin-bottom: 18px;
-  font-size: 11px;
-  color: var(--tm-muted);
+.questCardLink:hover .questTitle {
+  color: var(--tm-cyan);
 }
 
-.taskTag::before {
-  content: "#";
+.questCardBody {
+  flex: 1;
 }
 
-.taskFooter {
+.questCardFooter {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
+  padding: 12px 16px 16px;
+  border-top: 1px solid var(--tm-border);
 }
 
-.reward {
-  margin: 0;
-  font-size: 30px;
-  line-height: 1;
-  letter-spacing: -0.05em;
-  color: var(--tm-text);
-}
-
-.metaLine {
-  margin-top: 6px;
-  font-size: 11px;
-  color: var(--tm-muted);
-}
-
-.requester {
-  margin-top: 6px;
-  font-size: 10px;
-  color: var(--tm-cyan);
-}
-
-.footerRight {
+.questRewardBlock {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 8px;
-  font-size: 11px;
-  color: var(--tm-muted);
-  white-space: nowrap;
+  align-items: center;
+  gap: 6px;
 }
 
-.taskOpenLink {
-  color: var(--tm-cyan);
+.questRewardBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  background: rgba(50, 231, 152, 0.12);
+  border: 1px solid rgba(50, 231, 152, 0.3);
+  color: var(--tm-green);
+  font-size: 13px;
+  font-weight: 700;
+  border-radius: 999px;
+  letter-spacing: -0.01em;
+}
+
+.questWinners {
   font-size: 11px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  color: var(--tm-muted);
+}
+
+.questClaimBtn {
+  height: 30px;
+  padding: 0 14px;
+  border: 1px solid rgba(128, 255, 234, 0.45);
+  background: linear-gradient(120deg, rgba(128, 255, 234, 0.2), rgba(124, 92, 255, 0.28));
+  color: rgba(234, 255, 251, 0.95);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: filter 0.15s ease;
+}
+
+.questClaimBtn:hover {
+  filter: brightness(1.1);
+}
+
+.questClaimBtn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.questClaimedBadge {
+  display: inline-flex;
+  align-items: center;
+  height: 26px;
+  padding: 0 10px;
+  background: var(--tm-green-soft);
+  color: var(--tm-green);
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 6px;
+}
+
+.questStatusMini {
+  font-size: 11px;
+  color: var(--tm-muted);
 }
 
 .loadMoreRow {
   display: flex;
   justify-content: center;
-  padding-top: 18px;
+  padding-top: 16px;
 }
 
 .loadMore {
   height: 30px;
   border: 1px solid var(--tm-border);
   background: rgba(255, 255, 255, 0.04);
-  padding: 0 14px;
+  padding: 0 16px;
   font: inherit;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--tm-muted);
 }
 
@@ -707,7 +862,7 @@
 .formCard {
   border: 1px solid var(--tm-border);
   background: var(--tm-panel);
-  padding: 18px;
+  padding: 16px;
   border-radius: 20px;
   box-shadow: var(--tm-shadow);
 }
@@ -715,15 +870,15 @@
 .formTitle {
   margin: 0 0 16px;
   font-family: var(--font-display), serif;
-  font-size: 28px;
+  font-size: 24px;
 }
 
 .modeHelp {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 5px;
+  gap: 4px;
   margin: 8px 0 14px;
-  font-size: 10px;
+  font-size: 12px;
   color: var(--tm-muted);
 }
 
@@ -734,7 +889,7 @@
 .row2 {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  gap: 12px;
 }
 
 .submitButton {
@@ -744,9 +899,9 @@
   background: linear-gradient(120deg, rgba(128, 255, 234, 0.24), rgba(124, 92, 255, 0.34));
   color: rgba(234, 255, 251, 0.95);
   font: inherit;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
-  margin-top: 10px;
+  margin-top: 12px;
   border-radius: 12px;
   box-shadow: 0 12px 30px rgba(124, 92, 255, 0.2);
 }
@@ -756,7 +911,7 @@
 }
 
 .inlineNote {
-  margin-top: 10px;
+  margin-top: 12px;
   font-size: 10px;
   color: var(--tm-muted);
 }
@@ -766,7 +921,7 @@
   margin-bottom: 12px;
   border: 1px solid var(--tm-border);
   background: var(--tm-panel-strong);
-  padding: 10px 12px;
+  padding: 12px 12px;
   font-size: 12px;
   border-radius: 14px;
 }
@@ -778,7 +933,7 @@
 .placeholderCard {
   border: 1px solid var(--tm-border);
   background: var(--tm-panel);
-  padding: 18px;
+  padding: 16px;
   max-width: 760px;
   border-radius: 20px;
   box-shadow: var(--tm-shadow);
@@ -787,12 +942,12 @@
 .placeholderCard h1 {
   margin: 0 0 8px;
   font-family: var(--font-display), serif;
-  font-size: 36px;
+  font-size: 30px;
 }
 
 .placeholderCard p {
   margin: 0;
-  font-size: 12px;
+  font-size: 14px;
   color: var(--tm-muted);
 }
 
@@ -821,12 +976,12 @@
 .twitterTaskCard {
   border: 1px solid var(--tm-border-strong);
   background: linear-gradient(180deg, rgba(14, 18, 29, 0.92), rgba(10, 13, 22, 0.9));
-  padding: 20px;
+  padding: 24px;
   border-radius: 16px;
   box-shadow: 0 24px 50px rgba(0, 0, 0, 0.34);
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
 }
 
 .twitterTaskHeader {
@@ -849,7 +1004,7 @@
 .twitterTaskTitle {
   margin: 0 0 4px;
   font-family: var(--font-display), serif;
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 600;
   color: var(--tm-text);
   line-height: 1.3;
@@ -857,9 +1012,9 @@
 
 .twitterTaskDesc {
   margin: 0;
-  font-size: 11px;
+  font-size: 13px;
   color: var(--tm-muted);
-  line-height: 1.4;
+  line-height: 1.55;
 }
 
 .twitterTaskReward {
@@ -869,11 +1024,11 @@
 .rewardBadge {
   display: inline-flex;
   align-items: center;
-  padding: 4px 10px;
+  padding: 4px 12px;
   background: linear-gradient(120deg, rgba(50, 231, 152, 0.2), rgba(128, 255, 234, 0.15));
   border: 1px solid rgba(50, 231, 152, 0.35);
   color: var(--tm-green);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   border-radius: 999px;
   white-space: nowrap;
@@ -890,13 +1045,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 8px;
   height: 42px;
   border: 1px solid rgba(255, 255, 255, 0.15);
   background: rgba(255, 255, 255, 0.05);
   color: var(--tm-text);
   font: inherit;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   border-radius: 10px;
   cursor: pointer;
@@ -915,7 +1070,7 @@
   background: linear-gradient(120deg, #caffff 0%, #caffb8 100%);
   color: #0a0f1a;
   font: inherit;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
   border-radius: 10px;
   cursor: pointer;
@@ -937,7 +1092,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 12px;
   height: 42px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(255, 255, 255, 0.04);
@@ -998,16 +1153,16 @@
 /* Stats */
 .twitterStatsRow {
   display: flex;
-  gap: 14px;
-  margin-bottom: 20px;
+  gap: 16px;
+  margin-bottom: 24px;
 }
 
 .twitterStatCard {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
-  padding: 14px 24px;
+  gap: 4px;
+  padding: 16px 24px;
   border: 1px solid var(--tm-border);
   background: var(--tm-panel);
   border-radius: 14px;
@@ -1016,7 +1171,7 @@
 
 .twitterStatNumber {
   font-family: var(--font-display), serif;
-  font-size: 28px;
+  font-size: 26px;
   font-weight: 700;
   color: var(--tm-text);
   line-height: 1;
@@ -1032,17 +1187,17 @@
 /* Filter tabs */
 .twitterFilterTabs {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   margin-bottom: 16px;
 }
 
 .twitterFilterTab {
-  padding: 6px 14px;
+  padding: 8px 16px;
   border: 1px solid var(--tm-border);
   background: rgba(255, 255, 255, 0.03);
   color: var(--tm-muted);
   font: inherit;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
   border-radius: 8px;
   cursor: pointer;
@@ -1062,32 +1217,32 @@
 
 /* Settlement info */
 .settlementInfo {
-  margin-top: 6px;
+  margin-top: 8px;
 }
 
 .explorerLink {
   color: var(--tm-cyan);
-  font-size: 11px;
+  font-size: 12px;
   text-decoration: underline;
 }
 
 .demoNote {
-  font-size: 10px;
+  font-size: 11px;
   color: var(--tm-muted);
   font-style: italic;
 }
 
 /* How it works */
 .howItWorks {
-  margin-top: 36px;
+  margin-top: 32px;
   padding-top: 24px;
   border-top: 1px solid var(--tm-border);
 }
 
 .howItWorks h2 {
-  margin: 0 0 18px;
+  margin: 0 0 16px;
   font-family: var(--font-display), serif;
-  font-size: 22px;
+  font-size: 20px;
   color: var(--tm-text);
 }
 
@@ -1108,34 +1263,320 @@
 .stepNumber {
   width: 28px;
   height: 28px;
-  margin: 0 auto 10px;
+  margin: 0 auto 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: linear-gradient(120deg, rgba(128, 255, 234, 0.2), rgba(124, 92, 255, 0.2));
   border: 1px solid rgba(128, 255, 234, 0.3);
   border-radius: 50%;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--tm-cyan);
 }
 
 .stepCard h3 {
-  margin: 0 0 6px;
-  font-size: 13px;
+  margin: 0 0 8px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--tm-text);
 }
 
 .stepCard p {
   margin: 0;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--tm-muted);
-  line-height: 1.4;
+  line-height: 1.5;
 }
 
 @media (max-width: 860px) {
   .stepsGrid {
     grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ===== Sidebar overlay backdrop ===== */
+.sidebarOverlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 99;
+}
+
+.sidebarOverlayShow {
+  display: block;
+}
+
+/* ===== Mobile hamburger icon bars ===== */
+.mobileMenuIcon {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  width: 18px;
+  height: 18px;
+  pointer-events: none;
+}
+
+.mobileMenuIcon span {
+  display: block;
+  width: 100%;
+  height: 2px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+/* ===== 768px — tablet/mobile breakpoint ===== */
+@media (max-width: 768px) {
+  /* Hide sidebar by default; slide it in as an overlay when .sidebarOpen is added */
+  .sidebar {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 220px;
+    z-index: 100;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+  }
+
+  .sidebarOpen {
+    display: flex;
+    transform: translateX(0);
+  }
+
+  /* Make the menu button a real tappable control */
+  .menuButton {
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    min-height: 28px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    flex-shrink: 0;
+  }
+
+  .mobileMenuIcon {
+    display: flex;
+  }
+
+  /* Show the mobile header that is hidden on desktop */
+  .mobileHeader {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 12px;
+    height: 44px;
+    border-bottom: 1px solid var(--tm-border);
+    background: rgba(8, 10, 16, 0.72);
+    flex-shrink: 0;
+  }
+
+  /* Reduce content padding */
+  .content {
+    padding: 16px 16px 24px;
+  }
+
+  /* Task grid to 2 columns */
+  .tasksGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* Filters to 2 columns */
+  .filters,
+  .filtersAgents {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* Quest sort row wraps */
+  .questSortRow {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .questStatusFilter {
+    margin-left: 0;
+    width: 100%;
+    border-top: 1px solid var(--tm-border);
+    padding-top: 8px;
+  }
+
+  /* Search input expands to fill available space */
+  .searchWrap {
+    min-width: auto;
+    flex: 1 1 auto;
+    width: auto;
+  }
+
+  /* Smaller page title */
+  .pageHeader h1 {
+    font-size: 24px;
+  }
+
+  .pageLead {
+    font-size: 13px;
+  }
+
+  /* Prevent wallet button text from overflowing */
+  .walletButton {
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Allow stats row to wrap onto multiple lines */
+  .twitterStatsRow {
+    flex-wrap: wrap;
+  }
+
+  /* Stat cards shrink naturally on small screens */
+  .twitterStatCard {
+    min-width: auto;
+  }
+
+  /* Tighter panel on mobile */
+  .panel {
+    border-radius: 16px;
+    padding: 12px;
+  }
+
+  .pageHeader {
+    margin-bottom: 16px;
+  }
+}
+
+/* ===== 480px — small mobile breakpoint ===== */
+@media (max-width: 480px) {
+  /* Single column task grid */
+  .tasksGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* Single column filters */
+  .filters,
+  .filtersAgents {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* Quest sort row stacks */
+  .questSortRow {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .questSortTabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .questFilterPills {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .questStatusFilter {
+    display: flex;
+    border-top: none;
+    padding-top: 0;
+  }
+
+  /* Edge-to-edge content */
+  .content {
+    padding: 8px 0 16px;
+  }
+
+  /* Tighter topbar padding */
+  .topbar {
+    padding: 8px 12px;
+  }
+
+  /* Page header inset on edge-to-edge layout */
+  .pageHeader {
+    padding: 0 12px;
+    margin-bottom: 12px;
+  }
+
+  .pageHeader h1 {
+    font-size: 22px;
+  }
+
+  /* Full-width panels (edge-to-edge) */
+  .panel {
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    padding: 12px;
+  }
+
+  /* Quest cards */
+  .questCard {
+    border-radius: 14px;
+  }
+
+  /* Grid gaps */
+  .tasksGrid {
+    gap: 8px;
+    padding: 0 12px;
+  }
+
+  /* Twitter tasks grid forced to 1 column */
+  .twitterTasksGrid {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 0 12px;
+  }
+
+  /* Twitter task card compact */
+  .twitterTaskCard {
+    padding: 16px;
+    border-radius: 14px;
+  }
+
+  /* Stack Twitter task action buttons vertically */
+  .twitterTaskActions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  /* Full-width Twitter action buttons — larger touch target */
+  .twitterGoButton,
+  .twitterVerifyButton {
+    width: 100%;
+    flex: none;
+    height: 44px;
+  }
+
+  /* Steps grid compact */
+  .stepsGrid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding: 0 12px;
+  }
+
+  .stepCard {
+    padding: 12px;
+  }
+
+  /* Filter tabs scroll horizontally */
+  .twitterFilterTabs {
+    padding: 0 12px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .twitterFilterTab {
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* Stats row */
+  .twitterStatsRow {
+    padding: 0 12px;
   }
 }

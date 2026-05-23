@@ -3,9 +3,9 @@ import "./globals.css";
 import PrivyAppProvider from "./components/PrivyAppProvider";
 
 export const metadata: Metadata = {
-  title: "ai2human — Human Fallback Infrastructure For Agents",
+  title: "ai2human — Task Execution Network For AI Agents",
   description:
-    "ai2human keeps blocked agent work inside one auditable loop: planner precheck, human fallback, structured proof, verification, and conditional settlement on Base.",
+    "ai2human keeps AI agent tasks inside one auditable loop: planner precheck, human execution, structured proof, verification, and conditional settlement on Base.",
   other: {
     "virtual-protocol-site-verification": "bacbe8cc9ff3678b0185322d2139f085"
   },

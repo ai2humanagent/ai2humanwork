@@ -4,7 +4,7 @@
       "id": "tw-follow-0e4a2568",
       "title": "Follow @ai2humanwork on X",
       "budget": "0.5",
-      "deadline": "2026-06-15T23:59:00Z",
+      "deadline": "2026-05-28T16:00:00Z",
       "acceptance": "Follow the @ai2humanwork X account and click Verify to claim your reward.",
       "taskType": "twitter_follow",
       "campaign": {
@@ -39,7 +39,7 @@
         "totalPool": "5 USDC",
         "perWinner": "0.5 USDC",
         "maxWinners": 10,
-        "drawTime": "2026-06-15T23:59:00Z"
+        "drawTime": "2026-05-28T16:00:00Z"
       }
     }
   ],
@@ -83,6 +83,20 @@
     }
   ],
   "humans": [
+    {
+      "id": "h_4d89f531-de6",
+      "name": "abb",
+      "handle": "abb",
+      "city": "Unknown",
+      "country": "Unknown",
+      "verified": false,
+      "rating": 4,
+      "completedJobs": 0,
+      "hourlyRate": 30,
+      "skills": [],
+      "languages": [],
+      "avatarSeed": 6
+    },
     {
       "id": "h_e5b0da41-ea6",
       "name": "lp3600870ck38uk7lwkx",
@@ -1246,7 +1260,8 @@
       "createdAt": "2026-05-22T19:59:12.899Z",
       "authProvider": "privy",
       "privyUserId": "did:privy:cmphcf1j900040dju9ifeud9k",
-      "walletAddress": "0xd50c85ff5872323c5b218057a9e4f5f3a0aa2c3f"
+      "walletAddress": "0xd50c85ff5872323c5b218057a9e4f5f3a0aa2c3f",
+      "humanId": "h_4d89f531-de6"
     },
     {
       "id": "5ced3aeb-8b20-4ef9-8a96-7aeabb7df932",
@@ -1310,11 +1325,11 @@
   ],
   "sessions": [
     {
-      "id": "352872a2-872e-4383-8ddb-33590052385a",
+      "id": "9f5b0da9-f950-41a2-bb00-474311604ed8",
       "userId": "9a2efd93-ac69-4197-87b5-b16ee7944270",
-      "token": "5a0561ea19f7c108e778fbaa4522be2cdc16cb35aac76a2b06720f3e7959cad2",
-      "createdAt": "2026-05-22T19:59:32.720Z",
-      "expiresAt": "2026-06-21T19:59:32.707Z"
+      "token": "5b7c5411be6d8d4c1b0c5ade8ca55872f413cca4cc20303109814638082b5e1e",
+      "createdAt": "2026-05-23T02:07:31.045Z",
+      "expiresAt": "2026-06-22T02:07:31.036Z"
     },
     {
       "id": "7b2fbf58-2774-43eb-be6d-038ff8a3ee94",

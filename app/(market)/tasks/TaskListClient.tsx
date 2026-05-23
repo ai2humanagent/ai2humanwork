@@ -5,10 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { usePrivy, useWallets } from "@privy-io/react-auth";
 import styles from "../market.module.css";
-import {
-  DEFAULT_SETTLEMENT_TOKEN_SYMBOL,
-  formatBudgetLabel
-} from "../../lib/assetLabels.js";
+import { formatBudgetLabel } from "../../lib/assetLabels.js";
 import {
   fetchWithPrivySessionRetry,
   loadAuthWithPrivySession
@@ -49,6 +46,12 @@ type Task = {
     name: string;
     walletAddress?: string;
   };
+  rewardDistribution?: {
+    totalPool?: string;
+    perWinner?: string;
+    maxWinners?: number;
+    mode?: string;
+  };
 };
 
 type AuthPayload = {
@@ -80,17 +83,10 @@ function parseReward(value: string) {
 }
 
 function actionLabel(task: Task) {
-  if (!task.campaign) return "fallback";
+  if (!task.campaign) return "Task";
   if (task.campaign.label) return task.campaign.label;
   if (task.campaign.platform === "x") return `x ${task.campaign.action}`;
   return task.campaign.action.replace(/_/g, " ");
-}
-
-function statusClass(status: Task["status"]) {
-  if (status === "created" || status === "ai_done") return styles.badgeStatusOpen;
-  if (status === "human_assigned" || status === "human_done") return styles.badgeModeClaim;
-  if (status === "verified" || status === "paid") return styles.badgeModeBounty;
-  return styles.badgeStatus;
 }
 
 function canClaim(task: Task, auth: AuthPayload | null) {
@@ -104,7 +100,7 @@ function isClaimedByCurrentUser(task: Task, auth: AuthPayload | null) {
   return task.assignee?.type === "human" && task.assignee.name === auth.human.name;
 }
 
-export default function TaskListClient({ justCreated }: { justCreated: boolean }) {
+export default function TaskListClient({ justCreated, searchQuery }: { justCreated: boolean; searchQuery?: string }) {
   const router = useRouter();
   const { ready, authenticated, login, getAccessToken, user } = usePrivy();
   const { wallets } = useWallets();
@@ -112,7 +108,8 @@ export default function TaskListClient({ justCreated }: { justCreated: boolean }
   const [auth, setAuth] = useState<AuthPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
-  const [minReward, setMinReward] = useState("0");
+  const [sort, setSort] = useState("newest");
+  const [rewardType, setRewardType] = useState("all");
   const [claimingId, setClaimingId] = useState("");
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -152,9 +149,7 @@ export default function TaskListClient({ justCreated }: { justCreated: boolean }
   }, [ready, authenticated, getAccessToken, connectedWallet]);
 
   const filtered = useMemo(() => {
-    return tasks.filter((task) => {
-      if (parseReward(task.budget) < Number.parseFloat(minReward || "0")) return false;
-
+    let result = tasks.filter((task) => {
       if (filter === "available") {
         return ["created", "ai_failed"].includes(task.status);
       }
@@ -166,7 +161,31 @@ export default function TaskListClient({ justCreated }: { justCreated: boolean }
       }
       return true;
     });
-  }, [tasks, filter, minReward, auth]);
+
+    if (searchQuery && searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(
+        (t) =>
+          t.title.toLowerCase().includes(q) ||
+          (t.campaign?.brief || "").toLowerCase().includes(q) ||
+          (t.campaign?.requesterName || "").toLowerCase().includes(q)
+      );
+    }
+
+    if (rewardType === "token") {
+      result = result.filter((t) => t.campaign?.platform !== "real_world");
+    } else if (rewardType === "social") {
+      result = result.filter((t) => t.campaign?.platform === "x");
+    }
+
+    if (sort === "newest") {
+      result = [...result].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+    } else if (sort === "reward") {
+      result = [...result].sort((a, b) => parseReward(b.budget) - parseReward(a.budget));
+    }
+
+    return result;
+  }, [tasks, filter, sort, rewardType, auth, searchQuery]);
 
   async function claimTask(task: Task) {
     setError("");
@@ -214,8 +233,7 @@ export default function TaskListClient({ justCreated }: { justCreated: boolean }
       <header className={styles.pageHeader}>
         <h1>Tasks</h1>
         <p className={styles.pageLead}>
-          Live fallback tasks across social distribution and real-world execution. Connect a
-          wallet, claim a task, then submit proof for reviewer approval and onchain settlement.
+          Earn by completing tasks across social and real-world execution. Connect a wallet, claim, and submit proof for onchain settlement.
         </p>
       </header>
 
@@ -223,55 +241,57 @@ export default function TaskListClient({ justCreated }: { justCreated: boolean }
       {message ? <div className={styles.success}>{message}</div> : null}
       {error ? <div className={styles.alert}>{error}</div> : null}
 
-      <div className={`${styles.panel} ${styles.filters}`}>
-        <div className={styles.field}>
-          <label>Board</label>
-          <select className={styles.select} value={filter} onChange={(event) => setFilter(event.target.value)}>
-            <option value="available">Available to claim</option>
-            <option value="mine">My claimed tasks</option>
-            <option value="closed">Closed</option>
-            <option value="all">All tasks</option>
-          </select>
-        </div>
-        <div className={styles.field}>
-          <label>{`Min Reward (${DEFAULT_SETTLEMENT_TOKEN_SYMBOL})`}</label>
-          <input className={styles.input} value={minReward} onChange={(event) => setMinReward(event.target.value)} />
-        </div>
-        <div className={styles.field}>
-          <label>Operator session</label>
-          <div className={styles.modeHelp}>
-            {auth?.human ? (
-              <>
-                <div>
-                  <strong>{auth.human.name}</strong>
-                  <span> @{auth.human.handle}</span>
-                </div>
-                <div>Wallet connected and payout-ready.</div>
-              </>
-            ) : (
-              <div>No operator profile loaded yet.</div>
-            )}
-          </div>
-        </div>
-        <div className={styles.field}>
-          <label>Claim flow</label>
-          {authenticated ? (
-            <Link href="/app/profile" className={styles.submitButton}>
-              Manage Operator Profile
-            </Link>
-          ) : (
-            <button type="button" className={styles.submitButton} onClick={() => login()}>
-              Connect Wallet
+      <div className={styles.questSortRow}>
+        <div className={styles.questSortTabs}>
+          {[
+            { key: "newest", label: "Newest" },
+            { key: "reward", label: "Top Reward" }
+          ].map((tab) => (
+            <button
+              key={tab.key}
+              className={`${styles.questSortTab} ${sort === tab.key ? styles.questSortTabActive : ""}`}
+              onClick={() => setSort(tab.key)}
+            >
+              {tab.label}
             </button>
-          )}
+          ))}
+        </div>
+        <div className={styles.questFilterPills}>
+          {[
+            { key: "all", label: "All" },
+            { key: "token", label: "Token" },
+            { key: "social", label: "Social" }
+          ].map((pill) => (
+            <button
+              key={pill.key}
+              className={`${styles.questPill} ${rewardType === pill.key ? styles.questPillActive : ""}`}
+              onClick={() => setRewardType(pill.key)}
+            >
+              {pill.label}
+            </button>
+          ))}
+        </div>
+        <div className={styles.questStatusFilter}>
+          {[
+            { key: "available", label: "Available" },
+            { key: "mine", label: "My Tasks" }
+          ].map((opt) => (
+            <button
+              key={opt.key}
+              className={`${styles.questStatusBtn} ${filter === opt.key ? styles.questStatusBtnActive : ""}`}
+              onClick={() => setFilter(opt.key)}
+            >
+              {opt.label}
+            </button>
+          ))}
         </div>
       </div>
 
       {loading ? <div className={styles.placeholderCard}><p>Loading live tasks...</p></div> : null}
       {!loading && filtered.length === 0 ? (
         <div className={styles.placeholderCard}>
-          <h1>0 open tasks</h1>
-          <p>Create a campaign task at `/tasks/new`, or switch the board filter.</p>
+          <h1>No tasks found</h1>
+          <p>Create a campaign task or switch the board filter.</p>
         </div>
       ) : null}
 
@@ -280,70 +300,44 @@ export default function TaskListClient({ justCreated }: { justCreated: boolean }
           const claimedByMe = isClaimedByCurrentUser(task, auth);
           const claimable = canClaim(task, auth);
           return (
-            <article key={task.id} className={styles.taskCard}>
-              <Link href={`/tasks/${task.id}`} className={styles.taskCardLink}>
-                <div className={styles.badgeRow}>
-                  <span className={`${styles.badge} ${styles.badgeModeBounty}`}>{actionLabel(task)}</span>
-                  <span className={`${styles.badge} ${statusClass(task.status)}`}>
-                    {statusLabels[task.status]}
-                  </span>
-                </div>
-                <h3 className={styles.taskTitle}>{task.title}</h3>
-                <div className={styles.taskTags}>
-                  {task.campaign?.requesterHandle ? (
-                    <span className={styles.taskTag}>{task.campaign.requesterHandle}</span>
-                  ) : null}
-                  {task.campaign?.proofPhrase ? (
-                    <span className={styles.taskTag}>{task.campaign.proofPhrase}</span>
-                  ) : null}
-                  <span className={styles.taskTag}>{task.deadline}</span>
-                </div>
-                <div className={styles.modeHelp}>
-                  <div>{task.acceptance}</div>
-                  {task.campaign?.brief ? <div>{task.campaign.brief}</div> : null}
-                  {task.campaign?.targetUrl ? <div>{task.campaign.targetUrl}</div> : null}
+            <article key={task.id} className={styles.questCard}>
+              <Link href={`/tasks/${task.id}`} className={styles.questCardLink}>
+                <div className={styles.questCardBody}>
+                  <div className={styles.questCardMeta}>
+                    <img className={styles.questLogo} src="/icon.png" alt="" />
+                    <span className={styles.questRequester}>
+                      {task.campaign?.requesterName || "Official"}
+                    </span>
+                    <span className={styles.questBadge}>{actionLabel(task)}</span>
+                  </div>
+                  <h3 className={styles.questTitle}>{task.title}</h3>
                 </div>
               </Link>
-
-              <div className={styles.taskFooter}>
-                <div>
-                  <p className={styles.reward}>{formatBudgetLabel(task.budget)}</p>
-                  <div className={styles.metaLine}>Updated {new Date(task.updatedAt).toLocaleString()}</div>
-                  <div className={styles.requester}>
-                    {task.assignee?.type === "human"
-                      ? `Claimed by ${task.assignee.name}`
-                      : task.campaign?.requesterName || "Official campaign"}
-                  </div>
+              <div className={styles.questCardFooter}>
+                <div className={styles.questRewardBlock}>
+                  <span className={styles.questRewardBadge}>
+                    {task.rewardDistribution?.totalPool ?? formatBudgetLabel(task.budget)}
+                  </span>
+                  {task.rewardDistribution && task.rewardDistribution.maxWinners && task.rewardDistribution.maxWinners > 1 ? (
+                    <span className={styles.questWinners}>
+                      · {task.rewardDistribution.maxWinners} winners
+                    </span>
+                  ) : null}
                 </div>
                 <div className={styles.footerRight}>
-                  <Link href={`/tasks/${task.id}`} className={styles.taskOpenLink}>
-                    Open Task
-                  </Link>
                   {claimable ? (
                     <button
                       type="button"
-                      className={styles.submitButton}
+                      className={styles.questClaimBtn}
                       disabled={claimingId === task.id}
                       onClick={() => claimTask(task)}
                     >
-                      {claimingId === task.id ? "Claiming..." : "Accept Task"}
+                      {claimingId === task.id ? "..." : "Claim"}
                     </button>
                   ) : claimedByMe ? (
-                    <div className={styles.modeHelp}>
-                      <strong>Claimed by you</strong>
-                      <Link href="/reviewer">Open reviewer</Link>
-                    </div>
+                    <span className={styles.questClaimedBadge}>Yours</span>
                   ) : (
-                    <div className={styles.modeHelp}>
-                      <strong>{statusLabels[task.status]}</strong>
-                      {!authenticated ? (
-                        <span>Connect wallet to claim</span>
-                      ) : !auth?.human?.id || !auth?.user?.walletAddress ? (
-                        <span>Finish `/app/profile` first</span>
-                      ) : (
-                        <span>Not claimable</span>
-                      )}
-                    </div>
+                    <span className={styles.questStatusMini}>{statusLabels[task.status]}</span>
                   )}
                 </div>
               </div>

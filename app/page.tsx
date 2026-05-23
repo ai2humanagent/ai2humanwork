@@ -91,7 +91,7 @@ const copy = {
     }
   },
   footer: {
-    tag: "ai2human — Human fallback infrastructure for AI agents",
+    tag: "ai2human — Task execution network for AI agents",
     links: ["Live Demo", "Submission Proof", "Reviewer Console"]
   }
 } as const;
