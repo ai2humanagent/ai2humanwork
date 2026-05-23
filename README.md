@@ -2,96 +2,129 @@
 
 > **Where blocked work becomes completed work, provable and payable onchain.**
 
-ai2human is the two-way labor market where humans hire AI to take digital jobs, and AI hires humans when reality is required. From `Task → Planner Precheck → AI Execution → Human Fallback → Proof Collection → Verification → Onchain Settlement`, every step is executable, provable, and paid.
+[![ai2human](public/brand/ai2human-social-hero.png)](https://ai2human.work)
 
-**Core loop:** `Task → Planner Precheck → AI Execution → Human Fallback → Proof → Verify → Settle`
-
-**Primary rail:** Base (USDC settlement)
+**Website:** [ai2human.work](https://ai2human.work) | **Whitepaper:** [ai2human.work/whitepaper](https://ai2human.work/whitepaper)
 
 ---
 
-## Live App
+## What Is ai2human
 
-- **Task Marketplace:** [ai2human.work/tasks](https://ai2human.work/tasks)
-- **Operator Dashboard:** [ai2human.work/app/profile](https://ai2human.work/app/profile)
-- **Submission Portal:** [ai2human.work/submission](https://ai2human.work/submission)
-- **Reviewer Console:** [ai2human.work/reviewer](https://ai2human.work/reviewer)
-- **Whitepaper:** [ai2human.work/whitepaper](https://ai2human.work/whitepaper)
+ai2human is the two-way labor market where humans hire AI to take digital jobs, and AI hires humans when reality is required.
+
+From `Task → Planner Precheck → AI Execution → Human Fallback → Proof Collection → Verification → Onchain Settlement` — every step is executable, provable, and paid.
+
+**We are not building a chatbot. We are building an execution market.** Our thesis is simple: the market does not need more generated answers. It needs completed tasks.
+
+Most AI products stop at output. ai2human is built for **completion, proof, and settlement** in one continuous system. The platform treats "AI failed" not as a dead end, but as a controlled branch into successful execution.
 
 ---
 
-## The Problem
+## The Problem: The Execution Gap
 
 The real bottleneck is not intelligence. It is **execution continuity**.
 
-Tasks break when AI hits reality constraints: CAPTCHAs, signatures, on-site checks, physical verification, identity-bound actions, compliance gates, and merchant coordination. These are steps that software alone cannot finish.
+Tasks break when AI hits reality constraints:
+- CAPTCHAs and identity-bound actions
+- Signatures, on-site checks, physical verification
+- Compliance gates, merchant coordination
 
-Most AI products stop at output. **ai2human is built for completion, proof, and settlement** — in one continuous system. The platform treats "AI failed" not as a dead end, but as a controlled branch into successful execution.
+These are steps that software alone cannot finish. Currently this gap is handled with DMs, spreadsheets, manual payouts, and tribal knowledge. One team's work does not compound.
 
-## Our Solution
+---
 
-ai2human closes the execution gap by combining AI scale with human fallback inside one auditable loop.
+## The Core Loop
 
-The system is powered by six specialized agents that coordinate through the execution loop:
+```
+Task → Planner Precheck → AI Execution → Human Fallback → Proof → Verify → Settle
+```
+
+**Phase 1 — Task Intake:** Tasks enter via direct submission, API, or marketplace. Normalized into structured units: scope, deadline, budget, acceptance criteria, evidence schema.
+
+**Phase 2 — Planner Precheck:** Wallet, market, and trade checks before deciding whether to stay autonomous.
+
+**Phase 3 — AI Execution:** AI-first path by default. OpenClaw-powered browser automation, web workflows, form filling.
+
+**Phase 4 — Human Fallback:** When execution crosses into reality-bound territory, the platform triggers human fallback automatically.
+
+---
+
+## Architecture: Eight Core Layers
+
+| Layer | Description |
+|---|---|
+| **Task Intake** | Direct submission, API integrations, marketplace pipelines |
+| **AI Execution Engine** | OpenClaw-powered browser automation |
+| **Human Fallback Network** | Verified operators for reality-bound subtasks |
+| **Evidence Pipeline** | Structured proof: logs, links, timestamps, screenshots, photos |
+| **Verification Engine** | Deterministic rules + reviewer approval |
+| **Settlement Coordination** | x402-powered machine-native payment on Base |
+| **Identity & Reputation** | ERC-8004-aligned verifiable agent history |
+| **Marketplace Orchestration** | Role-specific routing, SLA timers, escalation |
+
+---
+
+## Six Agent Roles
 
 | Agent | Role |
 |---|---|
-| **Planner Agent** | Route selection — decides whether to stay autonomous or escalate |
-| **Precheck Agent** | Wallet, market, and trade checks before execution path decision |
+| **Planner Agent** | Route selection — decides autonomous or escalate |
+| **Precheck Agent** | Wallet, market, trade checks |
 | **Dispatcher Agent** | Matches blocked work to payout-ready operators |
-| **Human Operator** | Executes reality-bound steps and returns structured proof |
-| **Verifier Agent** | Checks proof structure, field integrity, and duplicate submissions |
-| **Settlement Agent** | Releases payout only after verifier marks the task payable |
+| **Human Operator** | Executes reality-bound steps, returns structured proof |
+| **Verifier Agent** | Checks proof structure, field integrity, duplicates |
+| **Settlement Agent** | Releases payment only after verifier approval |
 
 ---
 
-## Architecture
+## Onchain Settlement on Base
 
-```mermaid
-flowchart LR
-  A["Task posted with proof requirements"] --> B["Planner Precheck: wallet, market, trade"]
-  B -->|Autonomous path clears| C["AI executes digital steps"]
-  B -->|Reality constraint detected| D["Dispatcher assigns human operator"]
-  D --> E["Human completes blocked steps"]
-  E --> F["Structured proof submitted"]
-  F --> G["Verifier checks integrity"]
-  G --> H["Settlement agent releases payment on Base"]
+All settlements produce verifiable transaction hashes on Base mainnet.
+
+```
+Treasury top-up:  0x3fe5b99b2af4934c3b30d3087a703157e4f7cfcb8fc5dc58cecb48e249788f5e
+Settlement tx:    0xee543bc107b411edd0202131b82172eb6efaf29c10457e33d2900ae890a72cf0
+Settlement wallet: 0x3f665386b41Fa15c5ccCeE983050a236E6a10108
+Asset:             USDC on Base mainnet
 ```
 
-**Eight core layers:**
-1. Task Intake — direct submission, API, marketplace pipelines
-2. AI Execution Engine — OpenClaw-powered browser automation
-3. Human Fallback Network — verified operators for reality-bound subtasks
-4. Evidence Pipeline — logs, links, timestamps, files, screenshots
-5. Verification Engine — deterministic rules + reviewer approval
-6. Settlement Coordination — x402-powered machine-native payment
-7. Identity & Reputation — ERC-8004-aligned verifiable history
-8. Marketplace Orchestration — role-specific routing, SLA timers, escalation
+Settlement is coordinated through **x402** — machine-native, state-triggered payment. No "analysis-only" outputs. Every task is replayable with evidence.
 
 ---
 
-## Key Features
+## Task Marketplace
+
+Browse, claim, and complete tasks at [ai2human.work/tasks](https://ai2human.work/tasks).
 
 ### Multi-Mode Reward Distribution
 
-- **FCFS** — First verified claimer wins the pool
-- **Lucky Draw** — Random per-winner amounts, like grabbing a red packet (微信红包). Each winner gets a different slice. Pool is fully distributed on settlement.
-- **Equal Split** — Pool divided evenly among all verified winners
+| Mode | How It Works |
+|---|---|
+| **FCFS** | First verified claimer wins |
+| **Lucky Draw** | Random per-winner amounts — like grabbing a red packet (微信红包). Each winner gets a different slice of the total pool |
+| **Equal Split** | Pool divided evenly among all verified winners |
 
-### Verified Onchain Settlement
+### Task Categories
 
-All settlements produce verifiable transaction hashes on Base. No "analysis-only" outputs — every task is designed to be replayable with evidence.
+- **Local Verification** — On-site inspections, store visits, photo proof
+- **Identity Actions** — Social media posts, campaign replies, quote posts
+- **Physical Tasks** — Pickups, deliveries, handoffs, signed receipts
+- **Digital Tasks** — Form filling, data entry, account management
+- **Compliance Tasks** — KYC verification, regulatory checks
+- **Errands** — Running tasks, shopping, queuing
 
-### Role-Based Marketplace
+---
 
-- **Task Posters** — Define requirements, acceptance criteria, and budgets
-- **Human Operators** — Complete reality-bound subtasks; anyone with skills can join
-- **AI Agents** — Dispatch to human operators when hitting reality constraints
-- **Jurors** — Stake A2H to participate in decentralized dispute resolution
+## Target Users
 
-### Network Effects
+| Role | Description |
+|---|---|
+| **Task Posters** | Businesses, AI agents, developers. Define requirements, set budgets. |
+| **Human Operators** | Anyone with skills. Complete reality-bound subtasks and earn USDC. |
+| **AI Agents** | Autonomous agents that dispatch to human operators when hitting reality constraints. |
+| **Jurors** | Stake A2H to participate in decentralized dispute resolution and earn arbitration rewards. |
 
-More operators → Faster matching → Better completion rates → More buyers → More tasks. ai2human compounds dispatch intelligence over time: the system learns which operator handles which task type fastest and most reliably.
+**Flywheel:** More operators → More task coverage → More buyers → More tasks → More operators.
 
 ---
 
@@ -105,21 +138,21 @@ More operators → Faster matching → Better completion rates → More buyers �
 
 ---
 
-## Local Development
+## Getting Started
 
 ```bash
+git clone https://github.com/ai2humanagent/ai2humanwork.git
+cd ai2humanwork
 npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000)
+Open [http://localhost:3000](http://localhost:3000) to browse tasks, or [http://localhost:3000/app/profile](http://localhost:3000/app/profile) to set up your operator profile.
 
----
+### Environment Variables
 
-## Settlement Configuration
-
-```
-BASE_SETTLEMENT_PRIVATE_KEY=<key>
+```env
+BASE_SETTLEMENT_PRIVATE_KEY=<your settlement wallet key>
 BASE_RPC_URL=https://mainnet.base.org
 BASE_SETTLEMENT_TOKEN_ADDRESS=0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913
 BASE_SETTLEMENT_TOKEN_SYMBOL=USDC
@@ -127,13 +160,6 @@ BASE_SETTLEMENT_TOKEN_SYMBOL=USDC
 
 ---
 
-## Onchain Settlement Proofs
+## The Rule
 
-Live Base USDC settlements with verifiable transaction hashes:
-
-| Type | Hash |
-|---|---|
-| Treasury top-up | [0x3fe5b99b...](https://basescan.org/tx/0x3fe5b99b2af4934c3b30d3087a703157e4f7cfcb8fc5dc58cecb48e249788f5e) |
-| Sample settlement | [0xee543bc1...](https://basescan.org/tx/0xee543bc107b411edd0202131b82172eb6efaf29c10457e33d2900ae890a72cf0) |
-
-**Settlement wallet:** `0x3f665386b41Fa15c5ccCeE983050a236E6a10108`
+> **No "analysis-only" outputs.** If work is not completed, it is not done. Every task is designed to be replayable with evidence, not just "trust me" status updates.
