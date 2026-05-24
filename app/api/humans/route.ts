@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { getAuthContext } from "../../lib/auth";
-import { readDb, updateDb, type UserAccount } from "../../lib/store";
+import { readDb, updateDb, type UserAccount, type Notification, type Task } from "../../lib/store";
+import { appendEvidence } from "../../lib/taskEvidence";
 
 export const runtime = "nodejs";
 
@@ -31,10 +32,57 @@ function normalizeList(input: unknown, max: number): string[] {
     .slice(0, max);
 }
 
+function findAndAssignTask(
+  db: { tasks: Task[]; users: UserAccount[]; humans: { id: string; name: string }[] },
+  human: { id: string; name: string },
+  user: { walletAddress?: string }
+): Task | null {
+  // Find a task that is available (created or ai_failed status)
+  const available = db.tasks.filter(
+    (t) =>
+      (t.status === "created" || t.status === "ai_failed") &&
+      !t.assignee
+  );
+
+  if (available.length === 0) return null;
+
+  // Prioritize lucky draw event task first, then sort by oldest created
+  const luckyDrawTask = available.find((t) => t.id === "lucky-draw-event-001");
+  const task = luckyDrawTask || available.sort(
+    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+  )[0];
+
+  const previousStatus = task.status;
+  task.assignee = {
+    type: "human",
+    name: human.name,
+    walletAddress: user.walletAddress
+  };
+  task.status = "human_assigned";
+  task.updatedAt = new Date().toISOString();
+
+  appendEvidence(task, {
+    by: "system",
+    type: "log",
+    content: `Human assigned: ${human.name} (auto-dispatched)`,
+    createdAt: task.updatedAt
+  });
+  appendEvidence(task, {
+    by: "system",
+    type: "note",
+    content: `agent_event: dispatcher_agent | Auto-assigned to ${human.name} via profile completion.`,
+    createdAt: task.updatedAt
+  });
+
+  return task;
+}
+
 function normalizeProfileInput(body: Record<string, unknown>, user: UserAccount) {
   const name = String(body.name || user.email.split("@")[0] || "New Human").trim();
   return {
     name,
+    role: String(body.role || "").trim() || "",
+    location: String(body.location || "").trim() || "",
     city: String(body.city || "").trim() || "Unknown",
     country: String(body.country || "").trim() || "Unknown",
     hourlyRate: Number.isFinite(Number(body.hourlyRate))
@@ -134,6 +182,8 @@ export async function POST(request: Request) {
       id: `h_${crypto.randomUUID().slice(0, 12)}`,
       name: input.name,
       handle,
+      role: input.role,
+      location: input.location,
       city: input.city,
       country: input.country,
       verified: false,
@@ -148,6 +198,22 @@ export async function POST(request: Request) {
     db.humans.unshift(created);
     user.humanId = created.id;
     profile = created;
+
+    // Auto-dispatch: find an available task and assign to this human
+    const availableTask = findAndAssignTask(db, created, user);
+    if (availableTask) {
+      const notif: Notification = {
+        id: `notif_${crypto.randomUUID().slice(0, 12)}`,
+        userId: user.id,
+        type: "task_assigned",
+        title: "You have a new task",
+        body: `AI Executor assigned you: "${availableTask.title}". Accept it to begin earning.`,
+        taskId: availableTask.id,
+        read: false,
+        createdAt: new Date().toISOString()
+      };
+      db.notifications.unshift(notif);
+    }
   });
 
   if (!profile) {

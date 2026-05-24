@@ -17,6 +17,8 @@ type HumanProfile = {
   id: string;
   name: string;
   handle: string;
+  role: string;
+  location: string;
   city: string;
   country: string;
   verified: boolean;
@@ -42,13 +44,6 @@ type AuthPayload = {
   services: ServiceSummary[];
 };
 
-function splitList(input: string) {
-  return input
-    .split(",")
-    .map((item) => item.trim())
-    .filter(Boolean);
-}
-
 function shortAddress(address?: string) {
   if (!address) return "No wallet connected";
   if (address.length <= 12) return address;
@@ -72,6 +67,8 @@ export default function ProfilePage() {
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [role, setRole] = useState("");
+  const [location, setLocation] = useState("");
 
   const connectedWallet =
     wallets.find((wallet) => wallet.walletClientType !== "privy" && wallet.address)?.address ||
@@ -133,6 +130,8 @@ export default function ProfilePage() {
       setProfile(payload);
       setName(payload.human?.name || getFallbackName(payload.user.email));
       setEmail(payload.user.email || "");
+      setRole(payload.human?.role || "");
+      setLocation(payload.human?.location || "");
       setLoading(false);
     }
 
@@ -150,7 +149,9 @@ export default function ProfilePage() {
     setMessage("");
     try {
       const payload = {
-        name: name.trim()
+        name: name.trim(),
+        role: role.trim(),
+        location: location.trim()
       };
 
       const endpoint = profile.human ? `/api/humans/${profile.human.id}` : "/api/humans";
@@ -234,6 +235,26 @@ export default function ProfilePage() {
             value={name}
             onChange={(event) => setName(event.target.value)}
             placeholder="Your name"
+          />
+        </div>
+
+        <div className={styles.field}>
+          <label className={styles.fieldLabel}>Role</label>
+          <input
+            className={styles.input}
+            value={role}
+            onChange={(event) => setRole(event.target.value)}
+            placeholder="e.g. Growth Operator, Field Agent"
+          />
+        </div>
+
+        <div className={styles.field}>
+          <label className={styles.fieldLabel}>Location</label>
+          <input
+            className={styles.input}
+            value={location}
+            onChange={(event) => setLocation(event.target.value)}
+            placeholder="e.g. Austin, TX"
           />
         </div>
 

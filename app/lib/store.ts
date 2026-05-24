@@ -224,6 +224,14 @@ export type QuestProgress = {
   createdAt: string;
 };
 
+export type LuckyDrawParticipant = {
+  id: string;
+  taskId: string;
+  walletAddress: string;
+  xHandle: string;
+  createdAt: string;
+};
+
 export type NotificationType = "task_assigned" | "task_reminder" | "task_completed" | "system";
 
 export type Notification = {
@@ -271,6 +279,7 @@ type Db = {
   questProgress: QuestProgress[];
   notifications: Notification[];
   escrowDeposits: EscrowDeposit[];
+  luckyDrawParticipants: LuckyDrawParticipant[];
 };
 
 export function makeSeedTasks(count: number): Task[] {
@@ -636,7 +645,8 @@ function makeInitialDb(): Db {
     sessions: [],
     questProgress: [],
     notifications: [],
-    escrowDeposits: []
+    escrowDeposits: [],
+    luckyDrawParticipants: []
   };
 }
 
@@ -711,7 +721,8 @@ export async function readDb(): Promise<Db> {
     sessions: parsed.sessions ?? [],
     questProgress: Array.isArray(parsed.questProgress) ? parsed.questProgress : [],
     notifications: Array.isArray(parsed.notifications) ? parsed.notifications : [],
-    escrowDeposits: Array.isArray(parsed.escrowDeposits) ? parsed.escrowDeposits : []
+    escrowDeposits: Array.isArray(parsed.escrowDeposits) ? parsed.escrowDeposits : [],
+    luckyDrawParticipants: Array.isArray(parsed.luckyDrawParticipants) ? parsed.luckyDrawParticipants : []
   };
 }
 

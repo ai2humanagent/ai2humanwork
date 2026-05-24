@@ -273,6 +273,7 @@ export default function TaskDetailClient({
   const [expandedTasks, setExpandedTasks] = useState<Record<string, boolean>>({ "0": true });
   const [claimingReward, setClaimingReward] = useState(false);
   const [claimResult, setClaimResult] = useState<PaymentResult | null>(null);
+  const [xHandle, setXHandle] = useState("");
   const [questProgressLoaded, setQuestProgressLoaded] = useState(false);
   const [questersData, setQuestersData] = useState<QuestersData>({ count: 0, claimedCount: 0, questers: [] });
   const [relatedTasks, setRelatedTasks] = useState<Task[]>([]);
@@ -405,6 +406,10 @@ export default function TaskDetailClient({
       login();
       return;
     }
+    if (!xHandle.trim()) {
+      setError("Please enter your X handle to claim");
+      return;
+    }
     setClaimingReward(true);
     setError("");
     try {
@@ -412,7 +417,7 @@ export default function TaskDetailClient({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "same-origin",
-        body: JSON.stringify({ wallet: connectedWallet.toLowerCase() })
+        body: JSON.stringify({ wallet: connectedWallet.toLowerCase(), xHandle })
       });
       const data = await res.json();
       if (!res.ok) {
@@ -712,7 +717,7 @@ export default function TaskDetailClient({
 
   // ===== QuestN Layout (all tasks) =====
   {
-    const allTasksVerified = ["0","1","2","3"].every(k => taskStates[k]?.verified);
+    const allTasksVerified = ["0","1","2","3","4"].every(k => taskStates[k]?.verified);
     // For quest/twitter tasks, "done" means the current user has claimed, not the global task status
     // Also treat taskState as ended when pool is exhausted
     const isDone = !!claimResult || task.taskState === "full" || task.taskState === "closed" || task.taskState === "refunded";
@@ -750,10 +755,14 @@ export default function TaskDetailClient({
       </svg>
     );
     const joinSvg = (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+      </svg>
+    );
+    const userSvg = (
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
-        <polyline points="10 17 15 12 10 7"/>
-        <line x1="15" y1="12" x2="3" y2="12"/>
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+        <circle cx="12" cy="7" r="4"/>
       </svg>
     );
     const commentSvg = (
@@ -918,9 +927,10 @@ export default function TaskDetailClient({
                 <div className={styles.qnTaskList}>
                   {[
                     { key: "0", icon: followSvg, label: task.campaign?.label || getTaskDisplayLabel("twitter_follow", task.campaign?.requesterHandle), actionLabel: getTaskActionLabel("twitter_follow"), intentUrl: "https://x.com/intent/follow?screen_name=ai2humanwork" },
-                    { key: "1", icon: joinSvg, label: "Join AI2Human Discord", actionLabel: "Join", intentUrl: "https://discord.gg/ai2human" },
-                    { key: "2", icon: retweetSvg, label: "Repost pinned tweet", actionLabel: "Repost", intentUrl: "https://x.com/intent/retweet?tweet_id=2057669148281651651" },
-                    { key: "3", icon: likeSvg, label: "Like announcement post", actionLabel: "Like", intentUrl: "https://x.com/intent/like?tweet_id=2057669148281651651" },
+                    { key: "1", icon: joinSvg, label: "Join Telegram Group", actionLabel: "Join", intentUrl: "https://t.me/+G3U4loFH5H0zMmU1" },
+                    { key: "2", icon: retweetSvg, label: "Repost announcement tweet", actionLabel: "Repost", intentUrl: "https://x.com/intent/retweet?tweet_id=2057437770902372396" },
+                    { key: "3", icon: likeSvg, label: "Like announcement tweet", actionLabel: "Like", intentUrl: "https://x.com/intent/like?tweet_id=2058166798005248452" },
+                    { key: "4", icon: userSvg, label: "Enter your X handle", actionLabel: "Confirm", isXHandle: true },
                   ].map((item) => {
                     const state = taskStates[item.key] || { actionClicked: false, verifying: false, verified: false };
                     const isExpanded = expandedTasks[item.key] || false;
@@ -960,6 +970,51 @@ export default function TaskDetailClient({
                                     </div>
                                   </div>
                                 </div>
+                              ) : item.key === "4" ? (
+                                /* X Handle input — special inline field */
+                                <div className={styles.qnTaskButtons}>
+                                  <div className={styles.qnXHandleInputWrap}>
+                                    <input
+                                      type="text"
+                                      placeholder="@your_x_handle"
+                                      value={item.key === "4" ? xHandle : ""}
+                                      onChange={(e) => {
+                                        if (item.key === "4") {
+                                          setXHandle(e.target.value);
+                                        }
+                                      }}
+                                      className={styles.qnXHandleInput}
+                                      onKeyDown={(e) => {
+                                        if (e.key === "Enter" && xHandle.trim() && item.key === "4") {
+                                          // Auto-verify on Enter
+                                          setTaskStates((prev) => ({
+                                            ...prev,
+                                            ["4"]: { actionClicked: true, verifying: false, verified: true }
+                                          }));
+                                        }
+                                      }}
+                                    />
+                                    <div className={`${styles.btn3d} ${styles.btn3dGreen}`} style={{ flex: "0 0 auto" }}>
+                                      <div className={styles.btn3dInner}>
+                                        <button
+                                          type="button"
+                                          className={styles.btn3dFace}
+                                          disabled={!xHandle.trim()}
+                                          onClick={() => {
+                                            if (!xHandle.trim()) return;
+                                            setTaskStates((prev) => ({
+                                              ...prev,
+                                              ["4"]: { actionClicked: true, verifying: false, verified: true }
+                                            }));
+                                          }}
+                                        >
+                                          Confirm
+                                        </button>
+                                        <span className={styles.btn3dShadow} />
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
                               ) : state.verified ? (
                                 <div className={styles.qnTaskDoneInline}>
                                   {checkSvg}
@@ -982,7 +1037,7 @@ export default function TaskDetailClient({
                                           handleTaskAction(item.key);
                                         }}
                                       >
-                                        {twitterSvg}
+                                        {item.icon}
                                         {item.actionLabel}
                                       </button>
                                       <span className={styles.btn3dShadow} />
@@ -1115,7 +1170,18 @@ export default function TaskDetailClient({
                 {/* Key reward stats */}
                 <div className={styles.qnRewardStats}>
                   <div className={styles.qnStatItem}>
-                    <span className={styles.qnStatValue}>{dist?.perWinner || task.budget}</span>
+                    <span className={styles.qnStatValue}>
+                      {dist?.mode === "lucky_draw"
+                        ? (() => {
+                            const poolStr = dist?.totalPool || task.budget;
+                            const pool = parseFloat(String(poolStr).replace(/[^\d.]/g, ""));
+                            const winners = maxWinners || 1;
+                            const avg = pool / winners;
+                            const max = Math.round(avg * 2 * 100) / 100;
+                            return `${avg.toFixed(1)}~${max} USDC`;
+                          })()
+                        : (dist?.perWinner || task.budget)}
+                    </span>
                     <span className={styles.qnStatLabel}>Per Winner</span>
                   </div>
                   <div className={styles.qnStatDivider} />
@@ -1223,7 +1289,7 @@ export default function TaskDetailClient({
                       <button
                         type="button"
                         className={styles.btn3dFace}
-                        disabled={claimingReward}
+                        disabled={claimingReward || !xHandle.trim()}
                         onClick={handleClaimReward}
                       >
                         {claimingReward ? "Claiming..." : "Claim Reward"}

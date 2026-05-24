@@ -56,6 +56,8 @@ export async function PUT(
     const next = {
       ...found,
       name: String(body.name || found.name).trim(),
+      role: String(body.role ?? found.role ?? "").trim(),
+      location: String(body.location ?? found.location ?? "").trim(),
       city: String(body.city || found.city).trim(),
       country: String(body.country || found.country).trim(),
       hourlyRate: Number.isFinite(Number(body.hourlyRate))

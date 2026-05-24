@@ -1,198 +1,150 @@
 {
   "tasks": [
     {
-      "id": "3a877363-6e59-4b7c-8038-6d8b2cffaaf0",
-      "title": "Join ai2human Discord & Introduce Yourself",
-      "budget": "1",
-      "deadline": "2026-06-01T16:00:00Z",
-      "acceptance": "Provide evidence/logs",
-      "agentId": "agent_official",
-      "rewardDistribution": {
-        "mode": "lucky_draw",
-        "totalPool": "1 USDC",
-        "maxWinners": 3,
-        "drawTime": "2026-05-23T18:00:00Z"
-      },
-      "status": "paid",
-      "taskState": "full",
-      "createdAt": "2026-05-23T10:27:40.222Z",
-      "updatedAt": "2026-05-23T10:45:50.665Z",
-      "evidence": [
-        {
-          "id": "8341fbbe-7d8b-4d8a-98da-f4826b7c8995",
-          "by": "system",
-          "type": "log",
-          "content": "Task created: none -> created (escrow funded: 1 USDC)",
-          "createdAt": "2026-05-23T10:27:40.222Z"
-        },
-        {
-          "id": "be1a518b-8ecb-4651-b685-e61e9ca6d024",
-          "by": "system",
-          "type": "note",
-          "content": "escrow_deposit: 1 USDC transferred from 0x3f665386b41Fa15c5ccCeE983050a236E6a10108 to escrow 0x3f665386b41Fa15c5ccCeE983050a236E6a10108. tx: 0x3e7ca1db478270fe88a7452873ca0d36e8f7ecb95bd101be2f0b77226a5334ff",
-          "createdAt": "2026-05-23T10:27:40.222Z"
-        }
-      ],
-      "escrowDepositId": "escrow_abfb3b8d-fc1",
-      "assignee": {
-        "type": "human",
-        "name": "Quest Executor",
-        "walletAddress": "0xb52cedee77ed26ed17e456d26e425a19b3d12365"
-      },
-      "drawResult": {
-        "winners": [
-          {
-            "address": "0x137b8ea786967149499acc55c6808fadea789c20",
-            "amount": "0.088535 USDC"
-          },
-          {
-            "address": "0x107c976917fe61b827d5a82ae22aae1abfba824b",
-            "amount": "0.469685 USDC"
-          },
-          {
-            "address": "0xb52cedee77ed26ed17e456d26e425a19b3d12365",
-            "amount": "0.44178 USDC"
-          }
-        ],
-        "drawnAt": "2026-05-23T10:39:53.517Z"
-      }
-    },
-    {
-      "id": "6af22fbf-f0d2-4141-935f-636cf2c809ab",
-      "title": "Join ai2human Discord & Introduce Yourself",
-      "budget": "2",
-      "deadline": "2026-06-01T16:00:00Z",
-      "acceptance": "Provide evidence/logs",
-      "agentId": "agent_official",
-      "rewardDistribution": {
-        "mode": "lucky_draw",
-        "totalPool": "2 USDC",
-        "perWinner": "0.5 USDC",
-        "maxWinners": 4,
-        "drawTime": "2026-06-01T16:00:00Z"
-      },
-      "status": "created",
-      "taskState": "open",
-      "createdAt": "2026-05-23T10:22:19.675Z",
-      "updatedAt": "2026-05-23T10:22:19.675Z",
-      "evidence": [
-        {
-          "id": "719049d5-3bbc-4e3b-9397-2dba85ea6602",
-          "by": "system",
-          "type": "log",
-          "content": "Task created: none -> created (escrow funded: 2 USDC)",
-          "createdAt": "2026-05-23T10:22:19.675Z"
-        },
-        {
-          "id": "57bcc56b-4e54-4afc-b449-3bb476685206",
-          "by": "system",
-          "type": "note",
-          "content": "escrow_deposit: 2 USDC transferred from 0x3f665386b41Fa15c5ccCeE983050a236E6a10108 to escrow 0x3f665386b41Fa15c5ccCeE983050a236E6a10108. tx: 0xc433c6414c6fe462c2983beea35ac3171a9b5835beea349c16af64e6a2fd3a88",
-          "createdAt": "2026-05-23T10:22:19.675Z"
-        }
-      ],
-      "escrowDepositId": "escrow_b763a65e-5de"
-    },
-    {
-      "id": "9f1c11ae-8d0f-43bb-ae50-1888b954f611",
-      "title": "Follow @ai2humanwork on X",
-      "budget": "0.5",
-      "deadline": "2026-05-30T16:00:00Z",
-      "acceptance": "Provide evidence/logs",
-      "agentId": "agent_official",
-      "rewardDistribution": {
-        "mode": "fcfs",
-        "totalPool": "1 USDC",
-        "perWinner": "0.5 USDC",
-        "maxWinners": 2
-      },
-      "status": "human_assigned",
-      "taskState": "open",
-      "createdAt": "2026-05-23T09:31:18.637Z",
-      "updatedAt": "2026-05-23T09:34:57.946Z",
-      "evidence": [
-        {
-          "id": "d44b97b7-fe8d-47de-a211-6f2687996526",
-          "by": "system",
-          "type": "note",
-          "content": "agent_event: dispatcher_agent | Auto-assigned to rich、 via profile completion.",
-          "createdAt": "2026-05-23T09:34:57.946Z"
-        },
-        {
-          "id": "81062889-9ef4-414a-9fdb-2ee1e9a25313",
-          "by": "system",
-          "type": "log",
-          "content": "Human assigned: rich、 (auto-dispatched)",
-          "createdAt": "2026-05-23T09:34:57.946Z"
-        },
-        {
-          "id": "daa28359-c392-4451-b658-2b87284bcf3d",
-          "by": "system",
-          "type": "log",
-          "content": "Task created: none -> created (escrow funded: 1 USDC)",
-          "createdAt": "2026-05-23T09:31:18.637Z"
-        },
-        {
-          "id": "4e71a1e5-22aa-4ea7-bd2f-16179a908957",
-          "by": "system",
-          "type": "note",
-          "content": "escrow_deposit: 1 USDC transferred from 0x3f665386b41Fa15c5ccCeE983050a236E6a10108 to escrow 0x3f665386b41Fa15c5ccCeE983050a236E6a10108. tx: 0x4b6267cbfdf377997527bcfa3a7d77fc046a8943030fe3743f49cb2b19f5d8e8",
-          "createdAt": "2026-05-23T09:31:18.637Z"
-        }
-      ],
-      "escrowDepositId": "escrow_144ece6e-039",
-      "assignee": {
-        "type": "human",
-        "name": "rich、",
-        "walletAddress": "0x137b8ea786967149499acc55c6808fadea789c20"
-      }
-    },
-    {
-      "id": "tw-follow-0e4a2568",
-      "title": "Follow @ai2humanwork on X",
-      "budget": "0.5",
-      "deadline": "2026-05-28T16:00:00Z",
-      "acceptance": "Follow the @ai2humanwork X account and click Verify to claim your reward.",
+      "id": "lucky-draw-event-001",
+      "title": "Lucky Draw Event — Follow, Like, Retweet & Join Telegram",
+      "budget": "100",
+      "deadline": "2026-05-31T16:00:00Z",
+      "acceptance": "Complete all 4 tasks: Follow, Retweet, Like the announcement post, and Join the Telegram group. Then click Verify on each task and submit your wallet to enter the Lucky Draw.",
       "taskType": "twitter_follow",
       "campaign": {
         "requesterName": "ai2human Official",
         "requesterHandle": "@ai2humanwork",
         "platform": "x",
         "action": "follow",
-        "label": "Follow",
-        "targetUrl": "https://x.com/ai2humanwork/status/2057669148281651651",
+        "label": "Follow @ai2humanwork on X",
+        "targetUrl": "https://x.com/ai2humanwork/status/2058166798005248452",
         "targetLabel": "Target account",
         "proofPhrase": "",
-        "brief": "Follow @ai2humanwork on X",
+        "brief": "Follow, like, repost the announcement post and join our Telegram group to enter the Lucky Draw",
         "proofRequirements": [
           "Follow @ai2humanwork on X",
-          "Click Verify to claim your reward"
+          "Retweet https://x.com/ai2humanwork/status/2057437770902372396",
+          "Like https://x.com/ai2humanwork/status/2058166798005248452",
+          "Join the Telegram group: https://t.me/+G3U4loFH5H0zMmU1"
         ],
         "verificationChecks": [],
         "submissionFields": []
       },
-      "status": "paid",
+      "status": "created",
       "verifyCooldownHours": 24,
-      "createdAt": "2026-05-21T15:12:01.864Z",
-      "updatedAt": "2026-05-23T08:20:39.112Z",
-      "evidence": [],
+      "createdAt": "2026-05-24T00:00:00.000Z",
+      "updatedAt": "2026-05-24T08:58:08.742Z",
+      "evidence": [
+        {
+          "id": "ld-event-001-created",
+          "by": "system",
+          "type": "log",
+          "content": "Lucky Draw Event task created: 100 USDC pool, 50 winners",
+          "createdAt": "2026-05-24T00:00:00.000Z"
+        }
+      ],
       "agentId": "agent_official",
-      "assignee": {
-        "type": "human",
-        "name": "Quest Executor",
-        "walletAddress": "0x3b388c85b745fbdfdc8204878a77192de7c1767d"
-      },
       "rewardDistribution": {
-        "mode": "fcfs",
-        "totalPool": "5 USDC",
-        "perWinner": "0.5 USDC",
-        "maxWinners": 10,
-        "drawTime": "2026-05-28T16:00:00Z"
-      }
+        "mode": "lucky_draw",
+        "totalPool": "100 USDC",
+        "maxWinners": 50
+      },
+      "escrowDepositId": "escrow_ld_event_001",
+      "assignee": null,
+      "drawResult": {
+        "winners": [
+          {
+            "address": "0x74586e10e40818ecd3d0db0e7fd63e72cb4dd80c",
+            "amount": "47.319618 USDC"
+          },
+          {
+            "address": "0x635fc2e8eebdc96c26de5e8e487614acb9529422",
+            "amount": "1.907165 USDC"
+          },
+          {
+            "address": "0xf89bf56a097bfc65e7b0c2403cfe183978be866f",
+            "amount": "0.663629 USDC"
+          },
+          {
+            "address": "0xfc76f857c9aef2e29e0fc8cc04662c47d9dfb470",
+            "amount": "0.537954 USDC"
+          }
+        ],
+        "drawnAt": "2026-05-24T08:07:18.845Z"
+      },
+      "taskState": "open"
     }
   ],
   "waitlist": [],
   "payments": [
+    {
+      "id": "c7712286-db8c-44f2-8cf3-9a909504f897",
+      "taskId": "lucky-draw-event-001",
+      "amount": "0.537954",
+      "receiver": "Quest Executor",
+      "receiverAddress": "0xfc76f857c9aef2e29e0fc8cc04662c47d9dfb470",
+      "payerAddress": "0x3f665386b41Fa15c5ccCeE983050a236E6a10108",
+      "method": "base_erc20",
+      "status": "paid",
+      "source": "twitter_task",
+      "network": "base-mainnet",
+      "chainId": 8453,
+      "tokenSymbol": "USDC",
+      "tokenAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      "txHash": "0x54b7a6e146d909d5b4b4d65cbc8abc84f998107f1578df14ff98dc8204b4815b",
+      "explorerUrl": "https://basescan.org/tx/0x54b7a6e146d909d5b4b4d65cbc8abc84f998107f1578df14ff98dc8204b4815b",
+      "createdAt": "2026-05-24T08:58:08.734Z"
+    },
+    {
+      "id": "0d96f769-3ce9-48ea-987a-14af161f86de",
+      "taskId": "lucky-draw-event-001",
+      "amount": "0.663629",
+      "receiver": "Quest Executor",
+      "receiverAddress": "0xf89bf56a097bfc65e7b0c2403cfe183978be866f",
+      "payerAddress": "0x3f665386b41Fa15c5ccCeE983050a236E6a10108",
+      "method": "base_erc20",
+      "status": "paid",
+      "source": "twitter_task",
+      "network": "base-mainnet",
+      "chainId": 8453,
+      "tokenSymbol": "USDC",
+      "tokenAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      "txHash": "0xc80091a91dad4561de5b575493d6ab8ea8333267f239538538db6537bc3c2aa8",
+      "explorerUrl": "https://basescan.org/tx/0xc80091a91dad4561de5b575493d6ab8ea8333267f239538538db6537bc3c2aa8",
+      "createdAt": "2026-05-24T08:47:22.458Z"
+    },
+    {
+      "id": "378dffed-5010-445e-b171-74b5bd48f284",
+      "taskId": "lucky-draw-event-001",
+      "amount": "1.907165",
+      "receiver": "Quest Executor",
+      "receiverAddress": "0x635fc2e8eebdc96c26de5e8e487614acb9529422",
+      "payerAddress": "0x3f665386b41Fa15c5ccCeE983050a236E6a10108",
+      "method": "base_erc20",
+      "status": "paid",
+      "source": "twitter_task",
+      "network": "base-mainnet",
+      "chainId": 8453,
+      "tokenSymbol": "USDC",
+      "tokenAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      "txHash": "0x3764ba770293f08b7168dc64a22b4979cf32446cc323caa0488b71e7da1d5dbb",
+      "explorerUrl": "https://basescan.org/tx/0x3764ba770293f08b7168dc64a22b4979cf32446cc323caa0488b71e7da1d5dbb",
+      "createdAt": "2026-05-24T08:41:49.207Z"
+    },
+    {
+      "id": "6a9f17b0-b543-4903-aabb-a94b64375b30",
+      "taskId": "lucky-draw-event-001",
+      "amount": "47.319618",
+      "receiver": "Quest Executor",
+      "receiverAddress": "0x74586e10e40818ecd3d0db0e7fd63e72cb4dd80c",
+      "payerAddress": "0x3f665386b41Fa15c5ccCeE983050a236E6a10108",
+      "method": "base_erc20",
+      "status": "paid",
+      "source": "twitter_task",
+      "network": "base-mainnet",
+      "chainId": 8453,
+      "tokenSymbol": "USDC",
+      "tokenAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      "txHash": "0xf21b4d4b77a5e2a347c90f82b74e2332dc287693e3165d13f58d5f82381f75d5",
+      "explorerUrl": "https://basescan.org/tx/0xf21b4d4b77a5e2a347c90f82b74e2332dc287693e3165d13f58d5f82381f75d5",
+      "createdAt": "2026-05-24T08:07:18.830Z"
+    },
     {
       "id": "8f5b967e-22e6-4512-8907-c99e04a9aed6",
       "taskId": "3a877363-6e59-4b7c-8038-6d8b2cffaaf0",
@@ -303,6 +255,22 @@
     }
   ],
   "humans": [
+    {
+      "id": "h_3c592062-07a",
+      "name": "6ljc00180cl5sletckqe",
+      "handle": "6ljc00180cl5sletckqe",
+      "role": "",
+      "location": "hongkong",
+      "city": "Unknown",
+      "country": "Unknown",
+      "verified": false,
+      "rating": 4,
+      "completedJobs": 0,
+      "hourlyRate": 30,
+      "skills": [],
+      "languages": [],
+      "avatarSeed": 1
+    },
     {
       "id": "h_07178bae-66d",
       "name": "rich、",
@@ -1506,6 +1474,43 @@
   "fallbackSubscriptions": [],
   "users": [
     {
+      "id": "abc549c0-8781-48dd-80a7-67c807f1815f",
+      "email": "mfd8007r0bjyendrpp5j@privy.local",
+      "passwordHash": "__privy__",
+      "createdAt": "2026-05-24T08:56:28.627Z",
+      "authProvider": "privy",
+      "privyUserId": "did:privy:cmpjjmfd8007r0bjyendrpp5j",
+      "walletAddress": "0xfc76f857c9aef2e29e0fc8cc04662c47d9dfb470"
+    },
+    {
+      "id": "bc3fe551-8302-4eea-ab6a-2cc9b558c404",
+      "email": "jmnb00240cl2ttacqm14@privy.local",
+      "passwordHash": "__privy__",
+      "createdAt": "2026-05-24T08:54:31.883Z",
+      "authProvider": "privy",
+      "privyUserId": "did:privy:cmpjjjmnb00240cl2ttacqm14",
+      "walletAddress": "0x717bcb24dfab9c2413ede58ea7018dbee4ae5450"
+    },
+    {
+      "id": "1f8354dc-d738-4b43-b249-22c2e07209ab",
+      "email": "6ljc00180cl5sletckqe@privy.local",
+      "passwordHash": "__privy__",
+      "createdAt": "2026-05-24T08:44:16.079Z",
+      "authProvider": "privy",
+      "privyUserId": "did:privy:cmpjj6ljc00180cl5sletckqe",
+      "walletAddress": "0xf89bf56a097bfc65e7b0c2403cfe183978be866f",
+      "humanId": "h_3c592062-07a"
+    },
+    {
+      "id": "805c3a28-e2ee-44df-a850-b362d5065095",
+      "email": "it55000d0cjrxj9ez4vm@privy.local",
+      "passwordHash": "__privy__",
+      "createdAt": "2026-05-24T08:25:39.658Z",
+      "authProvider": "privy",
+      "privyUserId": "did:privy:cmpjiit55000d0cjrxj9ez4vm",
+      "walletAddress": "0x635fc2e8eebdc96c26de5e8e487614acb9529422"
+    },
+    {
       "id": "24e5d1c3-4081-4edf-bb7b-cc31aed4b974",
       "email": "1l5100ip0djmyk1knlmu@privy.local",
       "passwordHash": "__privy__",
@@ -1624,11 +1629,39 @@
   ],
   "sessions": [
     {
-      "id": "6ab59340-a10c-411a-afa1-47f725b6099f",
+      "id": "fa96b8d0-efaf-405b-a291-0ffa360114a5",
+      "userId": "abc549c0-8781-48dd-80a7-67c807f1815f",
+      "token": "1bd3a5c692c119c9aaddd98bd36d086c82ea53c9d5af248682becca824ea246c",
+      "createdAt": "2026-05-24T08:56:57.358Z",
+      "expiresAt": "2026-06-23T08:56:56.575Z"
+    },
+    {
+      "id": "009872f8-f1b2-4782-b3ac-b3fd0853bf4e",
+      "userId": "805c3a28-e2ee-44df-a850-b362d5065095",
+      "token": "0833b0df0b32ed3d9477d8b2d2911c517a5d00ad64504c831e60d3d672e4d1f3",
+      "createdAt": "2026-05-24T08:54:53.981Z",
+      "expiresAt": "2026-06-23T08:54:53.976Z"
+    },
+    {
+      "id": "1366bcda-8eb5-4b32-a753-5846756c57f3",
+      "userId": "bc3fe551-8302-4eea-ab6a-2cc9b558c404",
+      "token": "102170f9a71aee907fa511169384cebb85764cc33ac01e67dfe98094d10ffc59",
+      "createdAt": "2026-05-24T08:54:31.883Z",
+      "expiresAt": "2026-06-23T08:54:31.796Z"
+    },
+    {
+      "id": "65854b55-f855-4267-ac9b-089518fcd3fb",
+      "userId": "1f8354dc-d738-4b43-b249-22c2e07209ab",
+      "token": "7643ee19dedb33df0863457577ff46cca27c44b6e3bbb99fc84ead9f939da2e9",
+      "createdAt": "2026-05-24T08:44:16.508Z",
+      "expiresAt": "2026-06-23T08:44:16.073Z"
+    },
+    {
+      "id": "29166440-0751-4f76-929e-f55bc404a589",
       "userId": "24e5d1c3-4081-4edf-bb7b-cc31aed4b974",
-      "token": "3b62df512ad1b5b09232cd812497c672185e860c3dd94de5f02f8dfb18897050",
-      "createdAt": "2026-05-23T11:57:07.963Z",
-      "expiresAt": "2026-06-22T11:57:07.959Z"
+      "token": "be50b1693dbdabfe63aa41206122f7222bc45c89395184ef85bf442eac978985",
+      "createdAt": "2026-05-24T08:22:03.977Z",
+      "expiresAt": "2026-06-23T08:22:03.943Z"
     },
     {
       "id": "4282af0a-71ce-48e2-b005-563f08044cb0",
@@ -1682,327 +1715,151 @@
   ],
   "questProgress": [
     {
-      "id": "3ef94a9b-c3e9-4d5f-8840-3ed40d957e4d",
-      "walletAddress": "0x1234567890abcdef1234567890abcdef12345678",
-      "taskId": "tw-follow-0e4a2568",
-      "subtaskKey": "0",
-      "status": "verified",
-      "createdAt": "2026-05-22T16:14:20.738Z",
-      "verifiedAt": "2026-05-22T16:14:26.787Z"
-    },
-    {
-      "id": "7f22b397-1835-4bab-9523-cd0c10005bee",
-      "walletAddress": "0x1234567890abcdef1234567890abcdef12345678",
-      "taskId": "tw-follow-0e4a2568",
-      "subtaskKey": "1",
-      "status": "verified",
-      "createdAt": "2026-05-22T16:14:29.215Z",
-      "verifiedAt": "2026-05-22T16:14:32.528Z"
-    },
-    {
-      "id": "885844d5-c7b9-4d9c-80ad-4c677719dbf1",
-      "walletAddress": "0x1234567890abcdef1234567890abcdef12345678",
-      "taskId": "tw-follow-0e4a2568",
-      "subtaskKey": "2",
-      "status": "verified",
-      "createdAt": "2026-05-22T16:14:35.771Z",
-      "verifiedAt": "2026-05-22T16:14:38.048Z"
-    },
-    {
-      "id": "35269a78-5546-420e-a2ca-7957f996357d",
-      "walletAddress": "0x1234567890abcdef1234567890abcdef12345678",
-      "taskId": "tw-follow-0e4a2568",
-      "subtaskKey": "3",
-      "status": "verified",
-      "createdAt": "2026-05-22T16:14:40.347Z",
-      "verifiedAt": "2026-05-22T16:14:42.499Z"
-    },
-    {
-      "id": "78e656eb-37e8-4703-ae64-f911d07ca927",
+      "id": "6f995cd0-986e-433e-ab3f-a49579461766",
       "walletAddress": "0x74586e10e40818ecd3d0db0e7fd63e72cb4dd80c",
-      "taskId": "tw-follow-0e4a2568",
+      "taskId": "lucky-draw-event-001",
       "subtaskKey": "0",
       "status": "verified",
-      "createdAt": "2026-05-22T19:09:27.613Z",
-      "verifiedAt": "2026-05-22T19:09:37.685Z"
+      "createdAt": "2026-05-24T07:59:03.466Z",
+      "verifiedAt": "2026-05-24T08:07:03.079Z"
     },
     {
-      "id": "df4b29df-2713-426a-a47a-12a04d4f8529",
-      "walletAddress": "0x5b363258a84f868855ca211932ac5381b72231f3",
-      "taskId": "tw-follow-0e4a2568",
-      "subtaskKey": "0",
-      "status": "verified",
-      "createdAt": "2026-05-22T19:20:30.235Z",
-      "verifiedAt": "2026-05-22T19:20:32.835Z"
-    },
-    {
-      "id": "7c4f692a-467f-4eaa-9341-32e6083a0c63",
-      "walletAddress": "0x5b363258a84f868855ca211932ac5381b72231f3",
-      "taskId": "tw-follow-0e4a2568",
-      "subtaskKey": "1",
-      "status": "verified",
-      "createdAt": "2026-05-22T19:20:41.077Z",
-      "verifiedAt": "2026-05-22T19:20:48.462Z"
-    },
-    {
-      "id": "2a3e741f-e537-47d9-9bb2-243a9ac4a9c4",
-      "walletAddress": "0x5b363258a84f868855ca211932ac5381b72231f3",
-      "taskId": "tw-follow-0e4a2568",
-      "subtaskKey": "2",
-      "status": "verified",
-      "createdAt": "2026-05-22T19:20:52.670Z",
-      "verifiedAt": "2026-05-22T19:21:01.977Z"
-    },
-    {
-      "id": "61710ed6-8c97-413c-9f5f-e95c2a1640c9",
-      "walletAddress": "0x5b363258a84f868855ca211932ac5381b72231f3",
-      "taskId": "tw-follow-0e4a2568",
-      "subtaskKey": "3",
-      "status": "verified",
-      "createdAt": "2026-05-22T19:21:04.570Z",
-      "verifiedAt": "2026-05-22T19:21:11.534Z"
-    },
-    {
-      "id": "5dc17c15-64be-4189-a20e-428861feab1d",
-      "walletAddress": "0x72d39aaf15299be7f1541d0587584499040570a2",
-      "taskId": "tw-follow-0e4a2568",
-      "subtaskKey": "0",
-      "status": "action_done",
-      "createdAt": "2026-05-22T19:52:20.327Z"
-    },
-    {
-      "id": "94e8e588-6080-4561-9cd3-5a5ffd3d1ca6",
-      "walletAddress": "0x72d39aaf15299be7f1541d0587584499040570a2",
-      "taskId": "tw-follow-0e4a2568",
-      "subtaskKey": "1",
-      "status": "action_done",
-      "createdAt": "2026-05-22T19:58:18.532Z"
-    },
-    {
-      "id": "2ce3adb4-22d2-47e5-bc59-b6c82b409c3f",
-      "walletAddress": "0xd50c85ff5872323c5b218057a9e4f5f3a0aa2c3f",
-      "taskId": "tw-follow-0e4a2568",
-      "subtaskKey": "0",
-      "status": "verified",
-      "createdAt": "2026-05-22T19:59:32.199Z",
-      "verifiedAt": "2026-05-22T19:59:44.347Z"
-    },
-    {
-      "id": "0385ec16-2c07-4eff-8121-9aa59cbe34d2",
-      "walletAddress": "0xd50c85ff5872323c5b218057a9e4f5f3a0aa2c3f",
-      "taskId": "tw-follow-0e4a2568",
-      "subtaskKey": "1",
-      "status": "verified",
-      "createdAt": "2026-05-22T19:59:47.747Z",
-      "verifiedAt": "2026-05-22T19:59:55.162Z"
-    },
-    {
-      "id": "f61cd1d8-b71c-4503-8a5d-054810675ba3",
-      "walletAddress": "0xd50c85ff5872323c5b218057a9e4f5f3a0aa2c3f",
-      "taskId": "tw-follow-0e4a2568",
-      "subtaskKey": "2",
-      "status": "verified",
-      "createdAt": "2026-05-22T20:00:00.699Z",
-      "verifiedAt": "2026-05-22T20:00:16.233Z"
-    },
-    {
-      "id": "afb65c1a-697d-439d-89d4-456324e5e19c",
-      "walletAddress": "0xd50c85ff5872323c5b218057a9e4f5f3a0aa2c3f",
-      "taskId": "tw-follow-0e4a2568",
-      "subtaskKey": "3",
-      "status": "verified",
-      "createdAt": "2026-05-22T20:00:36.817Z",
-      "verifiedAt": "2026-05-22T20:00:43.418Z"
-    },
-    {
-      "id": "397dc04c-7f70-4cca-a727-30411fe09442",
-      "walletAddress": "0x3b388c85b745fbdfdc8204878a77192de7c1767d",
-      "taskId": "tw-follow-0e4a2568",
-      "subtaskKey": "0",
-      "status": "verified",
-      "createdAt": "2026-05-23T08:08:26.555Z",
-      "verifiedAt": "2026-05-23T08:19:45.480Z"
-    },
-    {
-      "id": "b76c7604-8684-4225-b67c-ca257d6d3c41",
-      "walletAddress": "0x3b388c85b745fbdfdc8204878a77192de7c1767d",
-      "taskId": "tw-follow-0e4a2568",
-      "subtaskKey": "1",
-      "status": "verified",
-      "createdAt": "2026-05-23T08:19:48.401Z",
-      "verifiedAt": "2026-05-23T08:19:56.795Z"
-    },
-    {
-      "id": "57bf298c-619a-41ce-9606-f6d4ed79b53b",
-      "walletAddress": "0x3b388c85b745fbdfdc8204878a77192de7c1767d",
-      "taskId": "tw-follow-0e4a2568",
-      "subtaskKey": "2",
-      "status": "verified",
-      "createdAt": "2026-05-23T08:19:59.491Z",
-      "verifiedAt": "2026-05-23T08:20:03.723Z"
-    },
-    {
-      "id": "1739e9e4-10af-4abf-a7bd-efcb51860aa7",
-      "walletAddress": "0x3b388c85b745fbdfdc8204878a77192de7c1767d",
-      "taskId": "tw-follow-0e4a2568",
-      "subtaskKey": "3",
-      "status": "verified",
-      "createdAt": "2026-05-23T08:20:15.346Z",
-      "verifiedAt": "2026-05-23T08:20:23.098Z"
-    },
-    {
-      "id": "4b5e52f9-6d98-49bf-b288-ce7eecac1dd9",
-      "walletAddress": "0x137b8ea786967149499acc55c6808fadea789c20",
-      "taskId": "3a877363-6e59-4b7c-8038-6d8b2cffaaf0",
-      "subtaskKey": "0",
-      "status": "verified",
-      "createdAt": "2026-05-23T10:34:58.248Z",
-      "verifiedAt": "2026-05-23T10:35:06.185Z"
-    },
-    {
-      "id": "29b001fc-658c-413c-86de-913675c91ee4",
-      "walletAddress": "0x137b8ea786967149499acc55c6808fadea789c20",
-      "taskId": "3a877363-6e59-4b7c-8038-6d8b2cffaaf0",
-      "subtaskKey": "1",
-      "status": "verified",
-      "createdAt": "2026-05-23T10:35:10.569Z",
-      "verifiedAt": "2026-05-23T10:35:15.929Z"
-    },
-    {
-      "id": "59fb7f6c-6038-4ff5-85dd-e9aad17bc804",
-      "walletAddress": "0x137b8ea786967149499acc55c6808fadea789c20",
-      "taskId": "3a877363-6e59-4b7c-8038-6d8b2cffaaf0",
-      "subtaskKey": "2",
-      "status": "verified",
-      "createdAt": "2026-05-23T10:35:27.965Z",
-      "verifiedAt": "2026-05-23T10:35:39.453Z"
-    },
-    {
-      "id": "b1c3aa65-4dbc-4746-9779-d96dbf4c3be3",
-      "walletAddress": "0x137b8ea786967149499acc55c6808fadea789c20",
-      "taskId": "3a877363-6e59-4b7c-8038-6d8b2cffaaf0",
-      "subtaskKey": "3",
-      "status": "verified",
-      "createdAt": "2026-05-23T10:35:45.862Z",
-      "verifiedAt": "2026-05-23T10:35:48.793Z"
-    },
-    {
-      "id": "e73f3295-17ec-4ff6-a207-b18222d39bfd",
-      "walletAddress": "0x107c976917fe61b827d5a82ae22aae1abfba824b",
-      "taskId": "3a877363-6e59-4b7c-8038-6d8b2cffaaf0",
-      "subtaskKey": "1",
-      "status": "verified",
-      "createdAt": "2026-05-23T10:43:03.158Z",
-      "verifiedAt": "2026-05-23T10:43:25.207Z"
-    },
-    {
-      "id": "258ee410-ed11-4bfb-8884-6742c43aad02",
-      "walletAddress": "0x107c976917fe61b827d5a82ae22aae1abfba824b",
-      "taskId": "3a877363-6e59-4b7c-8038-6d8b2cffaaf0",
-      "subtaskKey": "0",
-      "status": "verified",
-      "createdAt": "2026-05-23T10:43:03.276Z",
-      "verifiedAt": "2026-05-23T10:43:18.225Z"
-    },
-    {
-      "id": "0defe995-e82d-47f9-8901-1e40e9f0b844",
-      "walletAddress": "0x107c976917fe61b827d5a82ae22aae1abfba824b",
-      "taskId": "3a877363-6e59-4b7c-8038-6d8b2cffaaf0",
-      "subtaskKey": "2",
-      "status": "verified",
-      "createdAt": "2026-05-23T10:43:25.378Z",
-      "verifiedAt": "2026-05-23T10:43:32.821Z"
-    },
-    {
-      "id": "ca1a383e-2e16-4b04-82ad-354bb62e6d37",
-      "walletAddress": "0x107c976917fe61b827d5a82ae22aae1abfba824b",
-      "taskId": "3a877363-6e59-4b7c-8038-6d8b2cffaaf0",
-      "subtaskKey": "3",
-      "status": "verified",
-      "createdAt": "2026-05-23T10:43:41.376Z",
-      "verifiedAt": "2026-05-23T10:43:45.221Z"
-    },
-    {
-      "id": "44076500-a788-4807-bfb8-0ccee1604234",
-      "walletAddress": "0xb52cedee77ed26ed17e456d26e425a19b3d12365",
-      "taskId": "3a877363-6e59-4b7c-8038-6d8b2cffaaf0",
-      "subtaskKey": "0",
-      "status": "verified",
-      "createdAt": "2026-05-23T10:45:08.001Z",
-      "verifiedAt": "2026-05-23T10:45:11.515Z"
-    },
-    {
-      "id": "1014d776-bffa-4eca-90cf-aa438f7f9d87",
-      "walletAddress": "0xb52cedee77ed26ed17e456d26e425a19b3d12365",
-      "taskId": "3a877363-6e59-4b7c-8038-6d8b2cffaaf0",
-      "subtaskKey": "1",
-      "status": "verified",
-      "createdAt": "2026-05-23T10:45:11.714Z",
-      "verifiedAt": "2026-05-23T10:45:18.403Z"
-    },
-    {
-      "id": "7c8fd714-1749-4082-b189-0c7ec2cdf54c",
-      "walletAddress": "0xb52cedee77ed26ed17e456d26e425a19b3d12365",
-      "taskId": "3a877363-6e59-4b7c-8038-6d8b2cffaaf0",
-      "subtaskKey": "2",
-      "status": "verified",
-      "createdAt": "2026-05-23T10:45:22.746Z",
-      "verifiedAt": "2026-05-23T10:45:26.669Z"
-    },
-    {
-      "id": "7bf092ae-8546-46bb-994a-01d5eb2bc600",
-      "walletAddress": "0xb52cedee77ed26ed17e456d26e425a19b3d12365",
-      "taskId": "3a877363-6e59-4b7c-8038-6d8b2cffaaf0",
-      "subtaskKey": "3",
-      "status": "verified",
-      "createdAt": "2026-05-23T10:45:33.670Z",
-      "verifiedAt": "2026-05-23T10:45:38.625Z"
-    },
-    {
-      "id": "15462e0d-2d9a-42f7-bfee-4ccc2225c918",
+      "id": "9ecdef45-7d4c-49ad-8c3c-1811a0676b90",
       "walletAddress": "0x74586e10e40818ecd3d0db0e7fd63e72cb4dd80c",
-      "taskId": "6af22fbf-f0d2-4141-935f-636cf2c809ab",
-      "subtaskKey": "0",
-      "status": "action_done",
-      "createdAt": "2026-05-23T11:17:53.746Z"
-    },
-    {
-      "id": "8a0e5412-fbe2-4bd4-bc83-2414974a37a8",
-      "walletAddress": "0x74586e10e40818ecd3d0db0e7fd63e72cb4dd80c",
-      "taskId": "6af22fbf-f0d2-4141-935f-636cf2c809ab",
+      "taskId": "lucky-draw-event-001",
       "subtaskKey": "1",
-      "status": "action_done",
-      "createdAt": "2026-05-23T11:20:38.153Z"
+      "status": "verified",
+      "createdAt": "2026-05-24T07:59:10.313Z",
+      "verifiedAt": "2026-05-24T08:07:03.177Z"
     },
     {
-      "id": "ab745a19-fa55-492c-b7d7-79f29f86e484",
+      "id": "e7d346c5-ddda-4606-ac42-2e473bbd1d79",
       "walletAddress": "0x74586e10e40818ecd3d0db0e7fd63e72cb4dd80c",
-      "taskId": "6af22fbf-f0d2-4141-935f-636cf2c809ab",
+      "taskId": "lucky-draw-event-001",
       "subtaskKey": "2",
-      "status": "action_done",
-      "createdAt": "2026-05-23T11:20:45.557Z"
+      "status": "verified",
+      "createdAt": "2026-05-24T07:59:23.360Z",
+      "verifiedAt": "2026-05-24T08:07:03.055Z"
     },
     {
-      "id": "a182c674-7c03-4cd9-b403-4e5e747f6e3b",
-      "walletAddress": "0xb52cedee77ed26ed17e456d26e425a19b3d12365",
-      "taskId": "6af22fbf-f0d2-4141-935f-636cf2c809ab",
+      "id": "fefca268-e178-4bac-80bf-14e2eee23219",
+      "walletAddress": "0x74586e10e40818ecd3d0db0e7fd63e72cb4dd80c",
+      "taskId": "lucky-draw-event-001",
+      "subtaskKey": "3",
+      "status": "verified",
+      "createdAt": "2026-05-24T07:59:40.762Z",
+      "verifiedAt": "2026-05-24T08:07:03.222Z"
+    },
+    {
+      "id": "8f66fe48-0838-4b5f-a3b8-56ee181d2779",
+      "walletAddress": "0x635fc2e8eebdc96c26de5e8e487614acb9529422",
+      "taskId": "lucky-draw-event-001",
       "subtaskKey": "0",
-      "status": "action_done",
-      "createdAt": "2026-05-23T11:49:41.163Z"
+      "status": "verified",
+      "createdAt": "2026-05-24T08:36:06.041Z",
+      "verifiedAt": "2026-05-24T08:41:08.305Z"
+    },
+    {
+      "id": "5d3ccd5f-eeea-447d-a122-234050e2bc87",
+      "walletAddress": "0x635fc2e8eebdc96c26de5e8e487614acb9529422",
+      "taskId": "lucky-draw-event-001",
+      "subtaskKey": "1",
+      "status": "verified",
+      "createdAt": "2026-05-24T08:41:08.251Z",
+      "verifiedAt": "2026-05-24T08:41:11.045Z"
+    },
+    {
+      "id": "c21dd243-5552-49d5-b60e-ac41112c9e20",
+      "walletAddress": "0x635fc2e8eebdc96c26de5e8e487614acb9529422",
+      "taskId": "lucky-draw-event-001",
+      "subtaskKey": "2",
+      "status": "verified",
+      "createdAt": "2026-05-24T08:41:18.512Z",
+      "verifiedAt": "2026-05-24T08:41:21.317Z"
+    },
+    {
+      "id": "f2b8824e-6054-4a87-bb3f-7f2c8ca5aca2",
+      "walletAddress": "0x635fc2e8eebdc96c26de5e8e487614acb9529422",
+      "taskId": "lucky-draw-event-001",
+      "subtaskKey": "3",
+      "status": "verified",
+      "createdAt": "2026-05-24T08:41:24.872Z",
+      "verifiedAt": "2026-05-24T08:41:31.306Z"
+    },
+    {
+      "id": "f8ea6460-0c41-408c-8e9e-3dd8a4062be1",
+      "walletAddress": "0xf89bf56a097bfc65e7b0c2403cfe183978be866f",
+      "taskId": "lucky-draw-event-001",
+      "subtaskKey": "0",
+      "status": "verified",
+      "createdAt": "2026-05-24T08:46:52.240Z",
+      "verifiedAt": "2026-05-24T08:47:03.223Z"
+    },
+    {
+      "id": "82d0d1de-4e1b-4ac2-9f27-739e320bdd95",
+      "walletAddress": "0xf89bf56a097bfc65e7b0c2403cfe183978be866f",
+      "taskId": "lucky-draw-event-001",
+      "subtaskKey": "1",
+      "status": "verified",
+      "createdAt": "2026-05-24T08:46:52.484Z",
+      "verifiedAt": "2026-05-24T08:47:06.817Z"
+    },
+    {
+      "id": "ebc8f6fb-23fa-46aa-bbdb-8efa69e5514a",
+      "walletAddress": "0xf89bf56a097bfc65e7b0c2403cfe183978be866f",
+      "taskId": "lucky-draw-event-001",
+      "subtaskKey": "2",
+      "status": "verified",
+      "createdAt": "2026-05-24T08:46:56.159Z",
+      "verifiedAt": "2026-05-24T08:47:06.788Z"
+    },
+    {
+      "id": "7658bb77-edda-46d9-b73f-f868f7cbf6b9",
+      "walletAddress": "0xf89bf56a097bfc65e7b0c2403cfe183978be866f",
+      "taskId": "lucky-draw-event-001",
+      "subtaskKey": "3",
+      "status": "verified",
+      "createdAt": "2026-05-24T08:46:59.853Z",
+      "verifiedAt": "2026-05-24T08:47:10.331Z"
+    },
+    {
+      "id": "c34c9ea6-a092-463d-87d6-5b99ae6841c7",
+      "walletAddress": "0xfc76f857c9aef2e29e0fc8cc04662c47d9dfb470",
+      "taskId": "lucky-draw-event-001",
+      "subtaskKey": "1",
+      "status": "verified",
+      "createdAt": "2026-05-24T08:57:08.471Z",
+      "verifiedAt": "2026-05-24T08:57:20.122Z"
+    },
+    {
+      "id": "21d02f19-b923-4a0f-9874-eab173e39a08",
+      "walletAddress": "0xfc76f857c9aef2e29e0fc8cc04662c47d9dfb470",
+      "taskId": "lucky-draw-event-001",
+      "subtaskKey": "0",
+      "status": "verified",
+      "createdAt": "2026-05-24T08:57:08.573Z",
+      "verifiedAt": "2026-05-24T08:57:14.768Z"
+    },
+    {
+      "id": "070ac2ba-c34b-479a-b5d7-1a28530e587f",
+      "walletAddress": "0xfc76f857c9aef2e29e0fc8cc04662c47d9dfb470",
+      "taskId": "lucky-draw-event-001",
+      "subtaskKey": "2",
+      "status": "verified",
+      "createdAt": "2026-05-24T08:57:25.747Z",
+      "verifiedAt": "2026-05-24T08:57:32.438Z"
+    },
+    {
+      "id": "ad4f27a2-8941-4dd4-96a7-7d317964fd3e",
+      "walletAddress": "0xfc76f857c9aef2e29e0fc8cc04662c47d9dfb470",
+      "taskId": "lucky-draw-event-001",
+      "subtaskKey": "3",
+      "status": "verified",
+      "createdAt": "2026-05-24T08:57:34.683Z",
+      "verifiedAt": "2026-05-24T08:57:47.004Z"
     }
   ],
-  "notifications": [
-    {
-      "id": "notif_a44b06a5-217",
-      "userId": "90409c76-e28d-4904-b502-2b4e59348be0",
-      "type": "task_assigned",
-      "title": "You have a new task",
-      "body": "AI Executor assigned you: \"Follow @ai2humanwork on X\". Accept it to begin earning.",
-      "taskId": "9f1c11ae-8d0f-43bb-ae50-1888b954f611",
-      "read": true,
-      "createdAt": "2026-05-23T09:34:57.947Z"
-    }
-  ],
+  "notifications": [],
   "escrowDeposits": [
     {
       "id": "escrow_abfb3b8d-fc1",
@@ -2048,6 +1905,44 @@
       "depositExplorerUrl": "https://basescan.org/tx/0x4b6267cbfdf377997527bcfa3a7d77fc046a8943030fe3743f49cb2b19f5d8e8",
       "createdAt": "2026-05-23T09:31:18.636Z",
       "updatedAt": "2026-05-23T09:31:18.637Z"
+    },
+    {
+      "id": "escrow_ld_event_001",
+      "taskId": "lucky-draw-event-001",
+      "agentId": "agent_official",
+      "agentWallet": "0x3f665386b41Fa15c5ccCeE983050a236E6a10108",
+      "totalPool": "100",
+      "amountPaidOut": "50.428366",
+      "amountRefunded": "0",
+      "paidCount": 4,
+      "status": "active",
+      "depositTxHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+      "depositExplorerUrl": "",
+      "createdAt": "2026-05-24T00:00:00.000Z",
+      "updatedAt": "2026-05-24T08:58:08.743Z"
+    }
+  ],
+  "luckyDrawParticipants": [
+    {
+      "id": "7aebd4c3-33ed-477e-8bcb-1694d3ea1743",
+      "taskId": "lucky-draw-event-001",
+      "walletAddress": "0x635fc2e8eebdc96c26de5e8e487614acb9529422",
+      "xHandle": "richard",
+      "createdAt": "2026-05-24T08:41:49.220Z"
+    },
+    {
+      "id": "8567898d-cb6b-4dcb-b95e-59a048913a5b",
+      "taskId": "lucky-draw-event-001",
+      "walletAddress": "0xf89bf56a097bfc65e7b0c2403cfe183978be866f",
+      "xHandle": "fsdfs",
+      "createdAt": "2026-05-24T08:47:22.468Z"
+    },
+    {
+      "id": "53f7348a-3799-4ae0-a1fd-65bec8e16947",
+      "taskId": "lucky-draw-event-001",
+      "walletAddress": "0xfc76f857c9aef2e29e0fc8cc04662c47d9dfb470",
+      "xHandle": "Richard_buildAi",
+      "createdAt": "2026-05-24T08:58:08.742Z"
     }
   ]
 }
