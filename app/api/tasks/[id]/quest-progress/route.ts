@@ -4,7 +4,7 @@ import { readDb, updateDb, type QuestProgressStatus } from "../../../../lib/stor
 
 export const runtime = "nodejs";
 
-const VALID_SUBTASK_KEYS = ["0", "1", "2", "3"];
+const VALID_SUBTASK_KEYS = ["0", "1", "2", "3", "4"];
 
 
 /** GET /api/tasks/[id]/quest-progress?wallet=0x... */
@@ -46,17 +46,23 @@ export async function GET(
   );
   const claimed = !!claimedPayment;
 
+  // Check xHandle from luckyDrawParticipants
+  const participant = db.luckyDrawParticipants.find(
+    (p) => p.taskId === taskId && p.walletAddress === wallet
+  );
+
   return NextResponse.json({
     subtasks,
     claimed,
-    ...(claimedPayment ? { payment: claimedPayment } : {})
+    ...(claimedPayment ? { payment: claimedPayment } : {}),
+    ...(participant?.xHandle ? { xHandle: participant.xHandle } : {})
   });
 }
 
 /** POST /api/tasks/[id]/quest-progress
- *  Body: { wallet, subtaskKey, action: "action" | "verify" }
+ *  Body: { wallet, subtaskKey, action: "action" | "verify", xHandle?: string }
  *  Simple state machine: pending → action_done → verified.
- *  No wallet signature required — this is self-attestation.
+ *  xHandle is saved to luckyDrawParticipants when verifying subtask "4".
  */
 export async function POST(
   request: Request,
@@ -66,7 +72,8 @@ export async function POST(
   const body = await request.json().catch(() => ({}));
   const wallet = String(body.wallet || "").trim().toLowerCase();
   const subtaskKey = String(body.subtaskKey || "").trim();
-  const action = String(body.action || "").trim(); // "action" or "verify"
+  const action = String(body.action || "").trim();
+  const xHandle = body.xHandle ? String(body.xHandle).trim().replace(/^@/, "") : undefined;
 
   if (!wallet) {
     return NextResponse.json({ error: "wallet is required" }, { status: 400 });
@@ -87,6 +94,9 @@ export async function POST(
   const result = await updateDb((db) => {
     if (!Array.isArray(db.questProgress)) {
       db.questProgress = [];
+    }
+    if (!Array.isArray(db.luckyDrawParticipants)) {
+      db.luckyDrawParticipants = [];
     }
 
     let entry = db.questProgress.find(
@@ -110,6 +120,29 @@ export async function POST(
     } else if (action === "verify" && entry.status === "action_done") {
       entry.status = "verified";
       entry.verifiedAt = new Date().toISOString();
+    } else if (action === "verify" && entry.status === "pending" && subtaskKey === "4") {
+      // Task 4 (xHandle confirmation): skip action_done, go directly to verified
+      entry.status = "verified";
+      entry.verifiedAt = new Date().toISOString();
+    }
+
+    // Save xHandle when verifying subtask 4 (X handle confirmation)
+    if (subtaskKey === "4" && action === "verify" && xHandle) {
+      let participant = db.luckyDrawParticipants.find(
+        (p) => p.taskId === taskId && p.walletAddress === wallet
+      );
+      if (!participant) {
+        participant = {
+          id: crypto.randomUUID(),
+          taskId,
+          walletAddress: wallet,
+          xHandle,
+          createdAt: new Date().toISOString()
+        };
+        db.luckyDrawParticipants.push(participant);
+      } else {
+        participant.xHandle = xHandle;
+      }
     }
 
     return { status: entry.status };

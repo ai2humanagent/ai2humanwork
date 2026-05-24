@@ -248,6 +248,12 @@ export default function TaskDetailClient({
   const router = useRouter();
   const { ready, authenticated, login, getAccessToken, user } = usePrivy();
   const { wallets } = useWallets();
+  const recaptchaContainerRef = useRef<HTMLDivElement>(null);
+  const [recaptchaWidgetId, setRecaptchaWidgetId] = useState<number | null>(null);
+  const [showRecaptcha, setShowRecaptcha] = useState(false);
+  // CAPTCHA state for bot protection
+  const [captchaToken, setCaptchaToken] = useState<string>("");
+  const [signingInProgress, setSigningInProgress] = useState(false);
   const [task, setTask] = useState(initialTask);
   const [latestPayment, setLatestPayment] = useState<PaymentResult | null>(initialPayment);
   const [alternateClaimTask, setAlternateClaimTask] = useState<AlternateClaimTask | null>(
@@ -273,7 +279,13 @@ export default function TaskDetailClient({
   const [expandedTasks, setExpandedTasks] = useState<Record<string, boolean>>({ "0": true });
   const [claimingReward, setClaimingReward] = useState(false);
   const [claimResult, setClaimResult] = useState<PaymentResult | null>(null);
-  const [xHandle, setXHandle] = useState("");
+  const [xHandle, setXHandle] = useState(() => {
+    if (typeof window !== "undefined") {
+      const cached = localStorage.getItem(`ai2human:xhandle:${initialTask.id}`);
+      if (cached) return cached;
+    }
+    return "";
+  });
   const [questProgressLoaded, setQuestProgressLoaded] = useState(false);
   const [questersData, setQuestersData] = useState<QuestersData>({ count: 0, claimedCount: 0, questers: [] });
   const [relatedTasks, setRelatedTasks] = useState<Task[]>([]);
@@ -316,6 +328,13 @@ export default function TaskDetailClient({
           };
         }
         setTaskStates(newStates);
+        // Restore xHandle from DB
+        if (data.xHandle) {
+          setXHandle(data.xHandle);
+          if (typeof window !== "undefined") {
+            localStorage.setItem(`ai2human:xhandle:${initialTask.id}`, data.xHandle);
+          }
+        }
       }
       if (data.claimed && data.payment) {
         setClaimResult(data.payment);
@@ -362,21 +381,36 @@ export default function TaskDetailClient({
       return;
     }
     const state = taskStates[taskKey];
-    if (!state?.actionClicked || state.verifying || state.verified) return;
+    // For task 4 (xHandle), allow transition from action_done directly to verified
+    if (taskKey === "4" && xHandle.trim() && !state?.verified) {
+      // First transition to action_done if needed, then verify in one step
+      setTaskStates((prev) => ({
+        ...prev,
+        ["4"]: { actionClicked: true, verifying: true, verified: false }
+      }));
+      // Fall through to the API call below
+    } else if (!state?.actionClicked || state.verifying || state.verified) {
+      return;
+    }
     setTaskStates((prev) => ({
       ...prev,
       [taskKey]: { ...prev[taskKey], verifying: true }
     }));
     try {
+      const body: Record<string, string> = {
+        wallet: connectedWallet.toLowerCase(),
+        subtaskKey: taskKey,
+        action: "verify"
+      };
+      // Include xHandle when verifying task 4 (X handle confirmation)
+      if (taskKey === "4" && xHandle.trim()) {
+        body.xHandle = xHandle.trim();
+      }
       const res = await fetch(`/api/tasks/${initialTask.id}/quest-progress`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "same-origin",
-        body: JSON.stringify({
-          wallet: connectedWallet.toLowerCase(),
-          subtaskKey: taskKey,
-          action: "verify"
-        })
+        body: JSON.stringify(body)
       });
       const data = await res.json();
       if (data.status === "verified") {
@@ -400,24 +434,82 @@ export default function TaskDetailClient({
     }
   }
 
-  // Claim reward — triggers real settlement
-  async function handleClaimReward() {
-    if (!connectedWallet) {
-      login();
+  // Build the claim message (must match server-side)
+  function buildClaimMessage(taskId: string, wallet: string): string {
+    return [
+      "ai2human Lucky Draw Claim",
+      `Task: ${taskId}`,
+      `Wallet: ${wallet.toLowerCase()}`,
+      "I am claiming my lucky draw reward."
+    ].join("\n");
+  }
+
+  // Render Google reCAPTCHA v2 checkbox widget
+  function renderRecaptcha() {
+    if (typeof window === "undefined") return;
+    const grecaptcha = (window as unknown as { grecaptcha?: { render: (element: HTMLElement | string, opts: object) => number; getResponse: (widgetId: number) => string } }).grecaptcha;
+    if (!grecaptcha || !recaptchaContainerRef.current) return;
+    if (recaptchaWidgetId !== null) return;
+    const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
+    if (!siteKey) {
+      setError("reCAPTCHA not configured. Contact support.");
       return;
     }
-    if (!xHandle.trim()) {
-      setError("Please enter your X handle to claim");
+    recaptchaContainerRef.current.innerHTML = "";
+    const widgetId = grecaptcha.render(recaptchaContainerRef.current, {
+      sitekey: siteKey,
+      theme: "dark",
+      callback: onRecaptchaVerify,
+      "expired-callback": () => {
+        setError("reCAPTCHA expired. Please try again.");
+        setRecaptchaWidgetId(null);
+      },
+      "error-callback": () => {
+        setError("reCAPTCHA error. Please refresh and try again.");
+        setRecaptchaWidgetId(null);
+      }
+    });
+    setRecaptchaWidgetId(widgetId);
+  }
+
+  // Called when Google reCAPTCHA is successfully verified
+  async function onRecaptchaVerify(token: string) {
+    setShowRecaptcha(false);
+    if (!connectedWallet) return;
+    setSigningInProgress(true);
+    setError("");
+    const wallet = wallets.find((w) => w.address?.toLowerCase() === connectedWallet.toLowerCase());
+    if (!wallet) {
+      setError("Wallet not found. Please reconnect.");
+      setSigningInProgress(false);
+      return;
+    }
+    let signature: string;
+    try {
+      const provider = await wallet.getEthereumProvider();
+      const message = buildClaimMessage(initialTask.id, connectedWallet);
+      const hexMessage = "0x" + Buffer.from(message, "utf8").toString("hex");
+      signature = await provider.request({
+        method: "personal_sign",
+        params: [hexMessage, wallet.address]
+      }) as string;
+    } catch {
+      setError("Signature rejected or failed. Please try again.");
+      setSigningInProgress(false);
       return;
     }
     setClaimingReward(true);
-    setError("");
     try {
       const res = await fetch(`/api/tasks/${initialTask.id}/claim-reward`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "same-origin",
-        body: JSON.stringify({ wallet: connectedWallet.toLowerCase(), xHandle })
+        body: JSON.stringify({
+          wallet: connectedWallet.toLowerCase(),
+          xHandle,
+          signature,
+          captchaToken: token
+        })
       });
       const data = await res.json();
       if (!res.ok) {
@@ -432,11 +524,49 @@ export default function TaskDetailClient({
             : `${data.payment.amount} ${data.payment.tokenSymbol || "USDC"} sent to your wallet!`
         );
       }
+      setCaptchaToken("");
+      setRecaptchaWidgetId(null);
+      if (recaptchaContainerRef.current) {
+        recaptchaContainerRef.current.innerHTML = "";
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Claim failed");
     } finally {
       setClaimingReward(false);
+      setSigningInProgress(false);
     }
+  }
+
+  // Claim reward — triggers Google reCAPTCHA first
+  async function handleClaimReward() {
+    if (!connectedWallet) {
+      login();
+      return;
+    }
+    if (!xHandle.trim()) {
+      setError("Please enter your X handle to claim");
+      return;
+    }
+    setError("");
+    const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
+    if (!siteKey) {
+      // No reCAPTCHA configured — skip captcha, go straight to sign & claim
+      await onRecaptchaVerify("dev-token");
+      return;
+    }
+    const grecaptcha = (window as unknown as { grecaptcha?: { getResponse: (id: number) => string } }).grecaptcha;
+    if (recaptchaWidgetId !== null && grecaptcha) {
+      const existingToken = grecaptcha.getResponse(recaptchaWidgetId);
+      if (existingToken) {
+        await onRecaptchaVerify(existingToken);
+        return;
+      }
+    }
+    setShowRecaptcha(true);
+    setSigningInProgress(false);
+    setTimeout(() => {
+      renderRecaptcha();
+    }, 100);
   }
 
   // Toggle task expand/collapse
@@ -494,6 +624,23 @@ export default function TaskDetailClient({
 
   useEffect(() => {
     loadAuth();
+  }, []);
+
+  // Load Google reCAPTCHA v2 script once
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
+    if (!siteKey) return; // Skip if not configured
+    if (document.getElementById("google-recaptcha-script")) return;
+    const script = document.createElement("script");
+    script.id = "google-recaptcha-script";
+    script.src = `https://www.google.com/recaptcha/api.js?onload=onRecaptchaLoad&render=explicit`;
+    script.async = true;
+    script.defer = true;
+    (window as unknown as { onRecaptchaLoad?: () => void }).onRecaptchaLoad = () => {
+      console.log("Google reCAPTCHA loaded");
+    };
+    document.head.appendChild(script);
   }, []);
 
   useEffect(() => {
@@ -980,17 +1127,18 @@ export default function TaskDetailClient({
                                       value={item.key === "4" ? xHandle : ""}
                                       onChange={(e) => {
                                         if (item.key === "4") {
-                                          setXHandle(e.target.value);
+                                          const val = e.target.value;
+                                          setXHandle(val);
+                                          if (typeof window !== "undefined" && connectedWallet) {
+                                            localStorage.setItem(`ai2human:xhandle:${initialTask.id}`, val);
+                                          }
                                         }
                                       }}
                                       className={styles.qnXHandleInput}
                                       onKeyDown={(e) => {
                                         if (e.key === "Enter" && xHandle.trim() && item.key === "4") {
                                           // Auto-verify on Enter
-                                          setTaskStates((prev) => ({
-                                            ...prev,
-                                            ["4"]: { actionClicked: true, verifying: false, verified: true }
-                                          }));
+                                          handleTaskVerify("4");
                                         }
                                       }}
                                     />
@@ -1002,10 +1150,8 @@ export default function TaskDetailClient({
                                           disabled={!xHandle.trim()}
                                           onClick={() => {
                                             if (!xHandle.trim()) return;
-                                            setTaskStates((prev) => ({
-                                              ...prev,
-                                              ["4"]: { actionClicked: true, verifying: false, verified: true }
-                                            }));
+                                            // Save xHandle to DB via verify API, same as other tasks
+                                            handleTaskVerify("4");
                                           }}
                                         >
                                           Confirm
@@ -1356,6 +1502,31 @@ export default function TaskDetailClient({
             </div>
           </div>
         </div>
+
+        {/* Google reCAPTCHA Modal */}
+        {showRecaptcha && (
+          <div className={styles.captchaOverlay} onClick={() => { if (!signingInProgress) { setShowRecaptcha(false); setRecaptchaWidgetId(null); } }}>
+            <div className={styles.captchaModal} onClick={(e) => e.stopPropagation()}>
+              <h2 className={styles.captchaTitle}>Verify you're human</h2>
+              <p className={styles.captchaSubtitle}>Complete the reCAPTCHA to claim your reward</p>
+              <div ref={recaptchaContainerRef} className={styles.recaptchaContainer} />
+              {error && <p className={styles.captchaError}>{error}</p>}
+              <div className={styles.captchaActions}>
+                <button
+                  type="button"
+                  className={styles.captchaCancelBtn}
+                  onClick={() => { setShowRecaptcha(false); setRecaptchaWidgetId(null); if (recaptchaContainerRef.current) recaptchaContainerRef.current.innerHTML = ""; }}
+                  disabled={signingInProgress}
+                >
+                  Cancel
+                </button>
+              </div>
+              <p className={styles.captchaNote}>
+                Your wallet will sign a message to verify ownership. No transaction gas fees required.
+              </p>
+            </div>
+          </div>
+        )}
       </main>
     );
   }
