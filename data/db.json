@@ -1,8 +1,442 @@
 {
   "tasks": [
     {
+      "id": "campaign-103",
+      "title": "Campaign 103 - 100 Winner Lucky Draw",
+      "budget": "10",
+      "deadline": "2026-06-03T12:30:00Z",
+      "acceptance": "Claim your lucky draw reward from the PrizePool.",
+      "taskType": "twitter_follow",
+      "status": "created",
+      "taskState": "open",
+      "evidence": [],
+      "agentId": "agent_official",
+      "rewardDistribution": {
+        "mode": "lucky_draw",
+        "maxWinners": 100,
+        "totalPool": "10"
+      },
+      "campaign": {
+        "requesterName": "ai2human Official",
+        "requesterHandle": "@ai2humanwork",
+        "platform": "x",
+        "action": "lucky_draw",
+        "brief": "100 winner lucky draw campaign on Base Mainnet",
+        "proofRequirements": [],
+        "verificationChecks": []
+      },
+      "drawResult": {
+        "drawnAt": "2026-05-27T00:00:00Z",
+        "winners": [
+          {
+            "address": "0x005641AFcFAE9b0026960110811cc1D2539CaB06",
+            "amount": "0.179116 USDC"
+          },
+          {
+            "address": "0x094f6A4945B79DcD5581f4f91Cd0DDB036ce566D",
+            "amount": "0.056778 USDC"
+          },
+          {
+            "address": "0x0AB831d946a6dE5219d3FcEbD96cB512850443e4",
+            "amount": "0.165576 USDC"
+          },
+          {
+            "address": "0x0B83af5c3885bBe0Aa97449Fd455fa1F74c6c6E7",
+            "amount": "0.194223 USDC"
+          },
+          {
+            "address": "0x12FEbDf42F2e9Eb51Cb208f955ebdEDff4401455",
+            "amount": "0.168178 USDC"
+          },
+          {
+            "address": "0x1836711BFa3A39f8e12F11DFAF20Fa76aE07174c",
+            "amount": "0.027174 USDC"
+          },
+          {
+            "address": "0x1b50bC3cf26efAe0409510b401c4133bFF5b6783",
+            "amount": "0.181036 USDC"
+          },
+          {
+            "address": "0x1C69Ce5D855f4B4068F18344b50BdeA068446A52",
+            "amount": "0.054925 USDC"
+          },
+          {
+            "address": "0x1Dd24F7e87fddF2f61fcE5C9EcC03c3a5CED0749",
+            "amount": "0.004945 USDC"
+          },
+          {
+            "address": "0x2042B1b0AA18055Ed062a186f8c97BEb3F1A801D",
+            "amount": "0.061616 USDC"
+          },
+          {
+            "address": "0x21026804AD722Fd409aba3375Cf1237c5cc81300",
+            "amount": "0.147026 USDC"
+          },
+          {
+            "address": "0x2371637fdD8FF2bBd497DC35D5126cD326a670eC",
+            "amount": "0.024781 USDC"
+          },
+          {
+            "address": "0x256715F99A8122B106B1240F20475867226E0147",
+            "amount": "0.214249 USDC"
+          },
+          {
+            "address": "0x2571fb5B71102743802684A9665DF7eE09eB9cEA",
+            "amount": "0.152872 USDC"
+          },
+          {
+            "address": "0x26B36c77C05F01363dD42a91376DDE91332407Ef",
+            "amount": "0.080288 USDC"
+          },
+          {
+            "address": "0x26fd7d4F5ba60A2ec1445d3A2830b400C11DAfff",
+            "amount": "0.026678 USDC"
+          },
+          {
+            "address": "0x27094Ca0C03CEBa0256725ce378B70263D7cB1Ec",
+            "amount": "0.108018 USDC"
+          },
+          {
+            "address": "0x278114C351662777f14A790eb38A77CAD3dC3504",
+            "amount": "0.134369 USDC"
+          },
+          {
+            "address": "0x2850081568f4ca17248c80Ebb900fD95109048aC",
+            "amount": "0.040357 USDC"
+          },
+          {
+            "address": "0x2EBB0B23B7f0CccBD90b5D7194488c9c80f68D32",
+            "amount": "0.119902 USDC"
+          },
+          {
+            "address": "0x2F20A4B96063f8969070411CdCF80f9eD21400f3",
+            "amount": "0.029617 USDC"
+          },
+          {
+            "address": "0x32c9011bebFED9cC9096f327Cd1e005Cb17900a1",
+            "amount": "0.122323 USDC"
+          },
+          {
+            "address": "0x36E2E061D688CC439A8dABe7e66Cb9CE14Db8390",
+            "amount": "0.011648 USDC"
+          },
+          {
+            "address": "0x3A758e6Fc922f0ba5013e65693db4D68EF6244bE",
+            "amount": "0.001933 USDC"
+          },
+          {
+            "address": "0x3B620F283cA3e085498E2eCaB1891dB22C581be4",
+            "amount": "0.021549 USDC"
+          },
+          {
+            "address": "0x3F615D7D0c02B5Bc37C61b8Dc9FB93Fb2416e341",
+            "amount": "0.141115 USDC"
+          },
+          {
+            "address": "0x4229e547Da458429C45c15Ebc1aB6a49e45d4bdb",
+            "amount": "0.099347 USDC"
+          },
+          {
+            "address": "0x4548fab2EdDa4A719CE6b32432aE03Be82809D27",
+            "amount": "0.106004 USDC"
+          },
+          {
+            "address": "0x4941E17B5FB0890BDfaA5Ca443594e0b9462cCBE",
+            "amount": "0.005102 USDC"
+          },
+          {
+            "address": "0x4B8dA138Cf92a4D7957f612FF00114a5E4Fb53B4",
+            "amount": "0.153153 USDC"
+          },
+          {
+            "address": "0x4D4e67B2cFd0D0A616B59AB22d95375BEC554296",
+            "amount": "0.062602 USDC"
+          },
+          {
+            "address": "0x50303C96C61216E97FAB57783c0F5DCe6c72dd6B",
+            "amount": "0.006084 USDC"
+          },
+          {
+            "address": "0x51FC64E0e7fC24BA902CD2eF37a843D6A21fa35F",
+            "amount": "0.064937 USDC"
+          },
+          {
+            "address": "0x527388D7faa6E05e8184604C541c2A77D2bb36Ee",
+            "amount": "0.138436 USDC"
+          },
+          {
+            "address": "0x535c27E2AD71E05a18bf2afD89c74a0953BA0Af5",
+            "amount": "0.013642 USDC"
+          },
+          {
+            "address": "0x550d5f362e277105649A35587B021dcB62AdAF91",
+            "amount": "0.015994 USDC"
+          },
+          {
+            "address": "0x5963AbB659FD7A87cB2e15003A68275741DC74d5",
+            "amount": "0.018112 USDC"
+          },
+          {
+            "address": "0x5FCBF576f133D66A8E8f8A1942dAB66b456929cF",
+            "amount": "0.090061 USDC"
+          },
+          {
+            "address": "0x606B1Dd8452108E5539053c770Cb75A10f03d127",
+            "amount": "0.154293 USDC"
+          },
+          {
+            "address": "0x60743EA5EF31033cC7A9dd9aED1542dA4DCF6f36",
+            "amount": "0.131792 USDC"
+          },
+          {
+            "address": "0x60bAb7b7E2D890F757d577426bE6ebBfa4B25Cc6",
+            "amount": "0.140967 USDC"
+          },
+          {
+            "address": "0x64b04859e12275121a0ED27C465be478f34000B2",
+            "amount": "0.127250 USDC"
+          },
+          {
+            "address": "0x6D3ff35f082418441BECd77fab5A7F6d4c025548",
+            "amount": "0.065958 USDC"
+          },
+          {
+            "address": "0x715e2F2E12B04C03B52D0ea75Fc75636fC38c4bd",
+            "amount": "0.015170 USDC"
+          },
+          {
+            "address": "0x73288b48baF8b35B5535a8aBEE2529A9876b8f7C",
+            "amount": "0.172004 USDC"
+          },
+          {
+            "address": "0x73c55aFb78F9c737DDB488D7CAB9bFc4Df86B038",
+            "amount": "0.010218 USDC"
+          },
+          {
+            "address": "0x797028555EA571105561295BbBf2Be97a815eF60",
+            "amount": "0.120378 USDC"
+          },
+          {
+            "address": "0x7bD57b2003B9719A08F904f423a5b0C2991ccAFc",
+            "amount": "0.098727 USDC"
+          },
+          {
+            "address": "0x83b9283e8A03B6c97de5A3fA553623ae4D05cE50",
+            "amount": "0.026891 USDC"
+          },
+          {
+            "address": "0x87610004e8123085395f9147f7B31f7E17b9eff3",
+            "amount": "0.090981 USDC"
+          },
+          {
+            "address": "0x8A0c556c89dcc5C05C3A3be24545Ec8a3AbE5E70",
+            "amount": "0.187210 USDC"
+          },
+          {
+            "address": "0x8BB68f76B48Da39E1247BFC79B9A93d166045ebB",
+            "amount": "0.021314 USDC"
+          },
+          {
+            "address": "0x8c1292373D5dB2138f9975d56736C22Ba4BD5B3a",
+            "amount": "0.101500 USDC"
+          },
+          {
+            "address": "0x8E4038fd7375e914542895A5B268bBC6CF9e3b8e",
+            "amount": "0.239928 USDC"
+          },
+          {
+            "address": "0x918bEF83d418d6ae9C322E3207EB21B6CdCfF808",
+            "amount": "0.129394 USDC"
+          },
+          {
+            "address": "0x99742B8F9aF02Ac9a725cdbeFe457959371C9992",
+            "amount": "0.073280 USDC"
+          },
+          {
+            "address": "0x9C7CFec1B8182131372343B66E68668638470A13",
+            "amount": "0.007807 USDC"
+          },
+          {
+            "address": "0x9f13855617E0aB4bCb71Fd649368A2262Ff4ca55",
+            "amount": "0.225993 USDC"
+          },
+          {
+            "address": "0xA0cb74EF96F2c13353d58E1fd6625c8FB5A00fBE",
+            "amount": "0.098167 USDC"
+          },
+          {
+            "address": "0xa3464178911298aB29e50788143bAc43Ca5497bE",
+            "amount": "0.113851 USDC"
+          },
+          {
+            "address": "0xa508e4145a442974E4020505E307e03ada4Fe251",
+            "amount": "0.035528 USDC"
+          },
+          {
+            "address": "0xa6f15fA0a137b22D845D38f8c5f2117b5d2585fF",
+            "amount": "0.153642 USDC"
+          },
+          {
+            "address": "0xacB34041Af82943fb469829a3030c67B048dCb7A",
+            "amount": "0.093833 USDC"
+          },
+          {
+            "address": "0xae8bef446B2ab3d77FDf492982a4667414690784",
+            "amount": "0.108963 USDC"
+          },
+          {
+            "address": "0xB1B09A9d2818FA2e6102B3C3A964E21033D1A913",
+            "amount": "0.032366 USDC"
+          },
+          {
+            "address": "0xb30CFA6fa3a51114827beE23C2BA103Cb1321903",
+            "amount": "0.112271 USDC"
+          },
+          {
+            "address": "0xB373a5AB2C53E5fF97Ea9aD0da75CE024c87DfEB",
+            "amount": "0.134581 USDC"
+          },
+          {
+            "address": "0xb4743EB81ed40978c990C3595F05948935Ff1A49",
+            "amount": "0.165342 USDC"
+          },
+          {
+            "address": "0xb4cD1A99D3D4dd5365085e0c57016Fb995B864c2",
+            "amount": "0.153797 USDC"
+          },
+          {
+            "address": "0xB4EA36849Bc07360BA16E3904fd17dB9C2cA6a80",
+            "amount": "0.104148 USDC"
+          },
+          {
+            "address": "0xb813cbDB404f4cCB4801C5aDcDFaCf022f99399c",
+            "amount": "0.217818 USDC"
+          },
+          {
+            "address": "0xb989C9a2e2c230b49Dff89569893176BEF097742",
+            "amount": "0.062694 USDC"
+          },
+          {
+            "address": "0xc3B5Ca71c33449e6e8DD9dD8e77Daa03Ce1e3e37",
+            "amount": "0.134420 USDC"
+          },
+          {
+            "address": "0xC46cB4ebC154d9F8e396D9c6f4A39aee0572B6c0",
+            "amount": "0.092037 USDC"
+          },
+          {
+            "address": "0xc8bE3F3329349683804af0960894b4B1b3d1BC63",
+            "amount": "0.037105 USDC"
+          },
+          {
+            "address": "0xcb83355fb3D3DfA31EeEeC4353501C45c064Eb58",
+            "amount": "0.045125 USDC"
+          },
+          {
+            "address": "0xcCeBb44C4A9A72921C069a53b8457013b6A6f6d6",
+            "amount": "0.064698 USDC"
+          },
+          {
+            "address": "0xCe0da56D1a849bb84415Cd89A7fD3009D1B7d6ad",
+            "amount": "0.002815 USDC"
+          },
+          {
+            "address": "0xCE7A1b622f87d8bed21888ab133da5561b0afB4c",
+            "amount": "0.060342 USDC"
+          },
+          {
+            "address": "0xCEA35f1a9696a106C3204a9fCf41DaA0ee43B4A1",
+            "amount": "0.092651 USDC"
+          },
+          {
+            "address": "0xCF025119E3682db04cb7A60F4a4dDd56a7Ee54dd",
+            "amount": "0.041252 USDC"
+          },
+          {
+            "address": "0xCf355E3784Da4d9dd1840126547b389a0C0eA562",
+            "amount": "0.249407 USDC"
+          },
+          {
+            "address": "0xd22045b4B9638CdA023159124E920C0FE2A004a6",
+            "amount": "0.038326 USDC"
+          },
+          {
+            "address": "0xD2B8CC4fe793D392b5769A07B53323D921164693",
+            "amount": "0.118183 USDC"
+          },
+          {
+            "address": "0xd2db0F2F4A11b85c3c60f6d35A0CcfFD45A15858",
+            "amount": "0.186727 USDC"
+          },
+          {
+            "address": "0xD373F241D7517d1851ef5576C59138A717d374fb",
+            "amount": "0.058077 USDC"
+          },
+          {
+            "address": "0xDB2a41A0412D3D37AEA15839B5C4721c753907C2",
+            "amount": "0.007618 USDC"
+          },
+          {
+            "address": "0xdB5ef59EEF073502F05eAee56aD06b47F6ecFA66",
+            "amount": "0.199776 USDC"
+          },
+          {
+            "address": "0xDe38705Bfc7FFE2224589634a3aa85dcbC108f9A",
+            "amount": "0.171039 USDC"
+          },
+          {
+            "address": "0xE0eb6c7a4072C116cc71A35BEc97E134242222a1",
+            "amount": "0.216529 USDC"
+          },
+          {
+            "address": "0xe241B6959430282724cc28423e23fAB63022DF28",
+            "amount": "0.372282 USDC"
+          },
+          {
+            "address": "0xe2490D70006Fd82e5b1E348531524895CaF917F9",
+            "amount": "0.159578 USDC"
+          },
+          {
+            "address": "0xE307981C27527c1C37f75a7B3c39E7282A17EDC9",
+            "amount": "0.097369 USDC"
+          },
+          {
+            "address": "0xE52E3cE065EBA3ccb1eDa8f4b8C2C771a603FF23",
+            "amount": "0.006550 USDC"
+          },
+          {
+            "address": "0xebCcA76BC5449F92f85C28D7B52aAc2658E28fA7",
+            "amount": "0.021852 USDC"
+          },
+          {
+            "address": "0xed2E01757E9cf28ccc35030A60C7c281e7fA83F3",
+            "amount": "0.096037 USDC"
+          },
+          {
+            "address": "0xeE34E44902bB8dC3483A34aDF860EBF0d3184271",
+            "amount": "0.104507 USDC"
+          },
+          {
+            "address": "0xf4Ac17d1A2282E014B864C3bEe213c165dd1c851",
+            "amount": "0.070718 USDC"
+          },
+          {
+            "address": "0xF56A96B7F63d0A53F303069cb8F2F8a31383EBC3",
+            "amount": "0.139930 USDC"
+          },
+          {
+            "address": "0xF6C5e31d0c41e511E34AB5B6572eE7A53ACc8ED4",
+            "amount": "0.143228 USDC"
+          }
+        ]
+      },
+      "poolAddress": "0x53bc2327f7Cf57EBb0e8DC38799aE2f1b936E2a5",
+      "createdAt": "2026-05-27T00:00:00Z",
+      "updatedAt": "2026-05-27T00:00:00Z"
+    },
+    {
       "id": "lucky-draw-event-001",
-      "title": "Lucky Draw Event — Follow, Like, Retweet & Join Telegram",
+      "title": "Lucky Draw Event \u2014 Follow, Like, Retweet & Join Telegram",
       "budget": "100",
       "deadline": "2026-05-31T16:00:00Z",
       "acceptance": "Complete all 4 tasks: Follow, Retweet, Like the announcement post, and Join the Telegram group. Then click Verify on each task and submit your wallet to enter the Lucky Draw.",
@@ -42,33 +476,852 @@
       "agentId": "agent_official",
       "rewardDistribution": {
         "mode": "lucky_draw",
-        "totalPool": "100 USDC",
-        "maxWinners": 50
+        "maxWinners": 100,
+        "totalPool": "10"
       },
       "escrowDepositId": "escrow_ld_event_001",
       "assignee": null,
       "drawResult": {
+        "drawnAt": "2026-05-27T00:00:00Z",
         "winners": [
           {
-            "address": "0x74586e10e40818ecd3d0db0e7fd63e72cb4dd80c",
-            "amount": "47.319618 USDC"
+            "address": "0x005641AFcFAE9b0026960110811cc1D2539CaB06",
+            "amount": "0.179116 USDC"
           },
           {
-            "address": "0x635fc2e8eebdc96c26de5e8e487614acb9529422",
-            "amount": "1.907165 USDC"
+            "address": "0x094f6A4945B79DcD5581f4f91Cd0DDB036ce566D",
+            "amount": "0.056778 USDC"
           },
           {
-            "address": "0xf89bf56a097bfc65e7b0c2403cfe183978be866f",
-            "amount": "0.663629 USDC"
+            "address": "0x0AB831d946a6dE5219d3FcEbD96cB512850443e4",
+            "amount": "0.165576 USDC"
           },
           {
-            "address": "0xfc76f857c9aef2e29e0fc8cc04662c47d9dfb470",
-            "amount": "0.537954 USDC"
+            "address": "0x0B83af5c3885bBe0Aa97449Fd455fa1F74c6c6E7",
+            "amount": "0.194223 USDC"
+          },
+          {
+            "address": "0x12FEbDf42F2e9Eb51Cb208f955ebdEDff4401455",
+            "amount": "0.168178 USDC"
+          },
+          {
+            "address": "0x1836711BFa3A39f8e12F11DFAF20Fa76aE07174c",
+            "amount": "0.027174 USDC"
+          },
+          {
+            "address": "0x1b50bC3cf26efAe0409510b401c4133bFF5b6783",
+            "amount": "0.181036 USDC"
+          },
+          {
+            "address": "0x1C69Ce5D855f4B4068F18344b50BdeA068446A52",
+            "amount": "0.054925 USDC"
+          },
+          {
+            "address": "0x1Dd24F7e87fddF2f61fcE5C9EcC03c3a5CED0749",
+            "amount": "0.004945 USDC"
+          },
+          {
+            "address": "0x2042B1b0AA18055Ed062a186f8c97BEb3F1A801D",
+            "amount": "0.061616 USDC"
+          },
+          {
+            "address": "0x21026804AD722Fd409aba3375Cf1237c5cc81300",
+            "amount": "0.147026 USDC"
+          },
+          {
+            "address": "0x2371637fdD8FF2bBd497DC35D5126cD326a670eC",
+            "amount": "0.024781 USDC"
+          },
+          {
+            "address": "0x256715F99A8122B106B1240F20475867226E0147",
+            "amount": "0.214249 USDC"
+          },
+          {
+            "address": "0x2571fb5B71102743802684A9665DF7eE09eB9cEA",
+            "amount": "0.152872 USDC"
+          },
+          {
+            "address": "0x26B36c77C05F01363dD42a91376DDE91332407Ef",
+            "amount": "0.080288 USDC"
+          },
+          {
+            "address": "0x26fd7d4F5ba60A2ec1445d3A2830b400C11DAfff",
+            "amount": "0.026678 USDC"
+          },
+          {
+            "address": "0x27094Ca0C03CEBa0256725ce378B70263D7cB1Ec",
+            "amount": "0.108018 USDC"
+          },
+          {
+            "address": "0x278114C351662777f14A790eb38A77CAD3dC3504",
+            "amount": "0.134369 USDC"
+          },
+          {
+            "address": "0x2850081568f4ca17248c80Ebb900fD95109048aC",
+            "amount": "0.040357 USDC"
+          },
+          {
+            "address": "0x2EBB0B23B7f0CccBD90b5D7194488c9c80f68D32",
+            "amount": "0.119902 USDC"
+          },
+          {
+            "address": "0x2F20A4B96063f8969070411CdCF80f9eD21400f3",
+            "amount": "0.029617 USDC"
+          },
+          {
+            "address": "0x32c9011bebFED9cC9096f327Cd1e005Cb17900a1",
+            "amount": "0.122323 USDC"
+          },
+          {
+            "address": "0x36E2E061D688CC439A8dABe7e66Cb9CE14Db8390",
+            "amount": "0.011648 USDC"
+          },
+          {
+            "address": "0x3A758e6Fc922f0ba5013e65693db4D68EF6244bE",
+            "amount": "0.001933 USDC"
+          },
+          {
+            "address": "0x3B620F283cA3e085498E2eCaB1891dB22C581be4",
+            "amount": "0.021549 USDC"
+          },
+          {
+            "address": "0x3F615D7D0c02B5Bc37C61b8Dc9FB93Fb2416e341",
+            "amount": "0.141115 USDC"
+          },
+          {
+            "address": "0x4229e547Da458429C45c15Ebc1aB6a49e45d4bdb",
+            "amount": "0.099347 USDC"
+          },
+          {
+            "address": "0x4548fab2EdDa4A719CE6b32432aE03Be82809D27",
+            "amount": "0.106004 USDC"
+          },
+          {
+            "address": "0x4941E17B5FB0890BDfaA5Ca443594e0b9462cCBE",
+            "amount": "0.005102 USDC"
+          },
+          {
+            "address": "0x4B8dA138Cf92a4D7957f612FF00114a5E4Fb53B4",
+            "amount": "0.153153 USDC"
+          },
+          {
+            "address": "0x4D4e67B2cFd0D0A616B59AB22d95375BEC554296",
+            "amount": "0.062602 USDC"
+          },
+          {
+            "address": "0x50303C96C61216E97FAB57783c0F5DCe6c72dd6B",
+            "amount": "0.006084 USDC"
+          },
+          {
+            "address": "0x51FC64E0e7fC24BA902CD2eF37a843D6A21fa35F",
+            "amount": "0.064937 USDC"
+          },
+          {
+            "address": "0x527388D7faa6E05e8184604C541c2A77D2bb36Ee",
+            "amount": "0.138436 USDC"
+          },
+          {
+            "address": "0x535c27E2AD71E05a18bf2afD89c74a0953BA0Af5",
+            "amount": "0.013642 USDC"
+          },
+          {
+            "address": "0x550d5f362e277105649A35587B021dcB62AdAF91",
+            "amount": "0.015994 USDC"
+          },
+          {
+            "address": "0x5963AbB659FD7A87cB2e15003A68275741DC74d5",
+            "amount": "0.018112 USDC"
+          },
+          {
+            "address": "0x5FCBF576f133D66A8E8f8A1942dAB66b456929cF",
+            "amount": "0.090061 USDC"
+          },
+          {
+            "address": "0x606B1Dd8452108E5539053c770Cb75A10f03d127",
+            "amount": "0.154293 USDC"
+          },
+          {
+            "address": "0x60743EA5EF31033cC7A9dd9aED1542dA4DCF6f36",
+            "amount": "0.131792 USDC"
+          },
+          {
+            "address": "0x60bAb7b7E2D890F757d577426bE6ebBfa4B25Cc6",
+            "amount": "0.140967 USDC"
+          },
+          {
+            "address": "0x64b04859e12275121a0ED27C465be478f34000B2",
+            "amount": "0.127250 USDC"
+          },
+          {
+            "address": "0x6D3ff35f082418441BECd77fab5A7F6d4c025548",
+            "amount": "0.065958 USDC"
+          },
+          {
+            "address": "0x715e2F2E12B04C03B52D0ea75Fc75636fC38c4bd",
+            "amount": "0.015170 USDC"
+          },
+          {
+            "address": "0x73288b48baF8b35B5535a8aBEE2529A9876b8f7C",
+            "amount": "0.172004 USDC"
+          },
+          {
+            "address": "0x73c55aFb78F9c737DDB488D7CAB9bFc4Df86B038",
+            "amount": "0.010218 USDC"
+          },
+          {
+            "address": "0x797028555EA571105561295BbBf2Be97a815eF60",
+            "amount": "0.120378 USDC"
+          },
+          {
+            "address": "0x7bD57b2003B9719A08F904f423a5b0C2991ccAFc",
+            "amount": "0.098727 USDC"
+          },
+          {
+            "address": "0x83b9283e8A03B6c97de5A3fA553623ae4D05cE50",
+            "amount": "0.026891 USDC"
+          },
+          {
+            "address": "0x87610004e8123085395f9147f7B31f7E17b9eff3",
+            "amount": "0.090981 USDC"
+          },
+          {
+            "address": "0x8A0c556c89dcc5C05C3A3be24545Ec8a3AbE5E70",
+            "amount": "0.187210 USDC"
+          },
+          {
+            "address": "0x8BB68f76B48Da39E1247BFC79B9A93d166045ebB",
+            "amount": "0.021314 USDC"
+          },
+          {
+            "address": "0x8c1292373D5dB2138f9975d56736C22Ba4BD5B3a",
+            "amount": "0.101500 USDC"
+          },
+          {
+            "address": "0x8E4038fd7375e914542895A5B268bBC6CF9e3b8e",
+            "amount": "0.239928 USDC"
+          },
+          {
+            "address": "0x918bEF83d418d6ae9C322E3207EB21B6CdCfF808",
+            "amount": "0.129394 USDC"
+          },
+          {
+            "address": "0x99742B8F9aF02Ac9a725cdbeFe457959371C9992",
+            "amount": "0.073280 USDC"
+          },
+          {
+            "address": "0x9C7CFec1B8182131372343B66E68668638470A13",
+            "amount": "0.007807 USDC"
+          },
+          {
+            "address": "0x9f13855617E0aB4bCb71Fd649368A2262Ff4ca55",
+            "amount": "0.225993 USDC"
+          },
+          {
+            "address": "0xA0cb74EF96F2c13353d58E1fd6625c8FB5A00fBE",
+            "amount": "0.098167 USDC"
+          },
+          {
+            "address": "0xa3464178911298aB29e50788143bAc43Ca5497bE",
+            "amount": "0.113851 USDC"
+          },
+          {
+            "address": "0xa508e4145a442974E4020505E307e03ada4Fe251",
+            "amount": "0.035528 USDC"
+          },
+          {
+            "address": "0xa6f15fA0a137b22D845D38f8c5f2117b5d2585fF",
+            "amount": "0.153642 USDC"
+          },
+          {
+            "address": "0xacB34041Af82943fb469829a3030c67B048dCb7A",
+            "amount": "0.093833 USDC"
+          },
+          {
+            "address": "0xae8bef446B2ab3d77FDf492982a4667414690784",
+            "amount": "0.108963 USDC"
+          },
+          {
+            "address": "0xB1B09A9d2818FA2e6102B3C3A964E21033D1A913",
+            "amount": "0.032366 USDC"
+          },
+          {
+            "address": "0xb30CFA6fa3a51114827beE23C2BA103Cb1321903",
+            "amount": "0.112271 USDC"
+          },
+          {
+            "address": "0xB373a5AB2C53E5fF97Ea9aD0da75CE024c87DfEB",
+            "amount": "0.134581 USDC"
+          },
+          {
+            "address": "0xb4743EB81ed40978c990C3595F05948935Ff1A49",
+            "amount": "0.165342 USDC"
+          },
+          {
+            "address": "0xb4cD1A99D3D4dd5365085e0c57016Fb995B864c2",
+            "amount": "0.153797 USDC"
+          },
+          {
+            "address": "0xB4EA36849Bc07360BA16E3904fd17dB9C2cA6a80",
+            "amount": "0.104148 USDC"
+          },
+          {
+            "address": "0xb813cbDB404f4cCB4801C5aDcDFaCf022f99399c",
+            "amount": "0.217818 USDC"
+          },
+          {
+            "address": "0xb989C9a2e2c230b49Dff89569893176BEF097742",
+            "amount": "0.062694 USDC"
+          },
+          {
+            "address": "0xc3B5Ca71c33449e6e8DD9dD8e77Daa03Ce1e3e37",
+            "amount": "0.134420 USDC"
+          },
+          {
+            "address": "0xC46cB4ebC154d9F8e396D9c6f4A39aee0572B6c0",
+            "amount": "0.092037 USDC"
+          },
+          {
+            "address": "0xc8bE3F3329349683804af0960894b4B1b3d1BC63",
+            "amount": "0.037105 USDC"
+          },
+          {
+            "address": "0xcb83355fb3D3DfA31EeEeC4353501C45c064Eb58",
+            "amount": "0.045125 USDC"
+          },
+          {
+            "address": "0xcCeBb44C4A9A72921C069a53b8457013b6A6f6d6",
+            "amount": "0.064698 USDC"
+          },
+          {
+            "address": "0xCe0da56D1a849bb84415Cd89A7fD3009D1B7d6ad",
+            "amount": "0.002815 USDC"
+          },
+          {
+            "address": "0xCE7A1b622f87d8bed21888ab133da5561b0afB4c",
+            "amount": "0.060342 USDC"
+          },
+          {
+            "address": "0xCEA35f1a9696a106C3204a9fCf41DaA0ee43B4A1",
+            "amount": "0.092651 USDC"
+          },
+          {
+            "address": "0xCF025119E3682db04cb7A60F4a4dDd56a7Ee54dd",
+            "amount": "0.041252 USDC"
+          },
+          {
+            "address": "0xCf355E3784Da4d9dd1840126547b389a0C0eA562",
+            "amount": "0.249407 USDC"
+          },
+          {
+            "address": "0xd22045b4B9638CdA023159124E920C0FE2A004a6",
+            "amount": "0.038326 USDC"
+          },
+          {
+            "address": "0xD2B8CC4fe793D392b5769A07B53323D921164693",
+            "amount": "0.118183 USDC"
+          },
+          {
+            "address": "0xd2db0F2F4A11b85c3c60f6d35A0CcfFD45A15858",
+            "amount": "0.186727 USDC"
+          },
+          {
+            "address": "0xD373F241D7517d1851ef5576C59138A717d374fb",
+            "amount": "0.058077 USDC"
+          },
+          {
+            "address": "0xDB2a41A0412D3D37AEA15839B5C4721c753907C2",
+            "amount": "0.007618 USDC"
+          },
+          {
+            "address": "0xdB5ef59EEF073502F05eAee56aD06b47F6ecFA66",
+            "amount": "0.199776 USDC"
+          },
+          {
+            "address": "0xDe38705Bfc7FFE2224589634a3aa85dcbC108f9A",
+            "amount": "0.171039 USDC"
+          },
+          {
+            "address": "0xE0eb6c7a4072C116cc71A35BEc97E134242222a1",
+            "amount": "0.216529 USDC"
+          },
+          {
+            "address": "0xe241B6959430282724cc28423e23fAB63022DF28",
+            "amount": "0.372282 USDC"
+          },
+          {
+            "address": "0xe2490D70006Fd82e5b1E348531524895CaF917F9",
+            "amount": "0.159578 USDC"
+          },
+          {
+            "address": "0xE307981C27527c1C37f75a7B3c39E7282A17EDC9",
+            "amount": "0.097369 USDC"
+          },
+          {
+            "address": "0xE52E3cE065EBA3ccb1eDa8f4b8C2C771a603FF23",
+            "amount": "0.006550 USDC"
+          },
+          {
+            "address": "0xebCcA76BC5449F92f85C28D7B52aAc2658E28fA7",
+            "amount": "0.021852 USDC"
+          },
+          {
+            "address": "0xed2E01757E9cf28ccc35030A60C7c281e7fA83F3",
+            "amount": "0.096037 USDC"
+          },
+          {
+            "address": "0xeE34E44902bB8dC3483A34aDF860EBF0d3184271",
+            "amount": "0.104507 USDC"
+          },
+          {
+            "address": "0xf4Ac17d1A2282E014B864C3bEe213c165dd1c851",
+            "amount": "0.070718 USDC"
+          },
+          {
+            "address": "0xF56A96B7F63d0A53F303069cb8F2F8a31383EBC3",
+            "amount": "0.139930 USDC"
+          },
+          {
+            "address": "0xF6C5e31d0c41e511E34AB5B6572eE7A53ACc8ED4",
+            "amount": "0.143228 USDC"
           }
-        ],
-        "drawnAt": "2026-05-24T08:07:18.845Z"
+        ]
       },
-      "taskState": "open"
+      "taskState": "open",
+      "poolAddress": "0x53bc2327f7Cf57EBb0e8DC38799aE2f1b936E2a5"
+    },
+    {
+      "id": "lucky-draw-event-002",
+      "title": "Lucky Draw Event 002 \u2014 100 Winners on Base",
+      "budget": "10",
+      "deadline": "2026-06-03T12:30:00Z",
+      "acceptance": "Complete the task and claim your lucky draw reward from the PrizePool on Base Mainnet.",
+      "taskType": "twitter_follow",
+      "status": "created",
+      "taskState": "open",
+      "evidence": [],
+      "agentId": "agent_official",
+      "rewardDistribution": {
+        "mode": "lucky_draw",
+        "maxWinners": 100,
+        "totalPool": "10"
+      },
+      "campaign": {
+        "requesterName": "ai2human Official",
+        "requesterHandle": "@ai2humanwork",
+        "platform": "x",
+        "action": "lucky_draw",
+        "brief": "100 winner lucky draw \u2014 PrizePool on Base Mainnet. Prize pool: 10 USDC.",
+        "proofRequirements": [],
+        "verificationChecks": []
+      },
+      "drawResult": {
+        "drawnAt": "2026-05-27T00:00:00Z",
+        "winners": [
+          {
+            "address": "0x005641AFcFAE9b0026960110811cc1D2539CaB06",
+            "amount": "0.179116 USDC"
+          },
+          {
+            "address": "0x094f6A4945B79DcD5581f4f91Cd0DDB036ce566D",
+            "amount": "0.056778 USDC"
+          },
+          {
+            "address": "0x0AB831d946a6dE5219d3FcEbD96cB512850443e4",
+            "amount": "0.165576 USDC"
+          },
+          {
+            "address": "0x0B83af5c3885bBe0Aa97449Fd455fa1F74c6c6E7",
+            "amount": "0.194223 USDC"
+          },
+          {
+            "address": "0x12FEbDf42F2e9Eb51Cb208f955ebdEDff4401455",
+            "amount": "0.168178 USDC"
+          },
+          {
+            "address": "0x1836711BFa3A39f8e12F11DFAF20Fa76aE07174c",
+            "amount": "0.027174 USDC"
+          },
+          {
+            "address": "0x1b50bC3cf26efAe0409510b401c4133bFF5b6783",
+            "amount": "0.181036 USDC"
+          },
+          {
+            "address": "0x1C69Ce5D855f4B4068F18344b50BdeA068446A52",
+            "amount": "0.054925 USDC"
+          },
+          {
+            "address": "0x1Dd24F7e87fddF2f61fcE5C9EcC03c3a5CED0749",
+            "amount": "0.004945 USDC"
+          },
+          {
+            "address": "0x2042B1b0AA18055Ed062a186f8c97BEb3F1A801D",
+            "amount": "0.061616 USDC"
+          },
+          {
+            "address": "0x21026804AD722Fd409aba3375Cf1237c5cc81300",
+            "amount": "0.147026 USDC"
+          },
+          {
+            "address": "0x2371637fdD8FF2bBd497DC35D5126cD326a670eC",
+            "amount": "0.024781 USDC"
+          },
+          {
+            "address": "0x256715F99A8122B106B1240F20475867226E0147",
+            "amount": "0.214249 USDC"
+          },
+          {
+            "address": "0x2571fb5B71102743802684A9665DF7eE09eB9cEA",
+            "amount": "0.152872 USDC"
+          },
+          {
+            "address": "0x26B36c77C05F01363dD42a91376DDE91332407Ef",
+            "amount": "0.080288 USDC"
+          },
+          {
+            "address": "0x26fd7d4F5ba60A2ec1445d3A2830b400C11DAfff",
+            "amount": "0.026678 USDC"
+          },
+          {
+            "address": "0x27094Ca0C03CEBa0256725ce378B70263D7cB1Ec",
+            "amount": "0.108018 USDC"
+          },
+          {
+            "address": "0x278114C351662777f14A790eb38A77CAD3dC3504",
+            "amount": "0.134369 USDC"
+          },
+          {
+            "address": "0x2850081568f4ca17248c80Ebb900fD95109048aC",
+            "amount": "0.040357 USDC"
+          },
+          {
+            "address": "0x2EBB0B23B7f0CccBD90b5D7194488c9c80f68D32",
+            "amount": "0.119902 USDC"
+          },
+          {
+            "address": "0x2F20A4B96063f8969070411CdCF80f9eD21400f3",
+            "amount": "0.029617 USDC"
+          },
+          {
+            "address": "0x32c9011bebFED9cC9096f327Cd1e005Cb17900a1",
+            "amount": "0.122323 USDC"
+          },
+          {
+            "address": "0x36E2E061D688CC439A8dABe7e66Cb9CE14Db8390",
+            "amount": "0.011648 USDC"
+          },
+          {
+            "address": "0x3A758e6Fc922f0ba5013e65693db4D68EF6244bE",
+            "amount": "0.001933 USDC"
+          },
+          {
+            "address": "0x3B620F283cA3e085498E2eCaB1891dB22C581be4",
+            "amount": "0.021549 USDC"
+          },
+          {
+            "address": "0x3F615D7D0c02B5Bc37C61b8Dc9FB93Fb2416e341",
+            "amount": "0.141115 USDC"
+          },
+          {
+            "address": "0x4229e547Da458429C45c15Ebc1aB6a49e45d4bdb",
+            "amount": "0.099347 USDC"
+          },
+          {
+            "address": "0x4548fab2EdDa4A719CE6b32432aE03Be82809D27",
+            "amount": "0.106004 USDC"
+          },
+          {
+            "address": "0x4941E17B5FB0890BDfaA5Ca443594e0b9462cCBE",
+            "amount": "0.005102 USDC"
+          },
+          {
+            "address": "0x4B8dA138Cf92a4D7957f612FF00114a5E4Fb53B4",
+            "amount": "0.153153 USDC"
+          },
+          {
+            "address": "0x4D4e67B2cFd0D0A616B59AB22d95375BEC554296",
+            "amount": "0.062602 USDC"
+          },
+          {
+            "address": "0x50303C96C61216E97FAB57783c0F5DCe6c72dd6B",
+            "amount": "0.006084 USDC"
+          },
+          {
+            "address": "0x51FC64E0e7fC24BA902CD2eF37a843D6A21fa35F",
+            "amount": "0.064937 USDC"
+          },
+          {
+            "address": "0x527388D7faa6E05e8184604C541c2A77D2bb36Ee",
+            "amount": "0.138436 USDC"
+          },
+          {
+            "address": "0x535c27E2AD71E05a18bf2afD89c74a0953BA0Af5",
+            "amount": "0.013642 USDC"
+          },
+          {
+            "address": "0x550d5f362e277105649A35587B021dcB62AdAF91",
+            "amount": "0.015994 USDC"
+          },
+          {
+            "address": "0x5963AbB659FD7A87cB2e15003A68275741DC74d5",
+            "amount": "0.018112 USDC"
+          },
+          {
+            "address": "0x5FCBF576f133D66A8E8f8A1942dAB66b456929cF",
+            "amount": "0.090061 USDC"
+          },
+          {
+            "address": "0x606B1Dd8452108E5539053c770Cb75A10f03d127",
+            "amount": "0.154293 USDC"
+          },
+          {
+            "address": "0x60743EA5EF31033cC7A9dd9aED1542dA4DCF6f36",
+            "amount": "0.131792 USDC"
+          },
+          {
+            "address": "0x60bAb7b7E2D890F757d577426bE6ebBfa4B25Cc6",
+            "amount": "0.140967 USDC"
+          },
+          {
+            "address": "0x64b04859e12275121a0ED27C465be478f34000B2",
+            "amount": "0.127250 USDC"
+          },
+          {
+            "address": "0x6D3ff35f082418441BECd77fab5A7F6d4c025548",
+            "amount": "0.065958 USDC"
+          },
+          {
+            "address": "0x715e2F2E12B04C03B52D0ea75Fc75636fC38c4bd",
+            "amount": "0.015170 USDC"
+          },
+          {
+            "address": "0x73288b48baF8b35B5535a8aBEE2529A9876b8f7C",
+            "amount": "0.172004 USDC"
+          },
+          {
+            "address": "0x73c55aFb78F9c737DDB488D7CAB9bFc4Df86B038",
+            "amount": "0.010218 USDC"
+          },
+          {
+            "address": "0x797028555EA571105561295BbBf2Be97a815eF60",
+            "amount": "0.120378 USDC"
+          },
+          {
+            "address": "0x7bD57b2003B9719A08F904f423a5b0C2991ccAFc",
+            "amount": "0.098727 USDC"
+          },
+          {
+            "address": "0x83b9283e8A03B6c97de5A3fA553623ae4D05cE50",
+            "amount": "0.026891 USDC"
+          },
+          {
+            "address": "0x87610004e8123085395f9147f7B31f7E17b9eff3",
+            "amount": "0.090981 USDC"
+          },
+          {
+            "address": "0x8A0c556c89dcc5C05C3A3be24545Ec8a3AbE5E70",
+            "amount": "0.187210 USDC"
+          },
+          {
+            "address": "0x8BB68f76B48Da39E1247BFC79B9A93d166045ebB",
+            "amount": "0.021314 USDC"
+          },
+          {
+            "address": "0x8c1292373D5dB2138f9975d56736C22Ba4BD5B3a",
+            "amount": "0.101500 USDC"
+          },
+          {
+            "address": "0x8E4038fd7375e914542895A5B268bBC6CF9e3b8e",
+            "amount": "0.239928 USDC"
+          },
+          {
+            "address": "0x918bEF83d418d6ae9C322E3207EB21B6CdCfF808",
+            "amount": "0.129394 USDC"
+          },
+          {
+            "address": "0x99742B8F9aF02Ac9a725cdbeFe457959371C9992",
+            "amount": "0.073280 USDC"
+          },
+          {
+            "address": "0x9C7CFec1B8182131372343B66E68668638470A13",
+            "amount": "0.007807 USDC"
+          },
+          {
+            "address": "0x9f13855617E0aB4bCb71Fd649368A2262Ff4ca55",
+            "amount": "0.225993 USDC"
+          },
+          {
+            "address": "0xA0cb74EF96F2c13353d58E1fd6625c8FB5A00fBE",
+            "amount": "0.098167 USDC"
+          },
+          {
+            "address": "0xa3464178911298aB29e50788143bAc43Ca5497bE",
+            "amount": "0.113851 USDC"
+          },
+          {
+            "address": "0xa508e4145a442974E4020505E307e03ada4Fe251",
+            "amount": "0.035528 USDC"
+          },
+          {
+            "address": "0xa6f15fA0a137b22D845D38f8c5f2117b5d2585fF",
+            "amount": "0.153642 USDC"
+          },
+          {
+            "address": "0xacB34041Af82943fb469829a3030c67B048dCb7A",
+            "amount": "0.093833 USDC"
+          },
+          {
+            "address": "0xae8bef446B2ab3d77FDf492982a4667414690784",
+            "amount": "0.108963 USDC"
+          },
+          {
+            "address": "0xB1B09A9d2818FA2e6102B3C3A964E21033D1A913",
+            "amount": "0.032366 USDC"
+          },
+          {
+            "address": "0xb30CFA6fa3a51114827beE23C2BA103Cb1321903",
+            "amount": "0.112271 USDC"
+          },
+          {
+            "address": "0xB373a5AB2C53E5fF97Ea9aD0da75CE024c87DfEB",
+            "amount": "0.134581 USDC"
+          },
+          {
+            "address": "0xb4743EB81ed40978c990C3595F05948935Ff1A49",
+            "amount": "0.165342 USDC"
+          },
+          {
+            "address": "0xb4cD1A99D3D4dd5365085e0c57016Fb995B864c2",
+            "amount": "0.153797 USDC"
+          },
+          {
+            "address": "0xB4EA36849Bc07360BA16E3904fd17dB9C2cA6a80",
+            "amount": "0.104148 USDC"
+          },
+          {
+            "address": "0xb813cbDB404f4cCB4801C5aDcDFaCf022f99399c",
+            "amount": "0.217818 USDC"
+          },
+          {
+            "address": "0xb989C9a2e2c230b49Dff89569893176BEF097742",
+            "amount": "0.062694 USDC"
+          },
+          {
+            "address": "0xc3B5Ca71c33449e6e8DD9dD8e77Daa03Ce1e3e37",
+            "amount": "0.134420 USDC"
+          },
+          {
+            "address": "0xC46cB4ebC154d9F8e396D9c6f4A39aee0572B6c0",
+            "amount": "0.092037 USDC"
+          },
+          {
+            "address": "0xc8bE3F3329349683804af0960894b4B1b3d1BC63",
+            "amount": "0.037105 USDC"
+          },
+          {
+            "address": "0xcb83355fb3D3DfA31EeEeC4353501C45c064Eb58",
+            "amount": "0.045125 USDC"
+          },
+          {
+            "address": "0xcCeBb44C4A9A72921C069a53b8457013b6A6f6d6",
+            "amount": "0.064698 USDC"
+          },
+          {
+            "address": "0xCe0da56D1a849bb84415Cd89A7fD3009D1B7d6ad",
+            "amount": "0.002815 USDC"
+          },
+          {
+            "address": "0xCE7A1b622f87d8bed21888ab133da5561b0afB4c",
+            "amount": "0.060342 USDC"
+          },
+          {
+            "address": "0xCEA35f1a9696a106C3204a9fCf41DaA0ee43B4A1",
+            "amount": "0.092651 USDC"
+          },
+          {
+            "address": "0xCF025119E3682db04cb7A60F4a4dDd56a7Ee54dd",
+            "amount": "0.041252 USDC"
+          },
+          {
+            "address": "0xCf355E3784Da4d9dd1840126547b389a0C0eA562",
+            "amount": "0.249407 USDC"
+          },
+          {
+            "address": "0xd22045b4B9638CdA023159124E920C0FE2A004a6",
+            "amount": "0.038326 USDC"
+          },
+          {
+            "address": "0xD2B8CC4fe793D392b5769A07B53323D921164693",
+            "amount": "0.118183 USDC"
+          },
+          {
+            "address": "0xd2db0F2F4A11b85c3c60f6d35A0CcfFD45A15858",
+            "amount": "0.186727 USDC"
+          },
+          {
+            "address": "0xD373F241D7517d1851ef5576C59138A717d374fb",
+            "amount": "0.058077 USDC"
+          },
+          {
+            "address": "0xDB2a41A0412D3D37AEA15839B5C4721c753907C2",
+            "amount": "0.007618 USDC"
+          },
+          {
+            "address": "0xdB5ef59EEF073502F05eAee56aD06b47F6ecFA66",
+            "amount": "0.199776 USDC"
+          },
+          {
+            "address": "0xDe38705Bfc7FFE2224589634a3aa85dcbC108f9A",
+            "amount": "0.171039 USDC"
+          },
+          {
+            "address": "0xE0eb6c7a4072C116cc71A35BEc97E134242222a1",
+            "amount": "0.216529 USDC"
+          },
+          {
+            "address": "0xe241B6959430282724cc28423e23fAB63022DF28",
+            "amount": "0.372282 USDC"
+          },
+          {
+            "address": "0xe2490D70006Fd82e5b1E348531524895CaF917F9",
+            "amount": "0.159578 USDC"
+          },
+          {
+            "address": "0xE307981C27527c1C37f75a7B3c39E7282A17EDC9",
+            "amount": "0.097369 USDC"
+          },
+          {
+            "address": "0xE52E3cE065EBA3ccb1eDa8f4b8C2C771a603FF23",
+            "amount": "0.006550 USDC"
+          },
+          {
+            "address": "0xebCcA76BC5449F92f85C28D7B52aAc2658E28fA7",
+            "amount": "0.021852 USDC"
+          },
+          {
+            "address": "0xed2E01757E9cf28ccc35030A60C7c281e7fA83F3",
+            "amount": "0.096037 USDC"
+          },
+          {
+            "address": "0xeE34E44902bB8dC3483A34aDF860EBF0d3184271",
+            "amount": "0.104507 USDC"
+          },
+          {
+            "address": "0xf4Ac17d1A2282E014B864C3bEe213c165dd1c851",
+            "amount": "0.070718 USDC"
+          },
+          {
+            "address": "0xF56A96B7F63d0A53F303069cb8F2F8a31383EBC3",
+            "amount": "0.139930 USDC"
+          },
+          {
+            "address": "0xF6C5e31d0c41e511E34AB5B6572eE7A53ACc8ED4",
+            "amount": "0.143228 USDC"
+          }
+        ]
+      },
+      "poolAddress": "0x53bc2327f7Cf57EBb0e8DC38799aE2f1b936E2a5",
+      "createdAt": "2026-05-27T16:00:00Z",
+      "updatedAt": "2026-05-27T16:00:00Z"
     }
   ],
   "waitlist": [],
@@ -273,7 +1526,7 @@
     },
     {
       "id": "h_07178bae-66d",
-      "name": "rich、",
+      "name": "rich\u3001",
       "handle": "rich",
       "role": "",
       "location": "",
@@ -719,7 +1972,7 @@
       "name": "Hexdem",
       "handle": "hexdem",
       "city": "Izmir",
-      "country": "Türkiye",
+      "country": "T\u00fcrkiye",
       "verified": true,
       "rating": 4.7,
       "completedJobs": 132,
