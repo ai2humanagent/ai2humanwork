@@ -20,79 +20,84 @@ const copy = {
     app: "Open App"
   },
   hero: {
-    eyebrow: "Base Agent Fallback Infra",
-    titleA: "Agents hit reality.",
-    titleB: "ai2human closes the loop.",
+    eyebrow: "Human execution for AI agents",
+    titleA: "AI agents request.",
+    titleB: "Humans execute.",
     lead:
-      "The planner runs wallet, market, and trade prechecks first. If campaign growth, merchant onboarding, compliance, or real-world execution still blocks the task, ai2human dispatches a human operator, collects structured proof, verifies completion, and settles on Base.",
-    ctaPrimary: "Open Live Demo",
-    ctaSecondary: "Open Task Board",
-    ctaTertiary: "Open Submission Proof"
+      "Agents can automate digital workflows, but they still hit trust gates: real accounts, human judgment, local action, screenshots, receipts, and proof. ai2human routes those steps to verified human operators, checks the proof, and releases USDC on-chain.",
+    ctaPrimary: "See Live Loop",
+    ctaSecondary: "Browse Tasks",
+    ctaTertiary: "View Proof Flow"
   },
-  meta: ["human fallback infra", "planner precheck", "base settlement"],
+  meta: ["operator identity", "proof bundles", "verified USDC settlement"],
   section: {
-    stackTitle: "Planner + Fallback Stack",
+    stackTitle: "Human Execution Stack",
     stackDesc:
-      "Wallet, market, and trade prechecks happen before fallback. Dispatch, proof, verification, and settlement stay inside one auditable loop.",
+      "Task intake, operator identity, proof bundles, verification gates, and USDC settlement stay connected so agent workflows do not fall back to screenshots, DMs, and manual payments.",
     stackItems: [
       {
-        name: "precheck",
-        label: "Planner Precheck",
-        desc: "The planner queries wallet, market, and trade routes before deciding whether to stay autonomous."
+        name: "intake",
+        label: "Task Intake",
+        desc: "Agents submit human-required work with reward, deadline, proof rules, and settlement conditions."
       },
       {
-        name: "dispatch",
-        label: "Human Dispatch",
-        desc: "Only after the precheck fails does the dispatcher route the blocked task to a local operator."
+        name: "identity",
+        label: "Operator Identity",
+        desc: "Workers bind wallet, X account, and profile so every task has an accountable human executor."
       },
       {
-        name: "proof",
-        label: "Proof Bundle",
-        desc: "Capture structured evidence: photos, timestamps, signed receipts, and operator notes."
+        name: "proofkit",
+        label: "ProofKit",
+        desc: "Structured evidence packages make completion reviewable: X actions, screenshots, timestamps, receipts, photos, and notes."
       },
       {
-        name: "settlement",
-        label: "Base Settlement",
-        desc: "Payment follows verification. When configured, settlement writes a real Base transaction hash."
+        name: "verify",
+        label: "Verification Gate",
+        desc: "Proof is checked before payout, starting with identity binding, backend state, and reviewer approval."
+      },
+      {
+        name: "settle",
+        label: "Settlement Layer",
+        desc: "Payment unlocks only after verification, with claim records and on-chain USDC payout history."
       }
     ],
-    liveTitle: "Submission Walkthrough",
+    liveTitle: "Live Execution Signals",
     liveDesc:
-      "One blocked AI task flows through planner precheck, human fallback, proof, verification, and Base settlement.",
-    loopTitle: "The Loop: Precheck → Human fallback → Proof → Verify → Settle",
+      "The product surface is the trust loop itself: identity, task progress, proof review, risk checks, and settlement records.",
+    loopTitle: "Request → Route → Execute → Prove → Verify → Settle",
     loopDesc:
-      "The agent handles what it can. Human fallback is the last-resort execution layer when onchain agents hit real-world constraints or compliance gates.",
+      "Agents keep the digital workflow moving while ai2human handles the steps that need identity, judgment, local action, or verifiable proof.",
     loopBoards: {
-      intake: "Blocked Task",
-      console: "Proof Review",
+      intake: "Human Work Requests",
+      console: "Verification Gate",
       proof: "Proof + Settlement"
     },
-    caseTitle: "Best-Fit Scenarios",
+    caseTitle: "Where Agents Need Humans",
     caseDesc:
-      "Campaign growth, merchant ops, and compliance gates that agents cannot finish alone: identity-bound posts, merchant checks, screenshots, signatures, and proof-based verification on Base.",
-    entryTitle: "Three Roles, One Closed Loop",
-    entryDesc: "Buyer, operator, and reviewer stay inside the same auditable flow.",
+      "The strongest use cases are trust-gated steps: real X accounts, local checks, screenshots, receipts, signatures, merchant verification, and high-judgment review.",
+    entryTitle: "Three Entrances, One Trust Loop",
+    entryDesc: "Agents request work, operators execute it, and reviewers verify proof before settlement unlocks.",
     entries: [
-      { title: "Task Buyer", desc: "Post a blocked agent step and define the proof required for settlement." },
-      { title: "Reviewer", desc: "Approve proof packages and release payment only after verification." },
-      { title: "Operator Pool", desc: "Dispatch local humans for signatures, pickups, audits, and on-site proof." }
+      { title: "Agent / Task Buyer", desc: "Submit a trust-gated step and define the proof required for settlement." },
+      { title: "Reviewer", desc: "Check proof bundles and release payment only after completion is verified." },
+      { title: "Operator Network", desc: "Complete identity-bound, local, social, or proof-heavy work agents cannot finish alone." }
     ],
     entryKickers: {
-      hire: "task source",
-      publish: "verification",
-      human: "execution"
+      hire: "request",
+      publish: "verify",
+      human: "execute"
     },
     entryPanels: {
-      hireTitle: "Post one blocked step with a proof rule",
-      hireDesc: "Define the real-world action, the evidence bundle, and the condition that must clear before payment is released.",
-      publishTitle: "Review proof and release payment",
-      publishDesc: "The reviewer sees the proof package, verifies completion, and only then clears settlement.",
-      humanTitle: "Dispatch an operator for reality-bound work",
-      humanDesc: "Operators handle store visits, signed receipts, identity checks, and handoffs that agents cannot do alone."
+      hireTitle: "Submit work that needs a trusted human",
+      hireDesc: "Define the action, the proof bundle, the verification rule, and the condition that unlocks payment.",
+      publishTitle: "Verify proof before payment moves",
+      publishDesc: "Reviewers inspect the submitted proof, check completion, and only then clear settlement.",
+      humanTitle: "Route work to identity-bound operators",
+      humanDesc: "Operators handle X actions, screenshots, receipts, local checks, signatures, and other proof-heavy steps."
     }
   },
   footer: {
-    tag: "ai2human — Task execution network for AI agents",
+    tag: "ai2human — Human execution, proof, and settlement for AI agents",
     links: ["Live Demo", "Submission Proof", "Reviewer Console"]
   }
 } as const;
@@ -116,34 +121,34 @@ export default function HomePage() {
   const taskFeed = useMemo(() => {
     const tasks = [
       {
-        title: "Reply under the launch thread with a localized CTA",
-        meta: `X campaign · ${formatSettlementBudget("0.01")} · 2h`,
-        badge: "blocked",
-        tags: ["reply", "proof", "verify"]
+        title: "Use a real X account to reply under the launch thread",
+        meta: `X identity · ${formatSettlementBudget("0.01")} · proof required`,
+        badge: "trust gate",
+        tags: ["x account", "proof", "verify"]
       },
       {
-        title: "Quote-post the campaign update with your market take",
-        meta: `X campaign · ${formatSettlementBudget("0.02")} · 6h`,
-        badge: "needs human",
-        tags: ["quote", "growth", "proof"]
+        title: "Quote-post a campaign update from an identity-bound account",
+        meta: `social proof · ${formatSettlementBudget("0.02")} · 6h`,
+        badge: "operator",
+        tags: ["quote", "identity", "proof"]
       },
       {
-        title: "Repost the launch thread and keep it live for review",
-        meta: `X campaign · ${formatSettlementBudget("0.01")} · 12h`,
+        title: "Capture a screenshot and timestamp for reviewer approval",
+        meta: `proof bundle · ${formatSettlementBudget("0.01")} · 12h`,
         badge: "review",
-        tags: ["repost", "timeline", "review"]
+        tags: ["screenshot", "timestamp", "review"]
       },
       {
-        title: "Capture a merchant onboarding proof screenshot and summary",
-        meta: `Merchant ops · ${formatSettlementBudget("10")} · 2h`,
-        badge: "settled",
-        tags: ["merchant", "proof", "settle"]
+        title: "Verify a merchant onboarding step with receipt proof",
+        meta: `merchant check · ${formatSettlementBudget("10")} · local`,
+        badge: "settle",
+        tags: ["merchant", "receipt", "settle"]
       },
       {
-        title: "Publish a standalone campaign recap post with CTA",
-        meta: `Community growth · ${formatSettlementBudget("0.03")} · 4h`,
-        badge: "needs human",
-        tags: ["post", "cta", "verify"]
+        title: "Submit a proof package for a completed community action",
+        meta: `proof review · ${formatSettlementBudget("0.03")} · 4h`,
+        badge: "verify",
+        tags: ["bundle", "review", "verify"]
       }
     ];
 
@@ -153,34 +158,34 @@ export default function HomePage() {
   const humanFeed = useMemo(() => {
     const humans = [
       {
-        title: "Shanghai · bilingual X reply / proof capture",
-        meta: `${formatSettlementBudget("0.02")} · ready in 2 hours`,
+        title: "Shanghai · X identity action + screenshot proof",
+        meta: `${formatSettlementBudget("0.02")} · wallet linked`,
         badge: "available",
-        tags: ["photo", "proof", "fast"]
+        tags: ["x", "proof", "fast"]
       },
       {
-        title: "Hong Kong · campaign quote-post / thread support",
-        meta: `${formatSettlementBudget("0.03")} · same day`,
+        title: "Hong Kong · campaign quote-post + timestamp",
+        meta: `${formatSettlementBudget("0.03")} · X linked`,
         badge: "available",
-        tags: ["receipt", "verify", "proof"]
+        tags: ["identity", "verify", "proof"]
       },
       {
-        title: "Singapore · merchant onboarding check / screenshot proof",
+        title: "Singapore · merchant check + receipt capture",
         meta: `${formatSettlementBudget("8")} · same day`,
         badge: "available",
-        tags: ["pickup", "delivery", "proof"]
+        tags: ["merchant", "receipt", "proof"]
       },
       {
-        title: "Dubai · growth recap / localized CTA",
+        title: "Dubai · local verification + photo evidence",
         meta: `${formatSettlementBudget("0.03")} · high priority`,
         badge: "available",
-        tags: ["verify", "photo", "proof"]
+        tags: ["local", "photo", "proof"]
       },
       {
-        title: "Seoul · merchant confirmation / follow-up proof",
+        title: "Seoul · signature check + follow-up proof",
         meta: `${formatSettlementBudget("12")} · video ok`,
         badge: "available",
-        tags: ["sign", "proof", "urgent"]
+        tags: ["sign", "proof", "settle"]
       }
     ];
 
@@ -229,14 +234,14 @@ export default function HomePage() {
 
   const consoleLines = useMemo(() => {
     return [
-      "[task] campaign reply mission posted with proof requirements",
-      "[precheck] wallet, market, and trade routes queried before escalation",
-      "[planner] identity-bound post still required, escalating to dispatcher",
-      "[dispatch] routing to operator in Shanghai as last-resort fallback",
-      "[proof] evidence uploaded: live post url + screenshot + summary",
-      "[verify] reviewer approved the bundle",
-      "[settle] payment released on Base after verification",
-      "[ledger] tx hash attached to settlement record"
+      "[request] agent submitted a human execution request",
+      "[identity] wallet and X account required before task acceptance",
+      "[route] matching operator by capability and proof type",
+      "[execute] operator completed the trust-gated step",
+      "[proof] evidence uploaded: URL + screenshot + timestamp",
+      "[verify] completion checked against proof requirements",
+      "[settle] USDC payment unlocked after verification",
+      "[ledger] tx hash attached to payout history"
     ];
   }, []);
 
@@ -254,19 +259,19 @@ export default function HomePage() {
   const caseCards = useMemo(() => {
     return [
       {
-        title: "Campaign Reply Execution",
-        desc: "The planner cannot clear an identity-bound social action onchain, so ai2human dispatches a human operator for the post and proof.",
-        tags: ["growth", "proof", "verify"]
+        title: "Identity-Bound X Actions",
+        desc: "Agents can draft the message, but a real X account must post, reply, repost, or capture proof from a human-owned identity.",
+        tags: ["identity", "proof", "verify"]
       },
       {
-        title: "Merchant Proof Collection",
-        desc: "A human captures merchant evidence, onboarding confirmation, and timestamp before payment clears.",
-        tags: ["merchant", "human", "timestamp"]
+        title: "Merchant and Local Checks",
+        desc: "When a workflow needs a visit, receipt, storefront check, or local screenshot, ai2human turns it into a verified operator task.",
+        tags: ["local", "receipt", "settle"]
       },
       {
-        title: "Planner + Settlement",
-        desc: "Wallet, market, and trade prechecks decide the route before proof artifacts are settled on Base.",
-        tags: ["precheck", "base", "settle"]
+        title: "Proof-Gated Settlement",
+        desc: "Screenshots, timestamps, receipts, signatures, and notes become structured proof before USDC can be released.",
+        tags: ["proof", "review", "pay"]
       }
     ];
   }, []);
@@ -358,7 +363,7 @@ export default function HomePage() {
             <div className={styles.marketWidget}>
               <div className={styles.widgetInner}>
                 <div className={styles.widgetTop}>
-                  <span className={styles.widgetTitle}>LIVE FALLBACK LOOP</span>
+                  <span className={styles.widgetTitle}>LIVE TRUST LOOP</span>
                 </div>
 
                 <div className={styles.marketCols}>
@@ -783,9 +788,9 @@ export default function HomePage() {
                 </div>
               </div>
               <div className={styles.footerMeta}>
-                <span>{"Human fallback infra"}</span>
+                <span>{"Human execution layer"}</span>
                 <span>{"Proof → verify → settle"}</span>
-                <span>{"Base settlement"}</span>
+                <span>{"USDC settlement"}</span>
               </div>
             </div>
             <div className={styles.footerCols}>
