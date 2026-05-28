@@ -40,6 +40,7 @@ CREATE TABLE humans (
   skills TEXT[] DEFAULT '{}',
   languages TEXT[] DEFAULT '{}',
   avatar_seed INTEGER DEFAULT 1,
+  avatar_url TEXT,
   created_at TIMESTAMPTZ DEFAULT now()
 );
 

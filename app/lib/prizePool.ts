@@ -1,0 +1,628 @@
+/**
+ * PrizePool on-chain settlement library.
+ *
+ * Flow (FCFS reward mode):
+ *  1. Server creates campaign via PrizePoolFactory → deploys new PrizePool
+ *  2. Server deposits USDC into PrizePool (via ERC20 transfer)
+ *  3. Participants complete tasks → server marks questProgress verified
+ *  4. Server calls claimFor(recipient, amount) after verifying completion
+ *  5. Deadline passes → agent calls refund() to recover remaining USDC
+ *
+ * Security:
+ *  - claimFor is owner-only; backend verification gates payouts
+ *  - Optional MerkleProof path remains available for fixed winner lists
+ *  - CEI pattern: claimed state updated BEFORE USDC transfer
+ *  - ReentrancyGuard on claim(), claimFor(), and refund()
+ *  - Deadline enforcement on claims
+ */
+
+import {
+  createPublicClient,
+  createWalletClient,
+  defineChain,
+  erc20Abi,
+  formatUnits,
+  http,
+  isAddress
+} from "viem";
+import { privateKeyToAccount } from "viem/accounts";
+import { prizePoolAbi, prizePoolFactoryAbi, getChainConfig } from "./prizePoolContract";
+
+const USDC_DECIMALS = 6;
+
+// ============================================================
+// Helpers
+// ============================================================
+
+function normalizePrivateKey(value: string): `0x${string}` {
+  return (value.startsWith("0x") ? value : `0x${value}`) as `0x${string}`;
+}
+
+function parseAmount(raw: string): string {
+  const match = String(raw || "").replace(/,/g, "").match(/\d+(?:\.\d+)?/);
+  return match ? match[0] : "0";
+}
+
+function buildExplorerUrl(baseUrl: string, txHash: string): string {
+  return `${baseUrl.replace(/\/+$/, "")}/tx/${txHash}`;
+}
+
+// ============================================================
+// Merkle tree helpers (used by server to build winner tree)
+// ============================================================
+
+/**
+ * Build a sorted merkle tree root from winners list.
+ * Uses OpenZeppelin-compatible hashing: keccak256(abi.encodePacked(a, b))
+ * where a < b (sorted).
+ */
+export function buildMerkleRoot(winners: { address: string; amount: string }[]): string {
+  // Sort by address ascending
+  const sorted = [...winners].sort((a, b) =>
+    a.address.toLowerCase() < b.address.toLowerCase() ? -1 : 1
+  );
+
+  // Build leaves
+  const leaves = sorted.map((w) =>
+    keccak256(abiEncodePacked(w.address, parseAmount(w.amount)))
+  );
+
+  // Build tree
+  let hashes = leaves;
+  while (hashes.length > 1) {
+    const next: string[] = [];
+    for (let i = 0; i < hashes.length / 2; i++) {
+      const a = hashes[i * 2];
+      const b = hashes[i * 2 + 1];
+      next.push(a < b ? keccak256(concatAbiPacked(a, b)) : keccak256(concatAbiPacked(b, a)));
+    }
+    if (hashes.length % 2 === 1) {
+      next.push(hashes[hashes.length - 1]);
+    }
+    hashes = next;
+  }
+  return hashes[0];
+}
+
+/**
+ * Build merkle proof for a specific winner.
+ * Returns the sibling hashes needed to verify the leaf.
+ */
+export function buildMerkleProof(
+  winners: { address: string; amount: string }[],
+  recipient: string,
+  amount: string
+): string[] {
+  const sorted = [...winners].sort((a, b) =>
+    a.address.toLowerCase() < b.address.toLowerCase() ? -1 : 1
+  );
+
+  const leaf = keccak256(abiEncodePacked(recipient, parseAmount(amount)));
+
+  // For a 2-winner tree, proof is just the other winner's hash
+  if (sorted.length === 2) {
+    const proof: string[] = [];
+    for (const w of sorted) {
+      if (w.address.toLowerCase() !== recipient.toLowerCase()) {
+        proof.push(keccak256(abiEncodePacked(w.address, parseAmount(w.amount))));
+      }
+    }
+    return proof;
+  }
+
+  // For larger trees, compute level-by-level
+  const level = sorted.map((w) => keccak256(abiEncodePacked(w.address, parseAmount(w.amount))));
+  const targetLeaf = level.find((h) => h === leaf) || leaf;
+
+  let currentLevel = level;
+  const proof: string[] = [];
+  let targetIdx = currentLevel.indexOf(targetLeaf);
+
+  while (currentLevel.length > 1) {
+    const next: string[] = [];
+    for (let i = 0; i < currentLevel.length / 2; i++) {
+      const a = currentLevel[i * 2];
+      const b = currentLevel[i * 2 + 1];
+      const siblingIdx = targetIdx % 2 === 0 ? i * 2 + 1 : i * 2;
+      if (currentLevel.length > siblingIdx) {
+        proof.push(currentLevel[siblingIdx]);
+      }
+      next.push(a < b ? keccak256(concatAbiPacked(a, b)) : keccak256(concatAbiPacked(b, a)));
+    }
+    if (currentLevel.length % 2 === 1) {
+      next.push(currentLevel[currentLevel.length - 1]);
+    }
+    currentLevel = next;
+    targetIdx = Math.floor(targetIdx / 2);
+  }
+
+  return proof;
+}
+
+/**
+ * Verify a merkle proof on-chain (same logic as Solidity).
+ */
+export function verifyMerkleProof(
+  root: string,
+  recipient: string,
+  amount: string,
+  proof: string[]
+): boolean {
+  let leaf = keccak256(abiEncodePacked(recipient, parseAmount(amount)));
+  for (const sibling of proof) {
+    leaf = leaf < sibling
+      ? keccak256(concatAbiPacked(leaf, sibling))
+      : keccak256(concatAbiPacked(sibling, leaf));
+  }
+  return leaf === root;
+}
+
+// ============================================================
+// Minimal keccak256 / abi.encodePacked polyfills (Node.js)
+// ============================================================
+
+function keccak256(data: string): string {
+  // Use Node.js built-in crypto
+  const crypto = require("crypto");
+  const hash = crypto.createHash("shake256", { outputLength: 32 });
+  hash.update(Buffer.from(data.slice(2), "hex"), "utf8");
+  // Actually Node.js crypto doesn't support keccak directly...
+  // Use the web3-style keccak256 via buffer
+  const { keccak256: keccak } = require("js-sha3");
+  return "0x" + keccak(Buffer.from(data.slice(2), "hex"));
+}
+
+function abiEncodePacked(...args: string[]): string {
+  // Simplified: for our use case, just concat the hex-padded values
+  // This is NOT a full abi.encodePacked — use ethereumjs-abi in production
+  // For PrizePool leaf = keccak256(abi.encodePacked(addr, amount))
+  // amount is uint256 (32 bytes), address is 20 bytes
+  const [addr, amount] = args;
+  const addrHex = addr.toLowerCase().replace("0x", "").padStart(40, "0");
+  const amountHex = parseUnitsBn(amount).toString(16).padStart(64, "0");
+  return "0x" + addrHex + amountHex;
+}
+
+function concatAbiPacked(a: string, b: string): string {
+  return "0x" + a.slice(2) + b.slice(2);
+}
+
+function parseUnitsBn(amount: string): bigint {
+  const num = parseAmount(amount);
+  const parts = num.split(".");
+  const whole = BigInt(parts[0] || "0");
+  const frac = BigInt((parts[1] || "000000").slice(0, 6).padEnd(6, "0"));
+  return whole * BigInt(1e6) + frac;
+}
+
+// ============================================================
+// On-chain PrizePool operations
+// ============================================================
+
+function getPoolConfig() {
+  const chainId = Number(process.env.BASE_CHAIN_ID || 84532);
+  const rpcUrl = (process.env.BASE_RPC_URL || "https://sepolia.base.org").trim();
+  const explorerBaseUrl = (process.env.BASE_EXPLORER_BASE_URL || "https://sepolia.basescan.org").trim();
+  const privateKey = String(
+    process.env.PRIZE_POOL_PRIVATE_KEY ||
+      process.env.BASE_SETTLEMENT_PRIVATE_KEY ||
+      process.env.BASE_PRIVATE_KEY ||
+      ""
+  ).trim();
+  const factoryAddress = String(
+    process.env.PRIZE_POOL_FACTORY_ADDRESS || ""
+  ).trim();
+  const usdcAddress = (process.env.BASE_SETTLEMENT_TOKEN_ADDRESS || "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913").trim();
+
+  const config = getChainConfig(chainId);
+  const enabled = Boolean(privateKey);
+
+  return {
+    chainId,
+    rpcUrl,
+    explorerBaseUrl,
+    privateKey,
+    factoryAddress,
+    usdcAddress,
+    enabled,
+    chain: config || undefined
+  };
+}
+
+function buildViemChain(chainId: number) {
+  const cfg = getChainConfig(chainId);
+  if (!cfg) throw new Error(`Unsupported chain: ${chainId}`);
+  return defineChain({
+    id: chainId,
+    name: cfg.name,
+    nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+    rpcUrls: { default: { http: [cfg.rpcUrl] } },
+    blockExplorers: { default: { name: cfg.name, url: cfg.explorerUrl } }
+  });
+}
+
+// ============================================================
+// createCampaign — deploy a new PrizePool via factory
+// ============================================================
+
+export type CreateCampaignResult =
+  | { ok: true; campaignId: number; poolAddress: string; txHash: string; explorerUrl: string }
+  | { ok: false; error: string };
+
+export async function createPrizePoolCampaign(input: {
+  campaignId: number;
+  merkleRoot?: string;
+  deadline: number; // unix timestamp
+  maxWinners: number;
+  agent: string;
+}): Promise<CreateCampaignResult> {
+  const cfg = getPoolConfig();
+
+  if (!cfg.enabled || !cfg.factoryAddress) {
+    return { ok: false, error: "PrizePool not configured. Set PRIZE_POOL_PRIVATE_KEY and PRIZE_POOL_FACTORY_ADDRESS." };
+  }
+
+  if (!isAddress(input.agent)) {
+    return { ok: false, error: "Invalid agent address." };
+  }
+
+  const chain = buildViemChain(cfg.chainId);
+  const account = privateKeyToAccount(normalizePrivateKey(cfg.privateKey));
+  const walletClient = createWalletClient({ account, chain, transport: http(cfg.rpcUrl) });
+  const publicClient = createPublicClient({ chain, transport: http(cfg.rpcUrl) });
+
+  try {
+    const hash = await walletClient.writeContract({
+      address: cfg.factoryAddress as `0x${string}`,
+      abi: prizePoolFactoryAbi,
+      functionName: "createPool",
+      args: [
+        BigInt(input.campaignId),
+        (input.merkleRoot || "0x" + "0".repeat(64)) as `0x${string}`,
+        BigInt(input.deadline),
+        BigInt(input.maxWinners),
+        input.agent as `0x${string}`
+      ]
+    });
+
+    const receipt = await publicClient.waitForTransactionReceipt({ hash });
+    if (receipt.status !== "success") {
+      return { ok: false, error: "createPool transaction failed on-chain." };
+    }
+
+    // Read the pool address from the event
+    const poolAddress = await publicClient.readContract({
+      address: cfg.factoryAddress as `0x${string}`,
+      abi: prizePoolFactoryAbi,
+      functionName: "getPool",
+      args: [BigInt(input.campaignId)]
+    });
+
+    return {
+      ok: true,
+      campaignId: input.campaignId,
+      poolAddress: poolAddress as string,
+      txHash: hash,
+      explorerUrl: buildExplorerUrl(cfg.explorerBaseUrl, hash)
+    };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Unknown error";
+    return { ok: false, error: `createPool failed: ${msg}` };
+  }
+}
+
+// ============================================================
+// depositToPool — fund the PrizePool with USDC
+// ============================================================
+
+export type DepositToPoolResult =
+  | { ok: true; txHash: string; explorerUrl: string; amount: string }
+  | { ok: false; error: string };
+
+export async function depositToPrizePool(input: {
+  poolAddress: string;
+  amount: string; // e.g. "5" USDC
+}): Promise<DepositToPoolResult> {
+  const cfg = getPoolConfig();
+
+  if (!cfg.enabled) {
+    return { ok: false, error: "PrizePool not configured." };
+  }
+
+  if (!isAddress(input.poolAddress)) {
+    return { ok: false, error: "Invalid pool address." };
+  }
+
+  const amount = parseAmount(input.amount);
+  const value = parseUnits(amount, USDC_DECIMALS);
+  const chain = buildViemChain(cfg.chainId);
+  const account = privateKeyToAccount(normalizePrivateKey(cfg.privateKey));
+  const walletClient = createWalletClient({ account, chain, transport: http(cfg.rpcUrl) });
+  const publicClient = createPublicClient({ chain, transport: http(cfg.rpcUrl) });
+
+  try {
+    // First approve the pool to pull USDC
+    const approveHash = await walletClient.writeContract({
+      address: cfg.usdcAddress as `0x${string}`,
+      abi: erc20Abi,
+      functionName: "approve",
+      args: [input.poolAddress as `0x${string}`, value]
+    });
+    await publicClient.waitForTransactionReceipt({ hash: approveHash });
+
+    // Then call deposit (if pool has a deposit function)
+    // NOTE: PrizePool.sol doesn't have a deposit() function — it expects USDC to be
+    // transferred directly. For now, we do a plain transfer to the pool address.
+    const txHash = await walletClient.writeContract({
+      address: cfg.usdcAddress as `0x${string}`,
+      abi: erc20Abi,
+      functionName: "transfer",
+      args: [input.poolAddress as `0x${string}`, value]
+    });
+
+    const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
+    if (receipt.status !== "success") {
+      return { ok: false, error: "USDC transfer to pool failed." };
+    }
+
+    return {
+      ok: true,
+      txHash,
+      explorerUrl: buildExplorerUrl(cfg.explorerBaseUrl, txHash),
+      amount
+    };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Unknown error";
+    return { ok: false, error: `Deposit failed: ${msg}` };
+  }
+}
+
+// ============================================================
+// updateMerkleRoot — after drawing winners, update the pool
+// ============================================================
+
+export type UpdateMerkleRootResult =
+  | { ok: true; txHash: string; explorerUrl: string }
+  | { ok: false; error: string };
+
+export async function updatePrizePoolMerkleRoot(input: {
+  poolAddress: string;
+  merkleRoot: string;
+}): Promise<UpdateMerkleRootResult> {
+  const cfg = getPoolConfig();
+
+  if (!cfg.enabled) {
+    return { ok: false, error: "PrizePool not configured." };
+  }
+
+  const chain = buildViemChain(cfg.chainId);
+  const account = privateKeyToAccount(normalizePrivateKey(cfg.privateKey));
+  const walletClient = createWalletClient({ account, chain, transport: http(cfg.rpcUrl) });
+  const publicClient = createPublicClient({ chain, transport: http(cfg.rpcUrl) });
+
+  try {
+    const hash = await walletClient.writeContract({
+      address: input.poolAddress as `0x${string}`,
+      abi: prizePoolAbi,
+      functionName: "updateMerkleRoot",
+      args: [input.merkleRoot as `0x${string}`]
+    });
+
+    const receipt = await publicClient.waitForTransactionReceipt({ hash });
+    if (receipt.status !== "success") {
+      return { ok: false, error: "updateMerkleRoot transaction failed." };
+    }
+
+    return {
+      ok: true,
+      txHash: hash,
+      explorerUrl: buildExplorerUrl(cfg.explorerBaseUrl, hash)
+    };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Unknown error";
+    return { ok: false, error: `updateMerkleRoot failed: ${msg}` };
+  }
+}
+
+// ============================================================
+// getPoolInfo — read pool state from chain
+// ============================================================
+
+export async function getPrizePoolInfo(poolAddress: string) {
+  const cfg = getPoolConfig();
+  const chain = buildViemChain(cfg.chainId);
+  const publicClient = createPublicClient({ chain, transport: http(cfg.rpcUrl) });
+
+  try {
+    const result = await publicClient.readContract({
+      address: poolAddress as `0x${string}`,
+      abi: prizePoolAbi,
+      functionName: "getPoolInfo",
+      args: []
+    }) as [bigint, bigint, bigint, boolean, boolean, bigint];
+
+    return {
+      poolBalance: formatUnits(result[0], USDC_DECIMALS),
+      claimedTotal: result[1].toString(),
+      remaining: formatUnits(result[2], USDC_DECIMALS),
+      isPaused: result[3],
+      isDrawn: result[4],
+      slotsLeft: result[5].toString()
+    };
+  } catch (err) {
+    return null;
+  }
+}
+
+// ============================================================
+// refundRemaining — agent calls refund after deadline
+// ============================================================
+
+export type RefundResult =
+  | { ok: true; txHash: string; explorerUrl: string; amount: string }
+  | { ok: false; error: string };
+
+export async function refundPrizePool(input: {
+  poolAddress: string;
+}): Promise<RefundResult> {
+  const cfg = getPoolConfig();
+
+  if (!cfg.enabled) {
+    return { ok: false, error: "PrizePool not configured." };
+  }
+
+  const chain = buildViemChain(cfg.chainId);
+  const account = privateKeyToAccount(normalizePrivateKey(cfg.privateKey));
+  const walletClient = createWalletClient({ account, chain, transport: http(cfg.rpcUrl) });
+  const publicClient = createPublicClient({ chain, transport: http(cfg.rpcUrl) });
+
+  try {
+    const hash = await walletClient.writeContract({
+      address: input.poolAddress as `0x${string}`,
+      abi: prizePoolAbi,
+      functionName: "refund",
+      args: []
+    });
+
+    const receipt = await publicClient.waitForTransactionReceipt({ hash });
+    if (receipt.status !== "success") {
+      return { ok: false, error: "Refund transaction failed on-chain." };
+    }
+
+    return {
+      ok: true,
+      txHash: hash,
+      explorerUrl: buildExplorerUrl(cfg.explorerBaseUrl, hash),
+      amount: "remaining"
+    };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Unknown error";
+    return { ok: false, error: `Refund failed: ${msg}` };
+  }
+}
+
+// ============================================================
+// claimOnChainPrizePool — winner claims directly on PrizePool
+// ============================================================
+
+export type ClaimOnChainResult =
+  | { ok: true; txHash: string; explorerUrl: string }
+  | { ok: false; error: string };
+
+export async function claimOnChainPrizePool(input: {
+  poolAddress: string;
+  amount: string; // e.g. "0.5" USDC
+  merkleProof: string[];
+}): Promise<ClaimOnChainResult> {
+  const cfg = getPoolConfig();
+
+  if (!cfg.enabled) {
+    return { ok: false, error: "PrizePool not configured." };
+  }
+
+  const chain = buildViemChain(cfg.chainId);
+  const account = privateKeyToAccount(normalizePrivateKey(cfg.privateKey));
+  const walletClient = createWalletClient({ account, chain, transport: http(cfg.rpcUrl) });
+  const publicClient = createPublicClient({ chain, transport: http(cfg.rpcUrl) });
+
+  const amountBn = parseUnits(input.amount, USDC_DECIMALS);
+
+  try {
+    const hash = await walletClient.writeContract({
+      address: input.poolAddress as `0x${string}`,
+      abi: prizePoolAbi,
+      functionName: "claim",
+      args: [amountBn, input.merkleProof as `0x${string}`[]]
+    });
+
+    const receipt = await publicClient.waitForTransactionReceipt({ hash });
+    if (receipt.status !== "success") {
+      return { ok: false, error: "Claim transaction failed on-chain." };
+    }
+
+    return {
+      ok: true,
+      txHash: hash,
+      explorerUrl: buildExplorerUrl(cfg.explorerBaseUrl, hash)
+    };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Unknown error";
+    return { ok: false, error: `claim failed: ${msg}` };
+  }
+}
+
+// ============================================================
+// claimForPrizePool — backend-verified FCFS payout
+// ============================================================
+
+export async function claimForPrizePool(input: {
+  poolAddress: string;
+  recipientAddress: string;
+  amount: string;
+}): Promise<ClaimOnChainResult> {
+  const cfg = getPoolConfig();
+
+  if (!cfg.enabled) {
+    return { ok: false, error: "PrizePool not configured." };
+  }
+  if (!isAddress(input.poolAddress)) {
+    return { ok: false, error: "Invalid PrizePool address." };
+  }
+  if (!isAddress(input.recipientAddress)) {
+    return { ok: false, error: "Invalid recipient address." };
+  }
+
+  const chain = buildViemChain(cfg.chainId);
+  const account = privateKeyToAccount(normalizePrivateKey(cfg.privateKey));
+  const walletClient = createWalletClient({ account, chain, transport: http(cfg.rpcUrl) });
+  const publicClient = createPublicClient({ chain, transport: http(cfg.rpcUrl) });
+  const amountBn = parseUnits(input.amount, USDC_DECIMALS);
+
+  try {
+    const owner = await publicClient.readContract({
+      address: input.poolAddress as `0x${string}`,
+      abi: prizePoolAbi,
+      functionName: "owner",
+      args: []
+    }) as string;
+
+    if (owner.toLowerCase() !== account.address.toLowerCase()) {
+      return {
+        ok: false,
+        error: `PrizePool signer ${account.address} is not pool owner ${owner}. Set PRIZE_POOL_PRIVATE_KEY to the pool owner key or deploy a pool owned by the backend signer.`
+      };
+    }
+
+    const hash = await walletClient.writeContract({
+      address: input.poolAddress as `0x${string}`,
+      abi: prizePoolAbi,
+      functionName: "claimFor",
+      args: [input.recipientAddress as `0x${string}`, amountBn]
+    });
+
+    const receipt = await publicClient.waitForTransactionReceipt({ hash });
+    if (receipt.status !== "success") {
+      return { ok: false, error: "claimFor transaction failed on-chain." };
+    }
+
+    return {
+      ok: true,
+      txHash: hash,
+      explorerUrl: buildExplorerUrl(cfg.explorerBaseUrl, hash)
+    };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Unknown error";
+    return { ok: false, error: `claimFor failed: ${msg}` };
+  }
+}
+
+function parseUnits(amount: string, decimals: number): bigint {
+  const num = parseAmount(amount);
+  const parts = num.split(".");
+  const whole = BigInt(parts[0] || "0");
+  const fracStr = (parts[1] || "000000").slice(0, decimals).padEnd(decimals, "0");
+  const frac = BigInt(fracStr);
+  return whole * BigInt(10 ** decimals) + frac;
+}
+
+export { formatUnits, parseUnits };

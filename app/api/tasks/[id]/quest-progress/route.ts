@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
+import { getAuthContext } from "../../../../lib/auth";
 import { readDb, updateDb, type QuestProgressStatus } from "../../../../lib/store";
+import { getBoundXAccountForWallet, normalizeXHandle } from "../../../../lib/xIdentity";
 
 export const runtime = "nodejs";
 
@@ -25,6 +27,7 @@ export async function GET(
   if (!task) {
     return NextResponse.json({ error: "Task not found" }, { status: 404 });
   }
+  const { xAccount } = await getBoundXAccountForWallet(db, wallet);
 
   const progress = db.questProgress.filter(
     (qp) => qp.taskId === taskId && qp.walletAddress === wallet
@@ -42,6 +45,7 @@ export async function GET(
     (p) =>
       p.taskId === taskId &&
       p.source === "twitter_task" &&
+      (!task.poolAddress || (p.method === "prize_pool_claim" && Boolean(p.txHash))) &&
       (p.receiverAddress || "").toLowerCase() === wallet
   );
   const claimed = !!claimedPayment;
@@ -54,8 +58,9 @@ export async function GET(
   return NextResponse.json({
     subtasks,
     claimed,
+    xAccount,
     ...(claimedPayment ? { payment: claimedPayment } : {}),
-    ...(participant?.xHandle ? { xHandle: participant.xHandle } : {})
+    ...(xAccount?.username ? { xHandle: xAccount.username } : participant?.xHandle ? { xHandle: participant.xHandle } : {})
   });
 }
 
@@ -85,10 +90,34 @@ export async function POST(
     return NextResponse.json({ error: "action must be 'action' or 'verify'" }, { status: 400 });
   }
 
+  const auth = await getAuthContext(request);
+  if (!auth.ok) {
+    return NextResponse.json({ error: "Connect your wallet before doing tasks." }, { status: 401 });
+  }
+  if ((auth.user.walletAddress || "").toLowerCase() !== wallet) {
+    return NextResponse.json(
+      { error: "Connected wallet does not match this task progress request." },
+      { status: 403 }
+    );
+  }
+
   const db = await readDb();
   const task = db.tasks.find((t) => t.id === taskId);
   if (!task) {
     return NextResponse.json({ error: "Task not found" }, { status: 404 });
+  }
+  const { xAccount } = await getBoundXAccountForWallet(db, wallet);
+  if (!xAccount) {
+    return NextResponse.json(
+      { error: "Bind your X account before doing tasks." },
+      { status: 403 }
+    );
+  }
+  if (xHandle && normalizeXHandle(xHandle) !== normalizeXHandle(xAccount.username)) {
+    return NextResponse.json(
+      { error: "Submitted X handle does not match your bound X account." },
+      { status: 400 }
+    );
   }
 
   const result = await updateDb((db) => {
@@ -127,7 +156,7 @@ export async function POST(
     }
 
     // Save xHandle when verifying subtask 4 (X handle confirmation)
-    if (subtaskKey === "4" && action === "verify" && xHandle) {
+    if (subtaskKey === "4" && action === "verify") {
       let participant = db.luckyDrawParticipants.find(
         (p) => p.taskId === taskId && p.walletAddress === wallet
       );
@@ -136,12 +165,12 @@ export async function POST(
           id: crypto.randomUUID(),
           taskId,
           walletAddress: wallet,
-          xHandle,
+          xHandle: xAccount.username,
           createdAt: new Date().toISOString()
         };
         db.luckyDrawParticipants.push(participant);
       } else {
-        participant.xHandle = xHandle;
+        participant.xHandle = xAccount.username;
       }
     }
 

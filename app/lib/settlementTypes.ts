@@ -6,7 +6,8 @@ export type SettlementMethod =
   | "bnb_erc20"
   | "xlayer_erc20"
   | "solana_native"
-  | "x402_exact";
+  | "x402_exact"
+  | "prize_pool_claim";
 
 export type SettlementNetwork =
   | "base-mainnet"

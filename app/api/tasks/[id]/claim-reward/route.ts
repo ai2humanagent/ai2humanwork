@@ -1,14 +1,24 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
-import { readDb, updateDb, type PaymentEntry, type LuckyDrawWinner, type LuckyDrawResult, type LuckyDrawParticipant } from "../../../../lib/store";
+import {
+  readDb,
+  updateDb,
+  type PaymentEntry,
+  type RewardDistribution,
+  type Task
+} from "../../../../lib/store";
 import { executeSettlement } from "../../../../lib/settlement";
 import { DEFAULT_SETTLEMENT_TOKEN_SYMBOL } from "../../../../lib/assetLabels";
+import type { SettlementReceipt } from "../../../../lib/settlementTypes";
 import { verifyWalletSignature } from "../../../../lib/walletVerification";
 import { supabase } from "../../../../lib/supabase";
+import { claimForPrizePool } from "../../../../lib/prizePool";
+import { getBoundXAccountForWallet, normalizeXHandle } from "../../../../lib/xIdentity";
+import { getAuthContext } from "../../../../lib/auth";
 
 export const runtime = "nodejs";
 
-const REQUIRED_SUBTASK_KEYS = ["0", "1", "2", "3"];
+const REQUIRED_SUBTASK_KEYS = ["0", "1", "2", "3", "4"];
 const RATE_LIMIT_MS = 60_000; // 1 claim per wallet per task per 60s
 
 function parseAmount(raw: string): number {
@@ -18,11 +28,61 @@ function parseAmount(raw: string): number {
 
 function buildClaimMessage(taskId: string, wallet: string): string {
   return [
-    "ai2human Lucky Draw Claim",
+    "ai2human Reward Claim",
     `Task: ${taskId}`,
     `Wallet: ${wallet.toLowerCase()}`,
     "I am claiming my lucky draw reward."
   ].join("\n");
+}
+
+function buildLocalMockSettlement(amount: string, wallet: string): SettlementReceipt {
+  return {
+    amount: String(parseAmount(amount)),
+    receiverAddress: wallet,
+    method: "mock_x402",
+    status: "paid",
+    network: "base-mainnet",
+    chainId: 8453,
+    tokenSymbol: DEFAULT_SETTLEMENT_TOKEN_SYMBOL || "USDC",
+    tokenAddress: process.env.BASE_SETTLEMENT_TOKEN_ADDRESS,
+    evidenceLabel: "Payment recorded in local development mode after live settlement failed.",
+    configurationHint: "Local dev fallback only. Fund BASE_SETTLEMENT_PRIVATE_KEY wallet for live Base payouts."
+  };
+}
+
+function formatUsdcAmount(amount: number): string {
+  const rounded = Math.round(amount * 1e6) / 1e6;
+  return `${rounded.toFixed(6).replace(/\.?0+$/, "")} USDC`;
+}
+
+function getSettlementAmount(input: {
+  dist: RewardDistribution | undefined;
+  task: Task;
+  maxWinners: number;
+  claimedCount: number;
+  paidAmount: number;
+}): string {
+  const { dist, task, maxWinners, claimedCount, paidAmount } = input;
+
+  if (dist?.perWinner) {
+    return dist.perWinner;
+  }
+
+  if (dist?.totalPool && maxWinners > 0) {
+    const totalPool = parseAmount(dist.totalPool);
+    const remainingSlots = Math.max(maxWinners - claimedCount, 1);
+    const remainingPool = Math.max(Math.round((totalPool - paidAmount) * 1e6) / 1e6, 0);
+    const fixedShare = totalPool / maxWinners;
+    const amount = remainingSlots === 1 ? remainingPool : Math.min(fixedShare, remainingPool);
+    return formatUsdcAmount(amount);
+  }
+
+  return task.budget;
+}
+
+function isClaimedPaymentForTask(payment: PaymentEntry, task: Task): boolean {
+  if (!task.poolAddress) return true;
+  return payment.method === "prize_pool_claim" && Boolean(payment.txHash);
 }
 
 /** POST /api/tasks/[id]/claim-reward
@@ -49,9 +109,15 @@ export async function POST(
   if (!wallet) {
     return NextResponse.json({ error: "wallet is required" }, { status: 400 });
   }
-
-  if (!xHandle || xHandle.length < 1) {
-    return NextResponse.json({ error: "X handle is required" }, { status: 400 });
+  const auth = await getAuthContext(request);
+  if (!auth.ok) {
+    return NextResponse.json({ error: "Connect your wallet before claiming rewards." }, { status: 401 });
+  }
+  if ((auth.user.walletAddress || "").toLowerCase() !== wallet) {
+    return NextResponse.json(
+      { error: "Connected wallet does not match this claim request." },
+      { status: 403 }
+    );
   }
 
   // ── 1. Rate limit check (Supabase) ─────────────────────────────────────
@@ -137,6 +203,19 @@ export async function POST(
   if (!task) {
     return NextResponse.json({ error: "Task not found" }, { status: 404 });
   }
+  const { xAccount } = await getBoundXAccountForWallet(db, wallet);
+  if (!xAccount) {
+    return NextResponse.json(
+      { error: "Bind your X account before claiming rewards." },
+      { status: 403 }
+    );
+  }
+  if (xHandle && normalizeXHandle(xHandle) !== normalizeXHandle(xAccount.username)) {
+    return NextResponse.json(
+      { error: "Submitted X handle does not match your bound X account." },
+      { status: 400 }
+    );
+  }
 
   // ── 4. Check already claimed (inside updateDb for atomicity) ──────────────
   const dist = task.rewardDistribution;
@@ -144,19 +223,19 @@ export async function POST(
   const maxWinners = dist?.maxWinners || 1;
 
   if (mode === "fcfs") {
-    const result = await updateDbClaim(db, taskId, wallet, xHandle, mode, maxWinners, dist, task);
+    const result = await updateDbClaim(db, taskId, wallet, xAccount.username, mode, maxWinners, dist, task);
     if (result.error) {
       return NextResponse.json({ error: result.error }, { status: 400 });
     }
     return NextResponse.json({ success: true, alreadyClaimed: false, payment: result.payment });
   } else if (mode === "lucky_draw") {
-    const result = await updateDbClaim(db, taskId, wallet, xHandle, mode, maxWinners, dist, task);
+    const result = await updateDbClaim(db, taskId, wallet, xAccount.username, mode, maxWinners, dist, task);
     if (result.error) {
       return NextResponse.json({ error: result.error }, { status: 400 });
     }
     return NextResponse.json({ success: true, alreadyClaimed: false, payment: result.payment });
   } else {
-    const result = await updateDbClaim(db, taskId, wallet, xHandle, mode, maxWinners, dist, task);
+    const result = await updateDbClaim(db, taskId, wallet, xAccount.username, mode, maxWinners, dist, task);
     if (result.error) {
       return NextResponse.json({ error: result.error }, { status: 400 });
     }
@@ -171,14 +250,15 @@ async function updateDbClaim(
   xHandle: string,
   mode: string,
   maxWinners: number,
-  dist: ReturnType<typeof Object> | undefined,
-  task: ReturnType<typeof Array.prototype.find>
+  dist: RewardDistribution | undefined,
+  task: Task
 ) {
   // Check existing payment
   const existingPayment = db.payments.find(
     (p) =>
       p.taskId === taskId &&
       p.source === "twitter_task" &&
+      isClaimedPaymentForTask(p, task) &&
       (p.receiverAddress || "").toLowerCase() === wallet
   );
   if (existingPayment) {
@@ -186,6 +266,7 @@ async function updateDbClaim(
       error: null,
       payment: {
         amount: existingPayment.amount,
+        method: existingPayment.method,
         txHash: existingPayment.txHash,
         explorerUrl: existingPayment.explorerUrl,
         network: existingPayment.network,
@@ -196,90 +277,81 @@ async function updateDbClaim(
 
   // Count existing claims
   const claimedCount = db.payments.filter(
-    (p) => p.taskId === taskId && p.source === "twitter_task"
+    (p) => p.taskId === taskId && p.source === "twitter_task" && isClaimedPaymentForTask(p, task)
   ).length;
 
   if (claimedCount >= maxWinners) {
     return { error: "All reward slots have been claimed." };
   }
 
-  // Lucky draw: auto-create quest progress entries
-  if (mode === "lucky_draw") {
-    for (const key of REQUIRED_SUBTASK_KEYS) {
-      const existing = db.questProgress.find(
-        (qp) => qp.taskId === taskId && qp.walletAddress === wallet && qp.subtaskKey === key
-      );
-      if (!existing) {
-        db.questProgress.push({
-          id: crypto.randomUUID(),
-          walletAddress: wallet,
-          taskId,
-          subtaskKey: key,
-          status: "verified" as const,
-          verifiedAt: new Date().toISOString(),
-          createdAt: new Date().toISOString()
-        });
-      }
-    }
-  } else {
-    // FCFS / equal: require all subtasks verified
-    const progress = db.questProgress.filter(
-      (qp) => qp.taskId === taskId && qp.walletAddress === wallet
-    );
-    for (const key of REQUIRED_SUBTASK_KEYS) {
-      const entry = progress.find((qp) => qp.subtaskKey === key);
-      if (!entry || entry.status !== "verified") {
-        return { error: `Subtask ${key} is not verified. Complete all tasks before claiming.` };
-      }
+  const progress = db.questProgress.filter(
+    (qp) => qp.taskId === taskId && qp.walletAddress === wallet
+  );
+  for (const key of REQUIRED_SUBTASK_KEYS) {
+    const entry = progress.find((qp) => qp.subtaskKey === key);
+    if (!entry || entry.status !== "verified") {
+      return { error: `Subtask ${key} is not verified. Complete all tasks before claiming.` };
     }
   }
 
   // Determine settlement amount
-  let settlementAmount: string;
-  if (mode === "lucky_draw") {
-    let winnerAmounts: LuckyDrawWinner[] = (task.drawResult as { winners?: LuckyDrawWinner[] })?.winners || [];
-    const totalPoolAmount = parseAmount(dist?.totalPool || task.budget);
-    const alreadyPaid = winnerAmounts.reduce((sum, w) => sum + parseAmount(w.amount), 0);
-    const remainingPool = Math.round((totalPoolAmount - alreadyPaid) * 1e6) / 1e6;
-    const remainingSlots = maxWinners - claimedCount;
+  const alreadyPaid = db.payments
+    .filter((p) => p.taskId === taskId && p.source === "twitter_task" && isClaimedPaymentForTask(p, task))
+    .reduce((sum, payment) => sum + parseAmount(payment.amount), 0);
+  const remainingSlots = maxWinners - claimedCount;
+  const remainingPool = dist?.totalPool
+    ? Math.round((parseAmount(dist.totalPool) - alreadyPaid) * 1e6) / 1e6
+    : undefined;
 
-    if (remainingPool <= 0 || remainingSlots <= 0) {
-      return { error: "No more rewards available." };
-    }
-
-    if (remainingSlots === 1) {
-      settlementAmount = `${remainingPool} USDC`;
-    } else {
-      const fairShare = remainingPool / remainingSlots;
-      const minShare = fairShare * 0.5;
-      const maxShare = Math.min(fairShare * 2, remainingPool);
-      const amount = minShare + Math.random() * (maxShare - minShare);
-      const rounded = Math.round(amount * 1e6) / 1e6;
-      settlementAmount = `${rounded} USDC`;
-    }
-
-    winnerAmounts.push({ address: wallet, amount: settlementAmount });
-    (task as unknown as { drawResult?: LuckyDrawResult }).drawResult = {
-      winners: winnerAmounts,
-      drawnAt: (task.drawResult as LuckyDrawResult)?.drawnAt || new Date().toISOString()
-    };
-  } else if (dist?.perWinner) {
-    settlementAmount = dist.perWinner;
-  } else if (dist?.totalPool && maxWinners > 0) {
-    const pool = parseAmount(dist.totalPool);
-    const perWinner = pool / maxWinners;
-    settlementAmount = perWinner.toFixed(6).replace(/\.?0+$/, "") + " USDC";
-  } else {
-    settlementAmount = task.budget;
+  if (remainingSlots <= 0 || (remainingPool !== undefined && remainingPool <= 0)) {
+    return { error: "No more rewards available." };
   }
 
+  const settlementAmount = getSettlementAmount({ dist, task, maxWinners, claimedCount, paidAmount: alreadyPaid });
   let paymentResult: PaymentEntry | null = null;
+  const taskPoolAddress = task.poolAddress;
 
   try {
-    const settlement = await executeSettlement({
-      amount: settlementAmount,
-      receiverAddress: wallet
-    });
+    let settlement;
+    if (taskPoolAddress) {
+      const claimResult = await claimForPrizePool({
+        poolAddress: taskPoolAddress,
+        recipientAddress: wallet,
+        amount: settlementAmount
+      });
+
+      if (!claimResult.ok) {
+        console.error("PrizePool.claimFor() failed:", claimResult.error);
+        return { error: `On-chain claim failed: ${claimResult.error}` };
+      }
+
+      settlement = {
+        amount: settlementAmount.replace(" USDC", ""),
+        receiverAddress: wallet,
+        payerAddress: undefined,
+        method: "prize_pool_claim" as const,
+        status: "paid" as const,
+        network: "base-mainnet" as const,
+        chainId: 8453,
+        tokenSymbol: "USDC",
+        tokenAddress: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+        txHash: claimResult.txHash,
+        explorerUrl: claimResult.explorerUrl
+      };
+    } else {
+      try {
+        settlement = await executeSettlement({
+          amount: settlementAmount,
+          receiverAddress: wallet
+        });
+      } catch (err) {
+        if (process.env.VERCEL) {
+          throw err;
+        }
+        console.warn("Live settlement failed in local dev; recording mock payment:", err);
+        settlement = buildLocalMockSettlement(settlementAmount, wallet);
+      }
+    }
 
     paymentResult = {
       id: crypto.randomUUID(),
@@ -322,7 +394,7 @@ async function updateDbClaim(
     if (t) {
       t.updatedAt = new Date().toISOString();
       const totalClaimed = db.payments.filter(
-        (p) => p.taskId === taskId && p.source === "twitter_task"
+        (p) => p.taskId === taskId && p.source === "twitter_task" && isClaimedPaymentForTask(p, t)
       ).length;
       if (totalClaimed >= maxWinners) {
         t.status = "paid";
@@ -353,6 +425,7 @@ async function updateDbClaim(
     error: null,
     payment: {
       amount: paymentResult.amount,
+      method: paymentResult.method,
       txHash: paymentResult.txHash,
       explorerUrl: paymentResult.explorerUrl,
       network: paymentResult.network,

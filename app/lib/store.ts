@@ -97,6 +97,8 @@ export type Task = {
   escrowDepositId?: string;
   /** Task-level state tracking the reward pool lifecycle (open/full/closed/refunded) */
   taskState?: TaskState;
+  /** Deployed PrizePool contract address for on-chain reward campaigns. */
+  poolAddress?: string;
   /** Lucky draw result — set after draw is executed (when first winner claims) */
   drawResult?: LuckyDrawResult;
 };
@@ -203,6 +205,13 @@ export type UserAccount = {
   authProvider?: "local" | "privy";
   privyUserId?: string;
   walletAddress?: string;
+  xAccount?: {
+    subject: string;
+    username: string;
+    name?: string;
+    profilePictureUrl?: string;
+    linkedAt?: string;
+  };
 };
 
 export type AuthSession = {
@@ -266,7 +275,7 @@ export type RewardDistribution = {
   drawTime?: string;
 };
 
-type Db = {
+export type Db = {
   tasks: Task[];
   waitlist: WaitlistEntry[];
   payments: PaymentEntry[];
@@ -673,6 +682,15 @@ function getBundledDb(): Db {
   return JSON.parse(JSON.stringify(bundledDbSnapshot)) as Db;
 }
 
+async function readFileSnapshot(): Promise<Db> {
+  try {
+    const raw = await fs.readFile(DB_PATH, "utf-8");
+    return JSON.parse(raw) as Db;
+  } catch {
+    return getBundledDb();
+  }
+}
+
 async function ensureDb(): Promise<void> {
   try {
     await fs.access(DB_PATH);
@@ -686,8 +704,7 @@ async function ensureDb(): Promise<void> {
 // ---- JSON file fallback (local dev) ----
 async function readDbFromFile(): Promise<Db> {
   await ensureDb();
-  const raw = await fs.readFile(DB_PATH, "utf-8");
-  const parsed = JSON.parse(raw) as Db;
+  const parsed = await readFileSnapshot();
   const bundled = getBundledDb();
   const tasks = mergeById(
     Array.isArray(parsed.tasks) ? parsed.tasks : [],
@@ -735,7 +752,7 @@ async function writeDbToFile(db: Db): Promise<void> {
 // Maps snake_case DB columns to camelCase TypeScript fields
 
 interface SbUser { id: string; email: string | null; created_at: string; human_id: string | null; wallet_address: string | null; auth_provider: string | null; }
-interface SbHuman { id: string; name: string; handle: string; role: string; location: string; city: string; country: string; verified: boolean; rating: number; completed_jobs: number; hourly_rate: number; skills: string[]; languages: string[]; avatar_seed: number; created_at: string; }
+interface SbHuman { id: string; name: string; handle: string; role: string; location: string; city: string; country: string; verified: boolean; rating: number; completed_jobs: number; hourly_rate: number; skills: string[]; languages: string[]; avatar_seed: number; avatar_url?: string | null; created_at: string; }
 interface SbTask { id: string; title: string; budget: string; deadline: string | null; acceptance: string; task_type: string | null; status: string; task_state: string; evidence: unknown[]; agent_id: string | null; reward_distribution: unknown; escrow_deposit_id: string | null; assignee: unknown; draw_result: unknown; campaign: unknown; verify_cooldown_hours: number; created_at: string; updated_at: string; }
 interface SbQuestProgress { id: string; wallet_address: string; task_id: string; subtask_key: string; status: string; verified_at: string | null; created_at: string; }
 interface SbPayment { id: string; task_id: string | null; amount: string; receiver: string; receiver_address: string; payer_address: string; method: string; status: string; source: string | null; network: string | null; chain_id: number | null; token_symbol: string | null; token_address: string | null; tx_hash: string | null; explorer_url: string | null; created_at: string; }
@@ -745,7 +762,7 @@ interface SbEscrowDeposit { id: string; task_id: string | null; agent_id: string
 interface SbService { id: string; provider_id: string | null; title: string; short_description: string; description: string; category: string; price: number; pricing: string; duration_minutes: number; verified: boolean; rating_count: number; created_at: string; }
 
 function sbUserToHuman(s: SbUser): UserAccount { return { id: s.id, email: s.email || "", passwordHash: "", createdAt: s.created_at, humanId: s.human_id || undefined, walletAddress: s.wallet_address || undefined, authProvider: (s.auth_provider || undefined) as "privy" | "local" | undefined }; }
-function sbHumanToHuman(s: SbHuman): Human { return { id: s.id, name: s.name, handle: s.handle, role: s.role, location: s.location, city: s.city, country: s.country, verified: s.verified, rating: s.rating, completedJobs: s.completed_jobs, hourlyRate: s.hourly_rate, skills: s.skills, languages: s.languages, avatarSeed: s.avatar_seed }; }
+function sbHumanToHuman(s: SbHuman): Human { return { id: s.id, name: s.name, handle: s.handle, role: s.role, location: s.location, city: s.city, country: s.country, verified: s.verified, rating: s.rating, completedJobs: s.completed_jobs, hourlyRate: s.hourly_rate, skills: s.skills, languages: s.languages, avatarSeed: s.avatar_seed, ...(s.avatar_url ? { avatarUrl: s.avatar_url } : {}) }; }
 function sbTaskToTask(s: SbTask): Task { return { id: s.id, title: s.title, budget: s.budget, deadline: s.deadline || "", acceptance: s.acceptance, taskType: (s.task_type || undefined) as Task["taskType"], status: s.status as Task["status"], taskState: (s.task_state || undefined) as Task["taskState"], evidence: (s.evidence || []) as Task["evidence"], agentId: s.agent_id || undefined, rewardDistribution: (s.reward_distribution || undefined) as Task["rewardDistribution"], escrowDepositId: s.escrow_deposit_id || undefined, assignee: (s.assignee || undefined) as Task["assignee"], drawResult: (s.draw_result || undefined) as Task["drawResult"], campaign: (s.campaign || undefined) as Task["campaign"], verifyCooldownHours: s.verify_cooldown_hours, createdAt: s.created_at, updatedAt: s.updated_at }; }
 function sbQpToQp(s: SbQuestProgress): QuestProgress { return { id: s.id, walletAddress: s.wallet_address, taskId: s.task_id, subtaskKey: s.subtask_key, status: s.status as QuestProgress["status"], verifiedAt: s.verified_at || undefined, createdAt: s.created_at }; }
 function sbPaymentToPayment(s: SbPayment): PaymentEntry { return { id: s.id, taskId: s.task_id || undefined, fallbackOrderId: undefined, idempotencyKey: undefined, amount: s.amount, receiver: s.receiver, receiverAddress: s.receiver_address, payerAddress: s.payer_address, method: s.method as PaymentEntry["method"], status: s.status as PaymentEntry["status"], source: (s.source || undefined) as "task" | "fallback_order" | "x402_access" | "twitter_task" | undefined, network: (s.network || undefined) as SettlementNetwork | undefined, chainId: s.chain_id || undefined, tokenSymbol: s.token_symbol || undefined, tokenAddress: s.token_address || undefined, txHash: s.tx_hash || undefined, explorerUrl: s.explorer_url || undefined, createdAt: s.created_at }; }
@@ -756,8 +773,27 @@ function sbServiceToService(s: SbService): HumanService { return { id: s.id, pro
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function humanToSbUser(h: UserAccount): any { return { id: h.id, email: h.email, created_at: h.createdAt, human_id: h.humanId ?? null, wallet_address: h.walletAddress ?? null, auth_provider: h.authProvider ?? null }; }
+
+function mergeLocalUserMetadata(users: UserAccount[], localUsers: UserAccount[]): UserAccount[] {
+  return users.map((user) => {
+    const localUser = localUsers.find(
+      (item) =>
+        item.id === user.id ||
+        (item.privyUserId && item.privyUserId === user.privyUserId) ||
+        (item.walletAddress && user.walletAddress && item.walletAddress.toLowerCase() === user.walletAddress.toLowerCase())
+    );
+    return localUser?.xAccount ? { ...user, xAccount: localUser.xAccount } : user;
+  });
+}
+
+function mergeLocalHumanMetadata(humans: Human[], localHumans: Human[]): Human[] {
+  return humans.map((human) => {
+    const localHuman = localHumans.find((item) => item.id === human.id);
+    return localHuman?.avatarUrl ? { ...human, avatarUrl: localHuman.avatarUrl } : human;
+  });
+}
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function humanToSbHuman(h: Human): any { return { id: h.id, name: h.name, handle: h.handle, role: h.role, location: h.location, city: h.city, country: h.country, verified: h.verified, rating: h.rating, completed_jobs: h.completedJobs, hourly_rate: h.hourlyRate, skills: h.skills, languages: h.languages, avatar_seed: h.avatarSeed }; }
+function humanToSbHuman(h: Human, includeAvatarUrl = false): any { return { id: h.id, name: h.name, handle: h.handle, role: h.role, location: h.location, city: h.city, country: h.country, verified: h.verified, rating: h.rating, completed_jobs: h.completedJobs, hourly_rate: h.hourlyRate, skills: h.skills, languages: h.languages, avatar_seed: h.avatarSeed, ...(includeAvatarUrl ? { avatar_url: h.avatarUrl ?? null } : {}) }; }
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function taskToSbTask(t: Task): any { return { id: t.id, title: t.title, budget: t.budget, deadline: t.deadline ?? null, acceptance: t.acceptance, task_type: t.taskType ?? null, status: t.status, task_state: t.taskState, evidence: t.evidence ?? [], agent_id: t.agentId ?? null, reward_distribution: t.rewardDistribution ?? null, escrow_deposit_id: t.escrowDepositId ?? null, assignee: t.assignee ?? null, draw_result: t.drawResult ?? null, campaign: t.campaign ?? null, verify_cooldown_hours: t.verifyCooldownHours, created_at: t.createdAt, updated_at: t.updatedAt }; }
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -786,10 +822,29 @@ async function readDbFromSupabase(): Promise<Db> {
   ]);
   const [usersRes, humansRes, tasksRes, qpRes, paymentsRes, notifsRes, ldpRes, escrowRes, servicesRes] = results;
   const bundled = getBundledDb();
+  const fileSnapshot = await readFileSnapshot();
+  const localTaskSnapshot =
+    !process.env.VERCEL && Array.isArray(fileSnapshot.tasks) ? fileSnapshot.tasks : [];
+  const supabaseTasks = tasksRes.data?.map(sbTaskToTask) ?? [];
+  const supabaseUsers = usersRes.data?.map(sbUserToHuman) ?? [];
+  const supabaseHumans = humansRes.data?.map(sbHumanToHuman) ?? [];
+  const localUsers = Array.isArray(fileSnapshot.users) ? fileSnapshot.users : [];
+  const localHumans = Array.isArray(fileSnapshot.humans) ? fileSnapshot.humans : [];
+  const localSessions =
+    !process.env.VERCEL && Array.isArray(fileSnapshot.sessions) ? fileSnapshot.sessions : [];
   return {
-    users: usersRes.data?.map(sbUserToHuman) ?? [],
-    humans: humansRes.data?.length ? humansRes.data.map(sbHumanToHuman) : seedHumans.map(h => ({ ...h })),
-    tasks: tasksRes.data?.length ? tasksRes.data.map(sbTaskToTask) : mergeById([], bundled.tasks),
+    users: !process.env.VERCEL ? mergeLocalUserMetadata(supabaseUsers, localUsers) : supabaseUsers,
+    humans: supabaseHumans.length
+      ? !process.env.VERCEL
+        ? mergeLocalHumanMetadata(supabaseHumans, localHumans)
+        : supabaseHumans
+      : seedHumans.map(h => ({ ...h })),
+    tasks:
+      localTaskSnapshot.length > 0
+        ? mergeById(localTaskSnapshot, supabaseTasks)
+        : supabaseTasks.length > 0
+          ? supabaseTasks
+          : mergeById([], bundled.tasks),
     questProgress: qpRes.data?.map(sbQpToQp) ?? [],
     payments: paymentsRes.data?.map(sbPaymentToPayment) ?? [],
     notifications: notifsRes.data?.map(sbNotifToNotif) ?? [],
@@ -800,18 +855,28 @@ async function readDbFromSupabase(): Promise<Db> {
     fallbackOrders: bundled.fallbackOrders,
     fallbackSubscriptions: [],
     waitlist: [],
-    sessions: []
+    sessions: localSessions
   };
 }
 
 // Track which collections were modified during an updateDb call
 const _modifiedCollections = new Set<string>();
+let _supportsHumanAvatarUrl: boolean | null = null;
+
+async function supportsHumanAvatarUrl(): Promise<boolean> {
+  if (!supabase) return false;
+  if (_supportsHumanAvatarUrl !== null) return _supportsHumanAvatarUrl;
+  const { error } = await supabase.from("humans").select("avatar_url").limit(1);
+  _supportsHumanAvatarUrl = !error;
+  return _supportsHumanAvatarUrl;
+}
 
 async function writeDbToSupabase(db: Db): Promise<void> {
   if (!supabase) return;
+  const includeHumanAvatarUrl = await supportsHumanAvatarUrl();
   await Promise.all([
     supabase.from("users").upsert(db.users.map(humanToSbUser), { onConflict: "id" }),
-    supabase.from("humans").upsert(db.humans.map(humanToSbHuman), { onConflict: "id" }),
+    supabase.from("humans").upsert(db.humans.map((human) => humanToSbHuman(human, includeHumanAvatarUrl)), { onConflict: "id" }),
     supabase.from("tasks").upsert(db.tasks.map(taskToSbTask), { onConflict: "id" }),
     supabase.from("quest_progress").upsert(db.questProgress.map(qpToSbQp), { onConflict: "id" }),
     supabase.from("payments").upsert(db.payments.map(paymentToSbPayment), { onConflict: "id" }),
@@ -839,6 +904,9 @@ export async function writeDb(db: Db): Promise<void> {
   if (isSupabaseEnabled) {
     try {
       await writeDbToSupabase(db);
+      if (!process.env.VERCEL) {
+        await writeDbToFile(db);
+      }
       return;
     } catch (err) {
       console.error("[Supabase] writeDb failed, falling back to file:", err);

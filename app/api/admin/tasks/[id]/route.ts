@@ -42,7 +42,7 @@ export async function GET(
   const maxWinners = task.rewardDistribution?.maxWinners || 1;
   const mode = task.rewardDistribution?.mode || "fcfs";
 
-  return NextResponse.json({
+  const body = {
     task: {
       id: task.id,
       title: task.title,
@@ -87,5 +87,11 @@ export async function GET(
     }),
     winners,
     payments: taskPayments
-  });
+  };
+
+  const response = NextResponse.json(body);
+  response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+  response.headers.set("Pragma", "no-cache");
+  response.headers.set("Expires", "0");
+  return response;
 }

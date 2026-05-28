@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAuthContext, sanitizeUser } from "../../../lib/auth";
 import { readDb } from "../../../lib/store";
+import { getBoundXAccountForUser } from "../../../lib/xIdentity";
 
 export const runtime = "nodejs";
 
@@ -17,9 +18,13 @@ export async function GET(request: Request) {
   const services = human
     ? db.services.filter((item) => item.providerId === human.id)
     : [];
+  const xAccount = await getBoundXAccountForUser(auth.user);
 
   return NextResponse.json({
-    user: sanitizeUser(auth.user),
+    user: {
+      ...sanitizeUser(auth.user),
+      ...(xAccount ? { xAccount } : {})
+    },
     human,
     services
   });

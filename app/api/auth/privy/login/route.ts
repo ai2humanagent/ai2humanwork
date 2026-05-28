@@ -58,7 +58,7 @@ export async function POST(request: Request) {
     let user =
       db.users.find((item) => item.privyUserId === identity.privyUserId) ||
       db.users.find(
-        (item) => Boolean(identity.walletAddress) && item.walletAddress === identity.walletAddress
+        (item) => Boolean(walletAddress) && item.walletAddress?.toLowerCase() === String(walletAddress).toLowerCase()
       ) ||
       null;
 
@@ -70,7 +70,15 @@ export async function POST(request: Request) {
         createdAt: now,
         authProvider: "privy",
         privyUserId: identity.privyUserId,
-        walletAddress
+        walletAddress,
+        ...(identity.xAccount
+          ? {
+              xAccount: {
+                ...identity.xAccount,
+                linkedAt: now
+              }
+            }
+          : {})
       };
       db.users.unshift(user);
     } else {
@@ -79,6 +87,12 @@ export async function POST(request: Request) {
       user.privyUserId = identity.privyUserId;
       if (walletAddress) {
         user.walletAddress = walletAddress;
+      }
+      if (identity.xAccount) {
+        user.xAccount = {
+          ...identity.xAccount,
+          linkedAt: user.xAccount?.linkedAt || now
+        };
       }
       if (!user.passwordHash) {
         user.passwordHash = "__privy__";

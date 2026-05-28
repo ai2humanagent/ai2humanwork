@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { readDb, updateDb } from "../../../../lib/store";
+import { buildMerkleRoot } from "../../../../lib/merkleUtils";
+import { updatePrizePoolMerkleRoot } from "../../../../lib/prizePool";
 
 export const runtime = "nodejs";
 
@@ -93,11 +95,12 @@ export async function POST(
   const winners = shuffled.slice(0, Math.min(slotsLeft, shuffled.length));
 
   // Store draw results in task metadata
+  const drawnAt = new Date().toISOString();
   await updateDb((db) => {
     const t = db.tasks.find((x) => x.id === taskId);
     if (t) {
       (t as Record<string, unknown>).drawResult = {
-        drawnAt: new Date().toISOString(),
+        drawnAt,
         winners,
         totalEligible: eligibleWallets.length,
         totalCandidates: candidates.length
@@ -106,11 +109,53 @@ export async function POST(
     }
   });
 
+  // ── On-chain: update PrizePool merkle root ───────────────────────────────
+  // Get pool address from task. Use campaign.id if available, otherwise
+  // derive from task id. The PrizePool must have been created via factory
+  // before this draw endpoint is called.
+  let poolAddress = "";
+  let chainUpdated = false;
+  let chainTxHash = "";
+  let chainExplorerUrl = "";
+
+  // Try to get pool address from task metadata (set when pool was created)
+  const taskPoolAddress = (task as Record<string, unknown>).poolAddress as string | undefined;
+  if (taskPoolAddress) {
+    poolAddress = taskPoolAddress;
+  }
+
+  // Build merkle root from winners (each winner gets equal share)
+  if (poolAddress && winners.length > 0) {
+    const totalPoolAmount = dist.totalPool || task.budget;
+    const perWinner = parseFloat(totalPoolAmount) / winners.length;
+    const winnerEntries = winners.map((w: string) => ({
+      address: w,
+      amount: perWinner.toFixed(6)
+    }));
+
+    const merkleRoot = buildMerkleRoot(winnerEntries);
+    const updateResult = await updatePrizePoolMerkleRoot({
+      poolAddress,
+      merkleRoot
+    });
+
+    if (updateResult.ok) {
+      chainUpdated = true;
+      chainTxHash = updateResult.txHash;
+      chainExplorerUrl = updateResult.explorerUrl;
+    } else {
+      console.error("Failed to update on-chain merkle root:", updateResult.error);
+    }
+  }
+
   return NextResponse.json({
     success: true,
     winners,
     totalEligible: eligibleWallets.length,
     totalCandidates: candidates.length,
-    slotsAwarded: winners.length
+    slotsAwarded: winners.length,
+    merkleRoot: chainUpdated ? "updated" : "skipped",
+    chainTxHash: chainTxHash || null,
+    chainExplorerUrl: chainExplorerUrl || null
   });
 }

@@ -79,6 +79,12 @@ type AuthPayload = {
   user: {
     id: string;
     walletAddress?: string;
+    xAccount?: {
+      subject: string;
+      username: string;
+      name?: string;
+      profilePictureUrl?: string;
+    };
   };
   human: {
     id: string;
@@ -217,6 +223,10 @@ function settlementExplorerLabel(payment: PaymentResult) {
   return "View onchain transaction";
 }
 
+function isLocalMockPayment(payment: PaymentResult) {
+  return payment.method === "mock_x402" || !payment.txHash || !payment.explorerUrl;
+}
+
 function getCachedPayment(taskId: string): PaymentResult | null {
   if (typeof window === "undefined") return null;
   try {
@@ -306,6 +316,28 @@ export default function TaskDetailClient({
   const countdown = useCountdown(countdownTarget);
   const distMode = distributionModeLabel(dist?.mode);
   const maxWinners = dist?.maxWinners || 1;
+  const boundXAccount = auth?.user.xAccount;
+  const hasBoundXAccount = Boolean(boundXAccount?.username);
+
+  function cacheXHandle(handle: string) {
+    setXHandle(handle);
+    if (typeof window !== "undefined") {
+      localStorage.setItem(`ai2human:xhandle:${initialTask.id}`, handle);
+    }
+  }
+
+  function requireBoundXAccount() {
+    if (!connectedWallet) {
+      login();
+      return false;
+    }
+    if (!hasBoundXAccount) {
+      setError("Bind your X account from Profile before doing tasks.");
+      router.push("/app/profile");
+      return false;
+    }
+    return true;
+  }
 
   // Load quest progress from API
   async function loadQuestProgress(wallet: string) {
@@ -319,7 +351,7 @@ export default function TaskDetailClient({
       const subtasks = data.subtasks as Record<string, string> | undefined;
       if (subtasks) {
         const newStates: Record<string, TaskItemState> = {};
-        for (const key of ["0", "1", "2", "3"]) {
+        for (const key of ["0", "1", "2", "3", "4"]) {
           const status = subtasks[key] || "pending";
           newStates[key] = {
             actionClicked: status === "action_done" || status === "verified",
@@ -328,12 +360,9 @@ export default function TaskDetailClient({
           };
         }
         setTaskStates(newStates);
-        // Restore xHandle from DB
-        if (data.xHandle) {
-          setXHandle(data.xHandle);
-          if (typeof window !== "undefined") {
-            localStorage.setItem(`ai2human:xhandle:${initialTask.id}`, data.xHandle);
-          }
+        const restoredXHandle = data.xAccount?.username || data.xHandle;
+        if (restoredXHandle) {
+          cacheXHandle(restoredXHandle);
         }
       }
       if (data.claimed && data.payment) {
@@ -347,16 +376,14 @@ export default function TaskDetailClient({
 
   // Per-task action click handler — persists to DB
   async function handleTaskAction(taskKey: string) {
-    if (!connectedWallet) {
-      login();
-      return;
-    }
+    const walletAddress = connectedWallet;
+    if (!requireBoundXAccount() || !walletAddress) return;
     try {
       const res = await fetch(`/api/tasks/${initialTask.id}/quest-progress`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "same-origin",
-        body: JSON.stringify({ wallet: connectedWallet.toLowerCase(), subtaskKey: taskKey, action: "action" })
+        body: JSON.stringify({ wallet: walletAddress.toLowerCase(), subtaskKey: taskKey, action: "action" })
       });
       const data = await res.json();
       if (data.status === "action_done" || data.status === "verified") {
@@ -376,13 +403,11 @@ export default function TaskDetailClient({
 
   // Per-task verify handler — simple DB write, no wallet signature needed
   async function handleTaskVerify(taskKey: string) {
-    if (!connectedWallet) {
-      login();
-      return;
-    }
+    const walletAddress = connectedWallet;
+    if (!requireBoundXAccount() || !walletAddress) return;
     const state = taskStates[taskKey];
-    // For task 4 (xHandle), allow transition from action_done directly to verified
-    if (taskKey === "4" && xHandle.trim() && !state?.verified) {
+    // For task 4, the bound X account itself is the verification payload.
+    if (taskKey === "4" && hasBoundXAccount && !state?.verified) {
       // First transition to action_done if needed, then verify in one step
       setTaskStates((prev) => ({
         ...prev,
@@ -398,13 +423,12 @@ export default function TaskDetailClient({
     }));
     try {
       const body: Record<string, string> = {
-        wallet: connectedWallet.toLowerCase(),
+        wallet: walletAddress.toLowerCase(),
         subtaskKey: taskKey,
         action: "verify"
       };
-      // Include xHandle when verifying task 4 (X handle confirmation)
-      if (taskKey === "4" && xHandle.trim()) {
-        body.xHandle = xHandle.trim();
+      if (taskKey === "4" && boundXAccount?.username) {
+        body.xHandle = boundXAccount.username;
       }
       const res = await fetch(`/api/tasks/${initialTask.id}/quest-progress`, {
         method: "POST",
@@ -437,7 +461,7 @@ export default function TaskDetailClient({
   // Build the claim message (must match server-side)
   function buildClaimMessage(taskId: string, wallet: string): string {
     return [
-      "ai2human Lucky Draw Claim",
+      "ai2human Reward Claim",
       `Task: ${taskId}`,
       `Wallet: ${wallet.toLowerCase()}`,
       "I am claiming my lucky draw reward."
@@ -506,7 +530,7 @@ export default function TaskDetailClient({
         credentials: "same-origin",
         body: JSON.stringify({
           wallet: connectedWallet.toLowerCase(),
-          xHandle,
+          xHandle: boundXAccount?.username || xHandle,
           signature,
           captchaToken: token
         })
@@ -518,10 +542,13 @@ export default function TaskDetailClient({
       if (data.payment) {
         setClaimResult(data.payment);
         cachePayment(initialTask.id, data.payment);
+        const localMockPayment = isLocalMockPayment(data.payment);
         setMessage(
           data.alreadyClaimed
             ? "Reward already claimed!"
-            : `${data.payment.amount} ${data.payment.tokenSymbol || "USDC"} sent to your wallet!`
+            : localMockPayment
+              ? `${data.payment.amount} ${data.payment.tokenSymbol || "USDC"} recorded locally. No onchain transaction was created.`
+              : `${data.payment.amount} ${data.payment.tokenSymbol || "USDC"} sent to your wallet!`
         );
       }
       setCaptchaToken("");
@@ -539,14 +566,12 @@ export default function TaskDetailClient({
 
   // Claim reward — triggers Google reCAPTCHA first
   async function handleClaimReward() {
-    if (!connectedWallet) {
-      login();
+    if (!requireBoundXAccount()) return;
+    if (!boundXAccount?.username) {
+      setError("Bind your X account from Profile before claiming.");
       return;
     }
-    if (!xHandle.trim()) {
-      setError("Please enter your X handle to claim");
-      return;
-    }
+    cacheXHandle(boundXAccount.username);
     setError("");
     const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
     if (!siteKey) {
@@ -617,6 +642,9 @@ export default function TaskDetailClient({
       return;
     }
     setAuth(payload);
+    if (payload.user.xAccount?.username) {
+      cacheXHandle(payload.user.xAccount.username);
+    }
     if (payload.human?.handle) {
       setExecutorHandle((current) => current || `@${payload.human?.handle}`);
     }
@@ -1077,7 +1105,7 @@ export default function TaskDetailClient({
                     { key: "1", icon: joinSvg, label: "Join Telegram Group", actionLabel: "Join", intentUrl: "https://t.me/+G3U4loFH5H0zMmU1" },
                     { key: "2", icon: retweetSvg, label: "Repost announcement tweet", actionLabel: "Repost", intentUrl: "https://x.com/intent/retweet?tweet_id=2057437770902372396" },
                     { key: "3", icon: likeSvg, label: "Like announcement tweet", actionLabel: "Like", intentUrl: "https://x.com/intent/like?tweet_id=2058166798005248452" },
-                    { key: "4", icon: userSvg, label: "Enter your X handle", actionLabel: "Confirm", isXHandle: true },
+                    { key: "4", icon: userSvg, label: "Confirm bound X account", actionLabel: "Confirm" },
                   ].map((item) => {
                     const state = taskStates[item.key] || { actionClicked: false, verifying: false, verified: false };
                     const isExpanded = expandedTasks[item.key] || false;
@@ -1118,43 +1146,30 @@ export default function TaskDetailClient({
                                   </div>
                                 </div>
                               ) : item.key === "4" ? (
-                                /* X Handle input — special inline field */
                                 <div className={styles.qnTaskButtons}>
-                                  <div className={styles.qnXHandleInputWrap}>
-                                    <input
-                                      type="text"
-                                      placeholder="@your_x_handle"
-                                      value={item.key === "4" ? xHandle : ""}
-                                      onChange={(e) => {
-                                        if (item.key === "4") {
-                                          const val = e.target.value;
-                                          setXHandle(val);
-                                          if (typeof window !== "undefined" && connectedWallet) {
-                                            localStorage.setItem(`ai2human:xhandle:${initialTask.id}`, val);
-                                          }
-                                        }
-                                      }}
-                                      className={styles.qnXHandleInput}
-                                      onKeyDown={(e) => {
-                                        if (e.key === "Enter" && xHandle.trim() && item.key === "4") {
-                                          // Auto-verify on Enter
-                                          handleTaskVerify("4");
-                                        }
-                                      }}
-                                    />
-                                    <div className={`${styles.btn3d} ${styles.btn3dGreen}`} style={{ flex: "0 0 auto" }}>
+                                  <div className={styles.qnBoundXPanel}>
+                                    <div className={styles.qnBoundXInfo}>
+                                      <span>{hasBoundXAccount ? "Bound X account" : "X account required"}</span>
+                                      <strong>{hasBoundXAccount ? `@${boundXAccount?.username}` : "Bind from Profile before starting"}</strong>
+                                    </div>
+                                    <div
+                                      className={`${styles.btn3d} ${hasBoundXAccount ? styles.btn3dGreen : styles.btn3dCyan}`}
+                                      style={{ flex: "0 0 auto" }}
+                                    >
                                       <div className={styles.btn3dInner}>
                                         <button
                                           type="button"
                                           className={styles.btn3dFace}
-                                          disabled={!xHandle.trim()}
                                           onClick={() => {
-                                            if (!xHandle.trim()) return;
-                                            // Save xHandle to DB via verify API, same as other tasks
+                                            if (!hasBoundXAccount) {
+                                              setError("Bind your X account from Profile before doing tasks.");
+                                              router.push("/app/profile");
+                                              return;
+                                            }
                                             handleTaskVerify("4");
                                           }}
                                         >
-                                          Confirm
+                                          {hasBoundXAccount ? "Confirm" : "Bind X"}
                                         </button>
                                         <span className={styles.btn3dShadow} />
                                       </div>
@@ -1175,10 +1190,7 @@ export default function TaskDetailClient({
                                         type="button"
                                         className={styles.btn3dFace}
                                         onClick={() => {
-                                          if (!connectedWallet) {
-                                            login();
-                                            return;
-                                          }
+                                          if (!requireBoundXAccount()) return;
                                           window.open(item.intentUrl, "_blank", "width=600,height=400,toolbar=no,menubar=no");
                                           handleTaskAction(item.key);
                                         }}
@@ -1229,6 +1241,13 @@ export default function TaskDetailClient({
                 <div className={styles.qnProfileNotice}>
                   Complete your operator profile to start earning.
                   <a href="/app/profile">→ Complete Profile</a>
+                </div>
+              )}
+
+              {connectedWallet && auth && !hasBoundXAccount && !isDone && (
+                <div className={styles.qnProfileNotice}>
+                  Bind your X account before doing tasks.
+                  <a href="/app/profile">→ Bind X Account</a>
                 </div>
               )}
 
@@ -1395,7 +1414,8 @@ export default function TaskDetailClient({
                 {claimResult ? (
                   <div className={styles.qnClaimDone}>
                     {checkSvg}
-                    {claimResult.amount || task.budget} {claimResult.tokenSymbol || "USDC"} Claimed
+                    {claimResult.amount || task.budget} {claimResult.tokenSymbol || "USDC"}{" "}
+                    {isLocalMockPayment(claimResult) ? "Recorded locally" : "Claimed"}
                     {claimResult.explorerUrl && (
                       <a
                         href={claimResult.explorerUrl}
@@ -1435,7 +1455,7 @@ export default function TaskDetailClient({
                       <button
                         type="button"
                         className={styles.btn3dFace}
-                        disabled={claimingReward || !xHandle.trim()}
+                        disabled={claimingReward || !hasBoundXAccount}
                         onClick={handleClaimReward}
                       >
                         {claimingReward ? "Claiming..." : "Claim Reward"}
@@ -1461,7 +1481,10 @@ export default function TaskDetailClient({
                 {!connectedWallet && (
                   <p className={styles.qnClaimTips}>Connect wallet to start earning</p>
                 )}
-                {connectedWallet && !allTasksVerified && !claimResult && (
+                {connectedWallet && !hasBoundXAccount && !claimResult && (
+                  <p className={styles.qnClaimTips}>Bind your X account from Profile before doing tasks</p>
+                )}
+                {connectedWallet && hasBoundXAccount && !allTasksVerified && !claimResult && (
                   <p className={styles.qnClaimTips}>Complete all tasks to claim</p>
                 )}
               </div>

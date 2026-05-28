@@ -54,13 +54,35 @@ export type PrivyIdentity = {
   privyUserId: string;
   email: string;
   walletAddress?: string;
+  xAccount?: {
+    subject: string;
+    username: string;
+    name?: string;
+    profilePictureUrl?: string;
+  };
 };
+
+export function extractPrivyXAccount(user: User): PrivyIdentity["xAccount"] {
+  const account = user.linkedAccounts.find(
+    (item) => item.type === "twitter_oauth"
+  );
+  if (!account || account.type !== "twitter_oauth" || !account.subject || !account.username) {
+    return undefined;
+  }
+  return {
+    subject: account.subject,
+    username: account.username.replace(/^@/, ""),
+    name: account.name || undefined,
+    profilePictureUrl: account.profilePictureUrl || undefined
+  };
+}
 
 export function extractPrivyIdentity(user: User): PrivyIdentity {
   const fallback = `${user.id.replace(/[^a-z0-9]/gi, "").slice(-20)}@privy.local`;
   return {
     privyUserId: user.id,
     email: (user.email?.address || fallback).toLowerCase(),
-    walletAddress: getWalletAddress(user)
+    walletAddress: getWalletAddress(user),
+    xAccount: extractPrivyXAccount(user)
   };
 }

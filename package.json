@@ -11,10 +11,11 @@
     "smoke:day7": "node scripts/smoke-day7.mjs"
   },
   "dependencies": {
-    "@solana/web3.js": "^1.98.4",
     "@privy-io/react-auth": "^3.15.0",
     "@privy-io/server-auth": "^1.32.4",
+    "@solana/web3.js": "^1.98.4",
     "@supabase/supabase-js": "^2.95.3",
+    "js-sha3": "^0.9.3",
     "next": "^14.2.5",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

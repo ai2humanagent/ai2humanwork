@@ -37,6 +37,8 @@
   ],
   "exclude": [
     "node_modules",
-    "synthesis-app/**/*"
+    "synthesis-app/**/*",
+    "aeon/**/*",
+    "contracts/lib/**/*"
   ]
 }

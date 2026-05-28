@@ -26,6 +26,7 @@ export type Human = {
   skills: string[];
   languages: string[];
   avatarSeed: number;
+  avatarUrl?: string;
 };
 
 export type HumanService = {

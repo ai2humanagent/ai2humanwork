@@ -56,7 +56,8 @@ export function sanitizeUser(user: UserAccount) {
     createdAt: user.createdAt,
     humanId: user.humanId,
     walletAddress: user.walletAddress,
-    authProvider: user.authProvider || "local"
+    authProvider: user.authProvider || "local",
+    xAccount: user.xAccount
   };
 }
 

@@ -25,11 +25,19 @@ function ensureUniqueHandle(base: string, used: Set<string>): string {
 }
 
 function normalizeList(input: unknown, max: number): string[] {
-  if (!Array.isArray(input)) return [];
-  return input
+  const items = Array.isArray(input) ? input : String(input || "").split(",");
+  return items
     .map((item) => String(item).trim())
     .filter(Boolean)
     .slice(0, max);
+}
+
+function normalizeAvatarUrl(input: unknown): string | undefined {
+  const value = String(input || "").trim();
+  if (!value) return undefined;
+  if (value.length > 350_000) return undefined;
+  if (!/^data:image\/(png|jpe?g|webp);base64,[a-z0-9+/=]+$/i.test(value)) return undefined;
+  return value;
 }
 
 function findAndAssignTask(
@@ -89,7 +97,8 @@ function normalizeProfileInput(body: Record<string, unknown>, user: UserAccount)
       ? Math.max(1, Number(body.hourlyRate))
       : 30,
     skills: normalizeList(body.skills, 50),
-    languages: normalizeList(body.languages, 20)
+    languages: normalizeList(body.languages, 20),
+    avatarUrl: normalizeAvatarUrl(body.avatarUrl)
   };
 }
 
@@ -170,7 +179,11 @@ export async function POST(request: Request) {
     if (user.humanId) {
       const existing = db.humans.find((item) => item.id === user.humanId);
       if (!existing) return;
-      Object.assign(existing, input);
+      const nextInput = { ...input };
+      if (body.avatarUrl === undefined) {
+        delete nextInput.avatarUrl;
+      }
+      Object.assign(existing, nextInput);
       profile = existing;
       return;
     }
@@ -192,7 +205,8 @@ export async function POST(request: Request) {
       hourlyRate: input.hourlyRate,
       skills: input.skills,
       languages: input.languages,
-      avatarSeed: (db.humans.length % 8) + 1
+      avatarSeed: (db.humans.length % 8) + 1,
+      ...(input.avatarUrl ? { avatarUrl: input.avatarUrl } : {})
     };
 
     db.humans.unshift(created);
