@@ -18,10 +18,13 @@ DROP TABLE IF EXISTS waitlist CASCADE;
 CREATE TABLE users (
   id TEXT PRIMARY KEY,
   email TEXT,
+  password_hash TEXT,
   created_at TIMESTAMPTZ DEFAULT now(),
   human_id TEXT,
   wallet_address TEXT,
-  auth_provider TEXT
+  auth_provider TEXT,
+  privy_user_id TEXT,
+  x_account JSONB
 );
 
 -- Humans
@@ -165,6 +168,15 @@ CREATE TABLE waitlist (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
+-- Sessions (maps to app AuthSession type)
+CREATE TABLE sessions (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  token TEXT UNIQUE NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  expires_at TIMESTAMPTZ NOT NULL
+);
+
 -- Enable RLS (Row Level Security) - allow all for now with service role
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE humans ENABLE ROW LEVEL SECURITY;
@@ -176,6 +188,7 @@ ALTER TABLE lucky_draw_participants ENABLE ROW LEVEL SECURITY;
 ALTER TABLE escrow_deposits ENABLE ROW LEVEL SECURITY;
 ALTER TABLE services ENABLE ROW LEVEL SECURITY;
 ALTER TABLE waitlist ENABLE ROW LEVEL SECURITY;
+ALTER TABLE sessions ENABLE ROW LEVEL SECURITY;
 
 -- Policies: allow all operations with service role (bypasses RLS)
 CREATE POLICY "allow_all" ON users FOR ALL TO service_role USING (true) WITH CHECK (true);
@@ -188,3 +201,4 @@ CREATE POLICY "allow_all" ON lucky_draw_participants FOR ALL TO service_role USI
 CREATE POLICY "allow_all" ON escrow_deposits FOR ALL TO service_role USING (true) WITH CHECK (true);
 CREATE POLICY "allow_all" ON services FOR ALL TO service_role USING (true) WITH CHECK (true);
 CREATE POLICY "allow_all" ON waitlist FOR ALL TO service_role USING (true) WITH CHECK (true);
+CREATE POLICY "allow_all" ON sessions FOR ALL TO service_role USING (true) WITH CHECK (true);

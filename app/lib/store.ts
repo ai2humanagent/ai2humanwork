@@ -751,7 +751,17 @@ async function writeDbToFile(db: Db): Promise<void> {
 // ---- Supabase-backed storage ----
 // Maps snake_case DB columns to camelCase TypeScript fields
 
-interface SbUser { id: string; email: string | null; created_at: string; human_id: string | null; wallet_address: string | null; auth_provider: string | null; }
+interface SbUser {
+  id: string;
+  email: string | null;
+  password_hash?: string | null;
+  created_at: string;
+  human_id: string | null;
+  wallet_address: string | null;
+  auth_provider: string | null;
+  privy_user_id?: string | null;
+  x_account?: UserAccount["xAccount"] | null;
+}
 interface SbHuman { id: string; name: string; handle: string; role: string; location: string; city: string; country: string; verified: boolean; rating: number; completed_jobs: number; hourly_rate: number; skills: string[]; languages: string[]; avatar_seed: number; avatar_url?: string | null; created_at: string; }
 interface SbTask { id: string; title: string; budget: string; deadline: string | null; acceptance: string; task_type: string | null; status: string; task_state: string; evidence: unknown[]; agent_id: string | null; reward_distribution: unknown; escrow_deposit_id: string | null; assignee: unknown; draw_result: unknown; campaign: unknown; verify_cooldown_hours: number; created_at: string; updated_at: string; }
 interface SbQuestProgress { id: string; wallet_address: string; task_id: string; subtask_key: string; status: string; verified_at: string | null; created_at: string; }
@@ -759,20 +769,22 @@ interface SbPayment { id: string; task_id: string | null; amount: string; receiv
 interface SbNotification { id: string; user_id: string; type: string; title: string; body: string; task_id: string | null; read: boolean; created_at: string; }
 interface SbLuckyDrawParticipant { id: string; task_id: string; wallet_address: string; x_handle: string | null; created_at: string; }
 interface SbEscrowDeposit { id: string; task_id: string | null; agent_id: string | null; agent_wallet: string | null; total_pool: string | null; amount_paid_out: string; amount_refunded: string; paid_count: number; status: string; deposit_tx_hash: string | null; deposit_explorer_url: string | null; refund_tx_hash: string | null; refund_explorer_url: string | null; error_message: string | null; created_at: string; updated_at: string; }
+interface SbSession { id: string; user_id: string; token: string; created_at: string; expires_at: string; }
 interface SbService { id: string; provider_id: string | null; title: string; short_description: string; description: string; category: string; price: number; pricing: string; duration_minutes: number; verified: boolean; rating_count: number; created_at: string; }
 
-function sbUserToHuman(s: SbUser): UserAccount { return { id: s.id, email: s.email || "", passwordHash: "", createdAt: s.created_at, humanId: s.human_id || undefined, walletAddress: s.wallet_address || undefined, authProvider: (s.auth_provider || undefined) as "privy" | "local" | undefined }; }
+function sbUserToHuman(s: SbUser): UserAccount { return { id: s.id, email: s.email || "", passwordHash: s.password_hash || "", createdAt: s.created_at, humanId: s.human_id || undefined, walletAddress: s.wallet_address || undefined, authProvider: (s.auth_provider || undefined) as "privy" | "local" | undefined, privyUserId: s.privy_user_id || undefined, xAccount: s.x_account || undefined }; }
 function sbHumanToHuman(s: SbHuman): Human { return { id: s.id, name: s.name, handle: s.handle, role: s.role, location: s.location, city: s.city, country: s.country, verified: s.verified, rating: s.rating, completedJobs: s.completed_jobs, hourlyRate: s.hourly_rate, skills: s.skills, languages: s.languages, avatarSeed: s.avatar_seed, ...(s.avatar_url ? { avatarUrl: s.avatar_url } : {}) }; }
 function sbTaskToTask(s: SbTask): Task { return { id: s.id, title: s.title, budget: s.budget, deadline: s.deadline || "", acceptance: s.acceptance, taskType: (s.task_type || undefined) as Task["taskType"], status: s.status as Task["status"], taskState: (s.task_state || undefined) as Task["taskState"], evidence: (s.evidence || []) as Task["evidence"], agentId: s.agent_id || undefined, rewardDistribution: (s.reward_distribution || undefined) as Task["rewardDistribution"], escrowDepositId: s.escrow_deposit_id || undefined, assignee: (s.assignee || undefined) as Task["assignee"], drawResult: (s.draw_result || undefined) as Task["drawResult"], campaign: (s.campaign || undefined) as Task["campaign"], verifyCooldownHours: s.verify_cooldown_hours, createdAt: s.created_at, updatedAt: s.updated_at }; }
 function sbQpToQp(s: SbQuestProgress): QuestProgress { return { id: s.id, walletAddress: s.wallet_address, taskId: s.task_id, subtaskKey: s.subtask_key, status: s.status as QuestProgress["status"], verifiedAt: s.verified_at || undefined, createdAt: s.created_at }; }
 function sbPaymentToPayment(s: SbPayment): PaymentEntry { return { id: s.id, taskId: s.task_id || undefined, fallbackOrderId: undefined, idempotencyKey: undefined, amount: s.amount, receiver: s.receiver, receiverAddress: s.receiver_address, payerAddress: s.payer_address, method: s.method as PaymentEntry["method"], status: s.status as PaymentEntry["status"], source: (s.source || undefined) as "task" | "fallback_order" | "x402_access" | "twitter_task" | undefined, network: (s.network || undefined) as SettlementNetwork | undefined, chainId: s.chain_id || undefined, tokenSymbol: s.token_symbol || undefined, tokenAddress: s.token_address || undefined, txHash: s.tx_hash || undefined, explorerUrl: s.explorer_url || undefined, createdAt: s.created_at }; }
 function sbNotifToNotif(s: SbNotification): Notification { return { id: s.id, userId: s.user_id, type: s.type as Notification["type"], title: s.title, body: s.body, taskId: s.task_id || undefined, read: s.read, createdAt: s.created_at }; }
 function sbLdpToLdp(s: SbLuckyDrawParticipant): LuckyDrawParticipant { return { id: s.id, taskId: s.task_id, walletAddress: s.wallet_address, xHandle: s.x_handle || "", createdAt: s.created_at }; }
+function sbSessionToSession(s: SbSession): AuthSession { return { id: s.id, userId: s.user_id, token: s.token, createdAt: s.created_at, expiresAt: s.expires_at }; }
 function sbEscrowToEscrow(s: SbEscrowDeposit): EscrowDeposit { return { id: s.id, taskId: s.task_id || "", agentId: s.agent_id || "", agentWallet: s.agent_wallet || "", totalPool: s.total_pool || "0", amountPaidOut: s.amount_paid_out, amountRefunded: s.amount_refunded, paidCount: s.paid_count, status: (s.status || "active") as EscrowDeposit["status"], depositTxHash: s.deposit_tx_hash || undefined, depositExplorerUrl: s.deposit_explorer_url || undefined, refundTxHash: s.refund_tx_hash || undefined, refundExplorerUrl: s.refund_explorer_url || undefined, errorMessage: s.error_message || undefined, createdAt: s.created_at, updatedAt: s.updated_at }; }
 function sbServiceToService(s: SbService): HumanService { return { id: s.id, providerId: s.provider_id || "", title: s.title, shortDescription: s.short_description, description: s.description, category: s.category as HumanService["category"], price: s.price, pricing: s.pricing as HumanService["pricing"], durationMinutes: s.duration_minutes, verified: s.verified, ratingCount: s.rating_count }; }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function humanToSbUser(h: UserAccount): any { return { id: h.id, email: h.email, created_at: h.createdAt, human_id: h.humanId ?? null, wallet_address: h.walletAddress ?? null, auth_provider: h.authProvider ?? null }; }
+function humanToSbUser(h: UserAccount): any { return { id: h.id, email: h.email, password_hash: h.passwordHash || null, created_at: h.createdAt, human_id: h.humanId ?? null, wallet_address: h.walletAddress ?? null, auth_provider: h.authProvider ?? null, privy_user_id: h.privyUserId ?? null, x_account: h.xAccount ?? null }; }
 
 function mergeLocalUserMetadata(users: UserAccount[], localUsers: UserAccount[]): UserAccount[] {
   return users.map((user) => {
@@ -805,6 +817,8 @@ function notifToSbNotif(n: Notification): any { return { id: n.id, user_id: n.us
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function ldpToSbLdp(ldp: LuckyDrawParticipant): any { return { id: ldp.id, task_id: ldp.taskId, wallet_address: ldp.walletAddress, x_handle: ldp.xHandle ?? null, created_at: ldp.createdAt }; }
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+function sessionToSbSession(s: AuthSession): any { return { id: s.id, user_id: s.userId, token: s.token, created_at: s.createdAt, expires_at: s.expiresAt }; }
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function escrowToSbEscrow(e: EscrowDeposit): any { return { id: e.id, task_id: e.taskId ?? null, agent_id: e.agentId ?? null, agent_wallet: e.agentWallet ?? null, total_pool: e.totalPool ?? null, amount_paid_out: e.amountPaidOut, amount_refunded: e.amountRefunded, paid_count: e.paidCount, status: e.status, deposit_tx_hash: e.depositTxHash ?? null, deposit_explorer_url: e.depositExplorerUrl ?? null, refund_tx_hash: e.refundTxHash ?? null, refund_explorer_url: e.refundExplorerUrl ?? null, error_message: e.errorMessage ?? null, created_at: e.createdAt, updated_at: e.updatedAt }; }
 
 async function readDbFromSupabase(): Promise<Db> {
@@ -818,9 +832,33 @@ async function readDbFromSupabase(): Promise<Db> {
     supabase.from("notifications").select("*"),
     supabase.from("lucky_draw_participants").select("*"),
     supabase.from("escrow_deposits").select("*"),
-    supabase.from("services").select("*")
+    supabase.from("services").select("*"),
+    supabase.from("sessions").select("*")
   ]);
-  const [usersRes, humansRes, tasksRes, qpRes, paymentsRes, notifsRes, ldpRes, escrowRes, servicesRes] = results;
+  const [usersRes, humansRes, tasksRes, qpRes, paymentsRes, notifsRes, ldpRes, escrowRes, servicesRes, sessionsRes] = results;
+  const readErrors = [
+    ["users", usersRes.error],
+    ["humans", humansRes.error],
+    ["tasks", tasksRes.error],
+    ["quest_progress", qpRes.error],
+    ["payments", paymentsRes.error],
+    ["notifications", notifsRes.error],
+    ["lucky_draw_participants", ldpRes.error],
+    ["escrow_deposits", escrowRes.error],
+    ["services", servicesRes.error],
+    ["sessions", sessionsRes.error]
+  ].flatMap(([table, error]) =>
+    error && typeof error !== "string"
+      ? [{ table: String(table), message: error.message }]
+      : []
+  );
+  if (readErrors.length > 0) {
+    throw new Error(
+      `Supabase read failed: ${readErrors
+        .map((error) => `${error.table}: ${error.message || "unknown error"}`)
+        .join("; ")}`
+    );
+  }
   const bundled = getBundledDb();
   const fileSnapshot = await readFileSnapshot();
   const localTaskSnapshot =
@@ -855,7 +893,7 @@ async function readDbFromSupabase(): Promise<Db> {
     fallbackOrders: bundled.fallbackOrders,
     fallbackSubscriptions: [],
     waitlist: [],
-    sessions: localSessions
+    sessions: sessionsRes.data?.map(sbSessionToSession) ?? []
   };
 }
 
@@ -874,17 +912,31 @@ async function supportsHumanAvatarUrl(): Promise<boolean> {
 async function writeDbToSupabase(db: Db): Promise<void> {
   if (!supabase) return;
   const includeHumanAvatarUrl = await supportsHumanAvatarUrl();
-  await Promise.all([
-    supabase.from("users").upsert(db.users.map(humanToSbUser), { onConflict: "id" }),
-    supabase.from("humans").upsert(db.humans.map((human) => humanToSbHuman(human, includeHumanAvatarUrl)), { onConflict: "id" }),
-    supabase.from("tasks").upsert(db.tasks.map(taskToSbTask), { onConflict: "id" }),
-    supabase.from("quest_progress").upsert(db.questProgress.map(qpToSbQp), { onConflict: "id" }),
-    supabase.from("payments").upsert(db.payments.map(paymentToSbPayment), { onConflict: "id" }),
-    supabase.from("notifications").upsert(db.notifications.map(notifToSbNotif), { onConflict: "id" }),
-    supabase.from("lucky_draw_participants").upsert(db.luckyDrawParticipants.map(ldpToSbLdp), { onConflict: "id" }),
-    supabase.from("escrow_deposits").upsert(db.escrowDeposits.map(escrowToSbEscrow), { onConflict: "id" }),
-    supabase.from("services").upsert(db.services.map((s: HumanService) => ({ id: s.id, provider_id: s.providerId, title: s.title, short_description: s.shortDescription, description: s.description, category: s.category, price: s.price, pricing: s.pricing, duration_minutes: s.durationMinutes, verified: s.verified, rating_count: s.ratingCount, created_at: new Date().toISOString() })), { onConflict: "id" })
-  ]);
+  const writeRequests = [
+    { table: "users", request: supabase.from("users").upsert(db.users.map(humanToSbUser), { onConflict: "id" }) },
+    { table: "humans", request: supabase.from("humans").upsert(db.humans.map((human) => humanToSbHuman(human, includeHumanAvatarUrl)), { onConflict: "id" }) },
+    { table: "tasks", request: supabase.from("tasks").upsert(db.tasks.map(taskToSbTask), { onConflict: "id" }) },
+    { table: "quest_progress", request: supabase.from("quest_progress").upsert(db.questProgress.map(qpToSbQp), { onConflict: "id" }) },
+    { table: "payments", request: supabase.from("payments").upsert(db.payments.map(paymentToSbPayment), { onConflict: "id" }) },
+    { table: "notifications", request: supabase.from("notifications").upsert(db.notifications.map(notifToSbNotif), { onConflict: "id" }) },
+    { table: "lucky_draw_participants", request: supabase.from("lucky_draw_participants").upsert(db.luckyDrawParticipants.map(ldpToSbLdp), { onConflict: "id" }) },
+    { table: "escrow_deposits", request: supabase.from("escrow_deposits").upsert(db.escrowDeposits.map(escrowToSbEscrow), { onConflict: "id" }) },
+    { table: "services", request: supabase.from("services").upsert(db.services.map((s: HumanService) => ({ id: s.id, provider_id: s.providerId, title: s.title, short_description: s.shortDescription, description: s.description, category: s.category, price: s.price, pricing: s.pricing, duration_minutes: s.durationMinutes, verified: s.verified, rating_count: s.ratingCount, created_at: new Date().toISOString() })), { onConflict: "id" }) },
+    { table: "sessions", request: supabase.from("sessions").upsert(db.sessions.map(sessionToSbSession), { onConflict: "id" }) }
+  ];
+  const writes = await Promise.all(
+    writeRequests.map(async ({ table, request }) => [table, await request] as const)
+  );
+  const writeErrors = writes
+    .map(([table, result]) => [table, result.error] as const)
+    .filter(([, error]) => error);
+  if (writeErrors.length > 0) {
+    throw new Error(
+      `Supabase write failed: ${writeErrors
+        .map(([table, error]) => `${table}: ${error?.message || "unknown error"}`)
+        .join("; ")}`
+    );
+  }
 }
 
 // ---- Public API ----
