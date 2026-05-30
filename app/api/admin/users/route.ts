@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { readDb } from "../../../lib/store";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 function normalizeAddress(value?: string | null) {
   return value?.trim().toLowerCase() || "";
