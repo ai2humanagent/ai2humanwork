@@ -586,7 +586,7 @@ export default function ProfilePage() {
           </div>
 
           <button className={styles.saveBtn} type="button" onClick={saveProfile} disabled={saving}>
-            {saving ? "Saving..." : human ? "Save profile" : "Create profile"}
+            {saving ? "Saving..." : "Save profile"}
           </button>
         </section>
       </div>

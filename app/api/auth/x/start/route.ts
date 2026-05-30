@@ -40,12 +40,16 @@ function oauthEncode(value: string) {
 }
 
 function getXOAuthProxyUrl() {
-  return (
+  const proxyUrl = (
     process.env.X_OAUTH_PROXY_URL ||
     process.env.HTTPS_PROXY ||
     process.env.HTTP_PROXY ||
     ""
   ).trim();
+  if (process.env.VERCEL && /^https?:\/\/(127\.0\.0\.1|localhost)(:\d+)?\/?$/i.test(proxyUrl)) {
+    return "";
+  }
+  return proxyUrl;
 }
 
 function buildOAuthHeader(params: Record<string, string>) {
