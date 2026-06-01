@@ -17,7 +17,7 @@ pnpm-debug.log*
 # Env
 .env*
 
-# Local MVP data (use /tmp in prod)
+# Local MVP data and generated campaign artifacts.
 data/*
-!data/db.json
+!data/db.seed.json
 .vercel

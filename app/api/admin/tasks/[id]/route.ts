@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getAdminAuthContext } from "../../../../lib/adminAuth";
 import { readDb } from "../../../../lib/store";
 
 export const runtime = "nodejs";
@@ -8,6 +9,11 @@ export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const admin = await getAdminAuthContext(request);
+  if (!admin.ok) {
+    return NextResponse.json({ error: admin.error }, { status: admin.status });
+  }
+
   const { id } = await params;
   const db = await readDb();
 

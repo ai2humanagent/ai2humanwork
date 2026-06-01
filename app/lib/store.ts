@@ -1,7 +1,7 @@
 import { promises as fs } from "fs";
 import path from "path";
 import crypto from "crypto";
-import bundledDbSnapshot from "../../data/db.json";
+import bundledDbSnapshot from "../../data/db.seed.json";
 import {
   seedHumans,
   seedServices,

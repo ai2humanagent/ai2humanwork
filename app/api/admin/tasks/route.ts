@@ -1,10 +1,16 @@
 import { NextResponse } from "next/server";
+import { getAdminAuthContext } from "../../../lib/adminAuth";
 import { readDb } from "../../../lib/store";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request: Request) {
+  const admin = await getAdminAuthContext(request);
+  if (!admin.ok) {
+    return NextResponse.json({ error: admin.error }, { status: admin.status });
+  }
+
   const db = await readDb();
 
   const tasks = db.tasks.map((task) => {
