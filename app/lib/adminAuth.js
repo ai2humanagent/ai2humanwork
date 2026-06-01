@@ -36,3 +36,59 @@ export function checkAdminAuth(request) {
   return { ok: true, status: 200, error: "" };
 }
 
+function normalizeAddress(value) {
+  return value?.trim().toLowerCase() || "";
+}
+
+function splitEnvList(value) {
+  return String(value || "")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function getAdminWallets() {
+  return new Set(
+    splitEnvList(process.env.ADMIN_WALLET_ADDRESSES || process.env.ADMIN_WALLETS)
+      .map(normalizeAddress)
+      .filter(Boolean)
+  );
+}
+
+function getAdminUserIds() {
+  return new Set(splitEnvList(process.env.ADMIN_USER_IDS));
+}
+
+export function isAdminUser(user) {
+  if (!user) return false;
+  const adminWallets = getAdminWallets();
+  const adminUserIds = getAdminUserIds();
+  const wallet = normalizeAddress(user.walletAddress);
+
+  return (
+    (wallet && adminWallets.has(wallet)) ||
+    (user.id && adminUserIds.has(user.id)) ||
+    (user.privyUserId && adminUserIds.has(user.privyUserId))
+  );
+}
+
+export async function getAdminAuthContext(request) {
+  const { getAuthContext } = await import("./auth");
+  const auth = await getAuthContext(request);
+  if (!auth.ok) {
+    return { ok: false, status: auth.status, error: auth.error };
+  }
+
+  if (!isAdminUser(auth.user)) {
+    return { ok: false, status: 403, error: "Admin access required." };
+  }
+
+  return { ok: true, user: auth.user };
+}
+
+export async function getAdminAuthFromCookieHeader(cookieHeader) {
+  const request = new Request("https://ai2human.work/admin", {
+    headers: { cookie: cookieHeader }
+  });
+  return getAdminAuthContext(request);
+}
