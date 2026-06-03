@@ -15,11 +15,12 @@ export async function GET(request: Request) {
 
   const db = await readDb();
   const adminSnapshot = await readAdminTaskSnapshot();
+  const sourceTasks = adminSnapshot?.tasks ?? db.tasks;
   const payments = adminSnapshot?.payments ?? db.payments;
   const questProgress = adminSnapshot?.questProgress ?? db.questProgress;
   const luckyDrawParticipants = adminSnapshot?.luckyDrawParticipants ?? db.luckyDrawParticipants;
 
-  const tasks = db.tasks.map((task) => {
+  const tasks = sourceTasks.map((task) => {
     const taskPayments = payments.filter((p) => p.taskId === task.id);
     const taskQp = questProgress.filter((qp) => qp.taskId === task.id);
     const taskLdp = luckyDrawParticipants.filter((ldp) => ldp.taskId === task.id);
@@ -77,6 +78,7 @@ export async function GET(request: Request) {
     tasks,
     debug: {
       snapshotSource: adminSnapshot?.source || "readDb",
+      taskRows: sourceTasks.length,
       paymentRows: payments.length,
       questProgressRows: questProgress.length,
       luckyDrawParticipantRows: luckyDrawParticipants.length

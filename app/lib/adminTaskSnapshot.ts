@@ -2,11 +2,13 @@ import type {
   EscrowDeposit,
   LuckyDrawParticipant,
   PaymentEntry,
-  QuestProgress
+  QuestProgress,
+  Task
 } from "./store";
 import { supabase } from "./supabase";
 
 type AdminTaskSnapshot = {
+  tasks: Task[];
   payments: PaymentEntry[];
   questProgress: QuestProgress[];
   luckyDrawParticipants: LuckyDrawParticipant[];
@@ -69,6 +71,78 @@ type EscrowDepositRow = {
   created_at: string;
   updated_at: string;
 };
+
+type TaskRow = {
+  id: string;
+  title: string;
+  budget: string;
+  deadline: string | null;
+  acceptance: string;
+  task_type: string | null;
+  status: string;
+  task_state: string;
+  evidence: unknown[] | null;
+  agent_id: string | null;
+  reward_distribution: unknown;
+  escrow_deposit_id: string | null;
+  assignee: unknown;
+  draw_result: unknown;
+  campaign: unknown;
+  verify_cooldown_hours: number | null;
+  created_at: string;
+  updated_at: string;
+};
+
+const TASK_SELECT_COLUMNS = [
+  "id",
+  "title",
+  "budget",
+  "deadline",
+  "acceptance",
+  "task_type",
+  "status",
+  "task_state",
+  "evidence",
+  "agent_id",
+  "reward_distribution",
+  "escrow_deposit_id",
+  "assignee",
+  "draw_result",
+  "campaign",
+  "verify_cooldown_hours",
+  "created_at",
+  "updated_at"
+].join(",");
+
+function readPoolAddressFromCampaign(campaign: unknown): string | undefined {
+  if (!campaign || typeof campaign !== "object") return undefined;
+  const value = (campaign as Record<string, unknown>).poolAddress;
+  return typeof value === "string" && value.trim() ? value.trim() : undefined;
+}
+
+function taskFromRow(row: TaskRow): Task {
+  return {
+    id: row.id,
+    title: row.title,
+    budget: row.budget,
+    deadline: row.deadline || "",
+    acceptance: row.acceptance,
+    taskType: (row.task_type || undefined) as Task["taskType"],
+    status: row.status as Task["status"],
+    taskState: row.task_state as Task["taskState"],
+    evidence: (row.evidence || []) as Task["evidence"],
+    agentId: row.agent_id || undefined,
+    rewardDistribution: (row.reward_distribution || undefined) as Task["rewardDistribution"],
+    escrowDepositId: row.escrow_deposit_id || undefined,
+    assignee: (row.assignee || undefined) as Task["assignee"],
+    drawResult: (row.draw_result || undefined) as Task["drawResult"],
+    campaign: (row.campaign || undefined) as Task["campaign"],
+    poolAddress: readPoolAddressFromCampaign(row.campaign),
+    verifyCooldownHours: row.verify_cooldown_hours ?? 24,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
 
 function paymentFromRow(row: PaymentRow): PaymentEntry {
   return {
@@ -137,12 +211,14 @@ function escrowDepositFromRow(row: EscrowDepositRow): EscrowDeposit {
 export async function readAdminTaskSnapshot(taskId?: string): Promise<AdminTaskSnapshot | null> {
   if (!supabase) return null;
 
+  const tasksQuery = supabase.from("tasks").select(TASK_SELECT_COLUMNS).order("created_at", { ascending: false });
   const paymentQuery = supabase.from("payments").select("*").order("created_at", { ascending: true });
   const questProgressQuery = supabase.from("quest_progress").select("*").order("created_at", { ascending: true });
   const luckyDrawParticipantsQuery = supabase.from("lucky_draw_participants").select("*").order("created_at", { ascending: true });
   const escrowDepositsQuery = supabase.from("escrow_deposits").select("*").order("created_at", { ascending: true });
 
-  const [paymentsRes, questProgressRes, luckyDrawParticipantsRes, escrowDepositsRes] = await Promise.all([
+  const [tasksRes, paymentsRes, questProgressRes, luckyDrawParticipantsRes, escrowDepositsRes] = await Promise.all([
+    taskId ? tasksQuery.eq("id", taskId) : tasksQuery,
     taskId ? paymentQuery.eq("task_id", taskId) : paymentQuery,
     taskId ? questProgressQuery.eq("task_id", taskId) : questProgressQuery,
     taskId ? luckyDrawParticipantsQuery.eq("task_id", taskId) : luckyDrawParticipantsQuery,
@@ -150,6 +226,7 @@ export async function readAdminTaskSnapshot(taskId?: string): Promise<AdminTaskS
   ]);
 
   const errors = [
+    ["tasks", tasksRes.error],
     ["payments", paymentsRes.error],
     ["quest_progress", questProgressRes.error],
     ["lucky_draw_participants", luckyDrawParticipantsRes.error],
@@ -169,6 +246,7 @@ export async function readAdminTaskSnapshot(taskId?: string): Promise<AdminTaskS
   }
 
   return {
+    tasks: ((tasksRes.data || []) as unknown as TaskRow[]).map(taskFromRow),
     payments: ((paymentsRes.data || []) as PaymentRow[]).map(paymentFromRow),
     questProgress: ((questProgressRes.data || []) as QuestProgressRow[]).map(questProgressFromRow),
     luckyDrawParticipants: ((luckyDrawParticipantsRes.data || []) as LuckyDrawParticipantRow[]).map(luckyDrawParticipantFromRow),

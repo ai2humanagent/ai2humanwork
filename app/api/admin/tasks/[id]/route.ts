@@ -18,14 +18,14 @@ export async function GET(
 
   const { id } = await params;
   const db = await readDb();
+  const adminSnapshot = await readAdminTaskSnapshot(id);
 
-  const task = db.tasks.find((t) => t.id === id);
+  const task = adminSnapshot?.tasks.find((t) => t.id === id) ?? db.tasks.find((t) => t.id === id);
   if (!task) {
     return NextResponse.json({ error: "Task not found" }, { status: 404 });
   }
 
   const taskPayments = db.payments.filter((p) => p.taskId === id);
-  const adminSnapshot = await readAdminTaskSnapshot(id);
   const snapshotPayments = adminSnapshot?.payments ?? taskPayments;
   const taskQp = adminSnapshot?.questProgress ?? db.questProgress.filter((qp) => qp.taskId === id);
   const taskLdp =
