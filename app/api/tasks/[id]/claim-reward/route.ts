@@ -85,6 +85,22 @@ function isClaimedPaymentForTask(payment: PaymentEntry, task: Task): boolean {
   return payment.method === "prize_pool_claim" && Boolean(payment.txHash);
 }
 
+function normalizeAddress(value: string) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function findLuckyDrawWinner(task: Task, wallet: string) {
+  const winners = Array.isArray(task.drawResult?.winners) ? task.drawResult.winners : [];
+  const normalizedWallet = normalizeAddress(wallet);
+  for (const winner of winners) {
+    const address = typeof winner === "string" ? winner : winner.address;
+    if (normalizeAddress(address) === normalizedWallet) {
+      return typeof winner === "string" ? { address: winner, amount: "" } : winner;
+    }
+  }
+  return null;
+}
+
 /** POST /api/tasks/[id]/claim-reward
  *  Body: { wallet, xHandle, signature?, captchaToken?, captchaWord? }
  *
@@ -280,7 +296,13 @@ async function updateDbClaim(
     (p) => p.taskId === taskId && p.source === "twitter_task" && isClaimedPaymentForTask(p, task)
   ).length;
 
-  if (claimedCount >= maxWinners) {
+  const winner = mode === "lucky_draw" ? findLuckyDrawWinner(task, wallet) : null;
+  const luckyDrawWinnerCount = Array.isArray(task.drawResult?.winners)
+    ? task.drawResult.winners.length
+    : 0;
+  const claimLimit = mode === "lucky_draw" && luckyDrawWinnerCount > 0 ? luckyDrawWinnerCount : maxWinners;
+
+  if (claimedCount >= claimLimit) {
     return { error: "All reward slots have been claimed." };
   }
 
@@ -294,11 +316,20 @@ async function updateDbClaim(
     }
   }
 
+  if (mode === "lucky_draw") {
+    if (!task.drawResult?.drawnAt || luckyDrawWinnerCount === 0) {
+      return { error: "Lucky draw has not been completed yet." };
+    }
+    if (!winner) {
+      return { error: "This wallet was not selected in the lucky draw." };
+    }
+  }
+
   // Determine settlement amount
   const alreadyPaid = db.payments
     .filter((p) => p.taskId === taskId && p.source === "twitter_task" && isClaimedPaymentForTask(p, task))
     .reduce((sum, payment) => sum + parseAmount(payment.amount), 0);
-  const remainingSlots = maxWinners - claimedCount;
+  const remainingSlots = claimLimit - claimedCount;
   const remainingPool = dist?.totalPool
     ? Math.round((parseAmount(dist.totalPool) - alreadyPaid) * 1e6) / 1e6
     : undefined;
@@ -307,7 +338,7 @@ async function updateDbClaim(
     return { error: "No more rewards available." };
   }
 
-  const settlementAmount = getSettlementAmount({ dist, task, maxWinners, claimedCount, paidAmount: alreadyPaid });
+  const settlementAmount = winner?.amount || getSettlementAmount({ dist, task, maxWinners, claimedCount, paidAmount: alreadyPaid });
   let paymentResult: PaymentEntry | null = null;
   const taskPoolAddress = task.poolAddress;
 
@@ -381,13 +412,22 @@ async function updateDbClaim(
     db.payments.unshift(paymentResult!);
 
     if (mode === "lucky_draw") {
-      db.luckyDrawParticipants.push({
-        id: crypto.randomUUID(),
-        taskId,
-        walletAddress: wallet,
-        xHandle,
-        createdAt: new Date().toISOString()
-      });
+      const existingParticipant = db.luckyDrawParticipants.find(
+        (participant) =>
+          participant.taskId === taskId &&
+          (participant.walletAddress || "").toLowerCase() === wallet
+      );
+      if (existingParticipant) {
+        existingParticipant.xHandle = xHandle;
+      } else {
+        db.luckyDrawParticipants.push({
+          id: crypto.randomUUID(),
+          taskId,
+          walletAddress: wallet,
+          xHandle,
+          createdAt: new Date().toISOString()
+        });
+      }
     }
 
     const t = db.tasks.find((x) => x.id === taskId);

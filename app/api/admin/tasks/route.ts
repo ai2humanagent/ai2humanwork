@@ -29,11 +29,15 @@ export async function GET(request: Request) {
     const claimedWallets = new Set(taskPayments.map((p) => p.receiverAddress?.toLowerCase()));
 
     // Lucky draw winners
-    const winners = (task.drawResult?.winners || []).map((w) => ({
-      address: w.address,
-      amount: w.amount,
-      claimed: claimedWallets.has(w.address.toLowerCase())
-    }));
+    const winners = (task.drawResult?.winners || []).map((winner) => {
+      const address = typeof winner === "string" ? winner : winner.address;
+      const amount = typeof winner === "string" ? "" : winner.amount;
+      return {
+        address,
+        amount,
+        claimed: claimedWallets.has(address.toLowerCase())
+      };
+    });
 
     const totalPool = task.rewardDistribution?.totalPool || task.budget;
     const maxWinners = task.rewardDistribution?.maxWinners || 1;

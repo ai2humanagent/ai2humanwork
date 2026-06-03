@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { readDb, updateDb } from "../../../../lib/store";
 import { buildMerkleRoot } from "../../../../lib/merkleUtils";
+import { buildLuckyDrawWinners, parseUsdcToMicros } from "../../../../lib/luckyDraw.js";
 import { updatePrizePoolMerkleRoot } from "../../../../lib/prizePool";
 
 export const runtime = "nodejs";
@@ -35,8 +36,15 @@ export async function POST(
     );
   }
 
-  // Find all wallets that have completed all required subtasks
-  const REQUIRED_KEYS = ["0", "1", "2", "3"];
+  if (task.drawResult?.drawnAt && Array.isArray(task.drawResult.winners) && task.drawResult.winners.length > 0) {
+    return NextResponse.json(
+      { error: "Lucky draw has already been completed.", drawResult: task.drawResult },
+      { status: 400 }
+    );
+  }
+
+  // Find all wallets that have completed all required subtasks.
+  const REQUIRED_KEYS = ["0", "1", "2", "3", "4"];
   const progress = db.questProgress.filter((qp) => qp.taskId === taskId);
 
   const walletMap = new Map<string, Set<string>>();
@@ -90,23 +98,20 @@ export async function POST(
     );
   }
 
-  // Shuffle and pick winners
-  const shuffled = [...candidates].sort(() => Math.random() - 0.5);
-  const winners = shuffled.slice(0, Math.min(slotsLeft, shuffled.length));
+  const totalPool = dist.totalPool || task.budget;
+  const totalMicros = parseUsdcToMicros(totalPool);
+  if (totalMicros <= 0) {
+    return NextResponse.json(
+      { error: "Lucky draw total pool is invalid" },
+      { status: 400 }
+    );
+  }
 
-  // Store draw results in task metadata
-  const drawnAt = new Date().toISOString();
-  await updateDb((db) => {
-    const t = db.tasks.find((x) => x.id === taskId);
-    if (t) {
-      (t as Record<string, unknown>).drawResult = {
-        drawnAt,
-        winners,
-        totalEligible: eligibleWallets.length,
-        totalCandidates: candidates.length
-      };
-      t.updatedAt = new Date().toISOString();
-    }
+  const winners = buildLuckyDrawWinners({
+    candidates,
+    maxWinners: Math.min(slotsLeft, candidates.length),
+    totalPool,
+    maxDeviationBps: 1000
   });
 
   // ── On-chain: update PrizePool merkle root ───────────────────────────────
@@ -117,6 +122,7 @@ export async function POST(
   let chainUpdated = false;
   let chainTxHash = "";
   let chainExplorerUrl = "";
+  let merkleRoot = "";
 
   // Try to get pool address from task metadata (set when pool was created)
   const taskPoolAddress = (task as Record<string, unknown>).poolAddress as string | undefined;
@@ -124,16 +130,8 @@ export async function POST(
     poolAddress = taskPoolAddress;
   }
 
-  // Build merkle root from winners (each winner gets equal share)
   if (poolAddress && winners.length > 0) {
-    const totalPoolAmount = dist.totalPool || task.budget;
-    const perWinner = parseFloat(totalPoolAmount) / winners.length;
-    const winnerEntries = winners.map((w: string) => ({
-      address: w,
-      amount: perWinner.toFixed(6)
-    }));
-
-    const merkleRoot = buildMerkleRoot(winnerEntries);
+    merkleRoot = buildMerkleRoot(winners);
     const updateResult = await updatePrizePoolMerkleRoot({
       poolAddress,
       merkleRoot
@@ -145,8 +143,33 @@ export async function POST(
       chainExplorerUrl = updateResult.explorerUrl;
     } else {
       console.error("Failed to update on-chain merkle root:", updateResult.error);
+      return NextResponse.json(
+        { error: `Failed to finalize lucky draw on-chain: ${updateResult.error}` },
+        { status: 500 }
+      );
     }
   }
+
+  // Store draw results only after the on-chain commitment succeeds. For local
+  // tasks without a pool address, the merkle update is intentionally skipped.
+  const drawnAt = new Date().toISOString();
+  await updateDb((db) => {
+    const t = db.tasks.find((x) => x.id === taskId);
+    if (t) {
+      (t as Record<string, unknown>).drawResult = {
+        drawnAt,
+        winners,
+        totalEligible: eligibleWallets.length,
+        totalCandidates: candidates.length,
+        totalPool,
+        maxDeviationBps: 1000,
+        merkleRoot: merkleRoot || null,
+        chainTxHash: chainTxHash || null,
+        chainExplorerUrl: chainExplorerUrl || null
+      };
+      t.updatedAt = new Date().toISOString();
+    }
+  });
 
   return NextResponse.json({
     success: true,
@@ -154,7 +177,8 @@ export async function POST(
     totalEligible: eligibleWallets.length,
     totalCandidates: candidates.length,
     slotsAwarded: winners.length,
-    merkleRoot: chainUpdated ? "updated" : "skipped",
+    merkleRoot: merkleRoot || null,
+    merkleRootStatus: chainUpdated ? "updated" : "skipped",
     chainTxHash: chainTxHash || null,
     chainExplorerUrl: chainExplorerUrl || null
   });

@@ -32,14 +32,16 @@ export async function GET(
 
   const claimedWallets = new Set(taskPayments.map((p) => p.receiverAddress?.toLowerCase()));
 
-  const winners = (task.drawResult?.winners || []).map((w) => {
+  const winners = (task.drawResult?.winners || []).map((winner) => {
+    const address = typeof winner === "string" ? winner : winner.address;
+    const amount = typeof winner === "string" ? "" : winner.amount;
     const payment = taskPayments.find(
-      (p) => p.receiverAddress?.toLowerCase() === w.address.toLowerCase()
+      (p) => p.receiverAddress?.toLowerCase() === address.toLowerCase()
     );
     return {
-      address: w.address,
-      amount: w.amount,
-      claimed: claimedWallets.has(w.address.toLowerCase()),
+      address,
+      amount,
+      claimed: claimedWallets.has(address.toLowerCase()),
       txHash: payment?.txHash || null
     };
   });
