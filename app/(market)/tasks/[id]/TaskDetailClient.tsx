@@ -1014,6 +1014,23 @@ export default function TaskDetailClient({
       return targetUrl;
     }
 
+    function extractRequirementUrl(campaign: Task["campaign"] | undefined, labels: string[]) {
+      const requirements = campaign?.proofRequirements || [];
+      const match = requirements.find((requirement) => {
+        const normalized = requirement.toLowerCase();
+        return labels.some((label) => normalized.startsWith(label.toLowerCase()));
+      });
+      return match?.match(/https?:\/\/\S+/)?.[0] || "";
+    }
+
+    function buildTweetIntentFromUrl(type: "like" | "retweet", targetUrl: string) {
+      const tweetId = targetUrl.match(/status\/(\d+)/)?.[1] || "";
+      if (!tweetId) return targetUrl;
+      return type === "like"
+        ? `https://x.com/intent/like?tweet_id=${tweetId}`
+        : `https://x.com/intent/retweet?tweet_id=${tweetId}`;
+    }
+
     function getTaskDisplayLabel(taskType: string, requesterHandle?: string): string {
       const handle = requesterHandle?.replace("@", "") || "ai2humanwork";
       if (taskType === "twitter_follow") return `Follow @${handle} on X`;
@@ -1038,7 +1055,15 @@ export default function TaskDetailClient({
       }
     }
 
-    // relatedTasks now comes from API state
+    const telegramUrl =
+      extractRequirementUrl(task.campaign, ["Join"]) || "https://t.me/+G3U4loFH5H0zMmU1";
+    const repostUrl =
+      extractRequirementUrl(task.campaign, ["Repost", "Retweet"]) ||
+      "https://x.com/ai2humanwork/status/2057437770902372396";
+    const likeUrl =
+      extractRequirementUrl(task.campaign, ["Like"]) ||
+      task.campaign?.targetUrl ||
+      "https://x.com/ai2humanwork/status/2058166798005248452";
 
     return (
       <main className={styles.page}>
@@ -1095,9 +1120,9 @@ export default function TaskDetailClient({
                 <div className={styles.qnTaskList}>
                   {[
                     { key: "0", icon: followSvg, label: task.campaign?.label || getTaskDisplayLabel("twitter_follow", task.campaign?.requesterHandle), actionLabel: getTaskActionLabel("twitter_follow"), intentUrl: "https://x.com/intent/follow?screen_name=ai2humanwork" },
-                    { key: "1", icon: joinSvg, label: "Join Telegram Group", actionLabel: "Join", intentUrl: "https://t.me/+G3U4loFH5H0zMmU1" },
-                    { key: "2", icon: retweetSvg, label: "Repost announcement tweet", actionLabel: "Repost", intentUrl: "https://x.com/intent/retweet?tweet_id=2057437770902372396" },
-                    { key: "3", icon: likeSvg, label: "Like announcement tweet", actionLabel: "Like", intentUrl: "https://x.com/intent/like?tweet_id=2058166798005248452" },
+                    { key: "1", icon: joinSvg, label: "Join Telegram Group", actionLabel: "Join", intentUrl: telegramUrl },
+                    { key: "2", icon: retweetSvg, label: "Repost announcement tweet", actionLabel: "Repost", intentUrl: buildTweetIntentFromUrl("retweet", repostUrl) },
+                    { key: "3", icon: likeSvg, label: "Like announcement tweet", actionLabel: "Like", intentUrl: buildTweetIntentFromUrl("like", likeUrl) },
                   ].map((item) => {
                     const state = taskStates[item.key] || { actionClicked: false, verifying: false, verified: false };
                     const isExpanded = expandedTasks[item.key] || false;
