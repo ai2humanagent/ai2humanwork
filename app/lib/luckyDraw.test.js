@@ -89,3 +89,33 @@ test("generates instant claim amounts that preserve the pool across claims", () 
   assert.ok(stats.max <= 110_000, `max was ${stats.max}`);
   assert.ok(stats.cv < 0.08, `cv was ${stats.cv}`);
 });
+
+test("keeps instant claim variance bounded across many deterministic runs", () => {
+  let worstCv = 0;
+  for (let seed = 1; seed <= 1000; seed++) {
+    const randomInt = makeDeterministicRandomInt(seed);
+    const amounts = [];
+    let paidMicros = 0;
+
+    for (let claimedCount = 0; claimedCount < 100; claimedCount++) {
+      const amount = generateNextBoundedLuckyDrawAmount({
+        totalPool: "10 USDC",
+        maxWinners: 100,
+        claimedCount,
+        paidAmount: formatUsdcFromMicros(paidMicros),
+        maxDeviationBps: 1000,
+        randomInt
+      });
+      amounts.push(amount);
+      paidMicros += parseUsdcToMicros(amount);
+    }
+
+    const stats = amountStats(amounts);
+    worstCv = Math.max(worstCv, stats.cv);
+    assert.equal(stats.sum, 10_000_000);
+    assert.ok(stats.min >= 90_000, `seed ${seed} min was ${stats.min}`);
+    assert.ok(stats.max <= 110_000, `seed ${seed} max was ${stats.max}`);
+  }
+
+  assert.ok(worstCv < 0.08, `worst cv was ${worstCv}`);
+});
