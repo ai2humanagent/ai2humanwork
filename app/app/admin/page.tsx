@@ -16,7 +16,7 @@ async function buildCookieHeader() {
 export default async function AdminPage() {
   const auth = await getAdminAuthFromCookieHeader(await buildCookieHeader());
   if (!auth.ok) {
-    redirect(`/app/profile?admin_error=${auth.status}`);
+    redirect(`/admin/login?admin_error=${auth.status}&from=${encodeURIComponent("/app/admin")}`);
   }
 
   return <AdminClient />;

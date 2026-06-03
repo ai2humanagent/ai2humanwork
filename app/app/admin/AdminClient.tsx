@@ -233,6 +233,14 @@ export default function AdminPage() {
   const selectedUser =
     filteredUsers.find((user) => user.id === selectedUserId) || filteredUsers[0] || null;
 
+  async function logoutAdmin() {
+    await fetch("/api/admin/logout", {
+      method: "POST",
+      credentials: "same-origin"
+    }).catch(() => null);
+    router.push("/admin/login");
+  }
+
   return (
     <div className={styles.page}>
       <header className={styles.header}>
@@ -257,6 +265,9 @@ export default function AdminPage() {
           </div>
           <button className={styles.backBtn} onClick={() => router.push("/tasks")}>
             Task Board
+          </button>
+          <button className={styles.backBtn} onClick={logoutAdmin}>
+            Sign out
           </button>
         </div>
       </header>
