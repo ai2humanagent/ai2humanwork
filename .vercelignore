@@ -1,0 +1,10 @@
+.env*
+.next/
+node_modules/
+out/
+data/*
+!data/db.seed.json
+tsconfig.tsbuildinfo
+.claude/
+aeon/
+contracts/
