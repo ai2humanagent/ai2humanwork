@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { readAdminTaskSnapshot } from "../../../lib/adminTaskSnapshot";
+import { buildAdminWinners } from "../../../lib/adminTaskWinners";
 import { getAdminAuthContext } from "../../../lib/adminAuth";
 import { readDb } from "../../../lib/store";
 
@@ -30,19 +31,7 @@ export async function GET(request: Request) {
       ).values()
     );
 
-    // Claimed winners
-    const claimedWallets = new Set(taskPayments.map((p) => p.receiverAddress?.toLowerCase()));
-
-    // Lucky draw winners
-    const winners = (task.drawResult?.winners || []).map((winner) => {
-      const address = typeof winner === "string" ? winner : winner.address;
-      const amount = typeof winner === "string" ? "" : winner.amount;
-      return {
-        address,
-        amount,
-        claimed: claimedWallets.has(address.toLowerCase())
-      };
-    });
+    const winners = buildAdminWinners(task, taskPayments);
 
     const totalPool = task.rewardDistribution?.totalPool || task.budget;
     const maxWinners = task.rewardDistribution?.maxWinners || 1;

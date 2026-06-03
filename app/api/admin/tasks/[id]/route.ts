@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { readAdminTaskSnapshot } from "../../../../lib/adminTaskSnapshot";
+import { buildAdminWinners } from "../../../../lib/adminTaskWinners";
 import { getAdminAuthContext } from "../../../../lib/adminAuth";
 import { readDb } from "../../../../lib/store";
 
@@ -35,21 +36,7 @@ export async function GET(
     new Map(taskQp.map((qp) => [qp.walletAddress, qp])).values()
   );
 
-  const claimedWallets = new Set(snapshotPayments.map((p) => p.receiverAddress?.toLowerCase()));
-
-  const winners = (task.drawResult?.winners || []).map((winner) => {
-    const address = typeof winner === "string" ? winner : winner.address;
-    const amount = typeof winner === "string" ? "" : winner.amount;
-    const payment = snapshotPayments.find(
-      (p) => p.receiverAddress?.toLowerCase() === address.toLowerCase()
-    );
-    return {
-      address,
-      amount,
-      claimed: claimedWallets.has(address.toLowerCase()),
-      txHash: payment?.txHash || null
-    };
-  });
+  const winners = buildAdminWinners(task, snapshotPayments);
 
   const escrow = (adminSnapshot?.escrowDeposits ?? db.escrowDeposits).find((e) => e.taskId === id);
   const totalPool = task.rewardDistribution?.totalPool || task.budget;
