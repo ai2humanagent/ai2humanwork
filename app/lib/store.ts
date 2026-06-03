@@ -776,6 +776,27 @@ interface SbEscrowDeposit { id: string; task_id: string | null; agent_id: string
 interface SbSession { id: string; user_id: string; token: string; created_at: string; expires_at: string; }
 interface SbService { id: string; provider_id: string | null; title: string; short_description: string; description: string; category: string; price: number; pricing: string; duration_minutes: number; verified: boolean; rating_count: number; created_at: string; }
 
+const TASK_SELECT_COLUMNS = [
+  "id",
+  "title",
+  "budget",
+  "deadline",
+  "acceptance",
+  "task_type",
+  "status",
+  "task_state",
+  "evidence",
+  "agent_id",
+  "reward_distribution",
+  "escrow_deposit_id",
+  "assignee",
+  "draw_result",
+  "campaign",
+  "verify_cooldown_hours",
+  "created_at",
+  "updated_at"
+].join(",");
+
 function sbUserToHuman(s: SbUser): UserAccount { return { id: s.id, email: s.email || "", passwordHash: s.password_hash || "", createdAt: s.created_at, humanId: s.human_id || undefined, walletAddress: s.wallet_address || undefined, authProvider: (s.auth_provider || undefined) as "privy" | "local" | undefined, privyUserId: s.privy_user_id || undefined, xAccount: s.x_account || undefined }; }
 function sbHumanToHuman(s: SbHuman): Human { return { id: s.id, name: s.name, handle: s.handle, role: s.role, location: s.location, city: s.city, country: s.country, verified: s.verified, rating: s.rating, completedJobs: s.completed_jobs, hourlyRate: s.hourly_rate, skills: s.skills, languages: s.languages, avatarSeed: s.avatar_seed, ...(s.avatar_url ? { avatarUrl: s.avatar_url } : {}) }; }
 function readPoolAddressFromCampaign(campaign: unknown): string | undefined {
@@ -864,7 +885,7 @@ async function readDbFromSupabase(): Promise<Db> {
   const results = await Promise.all([
     supabase.from("users").select("*"),
     supabase.from("humans").select("*"),
-    supabase.from("tasks").select("*"),
+    supabase.from("tasks").select(TASK_SELECT_COLUMNS),
     supabase.from("quest_progress").select("*"),
     supabase.from("payments").select("*"),
     supabase.from("notifications").select("*"),
@@ -902,7 +923,8 @@ async function readDbFromSupabase(): Promise<Db> {
   const allowLocalMetadata = !isProductionRuntime();
   const localTaskSnapshot =
     allowLocalMetadata && Array.isArray(fileSnapshot.tasks) ? fileSnapshot.tasks : [];
-  const supabaseTasks = tasksRes.data?.map(sbTaskToTask) ?? [];
+  const supabaseTaskRows = (tasksRes.data ?? []) as unknown as SbTask[];
+  const supabaseTasks = supabaseTaskRows.map(sbTaskToTask);
   const supabaseUsers = usersRes.data?.map(sbUserToHuman) ?? [];
   const supabaseHumans = humansRes.data?.map(sbHumanToHuman) ?? [];
   const localUsers = Array.isArray(fileSnapshot.users) ? fileSnapshot.users : [];
