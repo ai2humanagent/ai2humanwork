@@ -6,6 +6,14 @@ ALTER TABLE users
   ADD COLUMN IF NOT EXISTS privy_user_id TEXT,
   ADD COLUMN IF NOT EXISTS x_account JSONB;
 
+CREATE UNIQUE INDEX IF NOT EXISTS idx_users_x_account_subject_unique
+ON users ((x_account->>'subject'))
+WHERE NULLIF(x_account->>'subject', '') IS NOT NULL;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_users_x_account_username_unique
+ON users (LOWER(x_account->>'username'))
+WHERE NULLIF(x_account->>'username', '') IS NOT NULL;
+
 ALTER TABLE humans
   ADD COLUMN IF NOT EXISTS avatar_url TEXT;
 
@@ -34,4 +42,3 @@ BEGIN
       WITH CHECK (true);
   END IF;
 END $$;
-

@@ -3,6 +3,7 @@ import crypto from "crypto";
 import { execFile } from "child_process";
 import { promisify } from "util";
 import { updateDb } from "../../../../lib/store";
+import { normalizeXHandle } from "../../../../lib/xIdentity";
 import {
   X_OAUTH_STATE_COOKIE,
   decodeXOAuthState,
@@ -280,24 +281,44 @@ async function bindXAccount(input: {
   const now = new Date().toISOString();
   let conflict = false;
   let updated = false;
+  const incomingSubject = String(input.xUser.subject || "").trim();
+  const incomingUsername = normalizeXHandle(input.xUser.username);
 
-  await updateDb((db) => {
-    conflict = db.users.some(
-      (user) => user.id !== input.userId && user.xAccount?.subject === input.xUser.subject
-    );
-    if (conflict) return;
+  try {
+    await updateDb((db) => {
+      const currentUser = db.users.find((item) => item.id === input.userId);
+      conflict = db.users.some((user) => {
+        if (user.id === input.userId) return false;
+        const account = user.xAccount;
+        if (!account) return false;
+        const sameSubject = Boolean(incomingSubject && account.subject === incomingSubject);
+        const sameUsername = Boolean(incomingUsername && normalizeXHandle(account.username) === incomingUsername);
+        if (!sameSubject && !sameUsername) return false;
+        return true;
+      });
+      if (conflict) return;
 
-    const user = db.users.find((item) => item.id === input.userId);
-    if (!user) return;
-    user.xAccount = {
-      subject: input.xUser.subject,
-      username: input.xUser.username.replace(/^@/, ""),
-      name: input.xUser.name || undefined,
-      profilePictureUrl: input.xUser.profilePictureUrl || undefined,
-      linkedAt: now
-    };
-    updated = true;
-  });
+      if (!currentUser) return;
+      currentUser.xAccount = {
+        subject: incomingSubject,
+        username: input.xUser.username.replace(/^@/, ""),
+        name: input.xUser.name || undefined,
+        profilePictureUrl: input.xUser.profilePictureUrl || undefined,
+        linkedAt: now
+      };
+      updated = true;
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "";
+    if (
+      message.includes("idx_users_x_account_subject_unique") ||
+      message.includes("idx_users_x_account_username_unique") ||
+      message.includes("duplicate key value")
+    ) {
+      return { conflict: true, updated: false };
+    }
+    throw err;
+  }
 
   return { conflict, updated };
 }

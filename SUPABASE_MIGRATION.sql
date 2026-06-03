@@ -27,6 +27,14 @@ CREATE TABLE users (
   x_account JSONB
 );
 
+CREATE UNIQUE INDEX IF NOT EXISTS idx_users_x_account_subject_unique
+ON users ((x_account->>'subject'))
+WHERE NULLIF(x_account->>'subject', '') IS NOT NULL;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_users_x_account_username_unique
+ON users (LOWER(x_account->>'username'))
+WHERE NULLIF(x_account->>'username', '') IS NOT NULL;
+
 -- Humans
 CREATE TABLE humans (
   id TEXT PRIMARY KEY,
