@@ -3,6 +3,7 @@ import { readDb } from "../../../lib/store";
 import { getPrizePoolInfo } from "../../../lib/prizePool";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 type AlternateClaimTask = {
   id: string;
@@ -81,5 +82,9 @@ export async function GET(
     }
   }
 
-  return NextResponse.json({ task, payment, alternateClaimTask, poolStatus });
+  const response = NextResponse.json({ task, payment, alternateClaimTask, poolStatus });
+  response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+  response.headers.set("Pragma", "no-cache");
+  response.headers.set("Expires", "0");
+  return response;
 }

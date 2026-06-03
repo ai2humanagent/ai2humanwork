@@ -19,6 +19,7 @@ import {
 } from "../../lib/escrowSettlement";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 const VALID_DISTRIBUTION_MODES: RewardDistributionMode[] = ["fcfs", "lucky_draw", "equal"];
 
@@ -38,7 +39,11 @@ function parseRewardDistribution(raw: unknown, fallbackBudget: string): RewardDi
 
 export async function GET() {
   const db = await readDb();
-  return NextResponse.json(sortTasksForBoard(db.tasks));
+  const response = NextResponse.json(sortTasksForBoard(db.tasks));
+  response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+  response.headers.set("Pragma", "no-cache");
+  response.headers.set("Expires", "0");
+  return response;
 }
 
 export async function POST(request: Request) {
