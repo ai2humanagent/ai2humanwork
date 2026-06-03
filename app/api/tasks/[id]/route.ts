@@ -92,6 +92,11 @@ export async function GET(
   }
 
   const response = NextResponse.json({ task, payment, alternateClaimTask, poolStatus });
+  const matchingTaskCount = db.tasks.filter((item) => item.id === id).length;
+  response.headers.set(
+    "X-A2H-Task-Selection",
+    `v2;matches=${matchingTaskCount};updatedAt=${encodeURIComponent(task.updatedAt || "")}`
+  );
   response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
   response.headers.set("Pragma", "no-cache");
   response.headers.set("Expires", "0");

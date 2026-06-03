@@ -607,7 +607,11 @@ export default function TaskDetailClient({
       if (!payload.task) {
         throw new Error("Task payload missing.");
       }
-      setTask(payload.task);
+      setTask((current) => {
+        const currentTime = +new Date(current.updatedAt || 0);
+        const nextTime = +new Date(payload.task?.updatedAt || 0);
+        return nextTime >= currentTime ? payload.task! : current;
+      });
       setLatestPayment((current) => payload.payment || current || getCachedPayment(initialTask.id));
       setAlternateClaimTask(payload.alternateClaimTask || null);
       if (payload.task.campaign?.proofPhrase) {
