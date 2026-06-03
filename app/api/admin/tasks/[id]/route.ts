@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { readAdminTaskSnapshot } from "../../../../lib/adminTaskSnapshot";
 import { getAdminAuthContext } from "../../../../lib/adminAuth";
 import { readDb } from "../../../../lib/store";
 
@@ -23,19 +24,23 @@ export async function GET(
   }
 
   const taskPayments = db.payments.filter((p) => p.taskId === id);
-  const taskQp = db.questProgress.filter((qp) => qp.taskId === id);
-  const taskLdp = db.luckyDrawParticipants.filter((ldp) => ldp.taskId === id);
+  const adminSnapshot = await readAdminTaskSnapshot(id);
+  const snapshotPayments = adminSnapshot?.payments ?? taskPayments;
+  const taskQp = adminSnapshot?.questProgress ?? db.questProgress.filter((qp) => qp.taskId === id);
+  const taskLdp =
+    adminSnapshot?.luckyDrawParticipants ??
+    db.luckyDrawParticipants.filter((ldp) => ldp.taskId === id);
 
   const participants = Array.from(
     new Map(taskQp.map((qp) => [qp.walletAddress, qp])).values()
   );
 
-  const claimedWallets = new Set(taskPayments.map((p) => p.receiverAddress?.toLowerCase()));
+  const claimedWallets = new Set(snapshotPayments.map((p) => p.receiverAddress?.toLowerCase()));
 
   const winners = (task.drawResult?.winners || []).map((winner) => {
     const address = typeof winner === "string" ? winner : winner.address;
     const amount = typeof winner === "string" ? "" : winner.amount;
-    const payment = taskPayments.find(
+    const payment = snapshotPayments.find(
       (p) => p.receiverAddress?.toLowerCase() === address.toLowerCase()
     );
     return {
@@ -46,7 +51,7 @@ export async function GET(
     };
   });
 
-  const escrow = db.escrowDeposits.find((e) => e.taskId === id);
+  const escrow = (adminSnapshot?.escrowDeposits ?? db.escrowDeposits).find((e) => e.taskId === id);
   const totalPool = task.rewardDistribution?.totalPool || task.budget;
   const maxWinners = task.rewardDistribution?.maxWinners || 1;
   const mode = task.rewardDistribution?.mode || "fcfs";
@@ -60,7 +65,7 @@ export async function GET(
       mode,
       totalPool,
       maxWinners,
-      claimedCount: taskPayments.length,
+      claimedCount: snapshotPayments.length,
       participantCount: participants.length,
       budget: task.budget,
       deadline: task.deadline,
@@ -74,7 +79,7 @@ export async function GET(
       updatedAt: task.updatedAt
     },
     participants: participants.map((qp) => {
-      const payment = taskPayments.find(
+      const payment = snapshotPayments.find(
         (p) => p.receiverAddress?.toLowerCase() === qp.walletAddress.toLowerCase()
       );
       const ldp = taskLdp.find(
@@ -95,7 +100,14 @@ export async function GET(
       };
     }),
     winners,
-    payments: taskPayments
+    payments: snapshotPayments,
+    debug: {
+      snapshotSource: adminSnapshot?.source || "readDb",
+      readDbPayments: taskPayments.length,
+      snapshotPayments: snapshotPayments.length,
+      questProgressRows: taskQp.length,
+      luckyDrawParticipantRows: taskLdp.length
+    }
   };
 
   const response = NextResponse.json(body);

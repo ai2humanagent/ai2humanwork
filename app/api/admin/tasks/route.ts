@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { readAdminTaskSnapshot } from "../../../lib/adminTaskSnapshot";
 import { getAdminAuthContext } from "../../../lib/adminAuth";
 import { readDb } from "../../../lib/store";
 
@@ -12,11 +13,15 @@ export async function GET(request: Request) {
   }
 
   const db = await readDb();
+  const adminSnapshot = await readAdminTaskSnapshot();
+  const payments = adminSnapshot?.payments ?? db.payments;
+  const questProgress = adminSnapshot?.questProgress ?? db.questProgress;
+  const luckyDrawParticipants = adminSnapshot?.luckyDrawParticipants ?? db.luckyDrawParticipants;
 
   const tasks = db.tasks.map((task) => {
-    const taskPayments = db.payments.filter((p) => p.taskId === task.id);
-    const taskQp = db.questProgress.filter((qp) => qp.taskId === task.id);
-    const taskLdp = db.luckyDrawParticipants.filter((ldp) => ldp.taskId === task.id);
+    const taskPayments = payments.filter((p) => p.taskId === task.id);
+    const taskQp = questProgress.filter((qp) => qp.taskId === task.id);
+    const taskLdp = luckyDrawParticipants.filter((ldp) => ldp.taskId === task.id);
 
     // Unique participants (wallets that have any progress)
     const participants = Array.from(
@@ -79,7 +84,15 @@ export async function GET(request: Request) {
     };
   });
 
-  const response = NextResponse.json({ tasks });
+  const response = NextResponse.json({
+    tasks,
+    debug: {
+      snapshotSource: adminSnapshot?.source || "readDb",
+      paymentRows: payments.length,
+      questProgressRows: questProgress.length,
+      luckyDrawParticipantRows: luckyDrawParticipants.length
+    }
+  });
   response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
   response.headers.set("Pragma", "no-cache");
   response.headers.set("Expires", "0");
