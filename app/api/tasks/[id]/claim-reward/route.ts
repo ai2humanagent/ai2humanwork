@@ -15,6 +15,7 @@ import { supabase } from "../../../../lib/supabase";
 import { claimForPrizePool } from "../../../../lib/prizePool";
 import { getBoundXAccountForWallet, normalizeXHandle } from "../../../../lib/xIdentity";
 import { getAuthContext } from "../../../../lib/auth";
+import { generateNextBoundedLuckyDrawAmount } from "../../../../lib/luckyDraw.js";
 
 export const runtime = "nodejs";
 
@@ -83,22 +84,6 @@ function getSettlementAmount(input: {
 function isClaimedPaymentForTask(payment: PaymentEntry, task: Task): boolean {
   if (!task.poolAddress) return true;
   return payment.method === "prize_pool_claim" && Boolean(payment.txHash);
-}
-
-function normalizeAddress(value: string) {
-  return String(value || "").trim().toLowerCase();
-}
-
-function findLuckyDrawWinner(task: Task, wallet: string) {
-  const winners = Array.isArray(task.drawResult?.winners) ? task.drawResult.winners : [];
-  const normalizedWallet = normalizeAddress(wallet);
-  for (const winner of winners) {
-    const address = typeof winner === "string" ? winner : winner.address;
-    if (normalizeAddress(address) === normalizedWallet) {
-      return typeof winner === "string" ? { address: winner, amount: "" } : winner;
-    }
-  }
-  return null;
 }
 
 /** POST /api/tasks/[id]/claim-reward
@@ -296,11 +281,7 @@ async function updateDbClaim(
     (p) => p.taskId === taskId && p.source === "twitter_task" && isClaimedPaymentForTask(p, task)
   ).length;
 
-  const winner = mode === "lucky_draw" ? findLuckyDrawWinner(task, wallet) : null;
-  const luckyDrawWinnerCount = Array.isArray(task.drawResult?.winners)
-    ? task.drawResult.winners.length
-    : 0;
-  const claimLimit = mode === "lucky_draw" && luckyDrawWinnerCount > 0 ? luckyDrawWinnerCount : maxWinners;
+  const claimLimit = maxWinners;
 
   if (claimedCount >= claimLimit) {
     return { error: "All reward slots have been claimed." };
@@ -313,15 +294,6 @@ async function updateDbClaim(
     const entry = progress.find((qp) => qp.subtaskKey === key);
     if (!entry || entry.status !== "verified") {
       return { error: `Subtask ${key} is not verified. Complete all tasks before claiming.` };
-    }
-  }
-
-  if (mode === "lucky_draw") {
-    if (!task.drawResult?.drawnAt || luckyDrawWinnerCount === 0) {
-      return { error: "Lucky draw has not been completed yet." };
-    }
-    if (!winner) {
-      return { error: "This wallet was not selected in the lucky draw." };
     }
   }
 
@@ -338,7 +310,15 @@ async function updateDbClaim(
     return { error: "No more rewards available." };
   }
 
-  const settlementAmount = winner?.amount || getSettlementAmount({ dist, task, maxWinners, claimedCount, paidAmount: alreadyPaid });
+  const settlementAmount = mode === "lucky_draw"
+    ? generateNextBoundedLuckyDrawAmount({
+        totalPool: dist?.totalPool || task.budget,
+        maxWinners,
+        claimedCount,
+        paidAmount: formatUsdcAmount(alreadyPaid),
+        maxDeviationBps: 1000
+      })
+    : getSettlementAmount({ dist, task, maxWinners, claimedCount, paidAmount: alreadyPaid });
   let paymentResult: PaymentEntry | null = null;
   const taskPoolAddress = task.poolAddress;
 
@@ -412,6 +392,34 @@ async function updateDbClaim(
     db.payments.unshift(paymentResult!);
 
     if (mode === "lucky_draw") {
+      const t = db.tasks.find((x) => x.id === taskId);
+      if (t) {
+        const drawResult = (t.drawResult || {
+          drawnAt: new Date().toISOString(),
+          winners: []
+        }) as {
+          drawnAt: string;
+          winners: Array<{ address: string; amount: string } | string>;
+          totalPool?: string;
+          maxDeviationBps?: number;
+          distributionType?: string;
+        };
+        const existingWinnerIndex = drawResult.winners.findIndex((winner) => {
+          const address = typeof winner === "string" ? winner : winner.address;
+          return (address || "").toLowerCase() === wallet;
+        });
+        const winnerEntry = { address: wallet, amount: settlementAmount };
+        if (existingWinnerIndex >= 0) {
+          drawResult.winners[existingWinnerIndex] = winnerEntry;
+        } else {
+          drawResult.winners.push(winnerEntry);
+        }
+        drawResult.totalPool = dist?.totalPool || task.budget;
+        drawResult.maxDeviationBps = 1000;
+        drawResult.distributionType = "instant_qualified_claim";
+        t.drawResult = drawResult as Task["drawResult"];
+      }
+
       const existingParticipant = db.luckyDrawParticipants.find(
         (participant) =>
           participant.taskId === taskId &&

@@ -2,6 +2,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   buildLuckyDrawWinners,
+  formatUsdcFromMicros,
+  generateNextBoundedLuckyDrawAmount,
   generateBoundedLuckyDrawAmounts,
   parseUsdcToMicros
 } from "./luckyDraw.js";
@@ -61,4 +63,29 @@ test("builds unique winner entries with bounded random amounts", () => {
   assert.equal(stats.sum, 2_000_000);
   assert.ok(stats.min >= 900_000);
   assert.ok(stats.max <= 1_100_000);
+});
+
+test("generates instant claim amounts that preserve the pool across claims", () => {
+  const randomInt = makeDeterministicRandomInt(2026);
+  const amounts = [];
+  let paidMicros = 0;
+
+  for (let claimedCount = 0; claimedCount < 100; claimedCount++) {
+    const amount = generateNextBoundedLuckyDrawAmount({
+      totalPool: "10 USDC",
+      maxWinners: 100,
+      claimedCount,
+      paidAmount: formatUsdcFromMicros(paidMicros),
+      maxDeviationBps: 1000,
+      randomInt
+    });
+    amounts.push(amount);
+    paidMicros += parseUsdcToMicros(amount);
+  }
+
+  const stats = amountStats(amounts);
+  assert.equal(stats.sum, 10_000_000);
+  assert.ok(stats.min >= 90_000, `min was ${stats.min}`);
+  assert.ok(stats.max <= 110_000, `max was ${stats.max}`);
+  assert.ok(stats.cv < 0.08, `cv was ${stats.cv}`);
 });

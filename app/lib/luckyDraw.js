@@ -78,6 +78,33 @@ export function generateBoundedLuckyDrawAmounts(input) {
   return shuffle(amounts, randomInt).map(formatUsdcFromMicros);
 }
 
+export function generateNextBoundedLuckyDrawAmount(input) {
+  const totalMicros = parseUsdcToMicros(input.totalPool);
+  const maxWinners = Math.max(1, Math.trunc(Number(input.maxWinners) || 1));
+  const claimedCount = Math.max(0, Math.trunc(Number(input.claimedCount) || 0));
+  const paidMicros = parseUsdcToMicros(input.paidAmount);
+  const maxDeviationBps = Math.max(0, Math.min(5000, Math.trunc(Number(input.maxDeviationBps) || 1000)));
+  const randomInt = input.randomInt || defaultRandomInt;
+
+  const remainingSlots = maxWinners - claimedCount;
+  const remainingPool = totalMicros - paidMicros;
+  if (remainingSlots <= 0 || remainingPool <= 0) return "0 USDC";
+  if (remainingSlots === 1) return formatUsdcFromMicros(remainingPool);
+
+  const average = totalMicros / maxWinners;
+  const min = Math.floor((average * (10000 - maxDeviationBps)) / 10000);
+  const max = Math.ceil((average * (10000 + maxDeviationBps)) / 10000);
+  const futureSlots = remainingSlots - 1;
+  const lower = Math.max(min, remainingPool - max * futureSlots);
+  const upper = Math.min(max, remainingPool - min * futureSlots);
+
+  if (lower > upper) {
+    return formatUsdcFromMicros(Math.floor(remainingPool / remainingSlots));
+  }
+
+  return formatUsdcFromMicros(lower + randomInt(upper - lower + 1));
+}
+
 export function buildLuckyDrawWinners(input) {
   const winners = pickLuckyDrawWinners(input.candidates, input.maxWinners, input.randomInt);
   const amounts = generateBoundedLuckyDrawAmounts({
