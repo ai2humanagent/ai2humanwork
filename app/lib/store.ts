@@ -960,8 +960,14 @@ export async function readDb(): Promise<Db> {
     try {
       return await readDbFromSupabase();
     } catch (err) {
+      if (process.env.VERCEL) {
+        throw err;
+      }
       console.error("[Supabase] readDb failed, falling back to file:", err);
     }
+  }
+  if (process.env.VERCEL) {
+    throw new Error("Supabase is required in production.");
   }
   return readDbFromFile();
 }
@@ -975,8 +981,14 @@ export async function writeDb(db: Db): Promise<void> {
       }
       return;
     } catch (err) {
+      if (process.env.VERCEL) {
+        throw err;
+      }
       console.error("[Supabase] writeDb failed, falling back to file:", err);
     }
+  }
+  if (process.env.VERCEL) {
+    throw new Error("Supabase is required in production.");
   }
   await writeDbToFile(db);
 }
