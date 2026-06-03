@@ -351,7 +351,7 @@ export default function TaskDetailClient({
       const subtasks = data.subtasks as Record<string, string> | undefined;
       if (subtasks) {
         const newStates: Record<string, TaskItemState> = {};
-        for (const key of ["0", "1", "2", "3", "4"]) {
+        for (const key of ["0", "1", "2", "3"]) {
           const status = subtasks[key] || "pending";
           newStates[key] = {
             actionClicked: status === "action_done" || status === "verified",
@@ -406,15 +406,7 @@ export default function TaskDetailClient({
     const walletAddress = connectedWallet;
     if (!requireBoundXAccount() || !walletAddress) return;
     const state = taskStates[taskKey];
-    // For task 4, the bound X account itself is the verification payload.
-    if (taskKey === "4" && hasBoundXAccount && !state?.verified) {
-      // First transition to action_done if needed, then verify in one step
-      setTaskStates((prev) => ({
-        ...prev,
-        ["4"]: { actionClicked: true, verifying: true, verified: false }
-      }));
-      // Fall through to the API call below
-    } else if (!state?.actionClicked || state.verifying || state.verified) {
+    if (!state?.actionClicked || state.verifying || state.verified) {
       return;
     }
     setTaskStates((prev) => ({
@@ -427,9 +419,6 @@ export default function TaskDetailClient({
         subtaskKey: taskKey,
         action: "verify"
       };
-      if (taskKey === "4" && boundXAccount?.username) {
-        body.xHandle = boundXAccount.username;
-      }
       const res = await fetch(`/api/tasks/${initialTask.id}/quest-progress`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -892,7 +881,7 @@ export default function TaskDetailClient({
 
   // ===== QuestN Layout (all tasks) =====
   {
-    const allTasksVerified = ["0","1","2","3","4"].every(k => taskStates[k]?.verified);
+    const allTasksVerified = ["0","1","2","3"].every(k => taskStates[k]?.verified);
     // For quest/twitter tasks, "done" means the current user has claimed, not the global task status
     // Also treat taskState as ended when pool is exhausted
     const isDone = !!claimResult || task.taskState === "full" || task.taskState === "closed" || task.taskState === "refunded";
@@ -1105,7 +1094,6 @@ export default function TaskDetailClient({
                     { key: "1", icon: joinSvg, label: "Join Telegram Group", actionLabel: "Join", intentUrl: "https://t.me/+G3U4loFH5H0zMmU1" },
                     { key: "2", icon: retweetSvg, label: "Repost announcement tweet", actionLabel: "Repost", intentUrl: "https://x.com/intent/retweet?tweet_id=2057437770902372396" },
                     { key: "3", icon: likeSvg, label: "Like announcement tweet", actionLabel: "Like", intentUrl: "https://x.com/intent/like?tweet_id=2058166798005248452" },
-                    { key: "4", icon: userSvg, label: "Confirm bound X account", actionLabel: "Confirm" },
                   ].map((item) => {
                     const state = taskStates[item.key] || { actionClicked: false, verifying: false, verified: false };
                     const isExpanded = expandedTasks[item.key] || false;
@@ -1142,37 +1130,6 @@ export default function TaskDetailClient({
                                         Connect Wallet
                                       </button>
                                       <span className={styles.btn3dShadow} />
-                                    </div>
-                                  </div>
-                                </div>
-                              ) : item.key === "4" ? (
-                                <div className={styles.qnTaskButtons}>
-                                  <div className={styles.qnBoundXPanel}>
-                                    <div className={styles.qnBoundXInfo}>
-                                      <span>{hasBoundXAccount ? "Bound X account" : "X account required"}</span>
-                                      <strong>{hasBoundXAccount ? `@${boundXAccount?.username}` : "Bind from Profile before starting"}</strong>
-                                    </div>
-                                    <div
-                                      className={`${styles.btn3d} ${hasBoundXAccount ? styles.btn3dGreen : styles.btn3dCyan}`}
-                                      style={{ flex: "0 0 auto" }}
-                                    >
-                                      <div className={styles.btn3dInner}>
-                                        <button
-                                          type="button"
-                                          className={styles.btn3dFace}
-                                          onClick={() => {
-                                            if (!hasBoundXAccount) {
-                                              setError("Bind your X account from Profile before doing tasks.");
-                                              router.push("/app/profile");
-                                              return;
-                                            }
-                                            handleTaskVerify("4");
-                                          }}
-                                        >
-                                          {hasBoundXAccount ? "Confirm" : "Bind X"}
-                                        </button>
-                                        <span className={styles.btn3dShadow} />
-                                      </div>
                                     </div>
                                   </div>
                                 </div>

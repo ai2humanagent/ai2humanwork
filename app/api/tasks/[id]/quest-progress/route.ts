@@ -6,7 +6,7 @@ import { getBoundXAccountForWallet, normalizeXHandle } from "../../../../lib/xId
 
 export const runtime = "nodejs";
 
-const VALID_SUBTASK_KEYS = ["0", "1", "2", "3", "4"];
+const VALID_SUBTASK_KEYS = ["0", "1", "2", "3"];
 
 
 /** GET /api/tasks/[id]/quest-progress?wallet=0x... */
@@ -78,7 +78,6 @@ export async function GET(
 /** POST /api/tasks/[id]/quest-progress
  *  Body: { wallet, subtaskKey, action: "action" | "verify", xHandle?: string }
  *  Simple state machine: pending → action_done → verified.
- *  xHandle is saved to luckyDrawParticipants when verifying subtask "4".
  */
 export async function POST(
   request: Request,
@@ -160,29 +159,6 @@ export async function POST(
     } else if (action === "verify" && entry.status === "action_done") {
       entry.status = "verified";
       entry.verifiedAt = new Date().toISOString();
-    } else if (action === "verify" && entry.status === "pending" && subtaskKey === "4") {
-      // Task 4 (xHandle confirmation): skip action_done, go directly to verified
-      entry.status = "verified";
-      entry.verifiedAt = new Date().toISOString();
-    }
-
-    // Save xHandle when verifying subtask 4 (X handle confirmation)
-    if (subtaskKey === "4" && action === "verify") {
-      let participant = db.luckyDrawParticipants.find(
-        (p) => p.taskId === taskId && p.walletAddress === wallet
-      );
-      if (!participant) {
-        participant = {
-          id: crypto.randomUUID(),
-          taskId,
-          walletAddress: wallet,
-          xHandle: xAccount.username,
-          createdAt: new Date().toISOString()
-        };
-        db.luckyDrawParticipants.push(participant);
-      } else {
-        participant.xHandle = xAccount.username;
-      }
     }
 
     return { status: entry.status };

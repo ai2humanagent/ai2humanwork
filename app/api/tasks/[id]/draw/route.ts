@@ -44,7 +44,7 @@ export async function POST(
   }
 
   // Find all wallets that have completed all required subtasks.
-  const REQUIRED_KEYS = ["0", "1", "2", "3", "4"];
+  const REQUIRED_KEYS = ["0", "1", "2", "3"];
   const progress = db.questProgress.filter((qp) => qp.taskId === taskId);
 
   const walletMap = new Map<string, Set<string>>();

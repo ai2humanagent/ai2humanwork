@@ -19,7 +19,7 @@ import { generateNextBoundedLuckyDrawAmount } from "../../../../lib/luckyDraw.js
 
 export const runtime = "nodejs";
 
-const REQUIRED_SUBTASK_KEYS = ["0", "1", "2", "3", "4"];
+const REQUIRED_SUBTASK_KEYS = ["0", "1", "2", "3"];
 const RATE_LIMIT_MS = 60_000; // 1 claim per wallet per task per 60s
 
 function parseAmount(raw: string): number {
