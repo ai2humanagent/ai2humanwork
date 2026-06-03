@@ -11,11 +11,20 @@ type AlternateClaimTask = {
   status: "created" | "ai_failed";
 };
 
+function findLatestTaskById(
+  tasks: Awaited<ReturnType<typeof readDb>>["tasks"],
+  taskId: string
+) {
+  const matches = tasks.filter((item) => item.id === taskId);
+  if (matches.length <= 1) return matches[0] ?? null;
+  return matches.sort((a, b) => +new Date(b.updatedAt) - +new Date(a.updatedAt))[0];
+}
+
 function findAlternateClaimTask(
   tasks: Awaited<ReturnType<typeof readDb>>["tasks"],
   currentTaskId: string
 ): AlternateClaimTask | null {
-  const currentTask = tasks.find((item) => item.id === currentTaskId);
+  const currentTask = findLatestTaskById(tasks, currentTaskId);
   if (!currentTask) return null;
 
   const candidate = tasks.find((candidate) => {
@@ -45,7 +54,7 @@ export default async function TaskDetailPage({
 }) {
   const { id } = await params;
   const db = await readDb();
-  const task = db.tasks.find((item) => item.id === id);
+  const task = findLatestTaskById(db.tasks, id);
   const payment =
     db.payments.find((item) => item.taskId === id && item.source === "task") ||
     db.payments.find((item) => item.taskId === id && item.source !== "x402_access") ||
