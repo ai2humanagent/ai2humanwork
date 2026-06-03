@@ -195,7 +195,11 @@ async function startOAuth1(request: Request, userId: string) {
     expiresAt: Date.now() + 10 * 60 * 1000
   });
 
-  const authorizeUrl = new URL(`${apiBaseUrl}/oauth/authorize`);
+  // OAuth 1.0a supports both /oauth/authorize and /oauth/authenticate.
+  // /oauth/authenticate is the safer login-style entrypoint on mobile because
+  // X can otherwise route mobile browsers through an authorize page that loses
+  // or rejects the request token.
+  const authorizeUrl = new URL(`${apiBaseUrl}/oauth/authenticate`);
   authorizeUrl.searchParams.set("oauth_token", payload.oauth_token);
   return NextResponse.redirect(authorizeUrl);
 }

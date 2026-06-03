@@ -97,7 +97,7 @@ function getXOAuthStatusMessage(code: string) {
     x_oauth_not_configured: "X login is not configured yet.",
     invalid_x_oauth_state: "The X login window expired. Please try again.",
     session_changed: "Your wallet session changed. Please reconnect and try again.",
-    x_account_already_bound: "This X account is already bound to another wallet.",
+    x_account_already_bound: "This X account is already bound to another wallet. Use the original wallet or bind a different X account.",
     x_api_not_enrolled: "X login worked, but this X Developer Project cannot access user profile data. Enable X API v2 access or upgrade the Project plan.",
     x_oauth_failed: "X login failed. Please try again."
   };
