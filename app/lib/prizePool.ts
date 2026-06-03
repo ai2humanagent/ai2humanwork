@@ -200,9 +200,9 @@ function parseUnitsBn(amount: string): bigint {
 // ============================================================
 
 function getPoolConfig() {
-  const chainId = Number(process.env.BASE_CHAIN_ID || 84532);
-  const rpcUrl = (process.env.BASE_RPC_URL || "https://sepolia.base.org").trim();
-  const explorerBaseUrl = (process.env.BASE_EXPLORER_BASE_URL || "https://sepolia.basescan.org").trim();
+  const chainId = Number(process.env.BASE_CHAIN_ID || 8453);
+  const rpcUrl = (process.env.BASE_RPC_URL || "https://mainnet.base.org").trim();
+  const explorerBaseUrl = (process.env.BASE_EXPLORER_BASE_URL || "https://basescan.org").trim();
   const privateKey = String(
     process.env.PRIZE_POOL_PRIVATE_KEY ||
       process.env.BASE_SETTLEMENT_PRIVATE_KEY ||
