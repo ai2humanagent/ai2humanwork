@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./admin.module.css";
 
@@ -40,9 +40,25 @@ type Participant = {
   createdAt: string;
 };
 
+type TaskPayment = {
+  id: string;
+  amount: string;
+  receiver: string | null;
+  receiverAddress: string | null;
+  method: string;
+  status: string;
+  source: string | null;
+  network: string | null;
+  tokenSymbol: string | null;
+  txHash: string | null;
+  explorerUrl: string | null;
+  createdAt: string;
+};
+
 type TaskDetail = TaskSummary & {
   participants: Participant[];
   winners: Winner[];
+  payments: TaskPayment[];
   escrow: object | null;
   campaign: object | null;
   evidence: object[];
@@ -170,39 +186,54 @@ export default function AdminPage() {
   const [detailLoading, setDetailLoading] = useState(false);
   const [query, setQuery] = useState("");
 
-  useEffect(() => {
-    fetch("/api/admin/tasks")
-      .then((r) => r.json())
-      .then((d) => {
-        setTasks(d.tasks || []);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
-  }, []);
+  const loadTasks = useCallback(async () => {
+    const response = await fetch("/api/admin/tasks", {
+      cache: "no-store",
+      credentials: "same-origin"
+    });
+    if (response.status === 401) {
+      router.push("/admin/login");
+      return;
+    }
+    const data = await response.json();
+    setTasks(data.tasks || []);
+    setLoading(false);
+  }, [router]);
 
-  useEffect(() => {
-    fetch("/api/admin/users")
-      .then((r) => r.json())
-      .then((d) => {
-        const nextUsers: AdminUser[] = d.users || [];
-        setUsers(nextUsers);
-        setUsersSummary(d.summary || null);
-        setSelectedUserId(nextUsers[0]?.id || null);
-        setUsersLoading(false);
-      })
-      .catch(() => setUsersLoading(false));
-  }, []);
+  const loadUsers = useCallback(async () => {
+    const response = await fetch("/api/admin/users", {
+      cache: "no-store",
+      credentials: "same-origin"
+    });
+    if (response.status === 401) {
+      router.push("/admin/login");
+      return;
+    }
+    const data = await response.json();
+    const nextUsers: AdminUser[] = data.users || [];
+    setUsers(nextUsers);
+    setUsersSummary(data.summary || null);
+    setSelectedUserId((current) => current || nextUsers[0]?.id || null);
+    setUsersLoading(false);
+  }, [router]);
 
-  function openTask(id: string) {
+  const openTask = useCallback((id: string, options: { clear?: boolean } = {}) => {
     setDetailLoading(true);
-    setSelected(null);
-    fetch(`/api/admin/tasks/${id}`)
+    if (options.clear !== false) {
+      setSelected(null);
+    }
+    fetch(`/api/admin/tasks/${id}`, {
+      cache: "no-store",
+      credentials: "same-origin"
+    })
       .then((r) => r.json())
       .then((d) => {
+        if (d.error) throw new Error(d.error);
         setSelected({
           ...(d.task || d),
           participants: d.participants || d.task?.participants || [],
           winners: d.winners || d.task?.winners || [],
+          payments: d.payments || d.task?.payments || [],
           escrow: d.task?.escrow || d.escrow || null,
           campaign: d.task?.campaign || d.campaign || null,
           evidence: d.task?.evidence || d.evidence || []
@@ -210,6 +241,32 @@ export default function AdminPage() {
         setDetailLoading(false);
       })
       .catch(() => setDetailLoading(false));
+  }, []);
+
+  useEffect(() => {
+    loadTasks().catch(() => setLoading(false));
+  }, [loadTasks]);
+
+  useEffect(() => {
+    loadUsers().catch(() => setUsersLoading(false));
+  }, [loadUsers]);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      loadTasks().catch(() => null);
+      if (selected?.id) {
+        openTask(selected.id, { clear: false });
+      }
+    }, 15000);
+    return () => window.clearInterval(interval);
+  }, [loadTasks, openTask, selected?.id]);
+
+  function refreshAdminData() {
+    loadTasks().catch(() => null);
+    loadUsers().catch(() => null);
+    if (selected?.id) {
+      openTask(selected.id, { clear: false });
+    }
   }
 
   const filteredUsers = useMemo(() => {
@@ -265,6 +322,9 @@ export default function AdminPage() {
           </div>
           <button className={styles.backBtn} onClick={() => router.push("/tasks")}>
             Task Board
+          </button>
+          <button className={styles.backBtn} onClick={refreshAdminData}>
+            Refresh
           </button>
           <button className={styles.backBtn} onClick={logoutAdmin}>
             Sign out
@@ -627,7 +687,7 @@ function TaskDetailPanel({ task }: { task: TaskDetail }) {
             {t.charAt(0).toUpperCase() + t.slice(1)}
             {t === "participants" && ` (${task.participants.length})`}
             {t === "winners" && ` (${task.winners.length})`}
-            {t === "payments" && ` (${task.claimedCount})`}
+            {t === "payments" && ` (${task.payments.length})`}
           </button>
         ))}
       </div>
@@ -777,7 +837,7 @@ function TaskDetailPanel({ task }: { task: TaskDetail }) {
 
       {tab === "payments" && (
         <div className={styles.tableWrap}>
-          {task.claimedCount === 0 ? (
+          {task.payments.length === 0 ? (
             <div className={styles.empty}>No payments yet</div>
           ) : (
             <table className={styles.table}>
@@ -792,24 +852,25 @@ function TaskDetailPanel({ task }: { task: TaskDetail }) {
                 </tr>
               </thead>
               <tbody>
-                {task.participants
-                  .filter((p) => p.claimed)
-                  .map((p) => (
-                    <tr key={p.txHash || p.wallet}>
-                      <td><span className={styles.addr}>{shortAddress(p.wallet)}</span></td>
-                      <td>{p.amount}</td>
-                      <td>On-chain</td>
-                      <td>{p.network || "—"}</td>
+                {task.payments.map((payment) => {
+                  const receiver = payment.receiverAddress || payment.receiver || "";
+                  return (
+                    <tr key={payment.id || payment.txHash || receiver}>
+                      <td><span className={styles.addr}>{receiver ? shortAddress(receiver) : "—"}</span></td>
+                      <td>{payment.amount} {payment.tokenSymbol || ""}</td>
+                      <td>{payment.method === "prize_pool_claim" ? "On-chain" : payment.method}</td>
+                      <td>{payment.network || "—"}</td>
                       <td>
-                        {p.txHash ? (
-                          <a href={p.explorerUrl || "#"} target="_blank" rel="noopener noreferrer" className={styles.txLink}>
-                            {shortAddress(p.txHash)}
+                        {payment.txHash ? (
+                          <a href={payment.explorerUrl || "#"} target="_blank" rel="noopener noreferrer" className={styles.txLink}>
+                            {shortAddress(payment.txHash)}
                           </a>
                         ) : "—"}
                       </td>
-                      <td>{p.createdAt ? timeAgo(p.createdAt) : "—"}</td>
+                      <td>{payment.createdAt ? timeAgo(payment.createdAt) : "—"}</td>
                     </tr>
-                  ))}
+                  );
+                })}
               </tbody>
             </table>
           )}
