@@ -38,15 +38,16 @@ function findAlternateClaimTask(
 export default async function TaskDetailPage({
   params
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = await params;
   const db = await readDb();
-  const task = db.tasks.find((item) => item.id === params.id);
+  const task = db.tasks.find((item) => item.id === id);
   const payment =
-    db.payments.find((item) => item.taskId === params.id && item.source === "task") ||
-    db.payments.find((item) => item.taskId === params.id && item.source !== "x402_access") ||
+    db.payments.find((item) => item.taskId === id && item.source === "task") ||
+    db.payments.find((item) => item.taskId === id && item.source !== "x402_access") ||
     null;
-  const alternateClaimTask = findAlternateClaimTask(db.tasks, params.id);
+  const alternateClaimTask = findAlternateClaimTask(db.tasks, id);
 
   if (!task) {
     notFound();

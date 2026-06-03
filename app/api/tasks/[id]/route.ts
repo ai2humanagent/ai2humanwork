@@ -39,11 +39,12 @@ function findAlternateClaimTask(
 
 export async function GET(
   _request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const db = await readDb();
-  const task = db.tasks.find((item) => item.id === params.id);
-  const alternateClaimTask = findAlternateClaimTask(db.tasks, params.id);
+  const task = db.tasks.find((item) => item.id === id);
+  const alternateClaimTask = findAlternateClaimTask(db.tasks, id);
 
   if (!task) {
     return NextResponse.json({ error: "Task not found" }, { status: 404 });
@@ -52,9 +53,9 @@ export async function GET(
   const isClaimedPayment = (item: (typeof db.payments)[number]) =>
     !task.poolAddress || (item.method === "prize_pool_claim" && Boolean(item.txHash));
   const payment =
-    db.payments.find((item) => item.taskId === params.id && item.source === "task") ||
+    db.payments.find((item) => item.taskId === id && item.source === "task") ||
     db.payments.find(
-      (item) => item.taskId === params.id && item.source !== "x402_access" && isClaimedPayment(item)
+      (item) => item.taskId === id && item.source !== "x402_access" && isClaimedPayment(item)
     ) ||
     null;
 
@@ -65,7 +66,7 @@ export async function GET(
     const info = await getPrizePoolInfo(poolAddress);
     if (info) {
       const claimedCount = db.payments.filter(
-        (p) => p.taskId === params.id && p.source === "twitter_task" && isClaimedPayment(p)
+        (p) => p.taskId === id && p.source === "twitter_task" && isClaimedPayment(p)
       ).length;
       poolStatus = {
         poolAddress,

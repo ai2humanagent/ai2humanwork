@@ -22,6 +22,17 @@ export async function GET(
     return NextResponse.json({ error: "wallet query param is required" }, { status: 400 });
   }
 
+  const auth = await getAuthContext(request);
+  if (!auth.ok) {
+    return NextResponse.json({ error: "Connect your wallet before loading task progress." }, { status: 401 });
+  }
+  if ((auth.user.walletAddress || "").toLowerCase() !== wallet) {
+    return NextResponse.json(
+      { error: "Connected wallet does not match this task progress request." },
+      { status: 403 }
+    );
+  }
+
   const db = await readDb();
   const task = db.tasks.find((t) => t.id === taskId);
   if (!task) {
