@@ -2,6 +2,9 @@ import { notFound } from "next/navigation";
 import { readDb } from "../../../lib/store";
 import TaskDetailClient from "./TaskDetailClient";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 type AlternateClaimTask = {
   id: string;
   deadline: string;

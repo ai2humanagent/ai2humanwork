@@ -646,6 +646,10 @@ function getDbPath(): string {
 
 const DB_PATH = getDbPath();
 
+function isProductionRuntime(): boolean {
+  return process.env.VERCEL === "1" || process.env.NODE_ENV === "production";
+}
+
 function makeInitialDb(): Db {
   return {
     tasks: makeSeedTasks(60),
@@ -813,14 +817,34 @@ function mergeLocalHumanMetadata(humans: Human[], localHumans: Human[]): Human[]
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function humanToSbHuman(h: Human, includeAvatarUrl = false): any { return { id: h.id, name: h.name, handle: h.handle, role: h.role, location: h.location, city: h.city, country: h.country, verified: h.verified, rating: h.rating, completed_jobs: h.completedJobs, hourly_rate: h.hourlyRate, skills: h.skills, languages: h.languages, avatar_seed: h.avatarSeed, ...(includeAvatarUrl ? { avatar_url: h.avatarUrl ?? null } : {}) }; }
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function taskToSbTask(t: Task): any {
+function taskToSbTask(t: Task, includePoolAddress = false): any {
   const campaign =
     t.poolAddress && t.campaign
       ? { ...t.campaign, poolAddress: t.poolAddress }
       : t.poolAddress
         ? { poolAddress: t.poolAddress }
         : t.campaign ?? null;
-  return { id: t.id, title: t.title, budget: t.budget, deadline: t.deadline || null, acceptance: t.acceptance, task_type: t.taskType ?? null, status: t.status, task_state: t.taskState, evidence: t.evidence ?? [], agent_id: t.agentId ?? null, reward_distribution: t.rewardDistribution ?? null, escrow_deposit_id: t.escrowDepositId ?? null, assignee: t.assignee ?? null, draw_result: t.drawResult ?? null, campaign, verify_cooldown_hours: t.verifyCooldownHours, created_at: t.createdAt, updated_at: t.updatedAt };
+  return {
+    id: t.id,
+    title: t.title,
+    budget: t.budget,
+    deadline: t.deadline || null,
+    acceptance: t.acceptance,
+    task_type: t.taskType ?? null,
+    status: t.status,
+    task_state: t.taskState,
+    evidence: t.evidence ?? [],
+    agent_id: t.agentId ?? null,
+    reward_distribution: t.rewardDistribution ?? null,
+    escrow_deposit_id: t.escrowDepositId ?? null,
+    assignee: t.assignee ?? null,
+    draw_result: t.drawResult ?? null,
+    campaign,
+    ...(includePoolAddress ? { pool_address: t.poolAddress ?? null } : {}),
+    verify_cooldown_hours: t.verifyCooldownHours,
+    created_at: t.createdAt,
+    updated_at: t.updatedAt
+  };
 }
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function qpToSbQp(qp: QuestProgress): any { return { id: qp.id, wallet_address: qp.walletAddress, task_id: qp.taskId, subtask_key: qp.subtaskKey, status: qp.status, verified_at: qp.verifiedAt ?? null, created_at: qp.createdAt }; }
@@ -875,19 +899,20 @@ async function readDbFromSupabase(): Promise<Db> {
   }
   const bundled = getBundledDb();
   const fileSnapshot = await readFileSnapshot();
+  const allowLocalMetadata = !isProductionRuntime();
   const localTaskSnapshot =
-    !process.env.VERCEL && Array.isArray(fileSnapshot.tasks) ? fileSnapshot.tasks : [];
+    allowLocalMetadata && Array.isArray(fileSnapshot.tasks) ? fileSnapshot.tasks : [];
   const supabaseTasks = tasksRes.data?.map(sbTaskToTask) ?? [];
   const supabaseUsers = usersRes.data?.map(sbUserToHuman) ?? [];
   const supabaseHumans = humansRes.data?.map(sbHumanToHuman) ?? [];
   const localUsers = Array.isArray(fileSnapshot.users) ? fileSnapshot.users : [];
   const localHumans = Array.isArray(fileSnapshot.humans) ? fileSnapshot.humans : [];
   const localSessions =
-    !process.env.VERCEL && Array.isArray(fileSnapshot.sessions) ? fileSnapshot.sessions : [];
+    allowLocalMetadata && Array.isArray(fileSnapshot.sessions) ? fileSnapshot.sessions : [];
   return {
-    users: !process.env.VERCEL ? mergeLocalUserMetadata(supabaseUsers, localUsers) : supabaseUsers,
+    users: allowLocalMetadata ? mergeLocalUserMetadata(supabaseUsers, localUsers) : supabaseUsers,
     humans: supabaseHumans.length
-      ? !process.env.VERCEL
+      ? allowLocalMetadata
         ? mergeLocalHumanMetadata(supabaseHumans, localHumans)
         : supabaseHumans
       : seedHumans.map(h => ({ ...h })),
@@ -914,6 +939,7 @@ async function readDbFromSupabase(): Promise<Db> {
 // Track which collections were modified during an updateDb call
 const _modifiedCollections = new Set<string>();
 let _supportsHumanAvatarUrl: boolean | null = null;
+let _supportsTaskPoolAddress: boolean | null = null;
 
 async function supportsHumanAvatarUrl(): Promise<boolean> {
   if (!supabase) return false;
@@ -923,13 +949,22 @@ async function supportsHumanAvatarUrl(): Promise<boolean> {
   return _supportsHumanAvatarUrl;
 }
 
+async function supportsTaskPoolAddress(): Promise<boolean> {
+  if (!supabase) return false;
+  if (_supportsTaskPoolAddress !== null) return _supportsTaskPoolAddress;
+  const { error } = await supabase.from("tasks").select("pool_address").limit(1);
+  _supportsTaskPoolAddress = !error;
+  return _supportsTaskPoolAddress;
+}
+
 async function writeDbToSupabase(db: Db): Promise<void> {
   if (!supabase) return;
   const includeHumanAvatarUrl = await supportsHumanAvatarUrl();
+  const includeTaskPoolAddress = await supportsTaskPoolAddress();
   const writeRequests = [
     { table: "users", request: supabase.from("users").upsert(db.users.map(humanToSbUser), { onConflict: "id" }) },
     { table: "humans", request: supabase.from("humans").upsert(db.humans.map((human) => humanToSbHuman(human, includeHumanAvatarUrl)), { onConflict: "id" }) },
-    { table: "tasks", request: supabase.from("tasks").upsert(db.tasks.map(taskToSbTask), { onConflict: "id" }) },
+    { table: "tasks", request: supabase.from("tasks").upsert(db.tasks.map((task) => taskToSbTask(task, includeTaskPoolAddress)), { onConflict: "id" }) },
     { table: "quest_progress", request: supabase.from("quest_progress").upsert(db.questProgress.map(qpToSbQp), { onConflict: "id" }) },
     { table: "payments", request: supabase.from("payments").upsert(db.payments.map(paymentToSbPayment), { onConflict: "id" }) },
     { table: "notifications", request: supabase.from("notifications").upsert(db.notifications.map(notifToSbNotif), { onConflict: "id" }) },
@@ -960,13 +995,13 @@ export async function readDb(): Promise<Db> {
     try {
       return await readDbFromSupabase();
     } catch (err) {
-      if (process.env.VERCEL) {
+      if (isProductionRuntime()) {
         throw err;
       }
       console.error("[Supabase] readDb failed, falling back to file:", err);
     }
   }
-  if (process.env.VERCEL) {
+  if (isProductionRuntime()) {
     throw new Error("Supabase is required in production.");
   }
   return readDbFromFile();
@@ -976,18 +1011,18 @@ export async function writeDb(db: Db): Promise<void> {
   if (isSupabaseEnabled) {
     try {
       await writeDbToSupabase(db);
-      if (!process.env.VERCEL) {
+      if (!isProductionRuntime()) {
         await writeDbToFile(db);
       }
       return;
     } catch (err) {
-      if (process.env.VERCEL) {
+      if (isProductionRuntime()) {
         throw err;
       }
       console.error("[Supabase] writeDb failed, falling back to file:", err);
     }
   }
-  if (process.env.VERCEL) {
+  if (isProductionRuntime()) {
     throw new Error("Supabase is required in production.");
   }
   await writeDbToFile(db);

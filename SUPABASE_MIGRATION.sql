@@ -64,6 +64,7 @@ CREATE TABLE tasks (
   assignee JSONB,
   draw_result JSONB,
   campaign JSONB,
+  pool_address TEXT,
   verify_cooldown_hours INTEGER DEFAULT 24,
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
