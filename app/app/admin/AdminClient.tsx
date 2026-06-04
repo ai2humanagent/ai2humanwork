@@ -208,7 +208,7 @@ export default function AdminPage() {
   const [query, setQuery] = useState("");
 
   const loadTasks = useCallback(async () => {
-    const response = await fetch("/api/admin/tasks", {
+    const response = await fetch(`/api/admin/tasks?ts=${Date.now()}`, {
       cache: "no-store",
       credentials: "same-origin"
     });
@@ -243,7 +243,7 @@ export default function AdminPage() {
     if (options.clear !== false) {
       setSelected(null);
     }
-    fetch(`/api/admin/tasks/${id}`, {
+    fetch(`/api/admin/tasks/${id}?ts=${Date.now()}`, {
       cache: "no-store",
       credentials: "same-origin"
     })
@@ -690,6 +690,21 @@ function TaskDetailPanel({ task }: { task: TaskDetail }) {
   const [actionBusy, setActionBusy] = useState<"" | "review" | "close_review" | "payout">("");
   const [actionMessage, setActionMessage] = useState("");
   const isArticleContest = task.mode === "ranked_article_contest";
+  const articleParticipantRows: Participant[] = articleSubmissions.map((submission) => ({
+    wallet: submission.walletAddress,
+    xHandle: submission.xHandle,
+    subtaskKey: "article",
+    status: submission.status,
+    verifiedAt: submission.reviewedAt || null,
+    claimed: submission.status === "paid",
+    amount: submission.prizeAmount || null,
+    txHash: submission.paymentTxHash || null,
+    explorerUrl: submission.paymentExplorerUrl || null,
+    network: "base-mainnet",
+    createdAt: submission.submittedAt
+  }));
+  const participantRows = isArticleContest ? articleParticipantRows : task.participants;
+  const displayedParticipantCount = isArticleContest ? articleSubmissions.length : task.participantCount;
 
   useEffect(() => {
     setArticleSubmissions(task.articleSubmissions || []);
@@ -700,7 +715,7 @@ function TaskDetailPanel({ task }: { task: TaskDetail }) {
   }, [task.id, task.articleSubmissions, isArticleContest, tab]);
 
   async function refreshArticleSubmissions() {
-    const response = await fetch(`/api/admin/tasks/${task.id}`, {
+    const response = await fetch(`/api/admin/tasks/${task.id}?ts=${Date.now()}`, {
       cache: "no-store",
       credentials: "same-origin"
     });
@@ -755,7 +770,7 @@ function TaskDetailPanel({ task }: { task: TaskDetail }) {
           <span className={styles.pool}>{task.totalPool} pool</span>
           <span>{modeLabel(task.mode)}</span>
           <span>{task.claimedCount}/{task.maxWinners} claimed</span>
-          <span>{task.participantCount} participants</span>
+          <span>{displayedParticipantCount} participants</span>
         </div>
       </div>
 
@@ -767,7 +782,7 @@ function TaskDetailPanel({ task }: { task: TaskDetail }) {
             onClick={() => setTab(t)}
           >
             {t.charAt(0).toUpperCase() + t.slice(1)}
-            {t === "participants" && ` (${task.participants.length})`}
+            {t === "participants" && ` (${participantRows.length})`}
             {t === "submissions" && ` (${articleSubmissions.length})`}
             {t === "winners" && ` (${task.winners.length})`}
             {t === "payments" && ` (${task.payments.length})`}
@@ -830,7 +845,7 @@ function TaskDetailPanel({ task }: { task: TaskDetail }) {
 
       {tab === "participants" && (
         <div className={styles.tableWrap}>
-          {task.participants.length === 0 ? (
+          {participantRows.length === 0 ? (
             <div className={styles.empty}>No participants yet</div>
           ) : (
             <table className={styles.table}>
@@ -847,7 +862,7 @@ function TaskDetailPanel({ task }: { task: TaskDetail }) {
                 </tr>
               </thead>
               <tbody>
-                {task.participants.map((p) => (
+                {participantRows.map((p) => (
                   <tr key={`${p.wallet}-${p.subtaskKey}`}>
                     <td>
                       <span className={styles.addr}>{shortAddress(p.wallet)}</span>
