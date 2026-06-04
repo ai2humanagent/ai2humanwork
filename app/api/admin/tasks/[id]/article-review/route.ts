@@ -5,6 +5,7 @@ import { readDb, updateDb } from "../../../../../lib/store";
 import { appendEvidence } from "../../../../../lib/taskEvidence";
 import {
   assignArticleContestPrizes,
+  fetchXArticleContent,
   isArticleContestDistribution,
   isSubmissionDeadlinePassed,
   scoreArticleSubmission
@@ -64,15 +65,45 @@ export async function POST(
     provider?: string;
     model?: string;
     latencyMs?: number;
+    source?: string;
     fallbackReason?: string;
     error?: string;
   }> = [];
   const scored = await Promise.all(
     submissions.map(async (submission) => {
       if (submission.status === "paid") return submission;
+      const liveContent = await fetchXArticleContent(submission.articleUrl);
+      if (!liveContent.ok) {
+        scoreDebug.push({
+          submissionId: submission.id,
+          xHandle: submission.xHandle,
+          walletAddress: submission.walletAddress,
+          score: 0,
+          provider: "x_fetch",
+          error: liveContent.error,
+          fallbackReason: liveContent.attempts.join(" | ")
+        });
+        return {
+          ...submission,
+          status: "invalid" as const,
+          aiScore: 0,
+          aiReview: `X live content fetch failed. ${liveContent.error} Attempts: ${liveContent.attempts.join(" -> ")}`,
+          aiRubric: {
+            relevance: 0,
+            originality: 0,
+            clarity: 0,
+            evidence: 0,
+            narrative: 0
+          },
+          rank: undefined,
+          prizeAmount: undefined,
+          reviewedAt: now,
+          updatedAt: now
+        };
+      }
       const score = await scoreArticleSubmission({
         title: submission.title,
-        content: submission.contentSnapshot,
+        content: liveContent.text,
         articleUrl: submission.articleUrl
       });
       scoreDebug.push({
@@ -83,13 +114,14 @@ export async function POST(
         provider: score.provider,
         model: score.model,
         latencyMs: score.latencyMs,
+        source: liveContent.source,
         fallbackReason: score.fallbackReason
       });
       return {
         ...submission,
         status: "reviewed" as const,
         aiScore: score.score,
-        aiReview: score.review,
+        aiReview: `Source: X live content (${liveContent.source}). ${score.review}`,
         aiRubric: score.rubric,
         reviewedAt: now,
         updatedAt: now

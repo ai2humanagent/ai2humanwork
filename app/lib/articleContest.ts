@@ -22,6 +22,18 @@ export type ArticleScoreResult = {
   fallbackReason?: string;
 };
 
+export type XArticleContentResult = {
+  ok: true;
+  source: "x_api" | "syndication" | "oembed" | "html";
+  text: string;
+  authorHandle?: string;
+  title?: string;
+} | {
+  ok: false;
+  error: string;
+  attempts: string[];
+};
+
 const DEFAULT_PRIZES = [
   { rank: 1, amount: "50 USDC", slots: 1, label: "1st place" },
   { rank: 2, amount: "20 USDC", slots: 1, label: "2nd place" },
@@ -36,6 +48,188 @@ function clampScore(value: unknown) {
 
 function normalizeUrlHost(host: string) {
   return host.toLowerCase().replace(/^www\./, "");
+}
+
+function decodeHtml(value: string) {
+  return value
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, "\"")
+    .replace(/&#39;/g, "'")
+    .replace(/&#x27;/g, "'")
+    .replace(/&#x2F;/g, "/")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/p>/gi, "\n")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function withTimeout(ms: number) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), ms);
+  return { signal: controller.signal, clear: () => clearTimeout(timeout) };
+}
+
+async function fetchText(url: string, init: RequestInit = {}) {
+  const timeout = withTimeout(12000);
+  try {
+    const response = await fetch(url, {
+      ...init,
+      signal: timeout.signal,
+      headers: {
+        "User-Agent": "Mozilla/5.0 ai2human-review-bot/1.0",
+        ...(init.headers || {})
+      },
+      cache: "no-store"
+    });
+    const text = await response.text();
+    return { response, text };
+  } finally {
+    timeout.clear();
+  }
+}
+
+async function getXBearerToken() {
+  const apiKey = process.env.X_OAUTH1_API_KEY;
+  const apiSecret = process.env.X_OAUTH1_API_SECRET;
+  if (!apiKey || !apiSecret) return "";
+
+  const credentials = Buffer.from(`${encodeURIComponent(apiKey)}:${encodeURIComponent(apiSecret)}`).toString("base64");
+  const { response, text } = await fetchText("https://api.twitter.com/oauth2/token", {
+    method: "POST",
+    headers: {
+      Authorization: `Basic ${credentials}`,
+      "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
+    },
+    body: "grant_type=client_credentials"
+  });
+  if (!response.ok) {
+    throw new Error(`bearer token HTTP ${response.status}: ${text.slice(0, 120)}`);
+  }
+  const data = JSON.parse(text) as { access_token?: string };
+  return data.access_token || "";
+}
+
+export async function fetchXArticleContent(articleUrl: string): Promise<XArticleContentResult> {
+  const parsed = parseXArticleUrl(articleUrl);
+  if (!parsed.ok) {
+    return { ok: false, error: parsed.error, attempts: ["parse_url"] };
+  }
+
+  const attempts: string[] = [];
+
+  try {
+    attempts.push("x_api");
+    const bearer = await getXBearerToken();
+    if (bearer) {
+      const endpoint = `https://api.twitter.com/2/tweets/${parsed.articleId}?tweet.fields=text,author_id,created_at,lang&expansions=author_id&user.fields=username,name`;
+      const { response, text } = await fetchText(endpoint, {
+        headers: { Authorization: `Bearer ${bearer}` }
+      });
+      if (response.ok) {
+        const data = JSON.parse(text) as {
+          data?: { text?: string };
+          includes?: { users?: Array<{ username?: string; name?: string }> };
+        };
+        const liveText = String(data.data?.text || "").trim();
+        if (liveText.length >= 40) {
+          return {
+            ok: true,
+            source: "x_api",
+            text: liveText,
+            authorHandle: data.includes?.users?.[0]?.username || parsed.authorHandle,
+            title: data.includes?.users?.[0]?.name
+          };
+        }
+        attempts.push("x_api_empty");
+      } else {
+        attempts.push(`x_api_http_${response.status}`);
+      }
+    } else {
+      attempts.push("x_api_missing_credentials");
+    }
+  } catch (error) {
+    attempts.push(`x_api_error:${error instanceof Error ? error.message.slice(0, 120) : "unknown"}`);
+  }
+
+  try {
+    attempts.push("syndication");
+    const { response, text } = await fetchText(`https://cdn.syndication.twimg.com/widgets/tweet?id=${parsed.articleId}&lang=en`);
+    if (response.ok) {
+      const data = JSON.parse(text) as { text?: string; user?: { screen_name?: string; name?: string } };
+      const liveText = decodeHtml(String(data.text || ""));
+      if (liveText.length >= 40) {
+        return {
+          ok: true,
+          source: "syndication",
+          text: liveText,
+          authorHandle: data.user?.screen_name || parsed.authorHandle,
+          title: data.user?.name
+        };
+      }
+      attempts.push("syndication_empty");
+    } else {
+      attempts.push(`syndication_http_${response.status}`);
+    }
+  } catch (error) {
+    attempts.push(`syndication_error:${error instanceof Error ? error.message.slice(0, 120) : "unknown"}`);
+  }
+
+  try {
+    attempts.push("oembed");
+    const { response, text } = await fetchText(`https://publish.twitter.com/oembed?omit_script=true&url=${encodeURIComponent(parsed.url)}`);
+    if (response.ok) {
+      const data = JSON.parse(text) as { html?: string; author_name?: string };
+      const liveText = decodeHtml(String(data.html || ""));
+      if (liveText.length >= 40) {
+        return {
+          ok: true,
+          source: "oembed",
+          text: liveText,
+          authorHandle: parsed.authorHandle,
+          title: data.author_name
+        };
+      }
+      attempts.push("oembed_empty");
+    } else {
+      attempts.push(`oembed_http_${response.status}`);
+    }
+  } catch (error) {
+    attempts.push(`oembed_error:${error instanceof Error ? error.message.slice(0, 120) : "unknown"}`);
+  }
+
+  try {
+    attempts.push("html");
+    const { response, text } = await fetchText(parsed.url);
+    if (response.ok) {
+      const metaDescription =
+        text.match(/<meta\s+property=["']og:description["']\s+content=["']([^"']+)["']/i)?.[1] ||
+        text.match(/<meta\s+name=["']description["']\s+content=["']([^"']+)["']/i)?.[1] ||
+        "";
+      const liveText = decodeHtml(metaDescription);
+      if (liveText.length >= 40) {
+        return {
+          ok: true,
+          source: "html",
+          text: liveText,
+          authorHandle: parsed.authorHandle
+        };
+      }
+      attempts.push("html_empty");
+    } else {
+      attempts.push(`html_http_${response.status}`);
+    }
+  } catch (error) {
+    attempts.push(`html_error:${error instanceof Error ? error.message.slice(0, 120) : "unknown"}`);
+  }
+
+  return {
+    ok: false,
+    error: "Unable to fetch live X content from this URL. The submission cannot be reviewed from user-provided snapshot only.",
+    attempts
+  };
 }
 
 export function parseXArticleUrl(rawUrl: string): ParsedXArticleUrl {
@@ -157,6 +351,7 @@ export async function scoreArticleSubmission(input: {
           role: "system",
           content: [
             "You score X article submissions for ai2human.",
+            "The content field is live text fetched from the submitted X URL. Judge only that fetched X content.",
             "Return strict JSON with keys: score, review, rubric.",
             "Rubric keys must be relevance, originality, clarity, evidence, narrative.",
             "Each rubric value is 0-20. score is 0-100.",
