@@ -752,6 +752,234 @@
   max-width: 460px;
 }
 
+.reviewShowcase {
+  margin: 14px 0 22px;
+  border: 1px solid #263244;
+  border-radius: 8px;
+  background: #090d14;
+  overflow: hidden;
+}
+
+.reviewHero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 420px;
+  gap: 20px;
+  padding: 22px;
+  border-bottom: 1px solid #1f2937;
+  background:
+    linear-gradient(135deg, rgba(251, 191, 36, 0.12), transparent 38%),
+    linear-gradient(180deg, #101720 0%, #0a0f17 100%);
+}
+
+.reviewHeroCopy {
+  min-width: 0;
+}
+
+.reviewKicker {
+  display: block;
+  margin-bottom: 8px;
+  color: #fbbf24;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.reviewHero h3 {
+  margin: 0;
+  color: #f8fafc;
+  font-size: 24px;
+  line-height: 1.15;
+  letter-spacing: 0;
+}
+
+.reviewHero p {
+  margin: 10px 0 0;
+  max-width: 760px;
+  color: #9ca3af;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.reviewStatsPanel {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.reviewStatsPanel div {
+  min-height: 72px;
+  border: 1px solid #263244;
+  border-radius: 8px;
+  background: rgba(15, 23, 34, 0.78);
+  padding: 12px;
+}
+
+.reviewStatsPanel strong {
+  display: block;
+  color: #f8fafc;
+  font-size: 19px;
+  line-height: 1.1;
+}
+
+.reviewStatsPanel span {
+  display: block;
+  margin-top: 7px;
+  color: #7b8495;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.prizeCard {
+  border: 1px solid #243044;
+  border-radius: 8px;
+  background: #0f1722;
+  padding: 16px;
+  min-width: 0;
+}
+
+.prizeCardFeatured {
+  margin: 16px;
+  padding: 20px;
+  border-color: #7c5d16;
+  background:
+    linear-gradient(135deg, rgba(251, 191, 36, 0.12), transparent 55%),
+    #111720;
+}
+
+.prizeGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 12px;
+  padding: 0 16px 16px;
+}
+
+.prizeCardTop {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.prizeLabel {
+  display: block;
+  color: #fbbf24;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.prizeCard h4 {
+  margin: 6px 0 0;
+  color: #e5e7eb;
+  font-size: 17px;
+  line-height: 1.2;
+  word-break: break-word;
+}
+
+.prizeAmount {
+  border: 1px solid rgba(34, 197, 94, 0.32);
+  border-radius: 999px;
+  color: #22c55e;
+  background: rgba(13, 51, 32, 0.48);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 7px 10px;
+  white-space: nowrap;
+}
+
+.prizeScoreRow {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  margin-top: 14px;
+}
+
+.prizeScoreRow strong {
+  color: #f8fafc;
+  font-size: 38px;
+  line-height: 1;
+}
+
+.prizeScoreRow span {
+  color: #8b95a7;
+  font-size: 14px;
+}
+
+.prizeTitle {
+  margin: 12px 0 0;
+  color: #d7deea;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.sourceBadge {
+  display: inline-flex;
+  max-width: 100%;
+  margin-top: 12px;
+  border: 1px solid #263244;
+  border-radius: 999px;
+  color: #9ca3af;
+  background: #101827;
+  font-size: 10px;
+  line-height: 1.25;
+  padding: 6px 8px;
+}
+
+.prizeReason {
+  margin: 12px 0 0;
+  color: #a8b3c5;
+  font-size: 12px;
+  line-height: 1.55;
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.prizeRubric {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 7px;
+  margin-top: 14px;
+}
+
+.prizeRubric div {
+  border: 1px solid #263244;
+  border-radius: 7px;
+  background: #0b1118;
+  padding: 8px;
+}
+
+.prizeRubric span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #7b8495;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.prizeRubric strong {
+  display: block;
+  margin-top: 5px;
+  color: #dbeafe;
+  font-size: 13px;
+}
+
+.reviewFootnote {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  border-top: 1px solid #1f2937;
+  padding: 12px 16px;
+  color: #7b8495;
+  font-size: 11px;
+}
+
 .tableWrap {
   overflow-x: auto;
 }
@@ -799,4 +1027,46 @@
 
 .txLink:hover {
   text-decoration: underline;
+}
+
+@media (max-width: 1100px) {
+  .layout {
+    grid-template-columns: 280px 1fr;
+  }
+
+  .reviewHero {
+    grid-template-columns: 1fr;
+  }
+
+  .reviewStatsPanel {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .prizeRubric {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .layout {
+    display: block;
+  }
+
+  .detail {
+    padding: 18px;
+  }
+
+  .reviewStatsPanel,
+  .prizeRubric {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .reviewFootnote {
+    flex-direction: column;
+  }
 }

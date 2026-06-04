@@ -685,6 +685,77 @@ function InfoLine({ label, value, mono = false }: { label: string; value: string
   );
 }
 
+function prizeLabel(rank: number | null) {
+  if (rank === 1) return "First Prize";
+  if (rank === 2) return "Second Prize";
+  if (rank === 3) return "Third Prize";
+  return "Finalist";
+}
+
+function sourceAndReason(review: string | null) {
+  if (!review) return { source: "Not reviewed", reason: "" };
+  const prefix = "Source: ";
+  if (!review.startsWith(prefix)) return { source: "AI review", reason: review };
+
+  const body = review.slice(prefix.length);
+  const fallbackMarker = "). ";
+  if (body.includes("live X fetch failed (")) {
+    const fallbackIndex = body.indexOf(fallbackMarker);
+    if (fallbackIndex >= 0) {
+      return {
+        source: body.slice(0, fallbackIndex + 1),
+        reason: body.slice(fallbackIndex + fallbackMarker.length)
+      };
+    }
+  }
+
+  const separator = body.indexOf(". ");
+  if (separator < 0) return { source: body, reason: "" };
+  return {
+    source: body.slice(0, separator),
+    reason: body.slice(separator + 2)
+  };
+}
+
+function PrizeCard({ submission, featured = false }: { submission: ArticleSubmission; featured?: boolean }) {
+  const review = sourceAndReason(submission.aiReview);
+  const rubricEntries = submission.aiRubric
+    ? Object.entries(submission.aiRubric)
+    : [];
+
+  return (
+    <article className={`${styles.prizeCard} ${featured ? styles.prizeCardFeatured : ""}`}>
+      <div className={styles.prizeCardTop}>
+        <div>
+          <span className={styles.prizeLabel}>{prizeLabel(submission.rank)}</span>
+          <h4>@{submission.xHandle}</h4>
+        </div>
+        <div className={styles.prizeAmount}>{submission.prizeAmount}</div>
+      </div>
+
+      <div className={styles.prizeScoreRow}>
+        <strong>{submission.aiScore != null ? submission.aiScore.toFixed(1) : "—"}</strong>
+        <span>/100</span>
+      </div>
+
+      <p className={styles.prizeTitle}>{submission.title}</p>
+      <div className={styles.sourceBadge}>{review.source}</div>
+      {review.reason && <p className={styles.prizeReason}>{review.reason}</p>}
+
+      {rubricEntries.length > 0 && (
+        <div className={styles.prizeRubric}>
+          {rubricEntries.map(([key, value]) => (
+            <div key={key}>
+              <span>{key}</span>
+              <strong>{Number(value).toFixed(1)}</strong>
+            </div>
+          ))}
+        </div>
+      )}
+    </article>
+  );
+}
+
 function TaskDetailPanel({ task }: { task: TaskDetail }) {
   const [tab, setTab] = useState<"overview" | "participants" | "submissions" | "winners" | "payments">("overview");
   const [articleSubmissions, setArticleSubmissions] = useState<ArticleSubmission[]>(task.articleSubmissions || []);
@@ -698,6 +769,8 @@ function TaskDetailPanel({ task }: { task: TaskDetail }) {
     return (b.aiScore || 0) - (a.aiScore || 0);
   });
   const winnerSubmissions = rankedSubmissions.filter((submission) => submission.rank && submission.prizeAmount);
+  const firstPrize = winnerSubmissions.find((submission) => submission.rank === 1);
+  const runnerUpPrizes = winnerSubmissions.filter((submission) => submission.rank !== 1);
   const hasReviewResults = reviewedSubmissions.length > 0;
   const averageScore = reviewedSubmissions.length
     ? reviewedSubmissions.reduce((sum, submission) => sum + (submission.aiScore || 0), 0) / reviewedSubmissions.length
@@ -981,39 +1054,50 @@ function TaskDetailPanel({ task }: { task: TaskDetail }) {
           </div>
           {actionMessage && <div className={styles.empty}>{actionMessage}</div>}
           {reviewedSubmissions.length > 0 && (
-            <div className={styles.reviewReport}>
-              <div className={styles.reviewReportHeader}>
-                <div>
-                  <h3>AI Review Report</h3>
+            <div className={styles.reviewShowcase}>
+              <div className={styles.reviewHero}>
+                <div className={styles.reviewHeroCopy}>
+                  <span className={styles.reviewKicker}>AI Article Contest Results</span>
+                  <h3>{task.title}</h3>
                   <p>
-                    Ranked from live X content when available; if live X fetching fails, the submitted snapshot is used as a clearly labeled fallback. Ties use earlier submission time.
+                    Ranked from live X content when available. If live X fetching fails, the submitted snapshot is used as a clearly labeled fallback. Ties use earlier submission time.
                   </p>
                 </div>
-                <div className={styles.reviewStats}>
-                  <span>{reviewedSubmissions.length} reviewed</span>
-                  <span>{winnerSubmissions.length} winners</span>
-                  <span>{averageScore.toFixed(1)} avg</span>
-                  {latestReviewedAt && <span>{timeAgo(latestReviewedAt)}</span>}
+                <div className={styles.reviewStatsPanel}>
+                  <div>
+                    <strong>{reviewedSubmissions.length}</strong>
+                    <span>Reviewed</span>
+                  </div>
+                  <div>
+                    <strong>{winnerSubmissions.length}</strong>
+                    <span>Winners</span>
+                  </div>
+                  <div>
+                    <strong>{averageScore.toFixed(1)}</strong>
+                    <span>Avg score</span>
+                  </div>
+                  <div>
+                    <strong>{task.totalPool}</strong>
+                    <span>Prize pool</span>
+                  </div>
                 </div>
               </div>
-              <div className={styles.reviewWinnerGrid}>
-                {winnerSubmissions.map((submission) => (
-                  <div key={submission.id} className={styles.reviewWinnerCard}>
-                    <div className={styles.reviewWinnerTop}>
-                      <strong>#{submission.rank} @{submission.xHandle}</strong>
-                      <span>{submission.prizeAmount}</span>
-                    </div>
-                    <div className={styles.reviewScore}>{submission.aiScore?.toFixed(1)}/100</div>
-                    {submission.aiReview && <p>{submission.aiReview}</p>}
-                    {submission.aiRubric && (
-                      <div className={styles.rubricGrid}>
-                        {Object.entries(submission.aiRubric).map(([key, value]) => (
-                          <span key={key}>{key}: {Number(value).toFixed(1)}/20</span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ))}
+
+              {firstPrize && (
+                <PrizeCard submission={firstPrize} featured />
+              )}
+
+              {runnerUpPrizes.length > 0 && (
+                <div className={styles.prizeGrid}>
+                  {runnerUpPrizes.map((submission) => (
+                    <PrizeCard key={submission.id} submission={submission} />
+                  ))}
+                </div>
+              )}
+
+              <div className={styles.reviewFootnote}>
+                <span>Rubric: relevance, originality, clarity, evidence, narrative.</span>
+                {latestReviewedAt && <span>Last reviewed {timeAgo(latestReviewedAt)}.</span>}
               </div>
             </div>
           )}
