@@ -687,7 +687,7 @@ function InfoLine({ label, value, mono = false }: { label: string; value: string
 function TaskDetailPanel({ task }: { task: TaskDetail }) {
   const [tab, setTab] = useState<"overview" | "participants" | "submissions" | "winners" | "payments">("overview");
   const [articleSubmissions, setArticleSubmissions] = useState<ArticleSubmission[]>(task.articleSubmissions || []);
-  const [actionBusy, setActionBusy] = useState<"" | "review" | "payout">("");
+  const [actionBusy, setActionBusy] = useState<"" | "review" | "close_review" | "payout">("");
   const [actionMessage, setActionMessage] = useState("");
   const isArticleContest = task.mode === "ranked_article_contest";
 
@@ -708,23 +708,28 @@ function TaskDetailPanel({ task }: { task: TaskDetail }) {
     setArticleSubmissions(data.articleSubmissions || data.task?.articleSubmissions || []);
   }
 
-  async function runArticleAction(action: "review" | "payout") {
+  async function runArticleAction(action: "review" | "close_review" | "payout") {
     setActionBusy(action);
     setActionMessage("");
     try {
-      const response = await fetch(`/api/admin/tasks/${task.id}/article-${action}`, {
+      const isReviewAction = action === "review" || action === "close_review";
+      const response = await fetch(`/api/admin/tasks/${task.id}/article-${isReviewAction ? "review" : action}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "same-origin",
-        body: action === "review" ? JSON.stringify({ force: true }) : JSON.stringify({})
+        body: isReviewAction
+          ? JSON.stringify({ force: action === "review", closeNow: action === "close_review" })
+          : JSON.stringify({})
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok && response.status !== 207) {
         throw new Error(data.error || `Article ${action} failed`);
       }
       await refreshArticleSubmissions();
-      if (action === "review") {
-        setActionMessage(`Review complete: ${data.reviewed || 0} submissions, ${data.winners || 0} winners.`);
+      if (isReviewAction) {
+        setActionMessage(
+          `${data.closedNow ? "Deadline closed. " : ""}Review complete: ${data.reviewed || 0} submissions, ${data.winners || 0} winners.`
+        );
       } else {
         setActionMessage(`Payout complete: ${data.paid || 0} paid${data.failed?.length ? `, ${data.failed.length} failed` : ""}.`);
       }
@@ -909,6 +914,13 @@ function TaskDetailPanel({ task }: { task: TaskDetail }) {
       {tab === "submissions" && (
         <div className={styles.section}>
           <div className={styles.headerActions}>
+            <button
+              className={styles.backBtn}
+              onClick={() => runArticleAction("close_review")}
+              disabled={actionBusy !== ""}
+            >
+              {actionBusy === "close_review" ? "Closing..." : "Close Now & Review"}
+            </button>
             <button
               className={styles.backBtn}
               onClick={() => runArticleAction("review")}

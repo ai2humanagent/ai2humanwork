@@ -23,6 +23,7 @@ export async function POST(
   const { id: taskId } = await params;
   const body = await request.json().catch(() => ({}));
   const force = Boolean(body.force);
+  const closeNow = Boolean(body.closeNow);
   const db = await readDb();
   const task = db.tasks.find((item) => item.id === taskId);
   if (!task) {
@@ -31,7 +32,7 @@ export async function POST(
   if (!isArticleContestDistribution(task.rewardDistribution)) {
     return NextResponse.json({ error: "This task is not a ranked article contest." }, { status: 400 });
   }
-  if (!force && !isSubmissionDeadlinePassed(task.deadline)) {
+  if (!force && !closeNow && !isSubmissionDeadlinePassed(task.deadline)) {
     return NextResponse.json({ error: "Submission deadline has not passed yet." }, { status: 400 });
   }
 
@@ -69,12 +70,17 @@ export async function POST(
     });
     const targetTask = nextDb.tasks.find((item) => item.id === taskId);
     if (targetTask) {
+      if (closeNow) {
+        targetTask.deadline = now;
+      }
       targetTask.updatedAt = now;
     }
   });
 
   return NextResponse.json({
     success: true,
+    deadline: closeNow ? now : task.deadline,
+    closedNow: closeNow,
     reviewed: ranked.length,
     winners: ranked.filter((submission) => submission.status === "winner" || submission.status === "paid").length,
     submissions: ranked
