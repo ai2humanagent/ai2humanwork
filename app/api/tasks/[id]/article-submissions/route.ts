@@ -26,6 +26,10 @@ async function requireArticleSubmissionsStorage() {
   return ok ? null : "article_submissions table is missing. Run SUPABASE_ARTICLE_CONTEST_PATCH.sql first.";
 }
 
+function isTestArticleContestTask(taskId: string) {
+  return taskId.startsWith("x-article-contest-test-");
+}
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -103,15 +107,16 @@ export async function POST(
   if (!isArticleContestDistribution(task.rewardDistribution)) {
     return NextResponse.json({ error: "This task does not accept X article submissions." }, { status: 400 });
   }
+  const testBypassEnabled = isTestArticleContestTask(taskId);
   if (isSubmissionDeadlinePassed(task.deadline)) {
     return NextResponse.json({ error: "Submission deadline has passed." }, { status: 400 });
   }
 
   const { xAccount } = await getBoundXAccountForWallet(db, wallet);
-  if (!xAccount?.username) {
+  if (!xAccount?.username && !testBypassEnabled) {
     return NextResponse.json({ error: "Bind your X account before submitting an article." }, { status: 403 });
   }
-  if (!xHandlesMatch(parsedUrl.authorHandle, xAccount.username)) {
+  if (xAccount?.username && !xHandlesMatch(parsedUrl.authorHandle, xAccount.username) && !testBypassEnabled) {
     return NextResponse.json(
       { error: `The article author @${parsedUrl.authorHandle} must match your bound X account @${xAccount.username}.` },
       { status: 400 }
@@ -120,7 +125,10 @@ export async function POST(
 
   const now = new Date().toISOString();
   const normalizedUrl = parsedUrl.url;
-  const normalizedXHandle = xAccount.username.replace(/^@/, "");
+  const normalizedXHandle = (xAccount?.username || parsedUrl.authorHandle).replace(/^@/, "");
+  const xBindingBypassed = testBypassEnabled && (
+    !xAccount?.username || !xHandlesMatch(parsedUrl.authorHandle, xAccount.username)
+  );
   const requestId = crypto.randomUUID();
   let saved: ArticleSubmission | null = null;
   let wasUpdate = false;
@@ -136,7 +144,7 @@ export async function POST(
         item.articleUrl.toLowerCase() === normalizedUrl.toLowerCase() &&
         item.walletAddress.toLowerCase() !== wallet
     );
-    if (duplicateUrl) {
+    if (duplicateUrl && !testBypassEnabled) {
       return { error: "This X article link has already been submitted by another wallet." };
     }
 
@@ -146,7 +154,7 @@ export async function POST(
         item.xHandle.toLowerCase() === normalizedXHandle.toLowerCase() &&
         item.walletAddress.toLowerCase() !== wallet
     );
-    if (duplicateX) {
+    if (duplicateX && !testBypassEnabled) {
       return { error: "This X account already submitted an article for this task." };
     }
 
@@ -198,10 +206,12 @@ export async function POST(
       appendEvidence(targetTask, {
         by: "system",
         type: "log",
-        content: `article_submission:${JSON.stringify({
+          content: `article_submission:${JSON.stringify({
           requestId,
           taskId,
           action: existing ? "update" : "create",
+          testBypassEnabled,
+          xBindingBypassed,
           submissionId: saved?.id,
           walletAddress: wallet,
           xHandle: normalizedXHandle,
@@ -221,11 +231,13 @@ export async function POST(
   if ("error" in result && result.error) {
     console.warn("[ArticleContest] submission:rejected", {
       requestId,
-      taskId,
-      walletAddress: wallet,
-      xHandle: normalizedXHandle,
-      articleUrl: normalizedUrl,
-      error: result.error
+    taskId,
+    walletAddress: wallet,
+    xHandle: normalizedXHandle,
+    articleUrl: normalizedUrl,
+    testBypassEnabled,
+    xBindingBypassed,
+    error: result.error
     });
     return NextResponse.json({ error: result.error }, { status: 400 });
   }
@@ -238,6 +250,8 @@ export async function POST(
     walletAddress: wallet,
     xHandle: normalizedXHandle,
     articleUrl: normalizedUrl,
+    testBypassEnabled,
+    xBindingBypassed,
     articleId: parsedUrl.articleId,
     authorHandle: parsedUrl.authorHandle,
     titleLength: title.length,
