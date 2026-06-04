@@ -233,7 +233,7 @@ export async function fetchXArticleContent(articleUrl: string): Promise<XArticle
 
   return {
     ok: false,
-    error: "Unable to fetch live X content from this URL. The submission cannot be reviewed from user-provided snapshot only.",
+    error: "Unable to fetch live X content from this URL.",
     attempts
   };
 }
@@ -353,6 +353,8 @@ export async function scoreArticleSubmission(input: {
   title: string;
   content: string;
   articleUrl: string;
+  contentSource?: "x_live" | "snapshot_fallback";
+  xFetchError?: string;
 }): Promise<ArticleScoreResult> {
   const apiKey = process.env.OPENAI_API_KEY;
   const baseUrl = (process.env.OPENAI_BASE_URL || "https://api.openai.com/v1").replace(/\/+$/, "");
@@ -361,6 +363,13 @@ export async function scoreArticleSubmission(input: {
   if (!apiKey) {
     return failedArticleScore("OPENAI_API_KEY is not configured", model, startedAt);
   }
+  const sourceInstruction = input.contentSource === "snapshot_fallback"
+    ? [
+        "The content field is the user-submitted snapshot because live X fetching failed.",
+        "You may score it, but the review must explicitly say it used snapshot fallback and should note lower confidence.",
+        input.xFetchError ? `X fetch failure: ${input.xFetchError}` : ""
+      ].filter(Boolean).join(" ")
+    : "The content field is live text fetched from the submitted X URL. Judge only that fetched X content.";
 
   const response = await fetch(`${baseUrl}/chat/completions`, {
     method: "POST",
@@ -377,7 +386,7 @@ export async function scoreArticleSubmission(input: {
           role: "system",
           content: [
             "You score X article submissions for ai2human.",
-            "The content field is live text fetched from the submitted X URL. Judge only that fetched X content.",
+            sourceInstruction,
             "Return strict JSON with keys: score, review, rubric.",
             "Rubric keys must be relevance, originality, clarity, evidence, narrative.",
             "Each rubric value is 0-20. score is 0-100.",

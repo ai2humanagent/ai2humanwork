@@ -986,7 +986,7 @@ function TaskDetailPanel({ task }: { task: TaskDetail }) {
                 <div>
                   <h3>AI Review Report</h3>
                   <p>
-                    Ranked from live X content fetched from each submitted link. Ties use earlier submission time. Rubric: relevance, originality, clarity, evidence, and narrative strength.
+                    Ranked from live X content when available; if live X fetching fails, the submitted snapshot is used as a clearly labeled fallback. Ties use earlier submission time.
                   </p>
                 </div>
                 <div className={styles.reviewStats}>

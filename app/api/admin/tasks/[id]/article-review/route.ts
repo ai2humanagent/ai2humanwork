@@ -73,21 +73,16 @@ export async function POST(
     submissions.map(async (submission) => {
       if (submission.status === "paid") return submission;
       const liveContent = await fetchXArticleContent(submission.articleUrl);
-      if (!liveContent.ok) {
-        scoreDebug.push({
-          submissionId: submission.id,
-          xHandle: submission.xHandle,
-          walletAddress: submission.walletAddress,
-          score: 0,
-          provider: "x_fetch",
-          error: liveContent.error,
-          fallbackReason: liveContent.attempts.join(" | ")
-        });
+      const reviewContent = liveContent.ok ? liveContent.text : submission.contentSnapshot.trim();
+      const contentSource = liveContent.ok ? "x_live" as const : "snapshot_fallback" as const;
+      const xFetchError = liveContent.ok ? "" : `${liveContent.error} Attempts: ${liveContent.attempts.join(" -> ")}`;
+
+      if (!liveContent.ok && reviewContent.length < 200) {
         return {
           ...submission,
           status: "invalid" as const,
           aiScore: 0,
-          aiReview: `X live content fetch failed. ${liveContent.error} Attempts: ${liveContent.attempts.join(" -> ")}`,
+          aiReview: `X live content fetch failed and no usable snapshot fallback was provided. ${xFetchError}`,
           aiRubric: {
             relevance: 0,
             originality: 0,
@@ -103,8 +98,10 @@ export async function POST(
       }
       const score = await scoreArticleSubmission({
         title: submission.title,
-        content: liveContent.text,
-        articleUrl: submission.articleUrl
+        content: reviewContent,
+        articleUrl: submission.articleUrl,
+        contentSource,
+        xFetchError
       });
       scoreDebug.push({
         submissionId: submission.id,
@@ -114,15 +111,18 @@ export async function POST(
         provider: score.provider,
         model: score.model,
         latencyMs: score.latencyMs,
-        source: liveContent.source,
+        source: liveContent.ok ? liveContent.source : "snapshot_fallback",
         fallbackReason: score.fallbackReason
       });
+      const sourceLabel = liveContent.ok
+        ? `X live content (${liveContent.source})`
+        : `submitted snapshot fallback; live X fetch failed (${xFetchError})`;
       if (score.provider !== "ai") {
         return {
           ...submission,
           status: "invalid" as const,
           aiScore: 0,
-          aiReview: `Source: X live content (${liveContent.source}). ${score.review}`,
+          aiReview: `Source: ${sourceLabel}. ${score.review}`,
           aiRubric: score.rubric,
           rank: undefined,
           prizeAmount: undefined,
@@ -134,7 +134,7 @@ export async function POST(
         ...submission,
         status: "reviewed" as const,
         aiScore: score.score,
-        aiReview: `Source: X live content (${liveContent.source}). ${score.review}`,
+        aiReview: `Source: ${sourceLabel}. ${score.review}`,
         aiRubric: score.rubric,
         reviewedAt: now,
         updatedAt: now
