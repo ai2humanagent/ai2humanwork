@@ -16,7 +16,7 @@ export type ArticleScoreResult = {
   score: number;
   review: string;
   rubric: Record<string, number>;
-  provider: "ai" | "heuristic";
+  provider: "ai" | "ai_error";
   model?: string;
   latencyMs?: number;
   fallbackReason?: string;
@@ -44,6 +44,12 @@ function clampScore(value: unknown) {
   const num = Number(value);
   if (!Number.isFinite(num)) return 0;
   return Math.max(0, Math.min(100, Math.round(num * 10) / 10));
+}
+
+function clampRubricScore(value: unknown) {
+  const num = Number(value);
+  if (!Number.isFinite(num)) return 0;
+  return Math.max(0, Math.min(20, Math.round(num * 10) / 10));
 }
 
 function normalizeUrlHost(host: string) {
@@ -298,29 +304,49 @@ export function isSubmissionDeadlinePassed(deadline: string | undefined) {
   return Date.now() > timestamp;
 }
 
-function heuristicScore(title: string, content: string, fallbackReason: string): ArticleScoreResult {
-  const text = `${title}\n${content}`.trim();
-  const wordCount = text.split(/\s+/).filter(Boolean).length;
-  const lower = text.toLowerCase();
-  const hasStructure = /(^|\n)(1\.|2\.|3\.|#|- |\*)/.test(text);
-  const mentionsA2h = /(ai2human|a2h|agent|human|proof|verify|settle|usdc|on-chain|onchain)/i.test(text);
-  const evidence = /(example|proof|screenshot|transaction|wallet|task|operator|fallback)/i.test(text);
-
-  const rubric = {
-    relevance: clampScore(mentionsA2h ? 24 : 12),
-    originality: clampScore(Math.min(20, 8 + wordCount / 40)),
-    clarity: clampScore(hasStructure ? 18 : 12),
-    evidence: clampScore(evidence ? 18 : 10),
-    narrative: clampScore(Math.min(20, 8 + wordCount / 55))
-  };
-  const score = clampScore(Object.values(rubric).reduce((sum, item) => sum + item, 0));
+function failedArticleScore(reason: string, model?: string, startedAt?: number): ArticleScoreResult {
   return {
-    score,
-    rubric,
-    provider: "heuristic",
-    fallbackReason,
-    review: `Heuristic review used: ${fallbackReason}. Score reflects relevance, originality, clarity, evidence, and narrative strength.`
+    score: 0,
+    rubric: {
+      relevance: 0,
+      originality: 0,
+      clarity: 0,
+      evidence: 0,
+      narrative: 0
+    },
+    provider: "ai_error",
+    model,
+    latencyMs: startedAt ? Date.now() - startedAt : undefined,
+    fallbackReason: reason,
+    review: `AI review failed: ${reason}. This submission was not scored.`
   };
+}
+
+function parseJsonObjectFromModel(content: string) {
+  const trimmed = content.trim();
+  const direct = JSON.parse(trimmed);
+  return direct;
+}
+
+function tryParseModelJson(content: string) {
+  try {
+    return parseJsonObjectFromModel(content);
+  } catch {
+    const fenced = content.match(/```(?:json)?\s*([\s\S]*?)```/i)?.[1];
+    if (fenced) {
+      try {
+        return parseJsonObjectFromModel(fenced);
+      } catch {
+        // Continue to object extraction.
+      }
+    }
+    const start = content.indexOf("{");
+    const end = content.lastIndexOf("}");
+    if (start >= 0 && end > start) {
+      return parseJsonObjectFromModel(content.slice(start, end + 1));
+    }
+    throw new Error("AI response did not contain a JSON object");
+  }
 }
 
 export async function scoreArticleSubmission(input: {
@@ -333,7 +359,7 @@ export async function scoreArticleSubmission(input: {
   const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
   const startedAt = Date.now();
   if (!apiKey) {
-    return heuristicScore(input.title, input.content, "OPENAI_API_KEY is not configured");
+    return failedArticleScore("OPENAI_API_KEY is not configured", model, startedAt);
   }
 
   const response = await fetch(`${baseUrl}/chat/completions`, {
@@ -355,6 +381,7 @@ export async function scoreArticleSubmission(input: {
             "Return strict JSON with keys: score, review, rubric.",
             "Rubric keys must be relevance, originality, clarity, evidence, narrative.",
             "Each rubric value is 0-20. score is 0-100.",
+            "Do not wrap the JSON in markdown. Do not add prose outside JSON.",
             "Reward concrete explanation of agent-human task execution, proof, verification, and settlement.",
             "Penalize generic hype, copied text, weak structure, and claims without examples."
           ].join(" ")
@@ -372,21 +399,17 @@ export async function scoreArticleSubmission(input: {
   });
 
   if (!response.ok) {
-    return heuristicScore(
-      input.title,
-      input.content,
-      `AI provider returned HTTP ${response.status}`
-    );
+    return failedArticleScore(`AI provider returned HTTP ${response.status}`, model, startedAt);
   }
 
   const data = await response.json().catch(() => null) as { choices?: Array<{ message?: { content?: string } }> } | null;
   const content = data?.choices?.[0]?.message?.content;
   if (!content) {
-    return heuristicScore(input.title, input.content, "AI provider returned an empty response");
+    return failedArticleScore("AI provider returned an empty response", model, startedAt);
   }
 
   try {
-    const parsed = JSON.parse(content) as {
+    const parsed = tryParseModelJson(content) as {
       score?: number;
       review?: string;
       rubric?: Record<string, number>;
@@ -399,15 +422,19 @@ export async function scoreArticleSubmission(input: {
       model,
       latencyMs: Date.now() - startedAt,
       rubric: {
-        relevance: clampScore(rubric.relevance),
-        originality: clampScore(rubric.originality),
-        clarity: clampScore(rubric.clarity),
-        evidence: clampScore(rubric.evidence),
-        narrative: clampScore(rubric.narrative)
+        relevance: clampRubricScore(rubric.relevance),
+        originality: clampRubricScore(rubric.originality),
+        clarity: clampRubricScore(rubric.clarity),
+        evidence: clampRubricScore(rubric.evidence),
+        narrative: clampRubricScore(rubric.narrative)
       }
     };
-  } catch {
-    return heuristicScore(input.title, input.content, "AI response was not valid JSON");
+  } catch (error) {
+    return failedArticleScore(
+      `AI response was not valid JSON (${error instanceof Error ? error.message : "unknown parse error"})`,
+      model,
+      startedAt
+    );
   }
 }
 

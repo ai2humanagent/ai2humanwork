@@ -117,6 +117,19 @@ export async function POST(
         source: liveContent.source,
         fallbackReason: score.fallbackReason
       });
+      if (score.provider !== "ai") {
+        return {
+          ...submission,
+          status: "invalid" as const,
+          aiScore: 0,
+          aiReview: `Source: X live content (${liveContent.source}). ${score.review}`,
+          aiRubric: score.rubric,
+          rank: undefined,
+          prizeAmount: undefined,
+          reviewedAt: now,
+          updatedAt: now
+        };
+      }
       return {
         ...submission,
         status: "reviewed" as const,
