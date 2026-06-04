@@ -356,6 +356,9 @@ export default function TaskDetailClient({
   const boundXAccount = auth?.user.xAccount;
   const hasBoundXAccount = Boolean(boundXAccount?.username);
   const isTestArticleContest = isArticleContest && task.id.startsWith("x-article-contest-test-");
+  const articleWallet = isTestArticleContest
+    ? connectedWallet || auth?.user.walletAddress || rawWallet
+    : connectedWallet;
 
   function cacheXHandle(handle: string) {
     setXHandle(handle);
@@ -748,10 +751,10 @@ export default function TaskDetailClient({
 
   useEffect(() => {
     if (!isArticleContest) return;
-    if (connectedWallet && !articleSubmissionLoaded) {
-      loadArticleSubmission(connectedWallet);
+    if (articleWallet && !articleSubmissionLoaded) {
+      loadArticleSubmission(articleWallet);
     }
-  }, [connectedWallet, isArticleContest, articleSubmissionLoaded]);
+  }, [articleWallet, isArticleContest, articleSubmissionLoaded]);
 
   // Load questers data for Twitter tasks
   useEffect(() => {
@@ -952,7 +955,7 @@ export default function TaskDetailClient({
   async function submitArticle() {
     setError("");
     setMessage("");
-    const walletAddress = connectedWallet;
+    const walletAddress = articleWallet;
     if (!walletAddress) {
       login();
       return;
@@ -1186,7 +1189,7 @@ export default function TaskDetailClient({
       const articleDeadlineEnded = countdown.ended || task.taskState === "closed" || task.taskState === "refunded";
       const articleStatus = articleSubmission?.status || "not submitted";
       const canSubmitArticle = Boolean(
-        connectedWallet && (hasBoundXAccount || isTestArticleContest) && !articleDeadlineEnded
+        articleWallet && (hasBoundXAccount || isTestArticleContest) && !articleDeadlineEnded
       );
 
       return (
@@ -1226,28 +1229,34 @@ export default function TaskDetailClient({
                     <p className={styles.qnDescTitle}>Submit your X article</p>
                     <div className={styles.qnDescContent}>
                       <p>{task.campaign?.brief || task.acceptance}</p>
-                      <p>
-                        Your article URL must be from X and the author handle in the URL must match your bound X account
-                        {boundXAccount?.username ? ` (@${boundXAccount.username})` : ""}.
-                      </p>
+                      {isTestArticleContest ? (
+                        <p>
+                          Test mode: X binding is bypassed. The X URL author handle will be used for this submission.
+                        </p>
+                      ) : (
+                        <p>
+                          Your article URL must be from X and the author handle in the URL must match your bound X account
+                          {boundXAccount?.username ? ` (@${boundXAccount.username})` : ""}.
+                        </p>
+                      )}
                     </div>
                   </div>
 
-                  {!connectedWallet && (
+                  {!articleWallet && (
                     <div className={styles.qnProfileNotice}>
                       Connect your wallet before submitting.
                       <button type="button" onClick={() => login()}>Connect Wallet</button>
                     </div>
                   )}
 
-                  {connectedWallet && !hasBoundXAccount && !isTestArticleContest && (
+                  {articleWallet && !hasBoundXAccount && !isTestArticleContest && (
                     <div className={styles.qnProfileNotice}>
                       Bind your X account before submitting an article.
                       <a href="/app/profile">→ Bind X Account</a>
                     </div>
                   )}
 
-                  {connectedWallet && !hasBoundXAccount && isTestArticleContest && (
+                  {articleWallet && !hasBoundXAccount && isTestArticleContest && (
                     <div className={styles.qnProfileNotice}>
                       Test mode: X binding is bypassed for this article contest.
                     </div>
