@@ -66,6 +66,7 @@ type ArticleSubmission = {
   status: string;
   aiScore: number | null;
   aiReview: string | null;
+  aiRubric?: Record<string, number> | null;
   rank: number | null;
   prizeAmount: string | null;
   paymentTxHash: string | null;
@@ -690,6 +691,22 @@ function TaskDetailPanel({ task }: { task: TaskDetail }) {
   const [actionBusy, setActionBusy] = useState<"" | "review" | "close_review" | "payout">("");
   const [actionMessage, setActionMessage] = useState("");
   const isArticleContest = task.mode === "ranked_article_contest";
+  const reviewedSubmissions = articleSubmissions.filter((submission) => submission.aiScore != null);
+  const rankedSubmissions = [...reviewedSubmissions].sort((a, b) => {
+    const rankDelta = (a.rank || 999) - (b.rank || 999);
+    if (rankDelta !== 0) return rankDelta;
+    return (b.aiScore || 0) - (a.aiScore || 0);
+  });
+  const winnerSubmissions = rankedSubmissions.filter((submission) => submission.rank && submission.prizeAmount);
+  const hasReviewResults = reviewedSubmissions.length > 0;
+  const averageScore = reviewedSubmissions.length
+    ? reviewedSubmissions.reduce((sum, submission) => sum + (submission.aiScore || 0), 0) / reviewedSubmissions.length
+    : 0;
+  const latestReviewedAt = reviewedSubmissions
+    .map((submission) => submission.reviewedAt)
+    .filter((value): value is string => Boolean(value))
+    .sort()
+    .at(-1);
   const articleParticipantRows: Participant[] = articleSubmissions.map((submission) => ({
     wallet: submission.walletAddress,
     xHandle: submission.xHandle,
@@ -750,7 +767,7 @@ function TaskDetailPanel({ task }: { task: TaskDetail }) {
       }
       if (isReviewAction) {
         setActionMessage(
-          `${data.closedNow ? "Deadline closed. " : ""}Review complete: ${data.reviewed || 0} submissions, ${data.winners || 0} winners.`
+          `${data.closedNow ? "Deadline closed. " : ""}Review complete: ${data.reviewed || 0} submissions, ${data.winners || 0} winners. Report updated below.`
         );
       } else {
         setActionMessage(`Payout complete: ${data.paid || 0} paid${data.failed?.length ? `, ${data.failed.length} failed` : ""}.`);
@@ -941,14 +958,18 @@ function TaskDetailPanel({ task }: { task: TaskDetail }) {
               onClick={() => runArticleAction("close_review")}
               disabled={actionBusy !== ""}
             >
-              {actionBusy === "close_review" ? "Closing..." : "Close Now & Review"}
+              {actionBusy === "close_review"
+                ? hasReviewResults ? "Review saved..." : "Closing..."
+                : "Close Now & Review"}
             </button>
             <button
               className={styles.backBtn}
               onClick={() => runArticleAction("review")}
               disabled={actionBusy !== ""}
             >
-              {actionBusy === "review" ? "Reviewing..." : "Run AI Review"}
+              {actionBusy === "review"
+                ? hasReviewResults ? "Review saved..." : "Reviewing..."
+                : "Run AI Review"}
             </button>
             <button
               className={styles.backBtn}
@@ -959,6 +980,43 @@ function TaskDetailPanel({ task }: { task: TaskDetail }) {
             </button>
           </div>
           {actionMessage && <div className={styles.empty}>{actionMessage}</div>}
+          {reviewedSubmissions.length > 0 && (
+            <div className={styles.reviewReport}>
+              <div className={styles.reviewReportHeader}>
+                <div>
+                  <h3>AI Review Report</h3>
+                  <p>
+                    Ranked by total score. Ties use earlier submission time. Rubric: relevance, originality, clarity, evidence, and narrative strength.
+                  </p>
+                </div>
+                <div className={styles.reviewStats}>
+                  <span>{reviewedSubmissions.length} reviewed</span>
+                  <span>{winnerSubmissions.length} winners</span>
+                  <span>{averageScore.toFixed(1)} avg</span>
+                  {latestReviewedAt && <span>{timeAgo(latestReviewedAt)}</span>}
+                </div>
+              </div>
+              <div className={styles.reviewWinnerGrid}>
+                {winnerSubmissions.map((submission) => (
+                  <div key={submission.id} className={styles.reviewWinnerCard}>
+                    <div className={styles.reviewWinnerTop}>
+                      <strong>#{submission.rank} @{submission.xHandle}</strong>
+                      <span>{submission.prizeAmount}</span>
+                    </div>
+                    <div className={styles.reviewScore}>{submission.aiScore?.toFixed(1)}/100</div>
+                    {submission.aiReview && <p>{submission.aiReview}</p>}
+                    {submission.aiRubric && (
+                      <div className={styles.rubricGrid}>
+                        {Object.entries(submission.aiRubric).map(([key, value]) => (
+                          <span key={key}>{key}: {Number(value).toFixed(1)}/20</span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           <div className={styles.tableWrap}>
             {articleSubmissions.length === 0 ? (
               <div className={styles.empty}>No article submissions yet</div>
@@ -973,6 +1031,7 @@ function TaskDetailPanel({ task }: { task: TaskDetail }) {
                     <th>Score</th>
                     <th>Prize</th>
                     <th>Status</th>
+                    <th>Reason</th>
                     <th>Article</th>
                     <th>Payout</th>
                     <th>Submitted</th>
@@ -999,6 +1058,20 @@ function TaskDetailPanel({ task }: { task: TaskDetail }) {
                         }`}>
                           {submission.status}
                         </span>
+                      </td>
+                      <td className={styles.reviewReason}>
+                        {submission.aiReview ? (
+                          <>
+                            <p>{submission.aiReview}</p>
+                            {submission.aiRubric && (
+                              <div className={styles.rubricInline}>
+                                {Object.entries(submission.aiRubric).map(([key, value]) => (
+                                  <span key={key}>{key} {Number(value).toFixed(1)}</span>
+                                ))}
+                              </div>
+                            )}
+                          </>
+                        ) : "—"}
                       </td>
                       <td>
                         <a href={submission.articleUrl} target="_blank" rel="noopener noreferrer" className={styles.txLink}>

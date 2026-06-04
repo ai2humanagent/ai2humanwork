@@ -646,6 +646,112 @@
   white-space: pre;
 }
 
+.reviewReport {
+  margin: 14px 0 18px;
+  padding: 16px;
+  border: 1px solid #1f2937;
+  border-radius: 8px;
+  background: #0b1118;
+}
+
+.reviewReportHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+  margin-bottom: 14px;
+}
+
+.reviewReportHeader h3 {
+  margin: 0 0 6px;
+  font-size: 13px;
+  color: #e5e7eb;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.reviewReportHeader p {
+  margin: 0;
+  color: #8b95a7;
+  font-size: 12px;
+  line-height: 1.5;
+  max-width: 620px;
+}
+
+.reviewStats {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.reviewStats span,
+.rubricGrid span,
+.rubricInline span {
+  border: 1px solid #263244;
+  border-radius: 999px;
+  color: #9ca3af;
+  background: #101827;
+  font-size: 10px;
+  line-height: 1;
+  padding: 6px 8px;
+  white-space: nowrap;
+}
+
+.reviewWinnerGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 10px;
+}
+
+.reviewWinnerCard {
+  border: 1px solid #1f2937;
+  border-radius: 8px;
+  padding: 12px;
+  background: #0f1722;
+}
+
+.reviewWinnerTop {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  color: #dbeafe;
+  font-size: 12px;
+}
+
+.reviewWinnerTop span {
+  color: #22c55e;
+  white-space: nowrap;
+}
+
+.reviewScore {
+  margin-top: 8px;
+  color: #fbbf24;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.reviewWinnerCard p,
+.reviewReason p {
+  margin: 8px 0 0;
+  color: #a8b3c5;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.rubricGrid,
+.rubricInline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.reviewReason {
+  min-width: 280px;
+  max-width: 460px;
+}
+
 .tableWrap {
   overflow-x: auto;
 }
