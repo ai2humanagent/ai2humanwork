@@ -705,6 +705,9 @@ function TaskDetailPanel({ task }: { task: TaskDetail }) {
       credentials: "same-origin"
     });
     const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || "Unable to refresh article submissions");
+    }
     setArticleSubmissions(data.articleSubmissions || data.task?.articleSubmissions || []);
   }
 
@@ -725,7 +728,11 @@ function TaskDetailPanel({ task }: { task: TaskDetail }) {
       if (!response.ok && response.status !== 207) {
         throw new Error(data.error || `Article ${action} failed`);
       }
-      await refreshArticleSubmissions();
+      if (Array.isArray(data.submissions)) {
+        setArticleSubmissions(data.submissions);
+      } else {
+        await refreshArticleSubmissions();
+      }
       if (isReviewAction) {
         setActionMessage(
           `${data.closedNow ? "Deadline closed. " : ""}Review complete: ${data.reviewed || 0} submissions, ${data.winners || 0} winners.`
