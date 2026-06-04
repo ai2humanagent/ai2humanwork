@@ -328,25 +328,79 @@ function parseJsonObjectFromModel(content: string) {
   return direct;
 }
 
-function tryParseModelJson(content: string) {
-  try {
-    return parseJsonObjectFromModel(content);
-  } catch {
-    const fenced = content.match(/```(?:json)?\s*([\s\S]*?)```/i)?.[1];
-    if (fenced) {
-      try {
-        return parseJsonObjectFromModel(fenced);
-      } catch {
-        // Continue to object extraction.
+function stripThinkingBlocks(content: string) {
+  return content
+    .replace(/<think>[\s\S]*?<\/think>/gi, "")
+    .trim();
+}
+
+function extractLastJsonObject(content: string) {
+  let depth = 0;
+  let end = -1;
+  let inString = false;
+  let escaped = false;
+
+  for (let index = content.length - 1; index >= 0; index -= 1) {
+    const char = content[index];
+    if (escaped) {
+      escaped = false;
+      continue;
+    }
+    if (char === "\\") {
+      escaped = true;
+      continue;
+    }
+    if (char === "\"") {
+      inString = !inString;
+      continue;
+    }
+    if (inString) continue;
+
+    if (char === "}") {
+      if (end === -1) end = index;
+      depth += 1;
+    } else if (char === "{") {
+      depth -= 1;
+      if (depth === 0 && end !== -1) {
+        return content.slice(index, end + 1);
       }
     }
-    const start = content.indexOf("{");
-    const end = content.lastIndexOf("}");
-    if (start >= 0 && end > start) {
-      return parseJsonObjectFromModel(content.slice(start, end + 1));
-    }
-    throw new Error("AI response did not contain a JSON object");
   }
+  return "";
+}
+
+function tryParseModelJson(content: string) {
+  const candidates = [
+    content,
+    content.includes("</think>") ? content.split(/<\/think>/i).at(-1) || "" : "",
+    stripThinkingBlocks(content)
+  ].filter((candidate) => candidate.trim());
+
+  for (const candidate of candidates) {
+    try {
+      return parseJsonObjectFromModel(candidate);
+    } catch {
+      // Try structured extraction below.
+    }
+  }
+
+  try {
+    const fenced = stripThinkingBlocks(content).match(/```(?:json)?\s*([\s\S]*?)```/i)?.[1];
+    if (fenced) return parseJsonObjectFromModel(fenced);
+  } catch {
+    // Continue to object extraction.
+  }
+
+  for (const candidate of candidates) {
+    const objectText = extractLastJsonObject(candidate);
+    if (!objectText) continue;
+    try {
+      return parseJsonObjectFromModel(objectText);
+    } catch {
+      // Continue to next candidate.
+    }
+  }
+  throw new Error("AI response did not contain a parseable JSON object");
 }
 
 export async function scoreArticleSubmission(input: {
