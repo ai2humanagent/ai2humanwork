@@ -133,6 +133,40 @@ CREATE TABLE lucky_draw_participants (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
+-- Ranked X Article Contest Submissions
+CREATE TABLE article_submissions (
+  id TEXT PRIMARY KEY,
+  task_id TEXT NOT NULL,
+  wallet_address TEXT NOT NULL,
+  user_id TEXT,
+  x_handle TEXT NOT NULL,
+  article_url TEXT NOT NULL,
+  article_id TEXT,
+  author_handle TEXT NOT NULL,
+  title TEXT NOT NULL,
+  content_snapshot TEXT NOT NULL,
+  status TEXT DEFAULT 'submitted',
+  ai_score REAL,
+  ai_review TEXT,
+  ai_rubric JSONB,
+  rank INTEGER,
+  prize_amount TEXT,
+  payment_tx_hash TEXT,
+  payment_explorer_url TEXT,
+  submitted_at TIMESTAMPTZ DEFAULT now(),
+  reviewed_at TIMESTAMPTZ,
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE UNIQUE INDEX article_submissions_task_wallet_uidx
+  ON article_submissions (task_id, lower(wallet_address));
+
+CREATE UNIQUE INDEX article_submissions_task_x_uidx
+  ON article_submissions (task_id, lower(x_handle));
+
+CREATE UNIQUE INDEX article_submissions_task_url_uidx
+  ON article_submissions (task_id, lower(article_url));
+
 -- Escrow Deposits (maps to app EscrowDeposit type)
 CREATE TABLE escrow_deposits (
   id TEXT PRIMARY KEY,
@@ -194,6 +228,7 @@ ALTER TABLE quest_progress ENABLE ROW LEVEL SECURITY;
 ALTER TABLE payments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE lucky_draw_participants ENABLE ROW LEVEL SECURITY;
+ALTER TABLE article_submissions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE escrow_deposits ENABLE ROW LEVEL SECURITY;
 ALTER TABLE services ENABLE ROW LEVEL SECURITY;
 ALTER TABLE waitlist ENABLE ROW LEVEL SECURITY;
@@ -207,6 +242,7 @@ CREATE POLICY "allow_all" ON quest_progress FOR ALL TO service_role USING (true)
 CREATE POLICY "allow_all" ON payments FOR ALL TO service_role USING (true) WITH CHECK (true);
 CREATE POLICY "allow_all" ON notifications FOR ALL TO service_role USING (true) WITH CHECK (true);
 CREATE POLICY "allow_all" ON lucky_draw_participants FOR ALL TO service_role USING (true) WITH CHECK (true);
+CREATE POLICY "allow_all" ON article_submissions FOR ALL TO service_role USING (true) WITH CHECK (true);
 CREATE POLICY "allow_all" ON escrow_deposits FOR ALL TO service_role USING (true) WITH CHECK (true);
 CREATE POLICY "allow_all" ON services FOR ALL TO service_role USING (true) WITH CHECK (true);
 CREATE POLICY "allow_all" ON waitlist FOR ALL TO service_role USING (true) WITH CHECK (true);

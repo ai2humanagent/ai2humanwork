@@ -1,10 +1,12 @@
 import type {
+  ArticleSubmission,
   EscrowDeposit,
   LuckyDrawParticipant,
   PaymentEntry,
   QuestProgress,
   Task
 } from "./store";
+import { supportsArticleSubmissionsTable } from "./store";
 import { supabase } from "./supabase";
 
 type AdminTaskSnapshot = {
@@ -12,6 +14,7 @@ type AdminTaskSnapshot = {
   payments: PaymentEntry[];
   questProgress: QuestProgress[];
   luckyDrawParticipants: LuckyDrawParticipant[];
+  articleSubmissions: ArticleSubmission[];
   escrowDeposits: EscrowDeposit[];
   source: "supabase-direct";
 };
@@ -51,6 +54,30 @@ type LuckyDrawParticipantRow = {
   wallet_address: string;
   x_handle: string | null;
   created_at: string;
+};
+
+type ArticleSubmissionRow = {
+  id: string;
+  task_id: string;
+  wallet_address: string;
+  user_id: string | null;
+  x_handle: string;
+  article_url: string;
+  article_id: string | null;
+  author_handle: string;
+  title: string;
+  content_snapshot: string;
+  status: ArticleSubmission["status"];
+  ai_score: number | null;
+  ai_review: string | null;
+  ai_rubric: Record<string, number> | null;
+  rank: number | null;
+  prize_amount: string | null;
+  payment_tx_hash: string | null;
+  payment_explorer_url: string | null;
+  submitted_at: string;
+  reviewed_at: string | null;
+  updated_at: string;
 };
 
 type EscrowDepositRow = {
@@ -187,6 +214,32 @@ function luckyDrawParticipantFromRow(row: LuckyDrawParticipantRow): LuckyDrawPar
   };
 }
 
+function articleSubmissionFromRow(row: ArticleSubmissionRow): ArticleSubmission {
+  return {
+    id: row.id,
+    taskId: row.task_id,
+    walletAddress: row.wallet_address,
+    userId: row.user_id || undefined,
+    xHandle: row.x_handle,
+    articleUrl: row.article_url,
+    articleId: row.article_id || undefined,
+    authorHandle: row.author_handle,
+    title: row.title,
+    contentSnapshot: row.content_snapshot,
+    status: row.status,
+    aiScore: row.ai_score ?? undefined,
+    aiReview: row.ai_review || undefined,
+    aiRubric: row.ai_rubric || undefined,
+    rank: row.rank ?? undefined,
+    prizeAmount: row.prize_amount || undefined,
+    paymentTxHash: row.payment_tx_hash || undefined,
+    paymentExplorerUrl: row.payment_explorer_url || undefined,
+    submittedAt: row.submitted_at,
+    reviewedAt: row.reviewed_at || undefined,
+    updatedAt: row.updated_at
+  };
+}
+
 function escrowDepositFromRow(row: EscrowDepositRow): EscrowDeposit {
   return {
     id: row.id,
@@ -215,13 +268,20 @@ export async function readAdminTaskSnapshot(taskId?: string): Promise<AdminTaskS
   const paymentQuery = supabase.from("payments").select("*").order("created_at", { ascending: true });
   const questProgressQuery = supabase.from("quest_progress").select("*").order("created_at", { ascending: true });
   const luckyDrawParticipantsQuery = supabase.from("lucky_draw_participants").select("*").order("created_at", { ascending: true });
+  const includeArticleSubmissions = await supportsArticleSubmissionsTable();
+  const articleSubmissionsQuery = includeArticleSubmissions
+    ? supabase.from("article_submissions").select("*").order("submitted_at", { ascending: true })
+    : null;
   const escrowDepositsQuery = supabase.from("escrow_deposits").select("*").order("created_at", { ascending: true });
 
-  const [tasksRes, paymentsRes, questProgressRes, luckyDrawParticipantsRes, escrowDepositsRes] = await Promise.all([
+  const [tasksRes, paymentsRes, questProgressRes, luckyDrawParticipantsRes, articleSubmissionsRes, escrowDepositsRes] = await Promise.all([
     taskId ? tasksQuery.eq("id", taskId) : tasksQuery,
     taskId ? paymentQuery.eq("task_id", taskId) : paymentQuery,
     taskId ? questProgressQuery.eq("task_id", taskId) : questProgressQuery,
     taskId ? luckyDrawParticipantsQuery.eq("task_id", taskId) : luckyDrawParticipantsQuery,
+    articleSubmissionsQuery
+      ? taskId ? articleSubmissionsQuery.eq("task_id", taskId) : articleSubmissionsQuery
+      : Promise.resolve({ data: [], error: null }),
     taskId ? escrowDepositsQuery.eq("task_id", taskId) : escrowDepositsQuery
   ]);
 
@@ -230,6 +290,7 @@ export async function readAdminTaskSnapshot(taskId?: string): Promise<AdminTaskS
     ["payments", paymentsRes.error],
     ["quest_progress", questProgressRes.error],
     ["lucky_draw_participants", luckyDrawParticipantsRes.error],
+    ["article_submissions", articleSubmissionsRes.error],
     ["escrow_deposits", escrowDepositsRes.error]
   ].flatMap(([table, error]) =>
     error && typeof error !== "string"
@@ -250,6 +311,7 @@ export async function readAdminTaskSnapshot(taskId?: string): Promise<AdminTaskS
     payments: ((paymentsRes.data || []) as PaymentRow[]).map(paymentFromRow),
     questProgress: ((questProgressRes.data || []) as QuestProgressRow[]).map(questProgressFromRow),
     luckyDrawParticipants: ((luckyDrawParticipantsRes.data || []) as LuckyDrawParticipantRow[]).map(luckyDrawParticipantFromRow),
+    articleSubmissions: ((articleSubmissionsRes.data || []) as ArticleSubmissionRow[]).map(articleSubmissionFromRow),
     escrowDeposits: ((escrowDepositsRes.data || []) as EscrowDepositRow[]).map(escrowDepositFromRow),
     source: "supabase-direct"
   };

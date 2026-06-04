@@ -33,7 +33,7 @@ type Task = {
   budget: string;
   deadline: string;
   acceptance: string;
-  taskType?: "twitter_follow" | "twitter_like" | "twitter_retweet" | "twitter_comment" | "physical";
+  taskType?: "twitter_follow" | "twitter_like" | "twitter_retweet" | "twitter_comment" | "x_article" | "physical";
   status:
     | "created"
     | "ai_running"
@@ -66,11 +66,18 @@ type Task = {
   evidence: EvidenceItem[];
   agentId?: string;
   rewardDistribution?: {
-    mode: "fcfs" | "lucky_draw" | "equal";
+    mode: "fcfs" | "lucky_draw" | "equal" | "ranked_article_contest";
     totalPool: string;
     perWinner?: string;
     maxWinners: number;
     drawTime?: string;
+    reviewAfter?: string;
+    prizes?: Array<{
+      rank: number;
+      amount: string;
+      slots?: number;
+      label?: string;
+    }>;
   };
   taskState?: "open" | "full" | "closed" | "refunded";
 };
@@ -134,6 +141,28 @@ type QuestersData = {
   questers: Quester[];
 };
 
+type ArticleSubmission = {
+  id: string;
+  taskId: string;
+  walletAddress: string;
+  xHandle: string;
+  articleUrl: string;
+  articleId?: string;
+  authorHandle: string;
+  title: string;
+  contentSnapshot: string;
+  status: "submitted" | "invalid" | "reviewed" | "winner" | "paid" | "rejected";
+  aiScore?: number;
+  aiReview?: string;
+  rank?: number;
+  prizeAmount?: string;
+  paymentTxHash?: string;
+  paymentExplorerUrl?: string;
+  submittedAt: string;
+  reviewedAt?: string;
+  updatedAt: string;
+};
+
 function useCountdown(targetDate: string | undefined) {
   const [remaining, setRemaining] = useState({ days: 0, hours: 0, min: 0, sec: 0, ended: !targetDate });
 
@@ -167,6 +196,7 @@ function distributionModeLabel(mode?: string): string {
   if (mode === "fcfs") return "FCFS";
   if (mode === "lucky_draw") return "Lucky Draw";
   if (mode === "equal") return "Equal Split";
+  if (mode === "ranked_article_contest") return "Ranked Article";
   return "FCFS";
 }
 
@@ -299,6 +329,12 @@ export default function TaskDetailClient({
   const [questProgressLoaded, setQuestProgressLoaded] = useState(false);
   const [questersData, setQuestersData] = useState<QuestersData>({ count: 0, claimedCount: 0, questers: [] });
   const [relatedTasks, setRelatedTasks] = useState<Task[]>([]);
+  const [articleSubmission, setArticleSubmission] = useState<ArticleSubmission | null>(null);
+  const [articleSubmissionLoaded, setArticleSubmissionLoaded] = useState(false);
+  const [articleSubmitting, setArticleSubmitting] = useState(false);
+  const [articleUrl, setArticleUrl] = useState("");
+  const [articleTitle, setArticleTitle] = useState("");
+  const [articleContent, setArticleContent] = useState("");
   // Prioritize external wallet (MetaMask etc.) over Privy embedded wallet
   const rawWallet =
     wallets.find((wallet) => wallet.walletClientType !== "privy" && wallet.address)?.address ||
@@ -309,6 +345,7 @@ export default function TaskDetailClient({
   const connectedWallet = (ready && authenticated) ? rawWallet : undefined;
 
   const isTwitterTask = ["twitter_follow", "twitter_like", "twitter_retweet", "twitter_comment"].includes(task.taskType || "");
+  const isArticleContest = task.rewardDistribution?.mode === "ranked_article_contest";
 
   // Countdown for reward card
   const dist = task.rewardDistribution;
@@ -371,6 +408,27 @@ export default function TaskDetailClient({
       setQuestProgressLoaded(true);
     } catch {
       // Silently fail; user can still interact
+    }
+  }
+
+  async function loadArticleSubmission(wallet: string) {
+    try {
+      const res = await fetch(
+        `/api/tasks/${initialTask.id}/article-submissions?wallet=${encodeURIComponent(wallet.toLowerCase())}`,
+        { cache: "no-store", credentials: "same-origin" }
+      );
+      if (!res.ok) return;
+      const data = await res.json();
+      const submission = data.submission as ArticleSubmission | null;
+      if (submission) {
+        setArticleSubmission(submission);
+        setArticleUrl(submission.articleUrl);
+        setArticleTitle(submission.title);
+        setArticleContent(submission.contentSnapshot);
+      }
+      setArticleSubmissionLoaded(true);
+    } catch {
+      setArticleSubmissionLoaded(true);
     }
   }
 
@@ -687,6 +745,13 @@ export default function TaskDetailClient({
     }
   }, [connectedWallet, questProgressLoaded]);
 
+  useEffect(() => {
+    if (!isArticleContest) return;
+    if (connectedWallet && !articleSubmissionLoaded) {
+      loadArticleSubmission(connectedWallet);
+    }
+  }, [connectedWallet, isArticleContest, articleSubmissionLoaded]);
+
   // Load questers data for Twitter tasks
   useEffect(() => {
     if (!isTwitterTask) return;
@@ -883,6 +948,46 @@ export default function TaskDetailClient({
     }
   }
 
+  async function submitArticle() {
+    setError("");
+    setMessage("");
+    const walletAddress = connectedWallet;
+    if (!requireBoundXAccount() || !walletAddress) return;
+
+    setArticleSubmitting(true);
+    try {
+      const response = await fetch(`/api/tasks/${task.id}/article-submissions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({
+          wallet: walletAddress.toLowerCase(),
+          articleUrl,
+          title: articleTitle,
+          contentSnapshot: articleContent
+        })
+      });
+      const payload = (await response.json().catch(() => ({}))) as {
+        error?: string;
+        submission?: ArticleSubmission;
+      };
+      if (!response.ok) {
+        throw new Error(payload.error || "Unable to submit article.");
+      }
+      if (payload.submission) {
+        setArticleSubmission(payload.submission);
+        setArticleUrl(payload.submission.articleUrl);
+        setArticleTitle(payload.submission.title);
+        setArticleContent(payload.submission.contentSnapshot);
+      }
+      setMessage("Article submitted. It will be reviewed after the deadline.");
+    } catch (submitError) {
+      setError(submitError instanceof Error ? submitError.message : "Unable to submit article.");
+    } finally {
+      setArticleSubmitting(false);
+    }
+  }
+
   // ===== QuestN Layout (all tasks) =====
   {
     const allTasksVerified = ["0","1","2","3"].every(k => taskStates[k]?.verified);
@@ -1064,6 +1169,247 @@ export default function TaskDetailClient({
       extractRequirementUrl(task.campaign, ["Like"]) ||
       task.campaign?.targetUrl ||
       "https://x.com/ai2humanwork/status/2058166798005248452";
+
+    if (isArticleContest) {
+      const articlePrizes = dist?.prizes?.length
+        ? dist.prizes
+        : [
+            { rank: 1, amount: "50 USDC", slots: 1, label: "1st place" },
+            { rank: 2, amount: "20 USDC", slots: 1, label: "2nd place" },
+            { rank: 3, amount: "10 USDC", slots: 2, label: "3rd place" }
+          ];
+      const articleDeadlineEnded = countdown.ended || task.taskState === "closed" || task.taskState === "refunded";
+      const articleStatus = articleSubmission?.status || "not submitted";
+      const canSubmitArticle = Boolean(connectedWallet && hasBoundXAccount && !articleDeadlineEnded);
+
+      return (
+        <main className={styles.page}>
+          <div className={styles.qnOuter}>
+            <Link href="/tasks" className={styles.backLink}>← Back to tasks</Link>
+
+            {error ? <div className={styles.noticeMsg}>{error}</div> : null}
+            {message ? <div className={styles.successMsg}>{message}</div> : null}
+
+            <div className={styles.qnSection}>
+              <div className={styles.qnMain}>
+                <div className={styles.qnDetail}>
+                  <div className={styles.qnCommunityBox}>
+                    <div className={styles.qnCommunity}>
+                      <div className={styles.qnLogo}>
+                        <img src="/brand/ai2human-dual-arrow-256.png" alt="AI2Human" />
+                      </div>
+                      <span className={styles.qnName}>
+                        {task.campaign?.requesterHandle || "@ai2humanwork"}
+                      </span>
+                    </div>
+                    <span className={`${styles.qnTag} ${articleSubmission ? styles.qnTagCompleted : styles.qnTagOngoing}`}>
+                      {articleSubmission ? "Submitted" : "Open"}
+                    </span>
+                  </div>
+
+                  <div className={styles.qnTitleWrap}>
+                    <h1 className={styles.qnTitle}>{task.title}</h1>
+                    <div className={styles.qnTagBox}>
+                      <span className={styles.qnTag}>{distMode}</span>
+                      <span className={styles.qnTag}>{getDeadlineDisplay()}</span>
+                    </div>
+                  </div>
+
+                  <div className={styles.qnDesc}>
+                    <p className={styles.qnDescTitle}>Submit your X article</p>
+                    <div className={styles.qnDescContent}>
+                      <p>{task.campaign?.brief || task.acceptance}</p>
+                      <p>
+                        Your article URL must be from X and the author handle in the URL must match your bound X account
+                        {boundXAccount?.username ? ` (@${boundXAccount.username})` : ""}.
+                      </p>
+                    </div>
+                  </div>
+
+                  {!connectedWallet && (
+                    <div className={styles.qnProfileNotice}>
+                      Connect your wallet before submitting.
+                      <button type="button" onClick={() => login()}>Connect Wallet</button>
+                    </div>
+                  )}
+
+                  {connectedWallet && !hasBoundXAccount && (
+                    <div className={styles.qnProfileNotice}>
+                      Bind your X account before submitting an article.
+                      <a href="/app/profile">→ Bind X Account</a>
+                    </div>
+                  )}
+
+                  {articleSubmission && (
+                    <div className={styles.notice}>
+                      <strong>Status:</strong> {articleStatus}
+                      {articleSubmission.aiScore != null ? ` · Score: ${articleSubmission.aiScore}/100` : ""}
+                      {articleSubmission.rank ? ` · Rank: #${articleSubmission.rank}` : ""}
+                      {articleSubmission.prizeAmount ? ` · Prize: ${articleSubmission.prizeAmount}` : ""}
+                      {articleSubmission.paymentExplorerUrl && (
+                        <>
+                          {" · "}
+                          <a href={articleSubmission.paymentExplorerUrl} target="_blank" rel="noreferrer">
+                            View payout
+                          </a>
+                        </>
+                      )}
+                      {articleSubmission.aiReview && (
+                        <p className={styles.fieldHelp}>{articleSubmission.aiReview}</p>
+                      )}
+                    </div>
+                  )}
+
+                  <div className={styles.form}>
+                    <div className={styles.field}>
+                      <label htmlFor="article-url">X article link</label>
+                      <input
+                        id="article-url"
+                        className={styles.input}
+                        value={articleUrl}
+                        onChange={(event) => setArticleUrl(event.target.value)}
+                        placeholder="https://x.com/yourhandle/status/..."
+                        disabled={articleSubmitting || articleSubmission?.status === "paid"}
+                      />
+                      <p className={styles.fieldHelp}>Use the public X URL that includes your handle.</p>
+                    </div>
+
+                    <div className={styles.field}>
+                      <label htmlFor="article-title">Title</label>
+                      <input
+                        id="article-title"
+                        className={styles.input}
+                        value={articleTitle}
+                        onChange={(event) => setArticleTitle(event.target.value)}
+                        placeholder="Your article title"
+                        disabled={articleSubmitting || articleSubmission?.status === "paid"}
+                      />
+                    </div>
+
+                    <div className={styles.field}>
+                      <label htmlFor="article-content">Article snapshot</label>
+                      <textarea
+                        id="article-content"
+                        className={styles.textarea}
+                        value={articleContent}
+                        onChange={(event) => setArticleContent(event.target.value)}
+                        placeholder="Paste the article text here so it can be reviewed after the deadline."
+                        rows={10}
+                        disabled={articleSubmitting || articleSubmission?.status === "paid"}
+                      />
+                      <p className={styles.fieldHelp}>
+                        The X link is the source of truth. The text snapshot is used for AI review and ranking.
+                      </p>
+                    </div>
+
+                    <div className={styles.ctaRow}>
+                      <button
+                        type="button"
+                        className={styles.button}
+                        onClick={submitArticle}
+                        disabled={!canSubmitArticle || articleSubmitting || articleSubmission?.status === "paid"}
+                      >
+                        {articleSubmitting ? "Submitting..." : articleSubmission ? "Update submission" : "Submit article"}
+                      </button>
+                      {articleSubmission?.articleUrl && (
+                        <a
+                          href={articleSubmission.articleUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className={styles.buttonGhost}
+                        >
+                          Open X link
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className={styles.qnForYou}>
+                  <div className={styles.qnForYouHead}>
+                    <h3 className={styles.qnForYouTitle}>Prize ranking</h3>
+                  </div>
+                  <div className={styles.qnForYouGrid}>
+                    {articlePrizes.map((prize, index) => (
+                      <div key={`${prize.rank}-${index}`} className={styles.qnQuestCard}>
+                        <div className={styles.qnQuestCardBg} />
+                        <div className={styles.qnQuestCardBody}>
+                          <p className={styles.qnQuestCardTitle}>
+                            {prize.label || `Rank #${prize.rank}`}
+                          </p>
+                          <div className={styles.qnQuestCardReward}>
+                            {prize.amount}
+                            {prize.slots && prize.slots > 1 ? ` · ${prize.slots} slots` : ""}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className={styles.qnSidebar}>
+                <div className={styles.qnRewardCard}>
+                  <div className={styles.qnRewardHeader}>
+                    <h3 className={styles.qnRewardH3}>Reward</h3>
+                    <span className={styles.qnRewardBadge}>{distMode}</span>
+                  </div>
+                  <div className={styles.qnRewardStats}>
+                    <div className={styles.qnStatItem}>
+                      <span className={styles.qnStatValue}>{dist?.totalPool || task.budget}</span>
+                      <span className={styles.qnStatLabel}>Total Pool</span>
+                    </div>
+                    <div className={styles.qnStatDivider} />
+                    <div className={styles.qnStatItem}>
+                      <span className={styles.qnStatValue}>{maxWinners}</span>
+                      <span className={styles.qnStatLabel}>Winners</span>
+                    </div>
+                  </div>
+                  <div className={styles.qnCountdown}>
+                    {articleDeadlineEnded ? (
+                      <div className={styles.qnCountdownLabel}>Submission closed</div>
+                    ) : countdownTarget ? (
+                      <>
+                        <div className={styles.qnCountdownLabel}>Submit before</div>
+                        <div className={styles.qnTimerRow}>
+                          <div className={styles.qnTimerItem}>
+                            <span className={styles.qnTimerNum}>{String(countdown.days).padStart(2, "0")}</span>
+                            <span className={styles.qnTimerUnit}>Days</span>
+                          </div>
+                          <div className={styles.qnTimerItem}>
+                            <span className={styles.qnTimerNum}>{String(countdown.hours).padStart(2, "0")}</span>
+                            <span className={styles.qnTimerUnit}>Hours</span>
+                          </div>
+                          <div className={styles.qnTimerItem}>
+                            <span className={styles.qnTimerNum}>{String(countdown.min).padStart(2, "0")}</span>
+                            <span className={styles.qnTimerUnit}>Min</span>
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <div className={styles.qnCountdownLabel}>No deadline</div>
+                    )}
+                  </div>
+                  <div className={styles.qnRewardInfo}>
+                    <div className={styles.qnChainRow}>
+                      <div className={styles.qnChainIcon}>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                          <circle cx="12" cy="12" r="10"/>
+                        </svg>
+                      </div>
+                      <span className={styles.qnChainName}>Base · USDC after review</span>
+                    </div>
+                  </div>
+                  <div className={styles.notice}>
+                    Submit first. After the deadline, admin runs AI review, ranks all articles, then pays ranked winners on-chain.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+      );
+    }
 
     return (
       <main className={styles.page}>

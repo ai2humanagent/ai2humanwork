@@ -14,6 +14,7 @@ type TaskSummary = {
   maxWinners: number;
   claimedCount: number;
   participantCount: number;
+  submissionCount?: number;
   createdAt: string;
   deadline: string | null;
   escrowDepositId: string | null;
@@ -55,10 +56,29 @@ type TaskPayment = {
   createdAt: string;
 };
 
+type ArticleSubmission = {
+  id: string;
+  taskId: string;
+  walletAddress: string;
+  xHandle: string;
+  articleUrl: string;
+  title: string;
+  status: string;
+  aiScore: number | null;
+  aiReview: string | null;
+  rank: number | null;
+  prizeAmount: string | null;
+  paymentTxHash: string | null;
+  paymentExplorerUrl: string | null;
+  submittedAt: string;
+  reviewedAt: string | null;
+};
+
 type TaskDetail = TaskSummary & {
   participants: Participant[];
   winners: Winner[];
   payments: TaskPayment[];
+  articleSubmissions: ArticleSubmission[];
   escrow: object | null;
   campaign: object | null;
   evidence: object[];
@@ -147,6 +167,7 @@ function timeAgo(dateStr: string) {
 function modeLabel(mode: string) {
   if (mode === "lucky_draw") return "Lucky Draw";
   if (mode === "equal") return "Equal Split";
+  if (mode === "ranked_article_contest") return "Ranked Article";
   return "FCFS";
 }
 
@@ -234,6 +255,7 @@ export default function AdminPage() {
           participants: d.participants || d.task?.participants || [],
           winners: d.winners || d.task?.winners || [],
           payments: d.payments || d.task?.payments || [],
+          articleSubmissions: d.articleSubmissions || d.task?.articleSubmissions || [],
           escrow: d.task?.escrow || d.escrow || null,
           campaign: d.task?.campaign || d.campaign || null,
           evidence: d.task?.evidence || d.evidence || []
@@ -663,7 +685,55 @@ function InfoLine({ label, value, mono = false }: { label: string; value: string
 }
 
 function TaskDetailPanel({ task }: { task: TaskDetail }) {
-  const [tab, setTab] = useState<"overview" | "participants" | "winners" | "payments">("overview");
+  const [tab, setTab] = useState<"overview" | "participants" | "submissions" | "winners" | "payments">("overview");
+  const [articleSubmissions, setArticleSubmissions] = useState<ArticleSubmission[]>(task.articleSubmissions || []);
+  const [actionBusy, setActionBusy] = useState<"" | "review" | "payout">("");
+  const [actionMessage, setActionMessage] = useState("");
+  const isArticleContest = task.mode === "ranked_article_contest";
+
+  useEffect(() => {
+    setArticleSubmissions(task.articleSubmissions || []);
+    setActionMessage("");
+    if (!isArticleContest && tab === "submissions") {
+      setTab("overview");
+    }
+  }, [task.id, task.articleSubmissions, isArticleContest, tab]);
+
+  async function refreshArticleSubmissions() {
+    const response = await fetch(`/api/admin/tasks/${task.id}`, {
+      cache: "no-store",
+      credentials: "same-origin"
+    });
+    const data = await response.json();
+    setArticleSubmissions(data.articleSubmissions || data.task?.articleSubmissions || []);
+  }
+
+  async function runArticleAction(action: "review" | "payout") {
+    setActionBusy(action);
+    setActionMessage("");
+    try {
+      const response = await fetch(`/api/admin/tasks/${task.id}/article-${action}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: action === "review" ? JSON.stringify({ force: true }) : JSON.stringify({})
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok && response.status !== 207) {
+        throw new Error(data.error || `Article ${action} failed`);
+      }
+      await refreshArticleSubmissions();
+      if (action === "review") {
+        setActionMessage(`Review complete: ${data.reviewed || 0} submissions, ${data.winners || 0} winners.`);
+      } else {
+        setActionMessage(`Payout complete: ${data.paid || 0} paid${data.failed?.length ? `, ${data.failed.length} failed` : ""}.`);
+      }
+    } catch (err) {
+      setActionMessage(err instanceof Error ? err.message : `Article ${action} failed`);
+    } finally {
+      setActionBusy("");
+    }
+  }
 
   return (
     <div className={styles.detail}>
@@ -678,7 +748,7 @@ function TaskDetailPanel({ task }: { task: TaskDetail }) {
       </div>
 
       <div className={styles.tabs}>
-        {(["overview", "participants", "winners", "payments"] as const).map((t) => (
+        {(["overview", "participants", ...(isArticleContest ? ["submissions" as const] : []), "winners", "payments"] as const).map((t) => (
           <button
             key={t}
             className={`${styles.tab} ${tab === t ? styles.tabActive : ""}`}
@@ -686,6 +756,7 @@ function TaskDetailPanel({ task }: { task: TaskDetail }) {
           >
             {t.charAt(0).toUpperCase() + t.slice(1)}
             {t === "participants" && ` (${task.participants.length})`}
+            {t === "submissions" && ` (${articleSubmissions.length})`}
             {t === "winners" && ` (${task.winners.length})`}
             {t === "payments" && ` (${task.payments.length})`}
           </button>
@@ -832,6 +903,88 @@ function TaskDetailPanel({ task }: { task: TaskDetail }) {
               </tbody>
             </table>
           )}
+        </div>
+      )}
+
+      {tab === "submissions" && (
+        <div className={styles.section}>
+          <div className={styles.headerActions}>
+            <button
+              className={styles.backBtn}
+              onClick={() => runArticleAction("review")}
+              disabled={actionBusy !== ""}
+            >
+              {actionBusy === "review" ? "Reviewing..." : "Run AI Review"}
+            </button>
+            <button
+              className={styles.backBtn}
+              onClick={() => runArticleAction("payout")}
+              disabled={actionBusy !== ""}
+            >
+              {actionBusy === "payout" ? "Paying..." : "Pay Winners"}
+            </button>
+          </div>
+          {actionMessage && <div className={styles.empty}>{actionMessage}</div>}
+          <div className={styles.tableWrap}>
+            {articleSubmissions.length === 0 ? (
+              <div className={styles.empty}>No article submissions yet</div>
+            ) : (
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>Rank</th>
+                    <th>X</th>
+                    <th>Wallet</th>
+                    <th>Title</th>
+                    <th>Score</th>
+                    <th>Prize</th>
+                    <th>Status</th>
+                    <th>Article</th>
+                    <th>Payout</th>
+                    <th>Submitted</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {articleSubmissions.map((submission) => (
+                    <tr key={submission.id}>
+                      <td>{submission.rank ? `#${submission.rank}` : "—"}</td>
+                      <td className={styles.xHandle}>@{submission.xHandle}</td>
+                      <td><span className={styles.addr}>{shortAddress(submission.walletAddress)}</span></td>
+                      <td>{submission.title}</td>
+                      <td>{submission.aiScore != null ? `${submission.aiScore}/100` : "—"}</td>
+                      <td>{submission.prizeAmount || "—"}</td>
+                      <td>
+                        <span className={`${styles.badge} ${
+                          submission.status === "paid"
+                            ? styles.badgeGreen
+                            : submission.status === "winner"
+                              ? styles.badgeYellow
+                              : submission.status === "rejected" || submission.status === "invalid"
+                                ? styles.badgeRed
+                                : styles.badgeGray
+                        }`}>
+                          {submission.status}
+                        </span>
+                      </td>
+                      <td>
+                        <a href={submission.articleUrl} target="_blank" rel="noopener noreferrer" className={styles.txLink}>
+                          Open
+                        </a>
+                      </td>
+                      <td>
+                        {submission.paymentTxHash ? (
+                          <a href={submission.paymentExplorerUrl || "#"} target="_blank" rel="noopener noreferrer" className={styles.txLink}>
+                            {shortAddress(submission.paymentTxHash)}
+                          </a>
+                        ) : "—"}
+                      </td>
+                      <td>{submission.submittedAt ? timeAgo(submission.submittedAt) : "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
         </div>
       )}
 

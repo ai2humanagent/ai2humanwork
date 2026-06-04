@@ -28,6 +28,7 @@ export type TaskType =
   | "twitter_like"
   | "twitter_retweet"
   | "twitter_comment"
+  | "x_article"
   | "physical";
 
 export type TaskStatus =
@@ -142,7 +143,7 @@ export type PaymentEntry = {
   payerAddress?: string;
   method: SettlementMethod;
   status: "paid";
-  source?: "task" | "fallback_order" | "x402_access" | "twitter_task";
+  source?: "task" | "fallback_order" | "x402_access" | "twitter_task" | "article_contest";
   network?: SettlementNetwork;
   chainId?: number;
   tokenSymbol?: string;
@@ -265,7 +266,14 @@ export type LuckyDrawResult = {
   drawnAt: string;
 };
 
-export type RewardDistributionMode = "fcfs" | "lucky_draw" | "equal";
+export type RewardPrize = {
+  rank: number;
+  amount: string;
+  slots?: number;
+  label?: string;
+};
+
+export type RewardDistributionMode = "fcfs" | "lucky_draw" | "equal" | "ranked_article_contest";
 
 export type RewardDistribution = {
   mode: RewardDistributionMode;
@@ -273,6 +281,40 @@ export type RewardDistribution = {
   perWinner?: string;
   maxWinners: number;
   drawTime?: string;
+  reviewAfter?: string;
+  prizes?: RewardPrize[];
+};
+
+export type ArticleSubmissionStatus =
+  | "submitted"
+  | "invalid"
+  | "reviewed"
+  | "winner"
+  | "paid"
+  | "rejected";
+
+export type ArticleSubmission = {
+  id: string;
+  taskId: string;
+  walletAddress: string;
+  userId?: string;
+  xHandle: string;
+  articleUrl: string;
+  articleId?: string;
+  authorHandle: string;
+  title: string;
+  contentSnapshot: string;
+  status: ArticleSubmissionStatus;
+  aiScore?: number;
+  aiReview?: string;
+  aiRubric?: Record<string, number>;
+  rank?: number;
+  prizeAmount?: string;
+  paymentTxHash?: string;
+  paymentExplorerUrl?: string;
+  submittedAt: string;
+  reviewedAt?: string;
+  updatedAt: string;
 };
 
 export type Db = {
@@ -290,6 +332,7 @@ export type Db = {
   notifications: Notification[];
   escrowDeposits: EscrowDeposit[];
   luckyDrawParticipants: LuckyDrawParticipant[];
+  articleSubmissions: ArticleSubmission[];
 };
 
 export function makeSeedTasks(count: number): Task[] {
@@ -665,7 +708,8 @@ function makeInitialDb(): Db {
     questProgress: [],
     notifications: [],
     escrowDeposits: [],
-    luckyDrawParticipants: []
+    luckyDrawParticipants: [],
+    articleSubmissions: []
   };
 }
 
@@ -744,7 +788,8 @@ async function readDbFromFile(): Promise<Db> {
     questProgress: Array.isArray(parsed.questProgress) ? parsed.questProgress : [],
     notifications: Array.isArray(parsed.notifications) ? parsed.notifications : [],
     escrowDeposits: Array.isArray(parsed.escrowDeposits) ? parsed.escrowDeposits : [],
-    luckyDrawParticipants: Array.isArray(parsed.luckyDrawParticipants) ? parsed.luckyDrawParticipants : []
+    luckyDrawParticipants: Array.isArray(parsed.luckyDrawParticipants) ? parsed.luckyDrawParticipants : [],
+    articleSubmissions: Array.isArray(parsed.articleSubmissions) ? parsed.articleSubmissions : []
   };
 }
 
@@ -772,6 +817,29 @@ interface SbQuestProgress { id: string; wallet_address: string; task_id: string;
 interface SbPayment { id: string; task_id: string | null; amount: string; receiver: string; receiver_address: string; payer_address: string; method: string; status: string; source: string | null; network: string | null; chain_id: number | null; token_symbol: string | null; token_address: string | null; tx_hash: string | null; explorer_url: string | null; created_at: string; }
 interface SbNotification { id: string; user_id: string; type: string; title: string; body: string; task_id: string | null; read: boolean; created_at: string; }
 interface SbLuckyDrawParticipant { id: string; task_id: string; wallet_address: string; x_handle: string | null; created_at: string; }
+interface SbArticleSubmission {
+  id: string;
+  task_id: string;
+  wallet_address: string;
+  user_id: string | null;
+  x_handle: string;
+  article_url: string;
+  article_id: string | null;
+  author_handle: string;
+  title: string;
+  content_snapshot: string;
+  status: string;
+  ai_score: number | null;
+  ai_review: string | null;
+  ai_rubric: Record<string, number> | null;
+  rank: number | null;
+  prize_amount: string | null;
+  payment_tx_hash: string | null;
+  payment_explorer_url: string | null;
+  submitted_at: string;
+  reviewed_at: string | null;
+  updated_at: string;
+}
 interface SbEscrowDeposit { id: string; task_id: string | null; agent_id: string | null; agent_wallet: string | null; total_pool: string | null; amount_paid_out: string; amount_refunded: string; paid_count: number; status: string; deposit_tx_hash: string | null; deposit_explorer_url: string | null; refund_tx_hash: string | null; refund_explorer_url: string | null; error_message: string | null; created_at: string; updated_at: string; }
 interface SbSession { id: string; user_id: string; token: string; created_at: string; expires_at: string; }
 interface SbService { id: string; provider_id: string | null; title: string; short_description: string; description: string; category: string; price: number; pricing: string; duration_minutes: number; verified: boolean; rating_count: number; created_at: string; }
@@ -807,9 +875,34 @@ function readPoolAddressFromCampaign(campaign: unknown): string | undefined {
 
 function sbTaskToTask(s: SbTask): Task { return { id: s.id, title: s.title, budget: s.budget, deadline: s.deadline || "", acceptance: s.acceptance, taskType: (s.task_type || undefined) as Task["taskType"], status: s.status as Task["status"], taskState: (s.task_state || undefined) as Task["taskState"], evidence: (s.evidence || []) as Task["evidence"], agentId: s.agent_id || undefined, rewardDistribution: (s.reward_distribution || undefined) as Task["rewardDistribution"], escrowDepositId: s.escrow_deposit_id || undefined, assignee: (s.assignee || undefined) as Task["assignee"], drawResult: (s.draw_result || undefined) as Task["drawResult"], campaign: (s.campaign || undefined) as Task["campaign"], poolAddress: s.pool_address || readPoolAddressFromCampaign(s.campaign), verifyCooldownHours: s.verify_cooldown_hours, createdAt: s.created_at, updatedAt: s.updated_at }; }
 function sbQpToQp(s: SbQuestProgress): QuestProgress { return { id: s.id, walletAddress: s.wallet_address, taskId: s.task_id, subtaskKey: s.subtask_key, status: s.status as QuestProgress["status"], verifiedAt: s.verified_at || undefined, createdAt: s.created_at }; }
-function sbPaymentToPayment(s: SbPayment): PaymentEntry { return { id: s.id, taskId: s.task_id || undefined, fallbackOrderId: undefined, idempotencyKey: undefined, amount: s.amount, receiver: s.receiver, receiverAddress: s.receiver_address, payerAddress: s.payer_address, method: s.method as PaymentEntry["method"], status: s.status as PaymentEntry["status"], source: (s.source || undefined) as "task" | "fallback_order" | "x402_access" | "twitter_task" | undefined, network: (s.network || undefined) as SettlementNetwork | undefined, chainId: s.chain_id || undefined, tokenSymbol: s.token_symbol || undefined, tokenAddress: s.token_address || undefined, txHash: s.tx_hash || undefined, explorerUrl: s.explorer_url || undefined, createdAt: s.created_at }; }
+function sbPaymentToPayment(s: SbPayment): PaymentEntry { return { id: s.id, taskId: s.task_id || undefined, fallbackOrderId: undefined, idempotencyKey: undefined, amount: s.amount, receiver: s.receiver, receiverAddress: s.receiver_address, payerAddress: s.payer_address, method: s.method as PaymentEntry["method"], status: s.status as PaymentEntry["status"], source: (s.source || undefined) as PaymentEntry["source"] | undefined, network: (s.network || undefined) as SettlementNetwork | undefined, chainId: s.chain_id || undefined, tokenSymbol: s.token_symbol || undefined, tokenAddress: s.token_address || undefined, txHash: s.tx_hash || undefined, explorerUrl: s.explorer_url || undefined, createdAt: s.created_at }; }
 function sbNotifToNotif(s: SbNotification): Notification { return { id: s.id, userId: s.user_id, type: s.type as Notification["type"], title: s.title, body: s.body, taskId: s.task_id || undefined, read: s.read, createdAt: s.created_at }; }
 function sbLdpToLdp(s: SbLuckyDrawParticipant): LuckyDrawParticipant { return { id: s.id, taskId: s.task_id, walletAddress: s.wallet_address, xHandle: s.x_handle || "", createdAt: s.created_at }; }
+function sbArticleSubmissionToArticleSubmission(s: SbArticleSubmission): ArticleSubmission {
+  return {
+    id: s.id,
+    taskId: s.task_id,
+    walletAddress: s.wallet_address,
+    userId: s.user_id || undefined,
+    xHandle: s.x_handle,
+    articleUrl: s.article_url,
+    articleId: s.article_id || undefined,
+    authorHandle: s.author_handle,
+    title: s.title,
+    contentSnapshot: s.content_snapshot,
+    status: (s.status || "submitted") as ArticleSubmissionStatus,
+    aiScore: s.ai_score ?? undefined,
+    aiReview: s.ai_review || undefined,
+    aiRubric: s.ai_rubric || undefined,
+    rank: s.rank ?? undefined,
+    prizeAmount: s.prize_amount || undefined,
+    paymentTxHash: s.payment_tx_hash || undefined,
+    paymentExplorerUrl: s.payment_explorer_url || undefined,
+    submittedAt: s.submitted_at,
+    reviewedAt: s.reviewed_at || undefined,
+    updatedAt: s.updated_at
+  };
+}
 function sbSessionToSession(s: SbSession): AuthSession { return { id: s.id, userId: s.user_id, token: s.token, createdAt: s.created_at, expiresAt: s.expires_at }; }
 function sbEscrowToEscrow(s: SbEscrowDeposit): EscrowDeposit { return { id: s.id, taskId: s.task_id || "", agentId: s.agent_id || "", agentWallet: s.agent_wallet || "", totalPool: s.total_pool || "0", amountPaidOut: s.amount_paid_out, amountRefunded: s.amount_refunded, paidCount: s.paid_count, status: (s.status || "active") as EscrowDeposit["status"], depositTxHash: s.deposit_tx_hash || undefined, depositExplorerUrl: s.deposit_explorer_url || undefined, refundTxHash: s.refund_tx_hash || undefined, refundExplorerUrl: s.refund_explorer_url || undefined, errorMessage: s.error_message || undefined, createdAt: s.created_at, updatedAt: s.updated_at }; }
 function sbServiceToService(s: SbService): HumanService { return { id: s.id, providerId: s.provider_id || "", title: s.title, shortDescription: s.short_description, description: s.description, category: s.category as HumanService["category"], price: s.price, pricing: s.pricing as HumanService["pricing"], durationMinutes: s.duration_minutes, verified: s.verified, ratingCount: s.rating_count }; }
@@ -876,12 +969,39 @@ function notifToSbNotif(n: Notification): any { return { id: n.id, user_id: n.us
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function ldpToSbLdp(ldp: LuckyDrawParticipant): any { return { id: ldp.id, task_id: ldp.taskId, wallet_address: ldp.walletAddress, x_handle: ldp.xHandle ?? null, created_at: ldp.createdAt }; }
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+function articleSubmissionToSbArticleSubmission(s: ArticleSubmission): any {
+  return {
+    id: s.id,
+    task_id: s.taskId,
+    wallet_address: s.walletAddress,
+    user_id: s.userId ?? null,
+    x_handle: s.xHandle,
+    article_url: s.articleUrl,
+    article_id: s.articleId ?? null,
+    author_handle: s.authorHandle,
+    title: s.title,
+    content_snapshot: s.contentSnapshot,
+    status: s.status,
+    ai_score: s.aiScore ?? null,
+    ai_review: s.aiReview ?? null,
+    ai_rubric: s.aiRubric ?? null,
+    rank: s.rank ?? null,
+    prize_amount: s.prizeAmount ?? null,
+    payment_tx_hash: s.paymentTxHash ?? null,
+    payment_explorer_url: s.paymentExplorerUrl ?? null,
+    submitted_at: s.submittedAt,
+    reviewed_at: s.reviewedAt ?? null,
+    updated_at: s.updatedAt
+  };
+}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function sessionToSbSession(s: AuthSession): any { return { id: s.id, user_id: s.userId, token: s.token, created_at: s.createdAt, expires_at: s.expiresAt }; }
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function escrowToSbEscrow(e: EscrowDeposit): any { return { id: e.id, task_id: e.taskId ?? null, agent_id: e.agentId ?? null, agent_wallet: e.agentWallet ?? null, total_pool: e.totalPool ?? null, amount_paid_out: e.amountPaidOut, amount_refunded: e.amountRefunded, paid_count: e.paidCount, status: e.status, deposit_tx_hash: e.depositTxHash ?? null, deposit_explorer_url: e.depositExplorerUrl ?? null, refund_tx_hash: e.refundTxHash ?? null, refund_explorer_url: e.refundExplorerUrl ?? null, error_message: e.errorMessage ?? null, created_at: e.createdAt, updated_at: e.updatedAt }; }
 
 async function readDbFromSupabase(): Promise<Db> {
   if (!supabase) throw new Error("Supabase not configured");
+  const includeArticleSubmissions = await supportsArticleSubmissions();
   const results = await Promise.all([
     supabase.from("users").select("*"),
     supabase.from("humans").select("*"),
@@ -892,9 +1012,12 @@ async function readDbFromSupabase(): Promise<Db> {
     supabase.from("lucky_draw_participants").select("*"),
     supabase.from("escrow_deposits").select("*"),
     supabase.from("services").select("*"),
-    supabase.from("sessions").select("*")
+    supabase.from("sessions").select("*"),
+    includeArticleSubmissions
+      ? supabase.from("article_submissions").select("*").order("submitted_at", { ascending: true })
+      : Promise.resolve({ data: [], error: null })
   ]);
-  const [usersRes, humansRes, tasksRes, qpRes, paymentsRes, notifsRes, ldpRes, escrowRes, servicesRes, sessionsRes] = results;
+  const [usersRes, humansRes, tasksRes, qpRes, paymentsRes, notifsRes, ldpRes, escrowRes, servicesRes, sessionsRes, articleSubmissionsRes] = results;
   const readErrors = [
     ["users", usersRes.error],
     ["humans", humansRes.error],
@@ -905,7 +1028,8 @@ async function readDbFromSupabase(): Promise<Db> {
     ["lucky_draw_participants", ldpRes.error],
     ["escrow_deposits", escrowRes.error],
     ["services", servicesRes.error],
-    ["sessions", sessionsRes.error]
+    ["sessions", sessionsRes.error],
+    ["article_submissions", articleSubmissionsRes.error]
   ].flatMap(([table, error]) =>
     error && typeof error !== "string"
       ? [{ table: String(table), message: error.message }]
@@ -948,6 +1072,7 @@ async function readDbFromSupabase(): Promise<Db> {
     payments: paymentsRes.data?.map(sbPaymentToPayment) ?? [],
     notifications: notifsRes.data?.map(sbNotifToNotif) ?? [],
     luckyDrawParticipants: ldpRes.data?.map(sbLdpToLdp) ?? [],
+    articleSubmissions: articleSubmissionsRes.data?.map(sbArticleSubmissionToArticleSubmission) ?? [],
     escrowDeposits: escrowRes.data?.map(sbEscrowToEscrow) ?? [],
     services: servicesRes.data?.length ? servicesRes.data : seedServices.map(s => ({ ...s })),
     agents: bundled.agents,
@@ -962,6 +1087,7 @@ async function readDbFromSupabase(): Promise<Db> {
 const _modifiedCollections = new Set<string>();
 let _supportsHumanAvatarUrl: boolean | null = null;
 let _supportsTaskPoolAddress: boolean | null = null;
+let _supportsArticleSubmissions: boolean | null = null;
 
 async function supportsHumanAvatarUrl(): Promise<boolean> {
   if (!supabase) return false;
@@ -979,10 +1105,24 @@ async function supportsTaskPoolAddress(): Promise<boolean> {
   return _supportsTaskPoolAddress;
 }
 
+async function supportsArticleSubmissions(): Promise<boolean> {
+  if (!supabase) return false;
+  if (_supportsArticleSubmissions !== null) return _supportsArticleSubmissions;
+  const { error } = await supabase.from("article_submissions").select("id").limit(1);
+  if (error) return false;
+  _supportsArticleSubmissions = true;
+  return true;
+}
+
+export async function supportsArticleSubmissionsTable(): Promise<boolean> {
+  return supportsArticleSubmissions();
+}
+
 async function writeDbToSupabase(db: Db): Promise<void> {
   if (!supabase) return;
   const includeHumanAvatarUrl = await supportsHumanAvatarUrl();
   const includeTaskPoolAddress = await supportsTaskPoolAddress();
+  const includeArticleSubmissions = await supportsArticleSubmissions();
   const writeRequests = [
     { table: "users", request: supabase.from("users").upsert(db.users.map(humanToSbUser), { onConflict: "id" }) },
     { table: "humans", request: supabase.from("humans").upsert(db.humans.map((human) => humanToSbHuman(human, includeHumanAvatarUrl)), { onConflict: "id" }) },
@@ -991,6 +1131,9 @@ async function writeDbToSupabase(db: Db): Promise<void> {
     { table: "payments", request: supabase.from("payments").upsert(db.payments.map(paymentToSbPayment), { onConflict: "id" }) },
     { table: "notifications", request: supabase.from("notifications").upsert(db.notifications.map(notifToSbNotif), { onConflict: "id" }) },
     { table: "lucky_draw_participants", request: supabase.from("lucky_draw_participants").upsert(db.luckyDrawParticipants.map(ldpToSbLdp), { onConflict: "id" }) },
+    ...(includeArticleSubmissions
+      ? [{ table: "article_submissions", request: supabase.from("article_submissions").upsert(db.articleSubmissions.map(articleSubmissionToSbArticleSubmission), { onConflict: "id" }) }]
+      : []),
     { table: "escrow_deposits", request: supabase.from("escrow_deposits").upsert(db.escrowDeposits.map(escrowToSbEscrow), { onConflict: "id" }) },
     { table: "services", request: supabase.from("services").upsert(db.services.map((s: HumanService) => ({ id: s.id, provider_id: s.providerId, title: s.title, short_description: s.shortDescription, description: s.description, category: s.category, price: s.price, pricing: s.pricing, duration_minutes: s.durationMinutes, verified: s.verified, rating_count: s.ratingCount, created_at: new Date().toISOString() })), { onConflict: "id" }) },
     { table: "sessions", request: supabase.from("sessions").upsert(db.sessions.map(sessionToSbSession), { onConflict: "id" }) }

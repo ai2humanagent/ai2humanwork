@@ -31,6 +31,9 @@ export async function GET(
   const taskLdp =
     adminSnapshot?.luckyDrawParticipants ??
     db.luckyDrawParticipants.filter((ldp) => ldp.taskId === id);
+  const articleSubmissions =
+    adminSnapshot?.articleSubmissions ??
+    db.articleSubmissions.filter((submission) => submission.taskId === id);
 
   const participants = Array.from(
     new Map(taskQp.map((qp) => [qp.walletAddress, qp])).values()
@@ -53,7 +56,8 @@ export async function GET(
       totalPool,
       maxWinners,
       claimedCount: snapshotPayments.length,
-      participantCount: participants.length,
+      participantCount: mode === "ranked_article_contest" ? articleSubmissions.length : participants.length,
+      submissionCount: articleSubmissions.length,
       budget: task.budget,
       deadline: task.deadline,
       campaign: task.campaign,
@@ -86,6 +90,7 @@ export async function GET(
         createdAt: qp.createdAt
       };
     }),
+    articleSubmissions,
     winners,
     payments: snapshotPayments,
     debug: {
@@ -93,7 +98,8 @@ export async function GET(
       readDbPayments: taskPayments.length,
       snapshotPayments: snapshotPayments.length,
       questProgressRows: taskQp.length,
-      luckyDrawParticipantRows: taskLdp.length
+      luckyDrawParticipantRows: taskLdp.length,
+      articleSubmissionRows: articleSubmissions.length
     }
   };
 

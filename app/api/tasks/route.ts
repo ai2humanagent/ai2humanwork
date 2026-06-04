@@ -21,7 +21,12 @@ import {
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const VALID_DISTRIBUTION_MODES: RewardDistributionMode[] = ["fcfs", "lucky_draw", "equal"];
+const VALID_DISTRIBUTION_MODES: RewardDistributionMode[] = [
+  "fcfs",
+  "lucky_draw",
+  "equal",
+  "ranked_article_contest"
+];
 
 function parseRewardDistribution(raw: unknown, fallbackBudget: string): RewardDistribution | undefined {
   if (!raw || typeof raw !== "object") return undefined;
@@ -33,7 +38,25 @@ function parseRewardDistribution(raw: unknown, fallbackBudget: string): RewardDi
     totalPool: String(obj.totalPool || fallbackBudget).trim(),
     perWinner: obj.perWinner ? String(obj.perWinner).trim() : undefined,
     maxWinners: Math.max(1, Math.floor(Number(obj.maxWinners) || 1)),
-    drawTime: obj.drawTime ? String(obj.drawTime).trim() : undefined
+    drawTime: obj.drawTime ? String(obj.drawTime).trim() : undefined,
+    reviewAfter: obj.reviewAfter ? String(obj.reviewAfter).trim() : undefined,
+    prizes: Array.isArray(obj.prizes)
+      ? obj.prizes
+          .map((rawPrize) => {
+            if (!rawPrize || typeof rawPrize !== "object") return null;
+            const prize = rawPrize as Record<string, unknown>;
+            const rank = Math.max(1, Math.floor(Number(prize.rank) || 0));
+            const amount = String(prize.amount || "").trim();
+            if (!rank || !amount) return null;
+            return {
+              rank,
+              amount,
+              slots: Math.max(1, Math.floor(Number(prize.slots) || 1)),
+              label: prize.label ? String(prize.label).trim() : undefined
+            };
+          })
+          .filter(Boolean) as RewardDistribution["prizes"]
+      : undefined
   };
 }
 

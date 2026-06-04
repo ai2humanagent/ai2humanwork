@@ -19,11 +19,13 @@ export async function GET(request: Request) {
   const payments = adminSnapshot?.payments ?? db.payments;
   const questProgress = adminSnapshot?.questProgress ?? db.questProgress;
   const luckyDrawParticipants = adminSnapshot?.luckyDrawParticipants ?? db.luckyDrawParticipants;
+  const articleSubmissions = adminSnapshot?.articleSubmissions ?? db.articleSubmissions;
 
   const tasks = sourceTasks.map((task) => {
     const taskPayments = payments.filter((p) => p.taskId === task.id);
     const taskQp = questProgress.filter((qp) => qp.taskId === task.id);
     const taskLdp = luckyDrawParticipants.filter((ldp) => ldp.taskId === task.id);
+    const taskArticleSubmissions = articleSubmissions.filter((submission) => submission.taskId === task.id);
 
     // Unique participants (wallets that have any progress)
     const participants = Array.from(
@@ -47,7 +49,10 @@ export async function GET(request: Request) {
       totalPool,
       maxWinners,
       claimedCount: taskPayments.length,
-      participantCount: participants.length,
+      participantCount: task.rewardDistribution?.mode === "ranked_article_contest"
+        ? taskArticleSubmissions.length
+        : participants.length,
+      submissionCount: taskArticleSubmissions.length,
       participants: participants.slice(0, 20).map((qp) => {
         const payment = taskPayments.find(
           (p) => p.receiverAddress?.toLowerCase() === qp.walletAddress.toLowerCase()
@@ -81,7 +86,8 @@ export async function GET(request: Request) {
       taskRows: sourceTasks.length,
       paymentRows: payments.length,
       questProgressRows: questProgress.length,
-      luckyDrawParticipantRows: luckyDrawParticipants.length
+      luckyDrawParticipantRows: luckyDrawParticipants.length,
+      articleSubmissionRows: articleSubmissions.length
     }
   });
   response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
