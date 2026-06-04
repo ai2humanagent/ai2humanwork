@@ -8,6 +8,7 @@ import {
   type ArticleSubmission
 } from "../../../../lib/store";
 import { isSupabaseEnabled } from "../../../../lib/supabase";
+import { appendEvidence } from "../../../../lib/taskEvidence";
 import {
   isArticleContestDistribution,
   isSubmissionDeadlinePassed,
@@ -120,7 +121,9 @@ export async function POST(
   const now = new Date().toISOString();
   const normalizedUrl = parsedUrl.url;
   const normalizedXHandle = xAccount.username.replace(/^@/, "");
+  const requestId = crypto.randomUUID();
   let saved: ArticleSubmission | null = null;
+  let wasUpdate = false;
 
   const result = await updateDb((nextDb) => {
     if (!Array.isArray(nextDb.articleSubmissions)) {
@@ -152,6 +155,7 @@ export async function POST(
     );
 
     if (existing) {
+      wasUpdate = true;
       if (existing.status === "paid") {
         return { error: "This submission has already been paid and cannot be changed." };
       }
@@ -189,12 +193,56 @@ export async function POST(
       nextDb.articleSubmissions.unshift(saved);
     }
 
+    const targetTask = nextDb.tasks.find((item) => item.id === taskId);
+    if (targetTask) {
+      appendEvidence(targetTask, {
+        by: "system",
+        type: "log",
+        content: `article_submission:${JSON.stringify({
+          requestId,
+          taskId,
+          action: existing ? "update" : "create",
+          submissionId: saved?.id,
+          walletAddress: wallet,
+          xHandle: normalizedXHandle,
+          articleUrl: normalizedUrl,
+          articleId: parsedUrl.articleId,
+          authorHandle: parsedUrl.authorHandle,
+          titleLength: title.length,
+          contentLength: contentSnapshot.length
+        })}`,
+        createdAt: now
+      });
+    }
+
     return { submission: saved };
   });
 
   if ("error" in result && result.error) {
+    console.warn("[ArticleContest] submission:rejected", {
+      requestId,
+      taskId,
+      walletAddress: wallet,
+      xHandle: normalizedXHandle,
+      articleUrl: normalizedUrl,
+      error: result.error
+    });
     return NextResponse.json({ error: result.error }, { status: 400 });
   }
 
-  return NextResponse.json({ success: true, submission: result.submission });
+  console.info("[ArticleContest] submission:accepted", {
+    requestId,
+    taskId,
+    submissionId: result.submission?.id,
+    action: wasUpdate ? "update" : "create",
+    walletAddress: wallet,
+    xHandle: normalizedXHandle,
+    articleUrl: normalizedUrl,
+    articleId: parsedUrl.articleId,
+    authorHandle: parsedUrl.authorHandle,
+    titleLength: title.length,
+    contentLength: contentSnapshot.length
+  });
+
+  return NextResponse.json({ success: true, requestId, submission: result.submission });
 }

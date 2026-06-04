@@ -16,6 +16,10 @@ export type ArticleScoreResult = {
   score: number;
   review: string;
   rubric: Record<string, number>;
+  provider: "ai" | "heuristic";
+  model?: string;
+  latencyMs?: number;
+  fallbackReason?: string;
 };
 
 const DEFAULT_PRIZES = [
@@ -100,7 +104,7 @@ export function isSubmissionDeadlinePassed(deadline: string | undefined) {
   return Date.now() > timestamp;
 }
 
-function heuristicScore(title: string, content: string): ArticleScoreResult {
+function heuristicScore(title: string, content: string, fallbackReason: string): ArticleScoreResult {
   const text = `${title}\n${content}`.trim();
   const wordCount = text.split(/\s+/).filter(Boolean).length;
   const lower = text.toLowerCase();
@@ -119,7 +123,9 @@ function heuristicScore(title: string, content: string): ArticleScoreResult {
   return {
     score,
     rubric,
-    review: "Heuristic review used because OPENAI_API_KEY is not configured. Score reflects relevance, originality, clarity, evidence, and narrative strength."
+    provider: "heuristic",
+    fallbackReason,
+    review: `Heuristic review used: ${fallbackReason}. Score reflects relevance, originality, clarity, evidence, and narrative strength.`
   };
 }
 
@@ -130,8 +136,10 @@ export async function scoreArticleSubmission(input: {
 }): Promise<ArticleScoreResult> {
   const apiKey = process.env.OPENAI_API_KEY;
   const baseUrl = (process.env.OPENAI_BASE_URL || "https://api.openai.com/v1").replace(/\/+$/, "");
+  const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
+  const startedAt = Date.now();
   if (!apiKey) {
-    return heuristicScore(input.title, input.content);
+    return heuristicScore(input.title, input.content, "OPENAI_API_KEY is not configured");
   }
 
   const response = await fetch(`${baseUrl}/chat/completions`, {
@@ -141,7 +149,7 @@ export async function scoreArticleSubmission(input: {
       Authorization: `Bearer ${apiKey}`
     },
     body: JSON.stringify({
-      model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+      model,
       temperature: 0.2,
       response_format: { type: "json_object" },
       messages: [
@@ -169,12 +177,18 @@ export async function scoreArticleSubmission(input: {
   });
 
   if (!response.ok) {
-    return heuristicScore(input.title, input.content);
+    return heuristicScore(
+      input.title,
+      input.content,
+      `AI provider returned HTTP ${response.status}`
+    );
   }
 
   const data = await response.json().catch(() => null) as { choices?: Array<{ message?: { content?: string } }> } | null;
   const content = data?.choices?.[0]?.message?.content;
-  if (!content) return heuristicScore(input.title, input.content);
+  if (!content) {
+    return heuristicScore(input.title, input.content, "AI provider returned an empty response");
+  }
 
   try {
     const parsed = JSON.parse(content) as {
@@ -186,6 +200,9 @@ export async function scoreArticleSubmission(input: {
     return {
       score: clampScore(parsed.score),
       review: String(parsed.review || "AI review completed.").slice(0, 1000),
+      provider: "ai",
+      model,
+      latencyMs: Date.now() - startedAt,
       rubric: {
         relevance: clampScore(rubric.relevance),
         originality: clampScore(rubric.originality),
@@ -195,7 +212,7 @@ export async function scoreArticleSubmission(input: {
       }
     };
   } catch {
-    return heuristicScore(input.title, input.content);
+    return heuristicScore(input.title, input.content, "AI response was not valid JSON");
   }
 }
 

@@ -6,6 +6,7 @@ import { executeSettlement } from "../../../../../lib/settlement";
 import { DEFAULT_SETTLEMENT_TOKEN_SYMBOL } from "../../../../../lib/assetLabels";
 import { readDb, updateDb, type PaymentEntry } from "../../../../../lib/store";
 import { isArticleContestDistribution } from "../../../../../lib/articleContest";
+import { appendEvidence } from "../../../../../lib/taskEvidence";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -27,6 +28,7 @@ export async function POST(
   }
 
   const { id: taskId } = await params;
+  const requestId = crypto.randomUUID();
   const db = await readDb();
   const task = db.tasks.find((item) => item.id === taskId);
   if (!task) {
@@ -51,10 +53,23 @@ export async function POST(
   );
 
   if (!payable.length) {
+    console.info("[ArticleContest] payout:skip", { requestId, taskId, reason: "No unpaid winners." });
     return NextResponse.json({ success: true, paid: 0, skipped: true, message: "No unpaid winners." });
   }
 
   const poolAddress = readPoolAddress(task);
+  console.info("[ArticleContest] payout:start", {
+    requestId,
+    taskId,
+    payable: payable.length,
+    poolAddress: poolAddress || null,
+    winners: payable.map((submission) => ({
+      submissionId: submission.id,
+      xHandle: submission.xHandle,
+      walletAddress: submission.walletAddress,
+      prizeAmount: submission.prizeAmount
+    }))
+  });
   const paid: Array<{ submissionId: string; payment: PaymentEntry }> = [];
   const failed: Array<{ submissionId: string; walletAddress: string; error: string }> = [];
 
@@ -68,6 +83,14 @@ export async function POST(
           amount: submission.prizeAmount!
         });
         if (!claimResult.ok) {
+          console.warn("[ArticleContest] payout:claim_failed", {
+            requestId,
+            taskId,
+            submissionId: submission.id,
+            walletAddress: submission.walletAddress,
+            prizeAmount: submission.prizeAmount,
+            error: claimResult.error
+          });
           failed.push({ submissionId: submission.id, walletAddress: submission.walletAddress, error: claimResult.error });
           continue;
         }
@@ -113,6 +136,14 @@ export async function POST(
         }
       });
     } catch (err) {
+      console.error("[ArticleContest] payout:settlement_error", {
+        requestId,
+        taskId,
+        submissionId: submission.id,
+        walletAddress: submission.walletAddress,
+        prizeAmount: submission.prizeAmount,
+        error: err instanceof Error ? err.message : "Settlement failed."
+      });
       failed.push({
         submissionId: submission.id,
         walletAddress: submission.walletAddress,
@@ -123,6 +154,23 @@ export async function POST(
 
   if (paid.length) {
     const now = new Date().toISOString();
+    const payoutLog = {
+      requestId,
+      taskId,
+      poolAddress: poolAddress || null,
+      paid: paid.length,
+      failed: failed.length,
+      payments: paid.map((item) => ({
+        submissionId: item.submissionId,
+        amount: item.payment.amount,
+        receiverAddress: item.payment.receiverAddress,
+        method: item.payment.method,
+        network: item.payment.network,
+        txHash: item.payment.txHash
+      })),
+      failures: failed
+    };
+    console.info("[ArticleContest] payout:complete", payoutLog);
     await updateDb((nextDb) => {
       for (const item of paid) {
         nextDb.payments.unshift(item.payment);
@@ -145,12 +193,24 @@ export async function POST(
       const targetTask = nextDb.tasks.find((item) => item.id === taskId);
       if (targetTask) {
         targetTask.updatedAt = now;
+        appendEvidence(targetTask, {
+          by: "system",
+          type: "log",
+          content: `article_payout:${JSON.stringify(payoutLog)}`,
+          createdAt: now
+        });
       }
+    });
+  } else if (failed.length) {
+    console.warn("[ArticleContest] payout:complete_no_payments", {
+      requestId,
+      taskId,
+      failed
     });
   }
 
   return NextResponse.json(
-    { success: failed.length === 0, paid: paid.length, failed },
+    { success: failed.length === 0, requestId, paid: paid.length, failed },
     { status: failed.length ? 207 : 200 }
   );
 }

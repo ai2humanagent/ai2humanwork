@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
+import crypto from "crypto";
 import { getAdminAuthContext } from "../../../../../lib/adminAuth";
 import { readDb, updateDb } from "../../../../../lib/store";
+import { appendEvidence } from "../../../../../lib/taskEvidence";
 import {
   assignArticleContestPrizes,
   isArticleContestDistribution,
@@ -24,6 +26,7 @@ export async function POST(
   const body = await request.json().catch(() => ({}));
   const force = Boolean(body.force);
   const closeNow = Boolean(body.closeNow);
+  const requestId = crypto.randomUUID();
   const db = await readDb();
   const task = db.tasks.find((item) => item.id === taskId);
   if (!task) {
@@ -37,11 +40,33 @@ export async function POST(
   }
 
   const submissions = db.articleSubmissions.filter((item) => item.taskId === taskId);
+  console.info("[ArticleContest] review:start", {
+    requestId,
+    taskId,
+    force,
+    closeNow,
+    deadline: task.deadline,
+    submissionCount: submissions.length,
+    model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+    baseUrl: process.env.OPENAI_BASE_URL || "https://api.openai.com/v1",
+    hasApiKey: Boolean(process.env.OPENAI_API_KEY)
+  });
   if (!submissions.length) {
     return NextResponse.json({ error: "No article submissions to review." }, { status: 400 });
   }
 
   const now = new Date().toISOString();
+  const scoreDebug: Array<{
+    submissionId: string;
+    xHandle: string;
+    walletAddress: string;
+    score?: number;
+    provider?: string;
+    model?: string;
+    latencyMs?: number;
+    fallbackReason?: string;
+    error?: string;
+  }> = [];
   const scored = await Promise.all(
     submissions.map(async (submission) => {
       if (submission.status === "paid") return submission;
@@ -49,6 +74,16 @@ export async function POST(
         title: submission.title,
         content: submission.contentSnapshot,
         articleUrl: submission.articleUrl
+      });
+      scoreDebug.push({
+        submissionId: submission.id,
+        xHandle: submission.xHandle,
+        walletAddress: submission.walletAddress,
+        score: score.score,
+        provider: score.provider,
+        model: score.model,
+        latencyMs: score.latencyMs,
+        fallbackReason: score.fallbackReason
       });
       return {
         ...submission,
@@ -62,6 +97,35 @@ export async function POST(
     })
   );
   const ranked = assignArticleContestPrizes(scored, task.rewardDistribution);
+  const winners = ranked.filter((submission) => submission.status === "winner" || submission.status === "paid");
+  const providerCounts = scoreDebug.reduce<Record<string, number>>((counts, item) => {
+    const key = item.provider || "unknown";
+    counts[key] = (counts[key] || 0) + 1;
+    return counts;
+  }, {});
+  const reviewLog = {
+    requestId,
+    taskId,
+    closedNow: closeNow,
+    force,
+    reviewed: ranked.length,
+    winners: winners.length,
+    providerCounts,
+    top: ranked
+      .filter((submission) => submission.rank)
+      .sort((a, b) => (a.rank || 999) - (b.rank || 999))
+      .slice(0, 10)
+      .map((submission) => ({
+        submissionId: submission.id,
+        rank: submission.rank,
+        xHandle: submission.xHandle,
+        walletAddress: submission.walletAddress,
+        score: submission.aiScore,
+        prizeAmount: submission.prizeAmount
+      })),
+    scoreDebug
+  };
+  console.info("[ArticleContest] review:complete", reviewLog);
 
   await updateDb((nextDb) => {
     nextDb.articleSubmissions = nextDb.articleSubmissions.map((submission) => {
@@ -74,15 +138,22 @@ export async function POST(
         targetTask.deadline = now;
       }
       targetTask.updatedAt = now;
+      appendEvidence(targetTask, {
+        by: "system",
+        type: "log",
+        content: `article_review:${JSON.stringify(reviewLog)}`,
+        createdAt: now
+      });
     }
   });
 
   return NextResponse.json({
     success: true,
+    requestId,
     deadline: closeNow ? now : task.deadline,
     closedNow: closeNow,
     reviewed: ranked.length,
-    winners: ranked.filter((submission) => submission.status === "winner" || submission.status === "paid").length,
+    winners: winners.length,
     submissions: ranked
   });
 }
