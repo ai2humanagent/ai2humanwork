@@ -355,6 +355,7 @@ export default function TaskDetailClient({
   const maxWinners = dist?.maxWinners || 1;
   const boundXAccount = auth?.user.xAccount;
   const hasBoundXAccount = Boolean(boundXAccount?.username);
+  const isTestArticleContest = isArticleContest && task.id.startsWith("x-article-contest-test-");
 
   function cacheXHandle(handle: string) {
     setXHandle(handle);
@@ -952,7 +953,11 @@ export default function TaskDetailClient({
     setError("");
     setMessage("");
     const walletAddress = connectedWallet;
-    if (!requireBoundXAccount() || !walletAddress) return;
+    if (!walletAddress) {
+      login();
+      return;
+    }
+    if (!isTestArticleContest && !requireBoundXAccount()) return;
 
     setArticleSubmitting(true);
     try {
@@ -1180,7 +1185,9 @@ export default function TaskDetailClient({
           ];
       const articleDeadlineEnded = countdown.ended || task.taskState === "closed" || task.taskState === "refunded";
       const articleStatus = articleSubmission?.status || "not submitted";
-      const canSubmitArticle = Boolean(connectedWallet && hasBoundXAccount && !articleDeadlineEnded);
+      const canSubmitArticle = Boolean(
+        connectedWallet && (hasBoundXAccount || isTestArticleContest) && !articleDeadlineEnded
+      );
 
       return (
         <main className={styles.page}>
@@ -1233,10 +1240,16 @@ export default function TaskDetailClient({
                     </div>
                   )}
 
-                  {connectedWallet && !hasBoundXAccount && (
+                  {connectedWallet && !hasBoundXAccount && !isTestArticleContest && (
                     <div className={styles.qnProfileNotice}>
                       Bind your X account before submitting an article.
                       <a href="/app/profile">→ Bind X Account</a>
+                    </div>
+                  )}
+
+                  {connectedWallet && !hasBoundXAccount && isTestArticleContest && (
+                    <div className={styles.qnProfileNotice}>
+                      Test mode: X binding is bypassed for this article contest.
                     </div>
                   )}
 
