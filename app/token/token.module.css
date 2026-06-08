@@ -1,0 +1,505 @@
+.page {
+  position: relative;
+  min-height: 100vh;
+  background: #0a0a0f;
+  color: #e0e0e0;
+  font-family: "JetBrains Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  overflow-x: hidden;
+}
+
+.noise {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.72' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='.6'/%3E%3C/svg%3E");
+}
+
+.header {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  z-index: 50;
+  width: calc(100% - 32px);
+  max-width: 768px;
+  transform: translateX(-50%);
+}
+
+.nav {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 16px;
+  border: 1px solid #1a1a24;
+  border-radius: 8px;
+  background: rgba(13, 13, 18, 0.9);
+  backdrop-filter: blur(14px);
+}
+
+.logoLink {
+  display: inline-flex;
+  min-width: 110px;
+}
+
+.logoMark {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #e0e0e0;
+  line-height: 1;
+}
+
+.logoNode {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid rgba(0, 212, 255, 0.45);
+  border-radius: 50%;
+  color: #00d4ff;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.logoText {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.navLinks {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.navLinks a {
+  padding: 8px 16px;
+  color: #888;
+  font-size: 14px;
+  transition: color 0.18s ease;
+}
+
+.navLinks a:hover {
+  color: #e0e0e0;
+}
+
+.appButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  padding: 0 16px;
+  border-radius: 6px;
+  background: #00d4ff;
+  color: #0a0a0f;
+  font-size: 14px;
+  font-weight: 700;
+  box-shadow: 0 0 26px rgba(0, 212, 255, 0.16);
+  transition: background 0.18s ease, transform 0.18s ease;
+}
+
+.appButton:hover {
+  background: #33ddff;
+  transform: translateY(-1px);
+}
+
+.hero {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  max-width: 1152px;
+  margin: 0 auto;
+  padding: 112px 16px 32px;
+  text-align: center;
+}
+
+.hero h1 {
+  margin: 0;
+  color: #e0e0e0;
+  font-family: Inter, "DM Sans", system-ui, sans-serif;
+  font-size: clamp(48px, 8vw, 72px);
+  font-weight: 800;
+  line-height: 0.95;
+  letter-spacing: 0;
+}
+
+.hero p {
+  max-width: 672px;
+  margin: 0;
+  color: #666;
+  font-size: clamp(16px, 2vw, 18px);
+  line-height: 1.6;
+}
+
+.contractPill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  margin-top: 8px;
+  padding: 8px 12px;
+  border: 1px solid #1a1a24;
+  border-radius: 6px;
+  background: #12121a;
+}
+
+.contractPill span {
+  color: #666;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.contractPill code {
+  color: #e0e0e0;
+  font-family: inherit;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.contractPill button,
+.contractPill a {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #666;
+  cursor: pointer;
+  transition: color 0.18s ease;
+}
+
+.contractPill button:hover,
+.contractPill a:hover {
+  color: #00d4ff;
+}
+
+.contractPill svg,
+.venueCard svg,
+.groupTitle svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+}
+
+.copyStatus {
+  margin-top: -12px;
+  color: #00d4ff;
+  font-size: 12px;
+}
+
+.stats {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+  max-width: 1152px;
+  margin: 0 auto;
+  padding: 32px 16px 48px;
+}
+
+.statCard {
+  min-height: 86px;
+  padding: 16px;
+  border: 1px solid #1a1a24;
+  border-radius: 8px;
+  background: #0d0d12;
+}
+
+.statCard div {
+  margin-bottom: 8px;
+  color: #666;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.statCard strong {
+  color: #e0e0e0;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.chartSection {
+  position: relative;
+  z-index: 1;
+  max-width: 896px;
+  margin: 0 auto;
+  padding: 0 16px 64px;
+}
+
+.chartFrame {
+  overflow: hidden;
+  min-height: 360px;
+  border: 1px solid #1a1a24;
+  border-radius: 8px;
+  background: #0d0d12;
+}
+
+.chartFrame iframe {
+  display: block;
+  width: 100%;
+  min-height: 360px;
+  aspect-ratio: 16 / 9;
+  border: 0;
+}
+
+.venues {
+  position: relative;
+  z-index: 1;
+  padding: 48px 16px 64px;
+  border-top: 1px solid #1a1a24;
+  background: #0a0a0f;
+}
+
+.sectionHeader {
+  max-width: 672px;
+  margin: 0 auto 40px;
+  text-align: center;
+}
+
+.sectionHeader h2 {
+  margin: 0 0 12px;
+  color: #e0e0e0;
+  font-family: Inter, "DM Sans", system-ui, sans-serif;
+  font-size: clamp(32px, 5vw, 40px);
+  line-height: 1.1;
+  letter-spacing: 0;
+}
+
+.sectionHeader p {
+  margin: 0;
+  color: #666;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.groupStack {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  max-width: 1152px;
+  margin: 0 auto;
+}
+
+.groupTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  color: #00d4ff;
+}
+
+.groupTitle h3 {
+  margin: 0;
+  color: #e0e0e0;
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.groupTitle svg {
+  stroke-width: 1.5;
+}
+
+.venueGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.venueCard {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 98px;
+  padding: 20px;
+  border: 1px solid #1a1a24;
+  border-radius: 8px;
+  background: #0d0d12;
+  transition: border-color 0.18s ease, transform 0.18s ease;
+}
+
+.venueCard:hover {
+  border-color: rgba(0, 212, 255, 0.42);
+  transform: translateY(-1px);
+}
+
+.venueCard span {
+  display: grid;
+  gap: 6px;
+}
+
+.venueCard strong {
+  color: #e0e0e0;
+  font-size: 15px;
+}
+
+.venueCard small {
+  color: #666;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.venueCard svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: #666;
+  transition: color 0.18s ease;
+}
+
+.venueCard:hover svg {
+  color: #00d4ff;
+}
+
+.footer {
+  position: relative;
+  z-index: 1;
+  border-top: 1px solid #1a1a24;
+  background: #0a0a0f;
+}
+
+.footerInner {
+  display: flex;
+  justify-content: space-between;
+  gap: 32px;
+  max-width: 1152px;
+  margin: 0 auto;
+  padding: 64px 16px 0;
+}
+
+.footerInner p {
+  margin: 16px 0 0;
+  color: #666;
+  font-size: 14px;
+}
+
+.legal {
+  display: grid;
+  gap: 12px;
+  min-width: 120px;
+}
+
+.legal h4 {
+  margin: 0 0 4px;
+  color: #e0e0e0;
+  font-size: 14px;
+}
+
+.legal a,
+.footerBottom a {
+  color: #666;
+  font-size: 14px;
+  transition: color 0.18s ease;
+}
+
+.legal a:hover,
+.footerBottom a:hover {
+  color: #00d4ff;
+}
+
+.footerBottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  max-width: 1152px;
+  margin: 64px auto 0;
+  padding: 32px 16px;
+  border-top: 1px solid #1a1a24;
+}
+
+.footerBottom p {
+  margin: 0;
+  color: #444;
+  font-size: 14px;
+}
+
+.footerBottom div {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+@media (max-width: 840px) {
+  .nav {
+    gap: 10px;
+  }
+
+  .logoLink {
+    min-width: auto;
+  }
+
+  .logoText {
+    display: none;
+  }
+
+  .stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .venueGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .header {
+    width: calc(100% - 24px);
+  }
+
+  .navLinks {
+    display: none;
+  }
+
+  .appButton {
+    padding: 0 12px;
+    font-size: 13px;
+  }
+
+  .hero {
+    padding-top: 112px;
+  }
+
+  .contractPill {
+    align-items: flex-start;
+    width: 100%;
+  }
+
+  .contractPill span {
+    padding-top: 4px;
+  }
+
+  .venueGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .footerInner,
+  .footerBottom {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .footerBottom div {
+    flex-wrap: wrap;
+  }
+}

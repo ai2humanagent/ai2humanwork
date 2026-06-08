@@ -27,3 +27,7 @@ WHERE NULLIF(x_account->>'subject', '') IS NOT NULL;
 CREATE UNIQUE INDEX IF NOT EXISTS idx_users_x_account_username_unique
 ON users (LOWER(x_account->>'username'))
 WHERE NULLIF(x_account->>'username', '') IS NOT NULL;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_users_wallet_address_unique
+ON users (LOWER(wallet_address))
+WHERE NULLIF(wallet_address, '') IS NOT NULL;

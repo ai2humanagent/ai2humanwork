@@ -35,6 +35,10 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_users_x_account_username_unique
 ON users (LOWER(x_account->>'username'))
 WHERE NULLIF(x_account->>'username', '') IS NOT NULL;
 
+CREATE UNIQUE INDEX IF NOT EXISTS idx_users_wallet_address_unique
+ON users (LOWER(wallet_address))
+WHERE NULLIF(wallet_address, '') IS NOT NULL;
+
 -- Humans
 CREATE TABLE humans (
   id TEXT PRIMARY KEY,
@@ -112,6 +116,21 @@ CREATE TABLE payments (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
+CREATE UNIQUE INDEX IF NOT EXISTS payments_task_source_receiver_uidx
+ON payments (task_id, source, LOWER(receiver_address))
+WHERE task_id IS NOT NULL
+  AND source IN ('twitter_task', 'article_contest')
+  AND status = 'paid'
+  AND NULLIF(receiver_address, '') IS NOT NULL;
+
+CREATE UNIQUE INDEX IF NOT EXISTS payments_tx_hash_uidx
+ON payments (LOWER(tx_hash))
+WHERE NULLIF(tx_hash, '') IS NOT NULL;
+
+CREATE UNIQUE INDEX IF NOT EXISTS payments_idempotency_key_uidx
+ON payments (idempotency_key)
+WHERE NULLIF(idempotency_key, '') IS NOT NULL;
+
 -- Notifications
 CREATE TABLE notifications (
   id TEXT PRIMARY KEY,
@@ -132,6 +151,14 @@ CREATE TABLE lucky_draw_participants (
   x_handle TEXT,
   created_at TIMESTAMPTZ DEFAULT now()
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS lucky_draw_participants_task_wallet_uidx
+ON lucky_draw_participants (task_id, LOWER(wallet_address))
+WHERE NULLIF(wallet_address, '') IS NOT NULL;
+
+CREATE UNIQUE INDEX IF NOT EXISTS lucky_draw_participants_task_x_uidx
+ON lucky_draw_participants (task_id, LOWER(x_handle))
+WHERE NULLIF(x_handle, '') IS NOT NULL;
 
 -- Ranked X Article Contest Submissions
 CREATE TABLE article_submissions (
@@ -166,6 +193,10 @@ CREATE UNIQUE INDEX article_submissions_task_x_uidx
 
 CREATE UNIQUE INDEX article_submissions_task_url_uidx
   ON article_submissions (task_id, lower(article_url));
+
+CREATE UNIQUE INDEX article_submissions_task_article_id_uidx
+  ON article_submissions (task_id, article_id)
+  WHERE NULLIF(article_id, '') IS NOT NULL;
 
 -- Escrow Deposits (maps to app EscrowDeposit type)
 CREATE TABLE escrow_deposits (

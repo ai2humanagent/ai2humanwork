@@ -124,11 +124,11 @@ export async function POST(
   }
 
   const now = new Date().toISOString();
-  const normalizedUrl = parsedUrl.url;
-  const normalizedXHandle = (xAccount?.username || parsedUrl.authorHandle).replace(/^@/, "");
   const xBindingBypassed = testBypassEnabled && (
     !xAccount?.username || !xHandlesMatch(parsedUrl.authorHandle, xAccount.username)
   );
+  const normalizedUrl = parsedUrl.url;
+  const normalizedXHandle = (xBindingBypassed ? parsedUrl.authorHandle : xAccount?.username || parsedUrl.authorHandle).replace(/^@/, "");
   const requestId = crypto.randomUUID();
   let saved: ArticleSubmission | null = null;
   let wasUpdate = false;
@@ -144,8 +144,20 @@ export async function POST(
         item.articleUrl.toLowerCase() === normalizedUrl.toLowerCase() &&
         item.walletAddress.toLowerCase() !== wallet
     );
-    if (duplicateUrl && !testBypassEnabled) {
+    if (duplicateUrl) {
       return { error: "This X article link has already been submitted by another wallet." };
+    }
+
+    const duplicateArticleId = parsedUrl.articleId
+      ? nextDb.articleSubmissions.find(
+          (item) =>
+            item.taskId === taskId &&
+            item.articleId === parsedUrl.articleId &&
+            item.walletAddress.toLowerCase() !== wallet
+        )
+      : null;
+    if (duplicateArticleId) {
+      return { error: "This X article has already been submitted by another wallet." };
     }
 
     const duplicateX = nextDb.articleSubmissions.find(
@@ -154,7 +166,7 @@ export async function POST(
         item.xHandle.toLowerCase() === normalizedXHandle.toLowerCase() &&
         item.walletAddress.toLowerCase() !== wallet
     );
-    if (duplicateX && !testBypassEnabled) {
+    if (duplicateX) {
       return { error: "This X account already submitted an article for this task." };
     }
 

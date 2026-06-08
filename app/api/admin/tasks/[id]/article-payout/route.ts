@@ -48,7 +48,8 @@ export async function POST(
         (payment) =>
           payment.taskId === taskId &&
           payment.source === "article_contest" &&
-          (payment.receiverAddress || "").toLowerCase() === submission.walletAddress.toLowerCase()
+          ((payment.receiverAddress || "").toLowerCase() === submission.walletAddress.toLowerCase() ||
+            payment.idempotencyKey === `article_contest:${taskId}:${submission.id}`)
       )
   );
 
@@ -125,6 +126,7 @@ export async function POST(
           payerAddress: settlement.payerAddress,
           method: settlement.method,
           status: settlement.status,
+          idempotencyKey: `article_contest:${taskId}:${submission.id}`,
           source: "article_contest",
           network: settlement.network,
           chainId: settlement.chainId,
@@ -173,6 +175,14 @@ export async function POST(
     console.info("[ArticleContest] payout:complete", payoutLog);
     await updateDb((nextDb) => {
       for (const item of paid) {
+        const alreadyRecorded = nextDb.payments.some(
+          (payment) =>
+            payment.taskId === taskId &&
+            payment.source === "article_contest" &&
+            (payment.idempotencyKey === item.payment.idempotencyKey ||
+              (payment.receiverAddress || "").toLowerCase() === (item.payment.receiverAddress || "").toLowerCase())
+        );
+        if (alreadyRecorded) continue;
         nextDb.payments.unshift(item.payment);
         const submission = nextDb.articleSubmissions.find((candidate) => candidate.id === item.submissionId);
         if (submission) {

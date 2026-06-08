@@ -1,5 +1,6 @@
 import type {
   ArticleSubmission,
+  ArticleReviewRubric,
   EscrowDeposit,
   LuckyDrawParticipant,
   PaymentEntry,
@@ -22,6 +23,8 @@ type AdminTaskSnapshot = {
 type PaymentRow = {
   id: string;
   task_id: string | null;
+  fallback_order_id?: string | null;
+  idempotency_key?: string | null;
   amount: string;
   receiver: string;
   receiver_address: string | null;
@@ -70,7 +73,7 @@ type ArticleSubmissionRow = {
   status: ArticleSubmission["status"];
   ai_score: number | null;
   ai_review: string | null;
-  ai_rubric: Record<string, number> | null;
+  ai_rubric: ArticleReviewRubric | null;
   rank: number | null;
   prize_amount: string | null;
   payment_tx_hash: string | null;
@@ -175,6 +178,8 @@ function paymentFromRow(row: PaymentRow): PaymentEntry {
   return {
     id: row.id,
     taskId: row.task_id || undefined,
+    fallbackOrderId: row.fallback_order_id || undefined,
+    idempotencyKey: row.idempotency_key || undefined,
     amount: row.amount,
     receiver: row.receiver,
     receiverAddress: row.receiver_address || undefined,

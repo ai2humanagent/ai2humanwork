@@ -6,13 +6,19 @@ import { appendEvidence } from "../../../../../lib/taskEvidence";
 import {
   assignArticleContestPrizes,
   fetchXArticleContent,
+  getArticleContestMinimumWinnerScore,
   isArticleContestDistribution,
   isSubmissionDeadlinePassed,
-  scoreArticleSubmission
+  scoreArticleSubmission,
+  xHandlesMatch
 } from "../../../../../lib/articleContest";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+function reviewedTextExcerpt(text: string) {
+  return text.replace(/\s+/g, " ").trim().slice(0, 900);
+}
 
 export async function POST(
   request: Request,
@@ -57,6 +63,7 @@ export async function POST(
   }
 
   const now = new Date().toISOString();
+  const minimumWinnerScore = getArticleContestMinimumWinnerScore(task.rewardDistribution);
   const scoreDebug: Array<{
     submissionId: string;
     xHandle: string;
@@ -66,6 +73,10 @@ export async function POST(
     model?: string;
     latencyMs?: number;
     source?: string;
+    contentSource?: string;
+    contentLength?: number;
+    excerpt?: string;
+    fetchAttempts?: string[];
     fallbackReason?: string;
     error?: string;
   }> = [];
@@ -76,6 +87,57 @@ export async function POST(
       const reviewContent = liveContent.ok ? liveContent.text : submission.contentSnapshot.trim();
       const contentSource = liveContent.ok ? "x_live" as const : "snapshot_fallback" as const;
       const xFetchError = liveContent.ok ? "" : `${liveContent.error} Attempts: ${liveContent.attempts.join(" -> ")}`;
+      const audit = {
+        contentSource,
+        fetchSource: liveContent.ok ? liveContent.source : "snapshot_fallback" as const,
+        fetchAttempts: liveContent.attempts,
+        xFetchError: liveContent.ok ? undefined : xFetchError,
+        reviewedTextExcerpt: reviewedTextExcerpt(reviewContent),
+        reviewedTextLength: reviewContent.length,
+        minimumWinnerScore
+      };
+
+      if (
+        liveContent.ok &&
+        liveContent.authorHandle &&
+        (!xHandlesMatch(liveContent.authorHandle, submission.authorHandle) ||
+          !xHandlesMatch(liveContent.authorHandle, submission.xHandle))
+      ) {
+        const error = `Live X author @${liveContent.authorHandle} does not match submitted author @${submission.authorHandle}.`;
+        scoreDebug.push({
+          submissionId: submission.id,
+          xHandle: submission.xHandle,
+          walletAddress: submission.walletAddress,
+          provider: "ai_error",
+          source: liveContent.source,
+          contentSource,
+          contentLength: reviewContent.length,
+          excerpt: reviewedTextExcerpt(reviewContent),
+          fetchAttempts: liveContent.attempts,
+          error
+        });
+        return {
+          ...submission,
+          status: "invalid" as const,
+          aiScore: 0,
+          aiReview: error,
+          aiRubric: {
+            relevance: 0,
+            originality: 0,
+            clarity: 0,
+            evidence: 0,
+            narrative: 0,
+            audit: {
+              ...audit,
+              provider: "ai_error" as const
+            }
+          },
+          rank: undefined,
+          prizeAmount: undefined,
+          reviewedAt: now,
+          updatedAt: now
+        };
+      }
 
       if (!liveContent.ok && reviewContent.length < 200) {
         return {
@@ -88,7 +150,11 @@ export async function POST(
             originality: 0,
             clarity: 0,
             evidence: 0,
-            narrative: 0
+            narrative: 0,
+            audit: {
+              ...audit,
+              provider: "ai_error" as const
+            }
           },
           rank: undefined,
           prizeAmount: undefined,
@@ -112,6 +178,10 @@ export async function POST(
         model: score.model,
         latencyMs: score.latencyMs,
         source: liveContent.ok ? liveContent.source : "snapshot_fallback",
+        contentSource,
+        contentLength: reviewContent.length,
+        excerpt: reviewedTextExcerpt(reviewContent),
+        fetchAttempts: liveContent.attempts,
         fallbackReason: score.fallbackReason
       });
       const sourceLabel = liveContent.ok
@@ -123,7 +193,15 @@ export async function POST(
           status: "invalid" as const,
           aiScore: 0,
           aiReview: `Source: ${sourceLabel}. ${score.review}`,
-          aiRubric: score.rubric,
+          aiRubric: {
+            ...score.rubric,
+            audit: {
+              ...audit,
+              provider: score.provider,
+              model: score.model,
+              latencyMs: score.latencyMs
+            }
+          },
           rank: undefined,
           prizeAmount: undefined,
           reviewedAt: now,
@@ -135,7 +213,15 @@ export async function POST(
         status: "reviewed" as const,
         aiScore: score.score,
         aiReview: `Source: ${sourceLabel}. ${score.review}`,
-        aiRubric: score.rubric,
+        aiRubric: {
+          ...score.rubric,
+          audit: {
+            ...audit,
+            provider: score.provider,
+            model: score.model,
+            latencyMs: score.latencyMs
+          }
+        },
         reviewedAt: now,
         updatedAt: now
       };
@@ -155,6 +241,7 @@ export async function POST(
     force,
     reviewed: ranked.length,
     winners: winners.length,
+    minimumWinnerScore,
     providerCounts,
     top: ranked
       .filter((submission) => submission.rank)
@@ -181,6 +268,9 @@ export async function POST(
     if (targetTask) {
       if (closeNow) {
         targetTask.deadline = now;
+      }
+      if (targetTask.taskState !== "refunded" && targetTask.taskState !== "full") {
+        targetTask.taskState = "closed";
       }
       targetTask.updatedAt = now;
       appendEvidence(targetTask, {

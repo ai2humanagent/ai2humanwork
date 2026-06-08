@@ -34,6 +34,10 @@ CREATE UNIQUE INDEX IF NOT EXISTS article_submissions_task_x_uidx
 CREATE UNIQUE INDEX IF NOT EXISTS article_submissions_task_url_uidx
   ON article_submissions (task_id, lower(article_url));
 
+CREATE UNIQUE INDEX IF NOT EXISTS article_submissions_task_article_id_uidx
+  ON article_submissions (task_id, article_id)
+  WHERE NULLIF(article_id, '') IS NOT NULL;
+
 CREATE INDEX IF NOT EXISTS article_submissions_task_status_idx
   ON article_submissions (task_id, status);
 

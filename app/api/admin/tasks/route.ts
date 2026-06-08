@@ -3,6 +3,7 @@ import { readAdminTaskSnapshot } from "../../../lib/adminTaskSnapshot";
 import { buildAdminWinners } from "../../../lib/adminTaskWinners";
 import { getAdminAuthContext } from "../../../lib/adminAuth";
 import { readDb } from "../../../lib/store";
+import { getCampaignLifecycleStatus } from "../../../lib/campaignReport";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -39,12 +40,18 @@ export async function GET(request: Request) {
     const totalPool = task.rewardDistribution?.totalPool || task.budget;
     const maxWinners = task.rewardDistribution?.maxWinners || 1;
     const mode = task.rewardDistribution?.mode || "fcfs";
+    const lifecycleStatus = getCampaignLifecycleStatus({
+      task,
+      articleSubmissions: taskArticleSubmissions,
+      payments: taskPayments
+    });
 
     return {
       id: task.id,
       title: task.title,
       status: task.status,
       taskState: task.taskState,
+      lifecycleStatus,
       mode,
       totalPool,
       maxWinners,

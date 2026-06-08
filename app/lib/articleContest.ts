@@ -1,4 +1,4 @@
-import type { ArticleSubmission, RewardDistribution } from "./store";
+import type { ArticleSubmission, ArticleReviewAudit, ArticleReviewRubric, RewardDistribution } from "./store";
 import { normalizeXHandle } from "./xIdentity";
 
 export type ParsedXArticleUrl = {
@@ -15,7 +15,7 @@ export type ParsedXArticleUrl = {
 export type ArticleScoreResult = {
   score: number;
   review: string;
-  rubric: Record<string, number>;
+  rubric: ArticleReviewRubric;
   provider: "ai" | "ai_error";
   model?: string;
   latencyMs?: number;
@@ -24,10 +24,11 @@ export type ArticleScoreResult = {
 
 export type XArticleContentResult = {
   ok: true;
-  source: "x_api" | "syndication" | "oembed" | "html";
+  source: "fxtwitter_thread" | "fxtwitter_status" | "x_api_thread" | "x_api" | "syndication" | "oembed" | "html";
   text: string;
   authorHandle?: string;
   title?: string;
+  attempts: string[];
 } | {
   ok: false;
   error: string;
@@ -39,6 +40,7 @@ const DEFAULT_PRIZES = [
   { rank: 2, amount: "20 USDC", slots: 1, label: "2nd place" },
   { rank: 3, amount: "10 USDC", slots: 2, label: "3rd place" }
 ];
+const DEFAULT_MINIMUM_WINNER_SCORE = 25;
 
 function clampScore(value: unknown) {
   const num = Number(value);
@@ -118,6 +120,253 @@ async function getXBearerToken() {
   return data.access_token || "";
 }
 
+type XApiTweet = {
+  id: string;
+  text?: string;
+  author_id?: string;
+  created_at?: string;
+  conversation_id?: string;
+  note_tweet?: {
+    text?: string;
+  };
+};
+
+type XApiUser = {
+  id?: string;
+  username?: string;
+  name?: string;
+};
+
+function readXApiTweetText(tweet: XApiTweet) {
+  return String(tweet.note_tweet?.text || tweet.text || "").trim();
+}
+
+function userById(users: XApiUser[] | undefined, id: string | undefined) {
+  if (!id || !Array.isArray(users)) return undefined;
+  return users.find((user) => user.id === id);
+}
+
+function formatThreadText(tweets: XApiTweet[]) {
+  return tweets
+    .map((tweet, index) => {
+      const text = readXApiTweetText(tweet);
+      return text ? `${index + 1}/${tweets.length}\n${text}` : "";
+    })
+    .filter(Boolean)
+    .join("\n\n");
+}
+
+function sortTweetsChronologically(tweets: XApiTweet[]) {
+  return [...tweets].sort((a, b) => {
+    const at = +new Date(a.created_at || "");
+    const bt = +new Date(b.created_at || "");
+    if (Number.isFinite(at) && Number.isFinite(bt) && at !== bt) return at - bt;
+    return BigInt(a.id) < BigInt(b.id) ? -1 : 1;
+  });
+}
+
+type FxTwitterStatus = {
+  id?: string;
+  text?: string;
+  raw_text?: { text?: string };
+  created_timestamp?: number;
+  created_at?: string;
+  author?: {
+    screen_name?: string;
+    name?: string;
+  };
+};
+
+function readFxTwitterText(status: FxTwitterStatus) {
+  return String(status.raw_text?.text || status.text || "").trim();
+}
+
+function formatFxThreadText(thread: FxTwitterStatus[]) {
+  return thread
+    .map((status, index) => {
+      const text = readFxTwitterText(status);
+      return text ? `${index + 1}/${thread.length}\n${text}` : "";
+    })
+    .filter(Boolean)
+    .join("\n\n");
+}
+
+function sortFxStatusesChronologically(statuses: FxTwitterStatus[]) {
+  return [...statuses].sort((a, b) => {
+    const at = Number(a.created_timestamp) || +new Date(a.created_at || "");
+    const bt = Number(b.created_timestamp) || +new Date(b.created_at || "");
+    if (Number.isFinite(at) && Number.isFinite(bt) && at !== bt) return at - bt;
+    if (a.id && b.id) return BigInt(a.id) < BigInt(b.id) ? -1 : 1;
+    return 0;
+  });
+}
+
+async function fetchFxTwitterThread(input: {
+  parsed: Extract<ParsedXArticleUrl, { ok: true }>;
+  attempts: string[];
+}): Promise<XArticleContentResult | null> {
+  const { parsed, attempts } = input;
+  if (parsed.kind !== "status" || !parsed.articleId) return null;
+
+  try {
+    attempts.push("fxtwitter_thread");
+    const { response, text } = await fetchText(`https://api.fxtwitter.com/2/thread/${parsed.articleId}`);
+    if (!response.ok) {
+      attempts.push(`fxtwitter_thread_http_${response.status}:${text.slice(0, 120)}`);
+      return null;
+    }
+    const data = JSON.parse(text) as {
+      code?: number;
+      thread?: FxTwitterStatus[];
+      status?: FxTwitterStatus;
+      author?: FxTwitterStatus["author"];
+    };
+    const thread = Array.isArray(data.thread) ? data.thread : [];
+    const usefulThread = sortFxStatusesChronologically(
+      thread.filter((status) => status.id && readFxTwitterText(status))
+    );
+    if (data.code === 200 && usefulThread.length >= 2) {
+      attempts.push(`fxtwitter_thread_posts_${usefulThread.length}`);
+      return {
+        ok: true,
+        source: "fxtwitter_thread",
+        text: formatFxThreadText(usefulThread),
+        authorHandle: usefulThread[0]?.author?.screen_name || data.author?.screen_name || parsed.authorHandle,
+        title: usefulThread[0]?.author?.name || data.author?.name,
+        attempts
+      };
+    }
+
+    const status = data.status || usefulThread[0];
+    const statusText = status ? readFxTwitterText(status) : "";
+    if (data.code === 200 && statusText.length >= 40) {
+      attempts.push("fxtwitter_thread_single_status");
+      return {
+        ok: true,
+        source: "fxtwitter_status",
+        text: statusText,
+        authorHandle: status?.author?.screen_name || data.author?.screen_name || parsed.authorHandle,
+        title: status?.author?.name || data.author?.name,
+        attempts
+      };
+    }
+    attempts.push(`fxtwitter_thread_empty:${data.code || "unknown"}`);
+  } catch (error) {
+    attempts.push(`fxtwitter_thread_error:${error instanceof Error ? error.message.slice(0, 120) : "unknown"}`);
+  }
+  return null;
+}
+
+async function fetchXThreadFromApi(input: {
+  parsed: Extract<ParsedXArticleUrl, { ok: true }>;
+  bearer: string;
+  attempts: string[];
+}): Promise<XArticleContentResult | null> {
+  const { parsed, bearer, attempts } = input;
+  if (!bearer || parsed.kind !== "status" || !parsed.articleId) return null;
+  const apiBase = (process.env.X_OAUTH1_API_BASE_URL || "https://api.x.com").replace(/\/+$/, "");
+  const tweetFields = "text,author_id,created_at,conversation_id,referenced_tweets,note_tweet";
+  const userFields = "username,name";
+
+  let rootTweet: XApiTweet | undefined;
+  let rootUser: XApiUser | undefined;
+  try {
+    attempts.push("x_api_thread_lookup");
+    const endpoint = `${apiBase}/2/tweets/${parsed.articleId}?tweet.fields=${encodeURIComponent(tweetFields)}&expansions=author_id&user.fields=${encodeURIComponent(userFields)}`;
+    const { response, text } = await fetchText(endpoint, {
+      headers: { Authorization: `Bearer ${bearer}` }
+    });
+    if (!response.ok) {
+      attempts.push(`x_api_thread_lookup_http_${response.status}:${text.slice(0, 120)}`);
+      return null;
+    }
+    const data = JSON.parse(text) as {
+      data?: XApiTweet;
+      includes?: { users?: XApiUser[] };
+    };
+    rootTweet = data.data;
+    rootUser = userById(data.includes?.users, rootTweet?.author_id);
+    if (!rootTweet || readXApiTweetText(rootTweet).length < 20) {
+      attempts.push("x_api_thread_lookup_empty");
+      return null;
+    }
+  } catch (error) {
+    attempts.push(`x_api_thread_lookup_error:${error instanceof Error ? error.message.slice(0, 120) : "unknown"}`);
+    return null;
+  }
+
+  const authorHandle = rootUser?.username || parsed.authorHandle;
+  const conversationId = rootTweet.conversation_id || parsed.articleId;
+  try {
+    attempts.push("x_api_thread_search");
+    const searchUrl = new URL(`${apiBase}/2/tweets/search/recent`);
+    searchUrl.searchParams.set("query", `conversation_id:${conversationId} from:${authorHandle}`);
+    searchUrl.searchParams.set("tweet.fields", tweetFields);
+    searchUrl.searchParams.set("expansions", "author_id");
+    searchUrl.searchParams.set("user.fields", userFields);
+    searchUrl.searchParams.set("max_results", "100");
+    const { response, text } = await fetchText(searchUrl.toString(), {
+      headers: { Authorization: `Bearer ${bearer}` }
+    });
+    if (!response.ok) {
+      attempts.push(`x_api_thread_search_http_${response.status}:${text.slice(0, 120)}`);
+      return {
+        ok: true,
+        source: "x_api",
+        text: readXApiTweetText(rootTweet),
+        authorHandle,
+        title: rootUser?.name,
+        attempts
+      };
+    }
+    const data = JSON.parse(text) as {
+      data?: XApiTweet[];
+      includes?: { users?: XApiUser[] };
+      meta?: { result_count?: number };
+    };
+    const allTweets = [rootTweet, ...(Array.isArray(data.data) ? data.data : [])];
+    const uniqueTweets = Array.from(
+      new Map(
+        allTweets
+          .filter((tweet) => tweet.id && readXApiTweetText(tweet))
+          .map((tweet) => [tweet.id, tweet])
+      ).values()
+    );
+    const sorted = sortTweetsChronologically(uniqueTweets);
+    const threadText = formatThreadText(sorted);
+    if (sorted.length >= 2 && threadText.length >= readXApiTweetText(rootTweet).length + 20) {
+      attempts.push(`x_api_thread_posts_${sorted.length}`);
+      return {
+        ok: true,
+        source: "x_api_thread",
+        text: threadText,
+        authorHandle,
+        title: rootUser?.name,
+        attempts
+      };
+    }
+    attempts.push(`x_api_thread_single_post:${data.meta?.result_count ?? 0}`);
+    return {
+      ok: true,
+      source: "x_api",
+      text: readXApiTweetText(rootTweet),
+      authorHandle,
+      title: rootUser?.name,
+      attempts
+    };
+  } catch (error) {
+    attempts.push(`x_api_thread_search_error:${error instanceof Error ? error.message.slice(0, 120) : "unknown"}`);
+    return {
+      ok: true,
+      source: "x_api",
+      text: readXApiTweetText(rootTweet),
+      authorHandle,
+      title: rootUser?.name,
+      attempts
+    };
+  }
+}
+
 export async function fetchXArticleContent(articleUrl: string): Promise<XArticleContentResult> {
   const parsed = parseXArticleUrl(articleUrl);
   if (!parsed.ok) {
@@ -125,33 +374,43 @@ export async function fetchXArticleContent(articleUrl: string): Promise<XArticle
   }
 
   const attempts: string[] = [];
+  let bearer = "";
+
+  const fxThread = await fetchFxTwitterThread({ parsed, attempts });
+  if (fxThread?.ok && fxThread.text.length >= 40) return fxThread;
 
   try {
-    attempts.push("x_api");
-    const bearer = await getXBearerToken();
+    attempts.push("x_api_bearer");
+    bearer = await getXBearerToken();
     if (bearer) {
-      const endpoint = `https://api.twitter.com/2/tweets/${parsed.articleId}?tweet.fields=text,author_id,created_at,lang&expansions=author_id&user.fields=username,name`;
+      const threadResult = await fetchXThreadFromApi({ parsed, bearer, attempts });
+      if (threadResult?.ok && threadResult.text.length >= 40) return threadResult;
+
+      attempts.push("x_api");
+      const apiBase = (process.env.X_OAUTH1_API_BASE_URL || "https://api.x.com").replace(/\/+$/, "");
+      const endpoint = `${apiBase}/2/tweets/${parsed.articleId}?tweet.fields=text,author_id,created_at,lang,note_tweet&expansions=author_id&user.fields=username,name`;
       const { response, text } = await fetchText(endpoint, {
         headers: { Authorization: `Bearer ${bearer}` }
       });
       if (response.ok) {
         const data = JSON.parse(text) as {
-          data?: { text?: string };
+          data?: XApiTweet;
           includes?: { users?: Array<{ username?: string; name?: string }> };
         };
-        const liveText = String(data.data?.text || "").trim();
+        const liveText = data.data ? readXApiTweetText(data.data) : "";
         if (liveText.length >= 40) {
           return {
             ok: true,
             source: "x_api",
             text: liveText,
             authorHandle: data.includes?.users?.[0]?.username || parsed.authorHandle,
-            title: data.includes?.users?.[0]?.name
+            title: data.includes?.users?.[0]?.name,
+            attempts
           };
         }
         attempts.push("x_api_empty");
       } else {
-        attempts.push(`x_api_http_${response.status}`);
+        attempts.push(`x_api_http_${response.status}:${text.slice(0, 120)}`);
       }
     } else {
       attempts.push("x_api_missing_credentials");
@@ -172,7 +431,8 @@ export async function fetchXArticleContent(articleUrl: string): Promise<XArticle
           source: "syndication",
           text: liveText,
           authorHandle: data.user?.screen_name || parsed.authorHandle,
-          title: data.user?.name
+          title: data.user?.name,
+          attempts
         };
       }
       attempts.push("syndication_empty");
@@ -195,7 +455,8 @@ export async function fetchXArticleContent(articleUrl: string): Promise<XArticle
           source: "oembed",
           text: liveText,
           authorHandle: parsed.authorHandle,
-          title: data.author_name
+          title: data.author_name,
+          attempts
         };
       }
       attempts.push("oembed_empty");
@@ -220,7 +481,8 @@ export async function fetchXArticleContent(articleUrl: string): Promise<XArticle
           ok: true,
           source: "html",
           text: liveText,
-          authorHandle: parsed.authorHandle
+          authorHandle: parsed.authorHandle,
+          attempts
         };
       }
       attempts.push("html_empty");
@@ -291,6 +553,12 @@ export function getArticleContestPrizes(distribution?: RewardDistribution) {
     }))
     .filter((prize) => prize.amount)
     .sort((a, b) => a.rank - b.rank);
+}
+
+export function getArticleContestMinimumWinnerScore(distribution?: RewardDistribution) {
+  const configured = Number(distribution?.minimumWinnerScore);
+  if (!Number.isFinite(configured)) return DEFAULT_MINIMUM_WINNER_SCORE;
+  return Math.max(0, Math.min(100, configured));
 }
 
 export function isArticleContestDistribution(distribution?: RewardDistribution) {
@@ -445,8 +713,14 @@ export async function scoreArticleSubmission(input: {
             "Rubric keys must be relevance, originality, clarity, evidence, narrative.",
             "Each rubric value is 0-20. score is 0-100.",
             "Do not wrap the JSON in markdown. Do not add prose outside JSON.",
-            "Reward concrete explanation of agent-human task execution, proof, verification, and settlement.",
-            "Penalize generic hype, copied text, weak structure, and claims without examples."
+            "This is a community article contest, not a strict security audit.",
+            "Reward clear explanations of ai2human, agent-human cooperation, proof, verification, settlement, and why the workflow matters.",
+            "Do not require transaction hashes or production-grade proof to give a fair medium score.",
+            "Score 70-90 for strong original writing with specific workflow detail, examples, and a clear ai2human thesis.",
+            "Score 45-69 for relevant posts that explain the concept but stay somewhat promotional or light on specifics.",
+            "Score 25-44 for short but relevant posts with limited detail.",
+            "Score below 25 for pure token hype, copied text, off-topic content, or claims with almost no explanation.",
+            "Keep the review balanced and public-facing: mention the strongest point first, then the main limitation, without insulting the author."
           ].join(" ")
         },
         {
@@ -480,7 +754,7 @@ export async function scoreArticleSubmission(input: {
     const rubric = parsed.rubric || {};
     return {
       score: clampScore(parsed.score),
-      review: String(parsed.review || "AI review completed.").slice(0, 1000),
+      review: String(parsed.review || "AI review completed.").slice(0, 1600),
       provider: "ai",
       model,
       latencyMs: Date.now() - startedAt,
@@ -506,8 +780,13 @@ export function assignArticleContestPrizes(
   distribution?: RewardDistribution
 ) {
   const prizes = getArticleContestPrizes(distribution);
+  const minimumWinnerScore = getArticleContestMinimumWinnerScore(distribution);
   const ranked = submissions
-    .filter((submission) => submission.status !== "invalid" && submission.status !== "rejected")
+    .filter((submission) => {
+      if (submission.status === "invalid" || submission.status === "rejected") return false;
+      if (submission.status === "paid") return true;
+      return (submission.aiScore || 0) >= minimumWinnerScore;
+    })
     .sort((a, b) => {
       const scoreDelta = (b.aiScore || 0) - (a.aiScore || 0);
       if (scoreDelta !== 0) return scoreDelta;
@@ -528,16 +807,29 @@ export function assignArticleContestPrizes(
   return submissions.map((submission) => {
     const winner = winners.get(submission.id);
     if (!winner) {
+      const audit: ArticleReviewAudit = {
+        ...(submission.aiRubric?.audit || {}),
+        minimumWinnerScore
+      };
+      const aiRubric: ArticleReviewRubric | undefined = submission.aiRubric
+        ? { ...submission.aiRubric, audit }
+        : undefined;
       return {
         ...submission,
         status: submission.status === "paid" ? submission.status : "reviewed" as const,
+        aiRubric,
         rank: undefined,
         prizeAmount: undefined
       };
     }
+    const audit: ArticleReviewAudit = {
+      ...(submission.aiRubric?.audit || {}),
+      minimumWinnerScore
+    };
     return {
       ...submission,
       status: submission.status === "paid" ? submission.status : "winner" as const,
+      aiRubric: submission.aiRubric ? { ...submission.aiRubric, audit } : undefined,
       rank: winner.rank,
       prizeAmount: winner.amount
     };

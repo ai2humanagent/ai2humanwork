@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { formatDateTimeUtc8 } from "../../lib/dateTime";
 import styles from "./admin.module.css";
 
 type TaskSummary = {
@@ -9,6 +10,7 @@ type TaskSummary = {
   title: string;
   status: string;
   taskState: string;
+  lifecycleStatus?: string;
   mode: string;
   totalPool: string;
   maxWinners: number;
@@ -66,7 +68,25 @@ type ArticleSubmission = {
   status: string;
   aiScore: number | null;
   aiReview: string | null;
-  aiRubric?: Record<string, number> | null;
+  aiRubric?: {
+    relevance?: number;
+    originality?: number;
+    clarity?: number;
+    evidence?: number;
+    narrative?: number;
+    audit?: {
+      contentSource?: string;
+      fetchSource?: string;
+      fetchAttempts?: string[];
+      xFetchError?: string;
+      reviewedTextExcerpt?: string;
+      reviewedTextLength?: number;
+      model?: string;
+      provider?: string;
+      latencyMs?: number;
+      minimumWinnerScore?: number;
+    };
+  } | null;
   rank: number | null;
   prizeAmount: string | null;
   paymentTxHash: string | null;
@@ -74,6 +94,8 @@ type ArticleSubmission = {
   submittedAt: string;
   reviewedAt: string | null;
 };
+
+type ArticleReviewAudit = NonNullable<NonNullable<ArticleSubmission["aiRubric"]>["audit"]>;
 
 type TaskDetail = TaskSummary & {
   participants: Participant[];
@@ -180,19 +202,68 @@ function formatLogin(email: string | null) {
 
 function formatDate(dateStr: string | null) {
   if (!dateStr) return "—";
-  return new Date(dateStr).toLocaleString();
+  return formatDateTimeUtc8(dateStr);
 }
 
-function statusBadge(status: string, taskState: string) {
+function lifecycleLabel(status: string | undefined) {
+  if (status === "draft") return "Draft";
+  if (status === "funded") return "Funded";
+  if (status === "open") return "Open";
+  if (status === "closed") return "Closed";
+  if (status === "reviewed") return "Reviewed";
+  if (status === "paying") return "Paying";
+  if (status === "completed") return "Completed";
+  if (status === "refunded") return "Refunded";
+  return "";
+}
+
+function statusBadge(status: string, taskState: string, lifecycleStatus?: string) {
+  const label = lifecycleLabel(lifecycleStatus) || status;
   const cls =
-    status === "paid" || taskState === "full"
+    lifecycleStatus === "completed" || status === "paid" || taskState === "full"
       ? styles.badgeGreen
-      : status === "created"
+      : lifecycleStatus === "open" || status === "created"
       ? styles.badgeBlue
-      : status === "human_assigned"
+      : lifecycleStatus === "reviewed" || lifecycleStatus === "paying" || status === "human_assigned"
       ? styles.badgeYellow
       : styles.badgeGray;
-  return <span className={`${styles.badge} ${cls}`}>{status}</span>;
+  return <span className={`${styles.badge} ${cls}`}>{label}</span>;
+}
+
+function deriveAdminLifecycle(task: TaskDetail, articleSubmissions: ArticleSubmission[]) {
+  const mode = task.mode;
+  const isArticleContest = mode === "ranked_article_contest";
+  const reviewed = isArticleContest && articleSubmissions.some((submission) => submission.aiScore != null);
+  const publicWinnerCount = isArticleContest
+    ? articleSubmissions.filter((submission) => submission.rank && submission.prizeAmount && (submission.aiScore || 0) >= 25).length
+    : task.winners.length;
+  const paidCount = isArticleContest
+    ? articleSubmissions.filter((submission) => submission.status === "paid").length
+    : task.payments.length;
+  const deadlinePassed = task.deadline ? Date.now() > +new Date(task.deadline) : false;
+  const funded = Boolean(task.totalPool || task.escrowDepositId);
+  const completed = publicWinnerCount > 0 && paidCount >= publicWinnerCount;
+  const current = task.taskState === "refunded"
+    ? "Refunded"
+    : completed
+      ? "Completed"
+      : paidCount > 0
+        ? "Paying"
+        : reviewed
+          ? "Reviewed"
+          : task.taskState === "closed" || deadlinePassed
+            ? "Closed"
+            : task.participantCount > 0 || task.taskState === "open"
+              ? "Open"
+              : funded
+                ? "Funded"
+                : "Draft";
+  const order = ["Draft", "Funded", "Open", "Closed", "Reviewed", "Paying", "Completed", "Refunded"];
+  const currentIndex = order.indexOf(current);
+  return order.map((label, index) => ({
+    label,
+    state: index < currentIndex ? "done" : index === currentIndex ? "current" : "pending"
+  }));
 }
 
 export default function AdminPage() {
@@ -386,7 +457,7 @@ export default function AdminPage() {
               >
                 <div className={styles.taskCardTop}>
                   <span className={styles.taskTitle}>{task.title}</span>
-                  {statusBadge(task.status, task.taskState)}
+                  {statusBadge(task.status, task.taskState, task.lifecycleStatus)}
                 </div>
                 <div className={styles.taskCardMeta}>
                   <span>{modeLabel(task.mode)}</span>
@@ -395,7 +466,7 @@ export default function AdminPage() {
                 </div>
                 <div className={styles.taskCardMeta}>
                   <span>{task.participantCount} participants</span>
-                  <span>{timeAgo(task.createdAt)}</span>
+                  <span>{formatDate(task.createdAt)}</span>
                 </div>
               </button>
             ))
@@ -717,11 +788,37 @@ function sourceAndReason(review: string | null) {
   };
 }
 
+function rubricEntries(rubric?: ArticleSubmission["aiRubric"]) {
+  if (!rubric) return [];
+  return (["relevance", "originality", "clarity", "evidence", "narrative"] as const)
+    .flatMap((key) => {
+      const value = rubric[key];
+      return typeof value === "number" ? [[key, value] as const] : [];
+    });
+}
+
+function auditLabel(audit?: ArticleReviewAudit) {
+  if (!audit) return "Review source unknown";
+  if (audit.contentSource === "snapshot_fallback") return "Snapshot fallback";
+  if (audit.fetchSource === "oembed") return "Live X embed";
+  if (audit.fetchSource === "x_api") return "Live X API";
+  if (audit.fetchSource === "syndication") return "Live X syndication";
+  return `Live X${audit.fetchSource ? ` · ${audit.fetchSource}` : ""}`;
+}
+
+function sourceLabelFromReview(submission: ArticleSubmission) {
+  const audit = submission.aiRubric?.audit;
+  if (audit) return auditLabel(audit);
+  const review = sourceAndReason(submission.aiReview);
+  if (review.source.toLowerCase().includes("x live content")) return review.source.replace("X live content", "Live X");
+  if (review.source.toLowerCase().includes("snapshot")) return review.source;
+  return "Legacy review";
+}
+
 function PrizeCard({ submission, featured = false }: { submission: ArticleSubmission; featured?: boolean }) {
   const review = sourceAndReason(submission.aiReview);
-  const rubricEntries = submission.aiRubric
-    ? Object.entries(submission.aiRubric)
-    : [];
+  const entries = rubricEntries(submission.aiRubric);
+  const audit = submission.aiRubric?.audit;
 
   return (
     <article className={`${styles.prizeCard} ${featured ? styles.prizeCardFeatured : ""}`}>
@@ -739,12 +836,19 @@ function PrizeCard({ submission, featured = false }: { submission: ArticleSubmis
       </div>
 
       <p className={styles.prizeTitle}>{submission.title}</p>
-      <div className={styles.sourceBadge}>{review.source}</div>
+      <div className={styles.sourceBadge}>{sourceLabelFromReview(submission)}</div>
+      <div className={styles.sourceSubline}>{review.source}</div>
       {review.reason && <p className={styles.prizeReason}>{review.reason}</p>}
+      {audit?.reviewedTextExcerpt && (
+        <div className={styles.reviewExcerpt}>
+          <span>Reviewed text</span>
+          <p>{audit.reviewedTextExcerpt}</p>
+        </div>
+      )}
 
-      {rubricEntries.length > 0 && (
+      {entries.length > 0 && (
         <div className={styles.prizeRubric}>
-          {rubricEntries.map(([key, value]) => (
+          {entries.map(([key, value]) => (
             <div key={key}>
               <span>{key}</span>
               <strong>{Number(value).toFixed(1)}</strong>
@@ -763,12 +867,22 @@ function TaskDetailPanel({ task }: { task: TaskDetail }) {
   const [actionMessage, setActionMessage] = useState("");
   const isArticleContest = task.mode === "ranked_article_contest";
   const reviewedSubmissions = articleSubmissions.filter((submission) => submission.aiScore != null);
+  const hasAuditResults = reviewedSubmissions.some((submission) => Boolean(submission.aiRubric?.audit));
   const rankedSubmissions = [...reviewedSubmissions].sort((a, b) => {
     const rankDelta = (a.rank || 999) - (b.rank || 999);
     if (rankDelta !== 0) return rankDelta;
     return (b.aiScore || 0) - (a.aiScore || 0);
   });
-  const winnerSubmissions = rankedSubmissions.filter((submission) => submission.rank && submission.prizeAmount);
+  const minimumWinnerScore = reviewedSubmissions
+    .map((submission) => submission.aiRubric?.audit?.minimumWinnerScore)
+    .find((value): value is number => typeof value === "number");
+  const displayMinimumWinnerScore = minimumWinnerScore ?? 25;
+  const winnerSubmissions = rankedSubmissions.filter(
+    (submission) => submission.rank && submission.prizeAmount && (submission.aiScore || 0) >= displayMinimumWinnerScore
+  );
+  const qualifiedSubmissions = minimumWinnerScore == null
+    ? reviewedSubmissions.filter((submission) => (submission.aiScore || 0) >= displayMinimumWinnerScore)
+    : reviewedSubmissions.filter((submission) => (submission.aiScore || 0) >= minimumWinnerScore);
   const firstPrize = winnerSubmissions.find((submission) => submission.rank === 1);
   const runnerUpPrizes = winnerSubmissions.filter((submission) => submission.rank !== 1);
   const hasReviewResults = reviewedSubmissions.length > 0;
@@ -795,6 +909,7 @@ function TaskDetailPanel({ task }: { task: TaskDetail }) {
   }));
   const participantRows = isArticleContest ? articleParticipantRows : task.participants;
   const displayedParticipantCount = isArticleContest ? articleSubmissions.length : task.participantCount;
+  const lifecycle = deriveAdminLifecycle(task, articleSubmissions);
 
   useEffect(() => {
     setArticleSubmissions(task.articleSubmissions || []);
@@ -862,6 +977,11 @@ function TaskDetailPanel({ task }: { task: TaskDetail }) {
           <span>{task.claimedCount}/{task.maxWinners} claimed</span>
           <span>{displayedParticipantCount} participants</span>
         </div>
+        <div className={styles.detailHeaderActions}>
+          <a href={`/tasks/${task.id}/report`} target="_blank" rel="noopener noreferrer" className={styles.reportLink}>
+            Public Report
+          </a>
+        </div>
       </div>
 
       <div className={styles.tabs}>
@@ -882,6 +1002,13 @@ function TaskDetailPanel({ task }: { task: TaskDetail }) {
 
       {tab === "overview" && (
         <div className={styles.overview}>
+          <div className={styles.lifecycleBar}>
+            {lifecycle.map((step) => (
+              <div key={step.label} className={`${styles.lifecyclePill} ${styles[`lifecycle${step.state}`]}`}>
+                {step.label}
+              </div>
+            ))}
+          </div>
           <div className={styles.infoGrid}>
             <div className={styles.infoRow}>
               <span className={styles.infoLabel}>Task ID</span>
@@ -889,7 +1016,11 @@ function TaskDetailPanel({ task }: { task: TaskDetail }) {
             </div>
             <div className={styles.infoRow}>
               <span className={styles.infoLabel}>Status</span>
-              <span className={styles.infoValue}>{task.status} / {task.taskState}</span>
+              <span className={styles.infoValue}>{lifecycleLabel(task.lifecycleStatus) || task.status}</span>
+            </div>
+            <div className={styles.infoRow}>
+              <span className={styles.infoLabel}>Raw State</span>
+              <span className={styles.infoValue}>{task.status} / {task.taskState || "—"}</span>
             </div>
             <div className={styles.infoRow}>
               <span className={styles.infoLabel}>Mode</span>
@@ -909,11 +1040,11 @@ function TaskDetailPanel({ task }: { task: TaskDetail }) {
             </div>
             <div className={styles.infoRow}>
               <span className={styles.infoLabel}>Deadline</span>
-              <span className={styles.infoValue}>{task.deadline ? new Date(task.deadline).toLocaleString() : "—"}</span>
+              <span className={styles.infoValue}>{formatDate(task.deadline)}</span>
             </div>
             <div className={styles.infoRow}>
               <span className={styles.infoLabel}>Created</span>
-              <span className={styles.infoValue}>{new Date(task.createdAt).toLocaleString()}</span>
+              <span className={styles.infoValue}>{formatDate(task.createdAt)}</span>
             </div>
           </div>
 
@@ -1042,7 +1173,7 @@ function TaskDetailPanel({ task }: { task: TaskDetail }) {
             >
               {actionBusy === "review"
                 ? hasReviewResults ? "Review saved..." : "Reviewing..."
-                : "Run AI Review"}
+                : hasReviewResults ? "Re-run AI Review" : "Run AI Review"}
             </button>
             <button
               className={styles.backBtn}
@@ -1053,6 +1184,11 @@ function TaskDetailPanel({ task }: { task: TaskDetail }) {
             </button>
           </div>
           {actionMessage && <div className={styles.empty}>{actionMessage}</div>}
+          {hasReviewResults && !hasAuditResults && (
+            <div className={styles.reviewWarning}>
+              This is a legacy review. Re-run AI Review to refresh scores, source audit, reviewed text excerpts, and the current winner threshold.
+            </div>
+          )}
           {reviewedSubmissions.length > 0 && (
             <div className={styles.reviewShowcase}>
               <div className={styles.reviewHero}>
@@ -1060,7 +1196,7 @@ function TaskDetailPanel({ task }: { task: TaskDetail }) {
                   <span className={styles.reviewKicker}>AI Article Contest Results</span>
                   <h3>{task.title}</h3>
                   <p>
-                    Ranked from live X content when available. If live X fetching fails, the submitted snapshot is used as a clearly labeled fallback. Ties use earlier submission time.
+                    Ranked from live X content when available. Snapshot text is only used when live X fetching fails, and the report records exactly what was reviewed.
                   </p>
                 </div>
                 <div className={styles.reviewStatsPanel}>
@@ -1073,12 +1209,16 @@ function TaskDetailPanel({ task }: { task: TaskDetail }) {
                     <span>Winners</span>
                   </div>
                   <div>
+                    <strong>{qualifiedSubmissions.length}</strong>
+                    <span>Qualified</span>
+                  </div>
+                  <div>
                     <strong>{averageScore.toFixed(1)}</strong>
                     <span>Avg score</span>
                   </div>
                   <div>
-                    <strong>{task.totalPool}</strong>
-                    <span>Prize pool</span>
+                    <strong>{displayMinimumWinnerScore}</strong>
+                    <span>Min score</span>
                   </div>
                 </div>
               </div>
@@ -1096,7 +1236,7 @@ function TaskDetailPanel({ task }: { task: TaskDetail }) {
               )}
 
               <div className={styles.reviewFootnote}>
-                <span>Rubric: relevance, originality, clarity, evidence, narrative.</span>
+                <span>Rubric: relevance, originality, clarity, evidence, narrative. Minimum winner score is intentionally light, but very weak submissions stay unawarded.</span>
                 {latestReviewedAt && <span>Last reviewed {timeAgo(latestReviewedAt)}.</span>}
               </div>
             </div>
@@ -1146,10 +1286,21 @@ function TaskDetailPanel({ task }: { task: TaskDetail }) {
                       <td className={styles.reviewReason}>
                         {submission.aiReview ? (
                           <>
+                            <div className={styles.sourceBadge}>{sourceLabelFromReview(submission)}</div>
                             <p>{submission.aiReview}</p>
+                            {submission.aiRubric?.audit?.reviewedTextExcerpt && (
+                              <details className={styles.reviewDetails}>
+                                <summary>Reviewed text</summary>
+                                <p>{submission.aiRubric.audit.reviewedTextExcerpt}</p>
+                                <span>
+                                  {submission.aiRubric.audit.reviewedTextLength || 0} chars
+                                  {submission.aiRubric.audit.model ? ` · ${submission.aiRubric.audit.model}` : ""}
+                                </span>
+                              </details>
+                            )}
                             {submission.aiRubric && (
                               <div className={styles.rubricInline}>
-                                {Object.entries(submission.aiRubric).map(([key, value]) => (
+                                {rubricEntries(submission.aiRubric).map(([key, value]) => (
                                   <span key={key}>{key} {Number(value).toFixed(1)}</span>
                                 ))}
                               </div>

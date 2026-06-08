@@ -17,6 +17,7 @@ import {
   fetchWithPrivySessionRetry,
   loadAuthWithPrivySession
 } from "../../../lib/clientPrivySession";
+import { formatCampaignWindowUtc8 } from "../../../lib/dateTime";
 import styles from "./detail.module.css";
 
 type EvidenceItem = {
@@ -1156,16 +1157,7 @@ export default function TaskDetailClient({
     function getDeadlineDisplay() {
       const deadline = task.deadline;
       if (!deadline) return "No deadline";
-      try {
-        const d = new Date(deadline);
-        const start = new Date(d);
-        start.setDate(start.getDate() - 7);
-        const fmt = (date: Date) =>
-          `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, "0")}/${String(date.getDate()).padStart(2, "0")} ${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
-        return `${fmt(start)} ~ ${fmt(d)} (UTC+08:00)`;
-      } catch {
-        return deadline;
-      }
+      return formatCampaignWindowUtc8(deadline);
     }
 
     const telegramUrl =
@@ -1284,7 +1276,7 @@ export default function TaskDetailClient({
 
                   <div className={styles.form}>
                     <div className={styles.field}>
-                      <label htmlFor="article-url">X article link</label>
+                      <label htmlFor="article-url">X article or thread link</label>
                       <input
                         id="article-url"
                         className={styles.input}
@@ -1293,7 +1285,7 @@ export default function TaskDetailClient({
                         placeholder="https://x.com/yourhandle/status/..."
                         disabled={articleSubmitting || articleSubmission?.status === "paid"}
                       />
-                      <p className={styles.fieldHelp}>Use the public X URL that includes your handle.</p>
+                      <p className={styles.fieldHelp}>Use the public X URL for the article, post, or first post of a thread.</p>
                     </div>
 
                     <div className={styles.field}>
@@ -1309,18 +1301,18 @@ export default function TaskDetailClient({
                     </div>
 
                     <div className={styles.field}>
-                      <label htmlFor="article-content">Article snapshot</label>
+                      <label htmlFor="article-content">Article / thread text snapshot</label>
                       <textarea
                         id="article-content"
                         className={styles.textarea}
                         value={articleContent}
                         onChange={(event) => setArticleContent(event.target.value)}
-                        placeholder="Paste the article text here so it can be reviewed after the deadline."
+                        placeholder="Paste the full article or full thread text here so it can be reviewed after the deadline."
                         rows={10}
                         disabled={articleSubmitting || articleSubmission?.status === "paid"}
                       />
                       <p className={styles.fieldHelp}>
-                        The X link is the source of truth. The text snapshot is used for AI review and ranking.
+                        We try to fetch live X content first. For threads, paste the full thread here because X may only return the first post.
                       </p>
                     </div>
 

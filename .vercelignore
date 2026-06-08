@@ -8,3 +8,4 @@ tsconfig.tsbuildinfo
 .claude/
 aeon/
 contracts/
+scripts/claim-100.sh

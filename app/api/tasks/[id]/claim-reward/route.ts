@@ -223,25 +223,11 @@ export async function POST(
   const mode = dist?.mode || "fcfs";
   const maxWinners = dist?.maxWinners || 1;
 
-  if (mode === "fcfs") {
-    const result = await updateDbClaim(db, taskId, wallet, xAccount.username, mode, maxWinners, dist, task);
-    if (result.error) {
-      return NextResponse.json({ error: result.error }, { status: 400 });
-    }
-    return NextResponse.json({ success: true, alreadyClaimed: false, payment: result.payment });
-  } else if (mode === "lucky_draw") {
-    const result = await updateDbClaim(db, taskId, wallet, xAccount.username, mode, maxWinners, dist, task);
-    if (result.error) {
-      return NextResponse.json({ error: result.error }, { status: 400 });
-    }
-    return NextResponse.json({ success: true, alreadyClaimed: false, payment: result.payment });
-  } else {
-    const result = await updateDbClaim(db, taskId, wallet, xAccount.username, mode, maxWinners, dist, task);
-    if (result.error) {
-      return NextResponse.json({ error: result.error }, { status: 400 });
-    }
-    return NextResponse.json({ success: true, alreadyClaimed: false, payment: result.payment });
+  const result = await updateDbClaim(db, taskId, wallet, xAccount.username, mode, maxWinners, dist, task);
+  if (result.error) {
+    return NextResponse.json({ error: result.error }, { status: 400 });
   }
+  return NextResponse.json({ success: true, alreadyClaimed: Boolean(result.alreadyClaimed), payment: result.payment });
 }
 
 async function updateDbClaim(
@@ -254,17 +240,21 @@ async function updateDbClaim(
   dist: RewardDistribution | undefined,
   task: Task
 ) {
+  const normalizedXHandle = normalizeXHandle(xHandle);
+  const paymentIdempotencyKey = `twitter_task:${taskId}:${wallet}`;
+
   // Check existing payment
   const existingPayment = db.payments.find(
     (p) =>
       p.taskId === taskId &&
       p.source === "twitter_task" &&
       isClaimedPaymentForTask(p, task) &&
-      (p.receiverAddress || "").toLowerCase() === wallet
+      ((p.receiverAddress || "").toLowerCase() === wallet || p.idempotencyKey === paymentIdempotencyKey)
   );
   if (existingPayment) {
     return {
       error: null,
+      alreadyClaimed: true,
       payment: {
         amount: existingPayment.amount,
         method: existingPayment.method,
@@ -274,6 +264,16 @@ async function updateDbClaim(
         tokenSymbol: existingPayment.tokenSymbol
       }
     };
+  }
+
+  const existingXParticipant = db.luckyDrawParticipants.find(
+    (participant) =>
+      participant.taskId === taskId &&
+      normalizeXHandle(participant.xHandle) === normalizedXHandle &&
+      (participant.walletAddress || "").toLowerCase() !== wallet
+  );
+  if (existingXParticipant) {
+    return { error: "This X account has already claimed this task with another wallet." };
   }
 
   // Count existing claims
@@ -372,9 +372,10 @@ async function updateDbClaim(
       receiverAddress: settlement.receiverAddress,
       payerAddress: settlement.payerAddress,
       method: settlement.method,
-      status: settlement.status,
-      source: "twitter_task" as const,
-      network: settlement.network,
+        status: settlement.status,
+        idempotencyKey: paymentIdempotencyKey,
+        source: "twitter_task" as const,
+        network: settlement.network,
       chainId: settlement.chainId,
       tokenSymbol: settlement.tokenSymbol || DEFAULT_SETTLEMENT_TOKEN_SYMBOL,
       tokenAddress: settlement.tokenAddress,
@@ -426,13 +427,13 @@ async function updateDbClaim(
           (participant.walletAddress || "").toLowerCase() === wallet
       );
       if (existingParticipant) {
-        existingParticipant.xHandle = xHandle;
+        existingParticipant.xHandle = normalizedXHandle;
       } else {
         db.luckyDrawParticipants.push({
           id: crypto.randomUUID(),
           taskId,
           walletAddress: wallet,
-          xHandle,
+          xHandle: normalizedXHandle,
           createdAt: new Date().toISOString()
         });
       }
