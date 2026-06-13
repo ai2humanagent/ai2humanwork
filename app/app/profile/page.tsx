@@ -12,6 +12,11 @@ type SessionUser = {
   humanId?: string;
   walletAddress?: string;
   authProvider?: string;
+  contactEmail?: string;
+  notificationPreferences?: {
+    emailTaskAlerts?: boolean;
+    emailRewardAlerts?: boolean;
+  };
   xAccount?: {
     subject: string;
     username: string;
@@ -76,6 +81,17 @@ function getDisplayEmail(email?: string) {
   return email.endsWith("@privy.local") ? "Wallet login" : email;
 }
 
+function getSuggestedContactEmail(email?: string) {
+  if (!email || email.endsWith("@privy.local")) return "";
+  return email;
+}
+
+function isUsableContactEmail(email?: string) {
+  const value = String(email || "").trim().toLowerCase();
+  if (!value || value.endsWith("@privy.local")) return false;
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
 function splitList(value: string) {
   return value
     .split(",")
@@ -89,6 +105,108 @@ function joinList(value?: string[]) {
 
 function priceLabel(service: ServiceSummary) {
   return `$${service.price}${service.pricing === "hourly" ? "/hr" : ""}`;
+}
+
+function ProfileSkeleton() {
+  return (
+    <div className={styles.page} aria-busy="true">
+      <header className={styles.profileHeader}>
+        <div>
+          <p className={styles.eyebrow}>Profile</p>
+          <div className={`${styles.skeletonLine} ${styles.skeletonTitle}`} />
+          <div className={`${styles.skeletonLine} ${styles.skeletonCopy}`} />
+        </div>
+        <div className={`${styles.skeletonLine} ${styles.skeletonButton}`} />
+      </header>
+
+      <div className={styles.loadingStatus}>
+        <span className={styles.spinner} />
+        <strong>Loading your profile</strong>
+        <span>Fetching wallet, email, X binding, and task readiness.</span>
+      </div>
+
+      <div className={styles.readinessBand}>
+        <div className={styles.readinessMain}>
+          <div className={`${styles.skeletonLine} ${styles.skeletonPill}`} />
+          <div className={`${styles.skeletonLine} ${styles.skeletonShort}`} />
+        </div>
+        <div className={styles.loop}>
+          <span>Pick a task</span>
+          <span>Submit proof</span>
+          <span>We check it</span>
+          <span>Reward paid</span>
+        </div>
+      </div>
+
+      <section className={styles.identityPanel}>
+        {["Contact email", "X account"].map((label) => (
+          <div className={styles.identityCard} key={label}>
+            <div className={styles.identityHeader}>
+              <span className={styles.identityMissing}>Loading</span>
+              <div>
+                <h2>{label}</h2>
+                <p>
+                  <span className={styles.inlineSpinner}><span className={styles.spinner} /></span>
+                  Checking saved details...
+                </p>
+              </div>
+            </div>
+            <div className={`${styles.skeletonLine} ${styles.skeletonInput}`} />
+            <div className={`${styles.skeletonLine} ${styles.skeletonButtonWide}`} />
+          </div>
+        ))}
+      </section>
+
+      <div className={styles.profileGrid}>
+        <aside className={styles.operatorPanel}>
+          <div className={styles.operatorTop}>
+            <div className={`${styles.avatarWrap} ${styles.skeletonAvatar}`} />
+            <div className={styles.profileInfo}>
+              <div className={`${styles.skeletonLine} ${styles.skeletonName}`} />
+              <div className={`${styles.skeletonLine} ${styles.skeletonShort}`} />
+            </div>
+          </div>
+          <div className={styles.metricGrid}>
+            {Array.from({ length: 4 }).map((_, index) => (
+              <div key={index}>
+                <span><span className={styles.spinner} /></span>
+                <strong><span className={`${styles.skeletonLine} ${styles.skeletonMetric}`} /></strong>
+              </div>
+            ))}
+          </div>
+          <div className={styles.checkList}>
+            {Array.from({ length: 5 }).map((_, index) => (
+              <div className={styles.checkRow} key={index}>
+                <span className={styles.checkMissing} />
+                <span><span className={`${styles.skeletonLine} ${styles.skeletonCheck}`} /></span>
+                <strong>...</strong>
+              </div>
+            ))}
+          </div>
+        </aside>
+
+        <section className={styles.formPanel}>
+          <div className={styles.sectionHeader}>
+            <div>
+              <h2>About you</h2>
+              <p>Loading saved profile fields...</p>
+            </div>
+            <span><span className={styles.spinner} /></span>
+          </div>
+          <div className={styles.formGrid}>
+            {Array.from({ length: 4 }).map((_, index) => (
+              <div className={styles.field} key={index}>
+                <div className={`${styles.skeletonLine} ${styles.skeletonLabel}`} />
+                <div className={`${styles.skeletonLine} ${styles.skeletonInput}`} />
+              </div>
+            ))}
+          </div>
+          <div className={`${styles.skeletonLine} ${styles.skeletonTextarea}`} />
+          <div className={`${styles.skeletonLine} ${styles.skeletonButtonWide}`} />
+        </section>
+      </div>
+    </div>
+  );
 }
 
 function getXOAuthStatusMessage(code: string) {
@@ -161,6 +279,9 @@ export default function ProfilePage() {
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
+  const [emailTaskAlerts, setEmailTaskAlerts] = useState(true);
+  const [emailRewardAlerts, setEmailRewardAlerts] = useState(true);
   const [role, setRole] = useState("");
   const [location, setLocation] = useState("");
   const [skills, setSkills] = useState("");
@@ -221,6 +342,9 @@ export default function ProfilePage() {
     setProfile(payload);
     setName(getSuggestedName(payload, connectedWallet));
     setEmail(getDisplayEmail(payload.user.email));
+    setContactEmail(payload.user.contactEmail || getSuggestedContactEmail(payload.user.email));
+    setEmailTaskAlerts(payload.user.notificationPreferences?.emailTaskAlerts !== false);
+    setEmailRewardAlerts(payload.user.notificationPreferences?.emailRewardAlerts !== false);
     setRole(payload.human?.role || "");
     setLocation(payload.human?.location || "");
     setSkills(joinList(payload.human?.skills));
@@ -264,6 +388,11 @@ export default function ProfilePage() {
     try {
       const payload = {
         name: name.trim(),
+        contactEmail: contactEmail.trim(),
+        notificationPreferences: {
+          emailTaskAlerts,
+          emailRewardAlerts
+        },
         role: role.trim(),
         location: location.trim(),
         hourlyRate: Number(hourlyRate) || 30,
@@ -293,6 +422,14 @@ export default function ProfilePage() {
         current
           ? {
               ...current,
+              user: {
+                ...current.user,
+                contactEmail: contactEmail.trim(),
+                notificationPreferences: {
+                  emailTaskAlerts,
+                  emailRewardAlerts
+                }
+              },
               human: nextHuman || null
             }
           : current
@@ -302,6 +439,26 @@ export default function ProfilePage() {
       setError(saveError instanceof Error ? saveError.message : "Unable to save your profile.");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function connectOrRefreshX() {
+    setMessage("");
+    setError("");
+    try {
+      if (profile?.user.xAccount?.username) {
+        await loadProfile();
+        setMessage("X account status refreshed.");
+      } else {
+        setLinkingX(true);
+        const params = new URLSearchParams();
+        const walletAddress = connectedWallet || profile?.user.walletAddress;
+        if (walletAddress) params.set("wallet", walletAddress);
+        window.location.assign(`/api/auth/x/start?${params.toString()}`);
+      }
+    } catch (linkError) {
+      setLinkingX(false);
+      setError(linkError instanceof Error ? linkError.message : "Unable to open X login.");
     }
   }
 
@@ -320,11 +477,7 @@ export default function ProfilePage() {
   }
 
   if (!ready || loading) {
-    return (
-      <div className={styles.page}>
-        <div className={styles.loadingPanel}>Loading your profile...</div>
-      </div>
-    );
+    return <ProfileSkeleton />;
   }
 
   if (!authenticated) {
@@ -352,9 +505,11 @@ export default function ProfilePage() {
   const avatarSrc = avatarUrl || xAccount?.profilePictureUrl || "/icon.png";
   const displayName = name.trim() || xAccount?.name || (xAccount?.username ? `@${xAccount.username}` : shortAddress(walletAddress));
   const displayRole = role.trim() || (xAccount?.username ? `@${xAccount.username}` : "Tell people what you do");
+  const hasContactEmail = isUsableContactEmail(contactEmail) || isUsableContactEmail(profile?.user.email);
   const readinessItems = [
     { label: "Basic info", ready: Boolean(name.trim() && role.trim()) },
     { label: "X connected", ready: Boolean(xAccount?.username) },
+    { label: "Contact email", ready: hasContactEmail },
     { label: "Where you can help", ready: Boolean(location.trim() && skillCount > 0) },
     { label: "Wallet", ready: Boolean(walletAddress) },
     { label: "Task types", ready: serviceCount > 0 }
@@ -370,8 +525,8 @@ export default function ProfilePage() {
           <p className={styles.eyebrow}>Profile</p>
           <h1>Your profile</h1>
           <p className={styles.headerCopy}>
-            Set up who you are, connect your X account, and choose the kinds of tasks you can do.
-            Completed tasks are checked before rewards are paid.
+            Set up who you are, add a contact email, connect your X account, and choose the kinds of tasks you can do.
+            Email and X binding are required before task rewards can be paid.
           </p>
         </div>
         <button className={styles.disconnectBtn} type="button" onClick={() => logout()}>
@@ -396,6 +551,72 @@ export default function ProfilePage() {
           <span>Reward paid</span>
         </div>
       </div>
+
+      <section className={styles.identityPanel}>
+        <div className={styles.identityCard}>
+          <div className={styles.identityHeader}>
+            <span className={hasContactEmail ? styles.identityReady : styles.identityMissing}>
+              {hasContactEmail ? "Ready" : "Required"}
+            </span>
+            <div>
+              <h2>Contact email</h2>
+              <p>Used for task alerts, winner notices, and payout updates. Not shown publicly.</p>
+            </div>
+          </div>
+          <input
+            className={styles.input}
+            type="email"
+            value={contactEmail}
+            onChange={(event) => setContactEmail(event.target.value)}
+            placeholder="you@example.com"
+          />
+          <div className={styles.identityToggles}>
+            <label className={styles.toggleRow}>
+              <input
+                type="checkbox"
+                checked={emailTaskAlerts}
+                onChange={(event) => setEmailTaskAlerts(event.target.checked)}
+              />
+              <span>New task alerts</span>
+            </label>
+            <label className={styles.toggleRow}>
+              <input
+                type="checkbox"
+                checked={emailRewardAlerts}
+                onChange={(event) => setEmailRewardAlerts(event.target.checked)}
+              />
+              <span>Winner and payout updates</span>
+            </label>
+          </div>
+          <button className={styles.saveBtn} type="button" onClick={saveProfile} disabled={saving}>
+            {saving ? "Saving..." : "Save email"}
+          </button>
+        </div>
+
+        <div className={styles.identityCard}>
+          <div className={styles.identityHeader}>
+            <span className={xAccount?.username ? styles.identityReady : styles.identityMissing}>
+              {xAccount?.username ? "Connected" : "Required for rewards"}
+            </span>
+            <div>
+              <h2>X account</h2>
+              <p>Required for normal tasks and reward campaigns. Test article contests only require email.</p>
+            </div>
+          </div>
+          <div className={styles.xAccountPreview}>
+            <strong>{xAccount?.username ? `@${xAccount.username}` : "Not connected"}</strong>
+            {xAccount?.name && <span>{xAccount.name}</span>}
+          </div>
+          <button
+            className={styles.saveBtn}
+            type="button"
+            onClick={connectOrRefreshX}
+            disabled={linkingX}
+          >
+            {linkingX ? "Opening X..." : xAccount?.username ? "Refresh X account" : "Connect X account"}
+          </button>
+        </div>
+      </section>
 
       <div className={styles.profileGrid}>
         <aside className={styles.operatorPanel}>
@@ -480,24 +701,7 @@ export default function ProfilePage() {
             <button
               className={styles.secondaryBtn}
               type="button"
-              onClick={async () => {
-                setMessage("");
-                setError("");
-                try {
-                  if (xAccount?.username) {
-                    await loadProfile();
-                    setMessage("X account status refreshed.");
-                  } else {
-                    setLinkingX(true);
-                    const params = new URLSearchParams();
-                    if (walletAddress) params.set("wallet", walletAddress);
-                    window.location.assign(`/api/auth/x/start?${params.toString()}`);
-                  }
-                } catch (linkError) {
-                  setLinkingX(false);
-                  setError(linkError instanceof Error ? linkError.message : "Unable to open X login.");
-                }
-              }}
+              onClick={connectOrRefreshX}
               disabled={linkingX}
             >
               {linkingX ? "Opening X..." : xAccount?.username ? "Refresh X" : "Connect X"}
@@ -568,17 +772,17 @@ export default function ProfilePage() {
             <p className={styles.helpText}>Use commas to separate each task type.</p>
           </div>
 
-          <div className={styles.formGrid}>
-            <div className={styles.field}>
-              <label className={styles.fieldLabel}>Languages</label>
-              <input
-                className={styles.input}
-                value={languages}
-                onChange={(event) => setLanguages(event.target.value)}
-                placeholder="English, Mandarin"
-              />
-            </div>
+          <div className={styles.field}>
+            <label className={styles.fieldLabel}>Languages</label>
+            <input
+              className={styles.input}
+              value={languages}
+              onChange={(event) => setLanguages(event.target.value)}
+              placeholder="English, Mandarin"
+            />
+          </div>
 
+          <div className={styles.formGrid}>
             <div className={styles.field}>
               <label className={styles.fieldLabel}>Login</label>
               <input className={styles.input} value={email || shortAddress(walletAddress)} readOnly />

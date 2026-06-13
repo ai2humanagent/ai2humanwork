@@ -19,7 +19,7 @@ const RESEND_ENDPOINT = "https://api.resend.com/emails";
 
 function buildText(input: SendFallbackEmailsInput) {
   return [
-    "New ai2human fallback order available.",
+    "New AI2Human fallback order available.",
     "",
     `Order: ${input.orderId}`,
     `Summary: ${input.serviceSummary}`,
@@ -27,7 +27,7 @@ function buildText(input: SendFallbackEmailsInput) {
     `Budget: ${input.budget}`,
     `Deadline: ${input.deadline}`,
     "",
-    "Open ai2human app to accept the order."
+    "Open AI2Human app to accept the order."
   ].join("\n");
 }
 
@@ -45,7 +45,7 @@ export async function sendFallbackAlertEmails(
   }
 
   const resendApiKey = process.env.RESEND_API_KEY || "";
-  const fromAddress = process.env.FALLBACK_ALERT_FROM_EMAIL || "ai2human <noreply@ai2human.work>";
+  const fromAddress = process.env.FALLBACK_ALERT_FROM_EMAIL || "AI2Human <noreply@ai2human.work>";
 
   if (!resendApiKey) {
     return {

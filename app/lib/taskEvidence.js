@@ -2,6 +2,9 @@ import crypto from "crypto";
 
 export function appendEvidence(task, payload) {
   const { by, type, content, createdAt } = payload;
+  if (!Array.isArray(task.evidence)) {
+    task.evidence = [];
+  }
   task.evidence.unshift({
     id: crypto.randomUUID(),
     by,

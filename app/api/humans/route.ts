@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { getAuthContext } from "../../lib/auth";
-import { readDb, updateDb, type UserAccount, type Notification, type Task } from "../../lib/store";
-import { appendEvidence } from "../../lib/taskEvidence";
+import { readDb, updateProfileDb } from "../../lib/store";
+import type { UserAccount } from "../../lib/store";
+import type { Human } from "../../lib/humanMarketplace";
 
 export const runtime = "nodejs";
 
@@ -40,49 +41,21 @@ function normalizeAvatarUrl(input: unknown): string | undefined {
   return value;
 }
 
-function findAndAssignTask(
-  db: { tasks: Task[]; users: UserAccount[]; humans: { id: string; name: string }[] },
-  human: { id: string; name: string },
-  user: { walletAddress?: string }
-): Task | null {
-  // Find a task that is available (created or ai_failed status)
-  const available = db.tasks.filter(
-    (t) =>
-      (t.status === "created" || t.status === "ai_failed") &&
-      !t.assignee
-  );
+function normalizeContactEmail(input: unknown): string | undefined {
+  const value = String(input || "").trim().toLowerCase();
+  if (!value) return undefined;
+  if (value.length > 254) throw new Error("Email is too long.");
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) throw new Error("Enter a valid email address.");
+  if (value.endsWith("@privy.local")) throw new Error("Enter a real email address for notifications.");
+  return value;
+}
 
-  if (available.length === 0) return null;
-
-  // Prioritize lucky draw event task first, then sort by oldest created
-  const luckyDrawTask = available.find((t) => t.id === "lucky-draw-event-001");
-  const task = luckyDrawTask || available.sort(
-    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-  )[0];
-
-  const previousStatus = task.status;
-  task.assignee = {
-    type: "human",
-    name: human.name,
-    walletAddress: user.walletAddress
+function normalizeNotificationPreferences(input: unknown) {
+  const raw = input && typeof input === "object" ? input as Record<string, unknown> : {};
+  return {
+    emailTaskAlerts: raw.emailTaskAlerts !== false,
+    emailRewardAlerts: raw.emailRewardAlerts !== false
   };
-  task.status = "human_assigned";
-  task.updatedAt = new Date().toISOString();
-
-  appendEvidence(task, {
-    by: "system",
-    type: "log",
-    content: `Human assigned: ${human.name} (auto-dispatched)`,
-    createdAt: task.updatedAt
-  });
-  appendEvidence(task, {
-    by: "system",
-    type: "note",
-    content: `agent_event: dispatcher_agent | Auto-assigned to ${human.name} via profile completion.`,
-    createdAt: task.updatedAt
-  });
-
-  return task;
 }
 
 function normalizeProfileInput(body: Record<string, unknown>, user: UserAccount) {
@@ -98,7 +71,9 @@ function normalizeProfileInput(body: Record<string, unknown>, user: UserAccount)
       : 30,
     skills: normalizeList(body.skills, 50),
     languages: normalizeList(body.languages, 20),
-    avatarUrl: normalizeAvatarUrl(body.avatarUrl)
+    avatarUrl: normalizeAvatarUrl(body.avatarUrl),
+    contactEmail: normalizeContactEmail(body.contactEmail),
+    notificationPreferences: normalizeNotificationPreferences(body.notificationPreferences)
   };
 }
 
@@ -168,67 +143,75 @@ export async function POST(request: Request) {
   }
 
   const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
-  let profile = null;
+  let input;
+  try {
+    input = normalizeProfileInput(body, auth.user);
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Invalid profile input." },
+      { status: 400 }
+    );
+  }
+  let profile: Human | null = null;
 
-  await updateDb((db) => {
-    const user = db.users.find((item) => item.id === auth.user.id);
-    if (!user) return;
+  try {
+    const result = await updateProfileDb<{ profile: Human | null }>((db) => {
+      const user = db.users.find((item) => item.id === auth.user.id);
+      if (!user) return { result: { profile: null } };
 
-    const input = normalizeProfileInput(body, user);
+      user.contactEmail = input.contactEmail;
+      user.notificationPreferences = input.notificationPreferences;
 
-    if (user.humanId) {
-      const existing = db.humans.find((item) => item.id === user.humanId);
-      if (!existing) return;
-      const nextInput = { ...input };
-      if (body.avatarUrl === undefined) {
-        delete nextInput.avatarUrl;
+      if (user.humanId) {
+        const existing = db.humans.find((item) => item.id === user.humanId);
+        if (!existing) return { result: { profile: null }, user };
+        const nextInput = { ...input };
+        if (body.avatarUrl === undefined) {
+          delete nextInput.avatarUrl;
+        }
+        Object.assign(existing, nextInput);
+        return {
+          result: { profile: existing },
+          user,
+          human: existing
+        };
       }
-      Object.assign(existing, nextInput);
-      profile = existing;
-      return;
-    }
 
-    const usedHandles = new Set(db.humans.map((item) => item.handle));
-    const handle = ensureUniqueHandle(buildHandle(input.name, user.email), usedHandles);
+      const usedHandles = new Set(db.humans.map((item) => item.handle));
+      const handle = ensureUniqueHandle(buildHandle(input.name, user.email), usedHandles);
 
-    const created = {
-      id: `h_${crypto.randomUUID().slice(0, 12)}`,
-      name: input.name,
-      handle,
-      role: input.role,
-      location: input.location,
-      city: input.city,
-      country: input.country,
-      verified: false,
-      rating: 4.0,
-      completedJobs: 0,
-      hourlyRate: input.hourlyRate,
-      skills: input.skills,
-      languages: input.languages,
-      avatarSeed: (db.humans.length % 8) + 1,
-      ...(input.avatarUrl ? { avatarUrl: input.avatarUrl } : {})
-    };
-
-    db.humans.unshift(created);
-    user.humanId = created.id;
-    profile = created;
-
-    // Auto-dispatch: find an available task and assign to this human
-    const availableTask = findAndAssignTask(db, created, user);
-    if (availableTask) {
-      const notif: Notification = {
-        id: `notif_${crypto.randomUUID().slice(0, 12)}`,
-        userId: user.id,
-        type: "task_assigned",
-        title: "You have a new task",
-        body: `AI Executor assigned you: "${availableTask.title}". Accept it to begin earning.`,
-        taskId: availableTask.id,
-        read: false,
-        createdAt: new Date().toISOString()
+      const created: Human = {
+        id: `h_${crypto.randomUUID().slice(0, 12)}`,
+        name: input.name,
+        handle,
+        role: input.role,
+        location: input.location,
+        city: input.city,
+        country: input.country,
+        verified: false,
+        rating: 4.0,
+        completedJobs: 0,
+        hourlyRate: input.hourlyRate,
+        skills: input.skills,
+        languages: input.languages,
+        avatarSeed: (db.humans.length % 8) + 1,
+        ...(input.avatarUrl ? { avatarUrl: input.avatarUrl } : {})
       };
-      db.notifications.unshift(notif);
-    }
-  });
+
+      db.humans.unshift(created);
+      user.humanId = created.id;
+
+      return {
+        result: { profile: created },
+        user,
+        human: created
+      };
+    });
+    profile = result.profile;
+  } catch (error) {
+    console.error("[Profile] save failed:", error);
+    return NextResponse.json({ error: "Unable to save profile." }, { status: 500 });
+  }
 
   if (!profile) {
     return NextResponse.json({ error: "Unable to save profile." }, { status: 400 });

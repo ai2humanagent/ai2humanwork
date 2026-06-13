@@ -22,6 +22,8 @@ CREATE TABLE users (
   created_at TIMESTAMPTZ DEFAULT now(),
   human_id TEXT,
   wallet_address TEXT,
+  contact_email TEXT,
+  notification_preferences JSONB DEFAULT '{}'::jsonb,
   auth_provider TEXT,
   privy_user_id TEXT,
   x_account JSONB

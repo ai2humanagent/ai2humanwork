@@ -14,9 +14,9 @@ import {
 } from "../lib/submissionProof.js";
 
 export const metadata = {
-  title: "ai2human Submission Proof",
+  title: "AI2Human Submission Proof",
   description:
-    "Base-first submission surface for ai2human, including the active Base rollout, archived BNB and X Layer receipts, and live product routes."
+    "Base-first submission surface for AI2Human, including the active Base rollout, archived BNB and X Layer receipts, and live product routes."
 };
 
 const scenarios = [
@@ -113,7 +113,7 @@ export default function SubmissionPage() {
             <div>
               <p className="mvp-muted">{SUBMISSION_SPRINT.name}</p>
               <h1 style={{ margin: "0 0 10px", fontSize: "clamp(34px, 6vw, 56px)" }}>
-                ai2human keeps blocked agent work inside one auditable line.
+                AI2Human keeps blocked agent work inside one auditable line.
               </h1>
               <p className="mvp-muted" style={{ maxWidth: 820, fontSize: 16, lineHeight: 1.7 }}>
                 {SUBMISSION_PROJECT.oneLiner}

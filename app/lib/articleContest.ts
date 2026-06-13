@@ -1,5 +1,7 @@
-import type { ArticleSubmission, ArticleReviewAudit, ArticleReviewRubric, RewardDistribution } from "./store";
+import type { ArticleSubmission, ArticleReviewAudit, ArticleReviewRubric, RewardDistribution, Task } from "./store";
 import { normalizeXHandle } from "./xIdentity";
+
+export type SubmissionContestKind = "x_article" | "banner_image";
 
 export type ParsedXArticleUrl = {
   ok: true;
@@ -16,10 +18,65 @@ export type ArticleScoreResult = {
   score: number;
   review: string;
   rubric: ArticleReviewRubric;
-  provider: "ai" | "ai_error";
+  provider: "ai" | "ai_error" | "multi_model";
   model?: string;
   latencyMs?: number;
   fallbackReason?: string;
+  modelReviews?: ArticleModelReviewResult[];
+};
+
+export type ArticleReviewProviderConfig = {
+  id: "openai" | "mimo" | "minimax" | "deepseek" | "anthropic";
+  label: string;
+  model: string;
+  weight: number;
+  apiKey?: string;
+  baseUrl?: string;
+  protocol: "openai_compatible" | "anthropic";
+};
+
+export type ArticleModelReviewResult = {
+  providerId: string;
+  providerLabel: string;
+  model?: string;
+  weight: number;
+  status: "scored" | "failed" | "skipped";
+  score?: number;
+  review?: string;
+  rubric?: Omit<ArticleReviewRubric, "audit">;
+  latencyMs?: number;
+  error?: string;
+};
+
+export type ArticleContestReviewTarget = {
+  projectName: string;
+  projectAliases: string[];
+  projectHandles: string[];
+  projectUrls: string[];
+  tokenSymbols: string[];
+  contractAddresses: string[];
+  requiredTopics: string[];
+  thesis?: string;
+};
+
+export type ArticleSubmissionReviewResult = {
+  submission: ArticleSubmission;
+  debug: {
+    submissionId: string;
+    xHandle: string;
+    walletAddress: string;
+    score?: number;
+    provider?: string;
+    model?: string;
+    latencyMs?: number;
+    source?: string;
+    contentSource?: string;
+    contentLength?: number;
+    excerpt?: string;
+    fetchAttempts?: string[];
+    fallbackReason?: string;
+    error?: string;
+  };
 };
 
 export type XArticleContentResult = {
@@ -28,6 +85,7 @@ export type XArticleContentResult = {
   text: string;
   authorHandle?: string;
   title?: string;
+  mediaUrls?: string[];
   attempts: string[];
 } | {
   ok: false;
@@ -35,12 +93,62 @@ export type XArticleContentResult = {
   attempts: string[];
 };
 
+type PublicImageAssetResult = {
+  ok: true;
+  url: string;
+  contentType?: string;
+  attempts: string[];
+} | {
+  ok: false;
+  error: string;
+  attempts: string[];
+};
+
+export type PublicImageInspectionResult = {
+  ok: true;
+  url: string;
+  contentType?: string;
+  format: "png" | "jpeg" | "webp" | "gif" | "unknown";
+  width?: number;
+  height?: number;
+  sizeBytes: number;
+  attempts: string[];
+} | {
+  ok: false;
+  error: string;
+  attempts: string[];
+  url?: string;
+  contentType?: string;
+  format?: "png" | "jpeg" | "webp" | "gif" | "unknown";
+  width?: number;
+  height?: number;
+  sizeBytes?: number;
+};
+
 const DEFAULT_PRIZES = [
   { rank: 1, amount: "50 USDC", slots: 1, label: "1st place" },
   { rank: 2, amount: "20 USDC", slots: 1, label: "2nd place" },
-  { rank: 3, amount: "10 USDC", slots: 2, label: "3rd place" }
+  { rank: 3, amount: "10 USDC", slots: 3, label: "3rd place" }
 ];
 const DEFAULT_MINIMUM_WINNER_SCORE = 25;
+
+export function getSubmissionContestKind(task?: Pick<Task, "campaign">): SubmissionContestKind {
+  return task?.campaign?.action === "banner_image_contest" ? "banner_image" : "x_article";
+}
+
+export function isBannerImageContestTask(task?: Pick<Task, "campaign" | "rewardDistribution">) {
+  return isArticleContestDistribution(task?.rewardDistribution) && getSubmissionContestKind(task) === "banner_image";
+}
+
+export function shortWalletLabel(value: string) {
+  if (!value) return "";
+  if (value.length <= 12) return value;
+  return `${value.slice(0, 6)}...${value.slice(-4)}`;
+}
+
+export function reviewedTextExcerpt(text: string) {
+  return text.replace(/\s+/g, " ").trim().slice(0, 900);
+}
 
 function clampScore(value: unknown) {
   const num = Number(value);
@@ -52,6 +160,162 @@ function clampRubricScore(value: unknown) {
   const num = Number(value);
   if (!Number.isFinite(num)) return 0;
   return Math.max(0, Math.min(20, Math.round(num * 10) / 10));
+}
+
+function uniqueStrings(values: Array<string | undefined>) {
+  return Array.from(new Set(
+    values
+      .map((value) => String(value || "").trim())
+      .filter(Boolean)
+  ));
+}
+
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function stripOfficialSuffix(value: string) {
+  return value
+    .replace(/\bofficial\b/gi, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+const GENERIC_PROJECT_SIGNAL_WORDS = new Set([
+  "ai",
+  "eth",
+  "sol",
+  "btc",
+  "base",
+  "web3",
+  "defi",
+  "defai",
+  "nft",
+  "dao",
+  "dex",
+  "token",
+  "agent",
+  "agents",
+  "crypto",
+  "protocol"
+]);
+
+function normalizedSignalWord(value: string) {
+  return value.toLowerCase().replace(/^[$@]/, "").replace(/[^a-z0-9]/g, "");
+}
+
+function isStrongAliasSignal(value: string) {
+  const normalized = normalizedSignalWord(value);
+  return normalized.length >= 4 && !GENERIC_PROJECT_SIGNAL_WORDS.has(normalized);
+}
+
+export function getArticleContestReviewTarget(task?: Pick<Task, "campaign">): ArticleContestReviewTarget {
+  const campaign = task?.campaign;
+  const configured = campaign?.reviewTarget;
+  const requesterName = stripOfficialSuffix(campaign?.requesterName || "");
+  const requesterHandle = campaign?.requesterHandle?.replace(/^@/, "");
+
+  const projectName = String(configured?.projectName || requesterName || requesterHandle || "this project").trim();
+  const projectAliases = uniqueStrings([
+    projectName,
+    requesterName,
+    requesterHandle,
+    ...(configured?.projectAliases || [])
+  ]);
+  const projectHandles = uniqueStrings([
+    requesterHandle,
+    ...(configured?.projectHandles || []).map((handle) => handle.replace(/^@/, ""))
+  ]);
+
+  return {
+    projectName,
+    projectAliases,
+    projectHandles,
+    projectUrls: uniqueStrings(configured?.projectUrls || []),
+    tokenSymbols: uniqueStrings((configured?.tokenSymbols || []).map((symbol) => symbol.replace(/^\$/, ""))),
+    contractAddresses: uniqueStrings(configured?.contractAddresses || []),
+    requiredTopics: uniqueStrings(configured?.requiredTopics || campaign?.verificationChecks || campaign?.proofRequirements || []),
+    thesis: configured?.thesis || campaign?.brief
+  };
+}
+
+function detectProjectSignalMatch(text: string, target: ArticleContestReviewTarget) {
+  const signals: Array<{ label: string; pattern: RegExp; strength: "strong" | "weak" }> = [];
+  for (const alias of target.projectAliases) {
+    if (alias.length < 2) continue;
+    signals.push({
+      label: alias,
+      pattern: new RegExp(`(^|[^a-z0-9_])${escapeRegExp(alias)}([^a-z0-9_]|$)`, "i"),
+      strength: isStrongAliasSignal(alias) ? "strong" : "weak"
+    });
+  }
+  for (const handle of target.projectHandles) {
+    if (!handle) continue;
+    signals.push({ label: `@${handle}`, pattern: new RegExp(`@?${escapeRegExp(handle)}\\b`, "i"), strength: "strong" });
+  }
+  for (const url of target.projectUrls) {
+    if (!url) continue;
+    signals.push({ label: url, pattern: new RegExp(escapeRegExp(url.replace(/^https?:\/\//i, "")), "i"), strength: "strong" });
+  }
+  for (const symbol of target.tokenSymbols) {
+    if (!symbol) continue;
+    signals.push({
+      label: `$${symbol.toUpperCase()}`,
+      pattern: new RegExp(`\\$?${escapeRegExp(symbol)}\\b`, "i"),
+      strength: isStrongAliasSignal(symbol) ? "weak" : "weak"
+    });
+  }
+  for (const address of target.contractAddresses) {
+    if (!address) continue;
+    signals.push({ label: address, pattern: new RegExp(escapeRegExp(address), "i"), strength: "strong" });
+  }
+
+  const matched = signals.filter((signal) => signal.pattern.test(text));
+  const strongSignals = uniqueStrings(matched.filter((signal) => signal.strength === "strong").map((signal) => signal.label));
+  const weakSignals = uniqueStrings(matched.filter((signal) => signal.strength === "weak").map((signal) => signal.label));
+  return {
+    signals: uniqueStrings([...strongSignals, ...weakSignals]),
+    strongSignals,
+    weakSignals,
+    passed: strongSignals.length > 0
+  };
+}
+
+function detectProjectSignals(text: string, target: ArticleContestReviewTarget) {
+  return detectProjectSignalMatch(text, target).signals;
+}
+
+function projectRelevanceGateScore(input: {
+  title: string;
+  content: string;
+  articleUrl: string;
+  startedAt: number;
+  reviewTarget: ArticleContestReviewTarget;
+}): ArticleScoreResult | null {
+  const signalMatch = detectProjectSignalMatch(`${input.articleUrl}\n${input.title}\n${input.content}`, input.reviewTarget);
+  if (signalMatch.passed) return null;
+
+  return {
+    score: 12,
+    provider: "ai",
+    model: "project-relevance-gate",
+    latencyMs: Date.now() - input.startedAt,
+    review: [
+      `Project relevance gate: this submission does not clearly discuss ${input.reviewTarget.projectName} or its configured contest topic.`,
+      "It may be about AI agents, trading, or another protocol, but it is off-topic for this contest and cannot qualify for prizes.",
+      signalMatch.weakSignals.length
+        ? `Weak project-like signals found (${signalMatch.weakSignals.join(", ")}), but no strong project signal such as an official handle, URL, contract address, or distinctive project name was present.`
+        : "",
+      `To qualify, the article must directly connect its thesis back to ${input.reviewTarget.projectName} and explain why the workflow matters.`
+    ].filter(Boolean).join(" "),
+    rubric: {
+      relevance: 2,
+      originality: 2,
+      clarity: 4,
+      evidence: 2,
+      narrative: 2
+    }
+  };
 }
 
 function normalizeUrlHost(host: string) {
@@ -72,6 +336,314 @@ function decodeHtml(value: string) {
     .replace(/<[^>]+>/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function isLikelyImagePath(pathname: string) {
+  return /\.(png|jpe?g|webp|gif|avif|svg)$/i.test(pathname);
+}
+
+export async function fetchPublicImageAsset(rawUrl: string): Promise<PublicImageAssetResult> {
+  let parsed: URL;
+  try {
+    parsed = new URL(String(rawUrl || "").trim());
+  } catch {
+    return { ok: false, error: "Submit a valid public image URL.", attempts: ["parse_url"] };
+  }
+
+  if (!["https:", "http:"].includes(parsed.protocol)) {
+    return { ok: false, error: "Only public http(s) image URLs are accepted.", attempts: ["protocol"] };
+  }
+
+  const normalizedUrl = parsed.toString();
+  const attempts: string[] = [];
+
+  try {
+    attempts.push("head");
+    const timeout = withTimeout(12000);
+    try {
+      const response = await fetch(normalizedUrl, {
+        method: "HEAD",
+        signal: timeout.signal,
+        cache: "no-store",
+        headers: {
+          "User-Agent": "Mozilla/5.0 ai2human-banner-review/1.0"
+        }
+      });
+      const contentType = String(response.headers.get("content-type") || "").toLowerCase();
+      if (response.ok && contentType.startsWith("image/")) {
+        attempts.push(`head_content_type:${contentType}`);
+        return { ok: true, url: normalizedUrl, contentType, attempts };
+      }
+      attempts.push(`head_http_${response.status}:${contentType || "no_content_type"}`);
+    } finally {
+      timeout.clear();
+    }
+  } catch (error) {
+    attempts.push(`head_error:${error instanceof Error ? error.message.slice(0, 120) : "unknown"}`);
+  }
+
+  try {
+    attempts.push("get");
+    const timeout = withTimeout(12000);
+    try {
+      const response = await fetch(normalizedUrl, {
+        method: "GET",
+        signal: timeout.signal,
+        cache: "no-store",
+        headers: {
+          Range: "bytes=0-0",
+          "User-Agent": "Mozilla/5.0 ai2human-banner-review/1.0"
+        }
+      });
+      const contentType = String(response.headers.get("content-type") || "").toLowerCase();
+      if (response.ok && contentType.startsWith("image/")) {
+        attempts.push(`get_content_type:${contentType}`);
+        return { ok: true, url: normalizedUrl, contentType, attempts };
+      }
+      attempts.push(`get_http_${response.status}:${contentType || "no_content_type"}`);
+    } finally {
+      timeout.clear();
+    }
+  } catch (error) {
+    attempts.push(`get_error:${error instanceof Error ? error.message.slice(0, 120) : "unknown"}`);
+  }
+
+  if (isLikelyImagePath(parsed.pathname)) {
+    attempts.push("path_extension_fallback");
+    return { ok: true, url: normalizedUrl, attempts };
+  }
+
+  return {
+    ok: false,
+    error: "The submitted URL does not look like a public image file. Use a direct PNG, JPG, WEBP, GIF, or AVIF URL.",
+    attempts
+  };
+}
+
+function detectImageFormat(bytes: Uint8Array, contentType?: string) {
+  const normalizedType = String(contentType || "").toLowerCase();
+  if (
+    bytes.length >= 8 &&
+    bytes[0] === 0x89 &&
+    bytes[1] === 0x50 &&
+    bytes[2] === 0x4e &&
+    bytes[3] === 0x47
+  ) {
+    return "png" as const;
+  }
+  if (
+    bytes.length >= 6 &&
+    bytes[0] === 0x47 &&
+    bytes[1] === 0x49 &&
+    bytes[2] === 0x46 &&
+    bytes[3] === 0x38
+  ) {
+    return "gif" as const;
+  }
+  if (bytes.length >= 2 && bytes[0] === 0xff && bytes[1] === 0xd8) {
+    return "jpeg" as const;
+  }
+  if (
+    bytes.length >= 12 &&
+    String.fromCharCode(...bytes.slice(0, 4)) === "RIFF" &&
+    String.fromCharCode(...bytes.slice(8, 12)) === "WEBP"
+  ) {
+    return "webp" as const;
+  }
+  if (normalizedType.includes("png")) return "png";
+  if (normalizedType.includes("jpeg") || normalizedType.includes("jpg")) return "jpeg";
+  if (normalizedType.includes("webp")) return "webp";
+  if (normalizedType.includes("gif")) return "gif";
+  return "unknown" as const;
+}
+
+function readPngDimensions(bytes: Uint8Array) {
+  if (bytes.length < 24) return null;
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  return { width: view.getUint32(16), height: view.getUint32(20) };
+}
+
+function readGifDimensions(bytes: Uint8Array) {
+  if (bytes.length < 10) return null;
+  return {
+    width: bytes[6] | (bytes[7] << 8),
+    height: bytes[8] | (bytes[9] << 8)
+  };
+}
+
+function readJpegDimensions(bytes: Uint8Array) {
+  if (bytes.length < 4 || bytes[0] !== 0xff || bytes[1] !== 0xd8) return null;
+  let offset = 2;
+  while (offset + 8 < bytes.length) {
+    if (bytes[offset] !== 0xff) {
+      offset += 1;
+      continue;
+    }
+    const marker = bytes[offset + 1];
+    const blockLength = (bytes[offset + 2] << 8) | bytes[offset + 3];
+    if (blockLength < 2) break;
+    const isStartOfFrame = [
+      0xc0, 0xc1, 0xc2, 0xc3,
+      0xc5, 0xc6, 0xc7,
+      0xc9, 0xca, 0xcb,
+      0xcd, 0xce, 0xcf
+    ].includes(marker);
+    if (isStartOfFrame && offset + 8 < bytes.length) {
+      return {
+        height: (bytes[offset + 5] << 8) | bytes[offset + 6],
+        width: (bytes[offset + 7] << 8) | bytes[offset + 8]
+      };
+    }
+    offset += 2 + blockLength;
+  }
+  return null;
+}
+
+function readWebpDimensions(bytes: Uint8Array) {
+  if (bytes.length < 30) return null;
+  const chunkType = String.fromCharCode(...bytes.slice(12, 16));
+  if (chunkType === "VP8X" && bytes.length >= 30) {
+    const width = 1 + bytes[24] + (bytes[25] << 8) + (bytes[26] << 16);
+    const height = 1 + bytes[27] + (bytes[28] << 8) + (bytes[29] << 16);
+    return { width, height };
+  }
+  if (chunkType === "VP8 " && bytes.length >= 30) {
+    return {
+      width: (bytes[26] | (bytes[27] << 8)) & 0x3fff,
+      height: (bytes[28] | (bytes[29] << 8)) & 0x3fff
+    };
+  }
+  if (chunkType === "VP8L" && bytes.length >= 25) {
+    const b21 = bytes[21];
+    const b22 = bytes[22];
+    const b23 = bytes[23];
+    const b24 = bytes[24];
+    const width = 1 + (((b22 & 0x3f) << 8) | b21);
+    const height = 1 + (((b24 & 0x0f) << 10) | (b23 << 2) | ((b22 & 0xc0) >> 6));
+    return { width, height };
+  }
+  return null;
+}
+
+function readImageDimensions(bytes: Uint8Array, format: "png" | "jpeg" | "webp" | "gif" | "unknown") {
+  switch (format) {
+    case "png":
+      return readPngDimensions(bytes);
+    case "gif":
+      return readGifDimensions(bytes);
+    case "jpeg":
+      return readJpegDimensions(bytes);
+    case "webp":
+      return readWebpDimensions(bytes);
+    default:
+      return null;
+  }
+}
+
+function formatMb(bytes: number) {
+  return `${(bytes / (1024 * 1024)).toFixed(2)}MB`;
+}
+
+export async function inspectPublicImageAsset(rawUrl: string): Promise<PublicImageInspectionResult> {
+  const asset = await fetchPublicImageAsset(rawUrl);
+  if (!asset.ok) {
+    return asset;
+  }
+
+  const attempts = [...asset.attempts, "inspect_get"];
+  const timeout = withTimeout(15000);
+  try {
+    const response = await fetch(asset.url, {
+      method: "GET",
+      signal: timeout.signal,
+      cache: "no-store",
+      headers: {
+        "User-Agent": "Mozilla/5.0 ai2human-image-inspector/1.0"
+      }
+    });
+    if (!response.ok) {
+      return {
+        ok: false,
+        error: `Image fetch failed with HTTP ${response.status}.`,
+        attempts: [...attempts, `inspect_http_${response.status}`],
+        url: asset.url,
+        contentType: asset.contentType
+      };
+    }
+    const contentType = String(response.headers.get("content-type") || asset.contentType || "").toLowerCase();
+    const buffer = new Uint8Array(await response.arrayBuffer());
+    const format = detectImageFormat(buffer, contentType);
+    const dimensions = readImageDimensions(buffer, format);
+    return {
+      ok: true,
+      url: asset.url,
+      contentType,
+      format,
+      width: dimensions?.width,
+      height: dimensions?.height,
+      sizeBytes: buffer.byteLength,
+      attempts: [...attempts, `inspect_content_type:${contentType || "unknown"}`, `inspect_format:${format}`]
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      error: `Image fetch failed (${error instanceof Error ? error.message : "network error"}).`,
+      attempts: [...attempts, `inspect_error:${error instanceof Error ? error.message.slice(0, 120) : "unknown"}`],
+      url: asset.url,
+      contentType: asset.contentType
+    };
+  } finally {
+    timeout.clear();
+  }
+}
+
+export async function validateDexscreenerHeaderImage(rawUrl: string): Promise<PublicImageInspectionResult> {
+  const inspected = await inspectPublicImageAsset(rawUrl);
+  if (!inspected.ok) return inspected;
+
+  const allowedFormats = new Set(["png", "jpeg", "webp", "gif"]);
+  const maxBytes = Math.floor(4.5 * 1024 * 1024);
+  const minWidth = 600;
+  const targetAspectRatio = 3;
+  const ratioTolerance = 0.03;
+
+  if (!allowedFormats.has(inspected.format)) {
+    return {
+      ...inspected,
+      ok: false,
+      error: `The attached image format must be PNG, JPG, WEBP, or GIF. Detected: ${inspected.format || "unknown"}.`
+    };
+  }
+  if (typeof inspected.width !== "number" || typeof inspected.height !== "number") {
+    return {
+      ...inspected,
+      ok: false,
+      error: "We could not read the image dimensions. Use a standard PNG, JPG, WEBP, or GIF file."
+    };
+  }
+  if (inspected.width < minWidth) {
+    return {
+      ...inspected,
+      ok: false,
+      error: `The attached image is too small (${inspected.width}x${inspected.height}). DexScreener headers need at least 600px width, for example 600x200 or 1500x500.`
+    };
+  }
+  const ratio = inspected.width / inspected.height;
+  if (!Number.isFinite(ratio) || Math.abs(ratio - targetAspectRatio) > ratioTolerance) {
+    return {
+      ...inspected,
+      ok: false,
+      error: `The attached image must use a 3:1 header ratio. Detected: ${inspected.width}x${inspected.height}. Use something like 600x200 or 1500x500.`
+    };
+  }
+  if (inspected.sizeBytes > maxBytes) {
+    return {
+      ...inspected,
+      ok: false,
+      error: `The attached image is too large (${formatMb(inspected.sizeBytes)}). DexScreener headers must be 4.5MB or smaller.`
+    };
+  }
+  return inspected;
 }
 
 function withTimeout(ms: number) {
@@ -126,6 +698,9 @@ type XApiTweet = {
   author_id?: string;
   created_at?: string;
   conversation_id?: string;
+  attachments?: {
+    media_keys?: string[];
+  };
   note_tweet?: {
     text?: string;
   };
@@ -137,6 +712,13 @@ type XApiUser = {
   name?: string;
 };
 
+type XApiMedia = {
+  media_key?: string;
+  type?: string;
+  url?: string;
+  preview_image_url?: string;
+};
+
 function readXApiTweetText(tweet: XApiTweet) {
   return String(tweet.note_tweet?.text || tweet.text || "").trim();
 }
@@ -144,6 +726,29 @@ function readXApiTweetText(tweet: XApiTweet) {
 function userById(users: XApiUser[] | undefined, id: string | undefined) {
   if (!id || !Array.isArray(users)) return undefined;
   return users.find((user) => user.id === id);
+}
+
+function mediaByKey(media: XApiMedia[] | undefined, key: string | undefined) {
+  if (!key || !Array.isArray(media)) return undefined;
+  return media.find((item) => item.media_key === key);
+}
+
+function uniqueMediaUrls(values: Array<string | undefined>) {
+  return Array.from(new Set(values.map((value) => String(value || "").trim()).filter(Boolean)));
+}
+
+function readXApiTweetMediaUrls(tweet: XApiTweet | undefined, media: XApiMedia[] | undefined) {
+  const mediaKeys = Array.isArray(tweet?.attachments?.media_keys) ? tweet.attachments?.media_keys : [];
+  return uniqueMediaUrls(
+    mediaKeys.map((key) => {
+      const match = mediaByKey(media, key);
+      return match?.url || match?.preview_image_url;
+    })
+  );
+}
+
+function readXApiThreadMediaUrls(tweets: XApiTweet[], media: XApiMedia[] | undefined) {
+  return uniqueMediaUrls(tweets.flatMap((tweet) => readXApiTweetMediaUrls(tweet, media)));
 }
 
 function formatThreadText(tweets: XApiTweet[]) {
@@ -175,6 +780,16 @@ type FxTwitterStatus = {
     screen_name?: string;
     name?: string;
   };
+  media?: {
+    all?: Array<{
+      type?: string;
+      url?: string;
+    }>;
+    photos?: Array<{
+      type?: string;
+      url?: string;
+    }>;
+  };
 };
 
 function readFxTwitterText(status: FxTwitterStatus) {
@@ -189,6 +804,19 @@ function formatFxThreadText(thread: FxTwitterStatus[]) {
     })
     .filter(Boolean)
     .join("\n\n");
+}
+
+function readFxStatusMediaUrls(status: FxTwitterStatus | undefined) {
+  if (!status) return [];
+  const media = status.media;
+  return uniqueMediaUrls([
+    ...(Array.isArray(media?.photos) ? media.photos.map((item) => item.url) : []),
+    ...(Array.isArray(media?.all) ? media.all.map((item) => item.url) : [])
+  ]);
+}
+
+function readFxThreadMediaUrls(statuses: FxTwitterStatus[]) {
+  return uniqueMediaUrls(statuses.flatMap((status) => readFxStatusMediaUrls(status)));
 }
 
 function sortFxStatusesChronologically(statuses: FxTwitterStatus[]) {
@@ -233,6 +861,7 @@ async function fetchFxTwitterThread(input: {
         text: formatFxThreadText(usefulThread),
         authorHandle: usefulThread[0]?.author?.screen_name || data.author?.screen_name || parsed.authorHandle,
         title: usefulThread[0]?.author?.name || data.author?.name,
+        mediaUrls: readFxThreadMediaUrls(usefulThread),
         attempts
       };
     }
@@ -247,6 +876,7 @@ async function fetchFxTwitterThread(input: {
         text: statusText,
         authorHandle: status?.author?.screen_name || data.author?.screen_name || parsed.authorHandle,
         title: status?.author?.name || data.author?.name,
+        mediaUrls: readFxStatusMediaUrls(status),
         attempts
       };
     }
@@ -265,14 +895,16 @@ async function fetchXThreadFromApi(input: {
   const { parsed, bearer, attempts } = input;
   if (!bearer || parsed.kind !== "status" || !parsed.articleId) return null;
   const apiBase = (process.env.X_OAUTH1_API_BASE_URL || "https://api.x.com").replace(/\/+$/, "");
-  const tweetFields = "text,author_id,created_at,conversation_id,referenced_tweets,note_tweet";
+  const tweetFields = "text,author_id,created_at,conversation_id,referenced_tweets,note_tweet,attachments";
   const userFields = "username,name";
+  const mediaFields = "url,preview_image_url,type";
 
   let rootTweet: XApiTweet | undefined;
   let rootUser: XApiUser | undefined;
+  let rootMedia: XApiMedia[] | undefined;
   try {
     attempts.push("x_api_thread_lookup");
-    const endpoint = `${apiBase}/2/tweets/${parsed.articleId}?tweet.fields=${encodeURIComponent(tweetFields)}&expansions=author_id&user.fields=${encodeURIComponent(userFields)}`;
+    const endpoint = `${apiBase}/2/tweets/${parsed.articleId}?tweet.fields=${encodeURIComponent(tweetFields)}&expansions=${encodeURIComponent("author_id,attachments.media_keys")}&user.fields=${encodeURIComponent(userFields)}&media.fields=${encodeURIComponent(mediaFields)}`;
     const { response, text } = await fetchText(endpoint, {
       headers: { Authorization: `Bearer ${bearer}` }
     });
@@ -282,10 +914,11 @@ async function fetchXThreadFromApi(input: {
     }
     const data = JSON.parse(text) as {
       data?: XApiTweet;
-      includes?: { users?: XApiUser[] };
+      includes?: { users?: XApiUser[]; media?: XApiMedia[] };
     };
     rootTweet = data.data;
     rootUser = userById(data.includes?.users, rootTweet?.author_id);
+    rootMedia = data.includes?.media;
     if (!rootTweet || readXApiTweetText(rootTweet).length < 20) {
       attempts.push("x_api_thread_lookup_empty");
       return null;
@@ -302,8 +935,9 @@ async function fetchXThreadFromApi(input: {
     const searchUrl = new URL(`${apiBase}/2/tweets/search/recent`);
     searchUrl.searchParams.set("query", `conversation_id:${conversationId} from:${authorHandle}`);
     searchUrl.searchParams.set("tweet.fields", tweetFields);
-    searchUrl.searchParams.set("expansions", "author_id");
+    searchUrl.searchParams.set("expansions", "author_id,attachments.media_keys");
     searchUrl.searchParams.set("user.fields", userFields);
+    searchUrl.searchParams.set("media.fields", mediaFields);
     searchUrl.searchParams.set("max_results", "100");
     const { response, text } = await fetchText(searchUrl.toString(), {
       headers: { Authorization: `Bearer ${bearer}` }
@@ -321,7 +955,7 @@ async function fetchXThreadFromApi(input: {
     }
     const data = JSON.parse(text) as {
       data?: XApiTweet[];
-      includes?: { users?: XApiUser[] };
+      includes?: { users?: XApiUser[]; media?: XApiMedia[] };
       meta?: { result_count?: number };
     };
     const allTweets = [rootTweet, ...(Array.isArray(data.data) ? data.data : [])];
@@ -342,6 +976,7 @@ async function fetchXThreadFromApi(input: {
         text: threadText,
         authorHandle,
         title: rootUser?.name,
+        mediaUrls: readXApiThreadMediaUrls(sorted, [...(rootMedia || []), ...(data.includes?.media || [])]),
         attempts
       };
     }
@@ -356,15 +991,16 @@ async function fetchXThreadFromApi(input: {
     };
   } catch (error) {
     attempts.push(`x_api_thread_search_error:${error instanceof Error ? error.message.slice(0, 120) : "unknown"}`);
-    return {
-      ok: true,
-      source: "x_api",
-      text: readXApiTweetText(rootTweet),
-      authorHandle,
-      title: rootUser?.name,
-      attempts
-    };
-  }
+      return {
+        ok: true,
+        source: "x_api",
+        text: readXApiTweetText(rootTweet),
+        authorHandle,
+        title: rootUser?.name,
+        mediaUrls: readXApiTweetMediaUrls(rootTweet, rootMedia),
+        attempts
+      };
+    }
 }
 
 export async function fetchXArticleContent(articleUrl: string): Promise<XArticleContentResult> {
@@ -388,14 +1024,14 @@ export async function fetchXArticleContent(articleUrl: string): Promise<XArticle
 
       attempts.push("x_api");
       const apiBase = (process.env.X_OAUTH1_API_BASE_URL || "https://api.x.com").replace(/\/+$/, "");
-      const endpoint = `${apiBase}/2/tweets/${parsed.articleId}?tweet.fields=text,author_id,created_at,lang,note_tweet&expansions=author_id&user.fields=username,name`;
+      const endpoint = `${apiBase}/2/tweets/${parsed.articleId}?tweet.fields=text,author_id,created_at,lang,note_tweet,attachments&expansions=${encodeURIComponent("author_id,attachments.media_keys")}&user.fields=username,name&media.fields=url,preview_image_url,type`;
       const { response, text } = await fetchText(endpoint, {
         headers: { Authorization: `Bearer ${bearer}` }
       });
       if (response.ok) {
         const data = JSON.parse(text) as {
           data?: XApiTweet;
-          includes?: { users?: Array<{ username?: string; name?: string }> };
+          includes?: { users?: Array<{ username?: string; name?: string }>; media?: XApiMedia[] };
         };
         const liveText = data.data ? readXApiTweetText(data.data) : "";
         if (liveText.length >= 40) {
@@ -405,6 +1041,7 @@ export async function fetchXArticleContent(articleUrl: string): Promise<XArticle
             text: liveText,
             authorHandle: data.includes?.users?.[0]?.username || parsed.authorHandle,
             title: data.includes?.users?.[0]?.name,
+            mediaUrls: readXApiTweetMediaUrls(data.data, data.includes?.media),
             attempts
           };
         }
@@ -572,6 +1209,36 @@ export function isSubmissionDeadlinePassed(deadline: string | undefined) {
   return Date.now() > timestamp;
 }
 
+export function isArticleContestResultsVisible(input: {
+  deadline?: string;
+  taskState?: string;
+}) {
+  return (
+    input.taskState === "closed" ||
+    input.taskState === "full" ||
+    input.taskState === "refunded" ||
+    isSubmissionDeadlinePassed(input.deadline)
+  );
+}
+
+export function sanitizeArticleSubmissionForUser(
+  submission: ArticleSubmission,
+  input: { deadline?: string; taskState?: string }
+): ArticleSubmission {
+  if (isArticleContestResultsVisible(input)) return submission;
+  return {
+    ...submission,
+    aiScore: undefined,
+    aiReview: undefined,
+    aiRubric: undefined,
+    rank: undefined,
+    prizeAmount: undefined,
+    paymentTxHash: undefined,
+    paymentExplorerUrl: undefined,
+    reviewedAt: undefined
+  };
+}
+
 function failedArticleScore(reason: string, model?: string, startedAt?: number): ArticleScoreResult {
   return {
     score: 0,
@@ -588,6 +1255,15 @@ function failedArticleScore(reason: string, model?: string, startedAt?: number):
     fallbackReason: reason,
     review: `AI review failed: ${reason}. This submission was not scored.`
   };
+}
+
+export function hasDefinitiveXNotFound(attempts: string[]) {
+  const hardNotFoundAttempts = attempts.filter((attempt) =>
+    /(?:^|_)http_404(?::|$)/.test(attempt) ||
+    attempt.includes("code\":404") ||
+    attempt.includes("\"status\":404")
+  );
+  return hardNotFoundAttempts.length >= 2;
 }
 
 function parseJsonObjectFromModel(content: string) {
@@ -671,108 +1347,1169 @@ function tryParseModelJson(content: string) {
   throw new Error("AI response did not contain a parseable JSON object");
 }
 
+function parseModelWeight(value: string | undefined, fallback: number) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
+  return parsed;
+}
+
+function parseModelMaxTokens(provider: ArticleReviewProviderConfig, fallback: number) {
+  const providerKey = provider.id.toUpperCase();
+  const configured =
+    process.env[`ARTICLE_REVIEW_${providerKey}_MAX_TOKENS`] ||
+    process.env[`${providerKey}_REVIEW_MAX_TOKENS`] ||
+    process.env[`${providerKey}_MAX_TOKENS`];
+  const parsed = Number(configured);
+  if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
+  return Math.max(256, Math.min(8000, Math.floor(parsed)));
+}
+
+function envEnabled(value: string | undefined, fallback = true) {
+  if (value == null || value === "") return fallback;
+  return !["0", "false", "no", "off"].includes(value.trim().toLowerCase());
+}
+
+function reviewProtocol(value: string | undefined, fallback: ArticleReviewProviderConfig["protocol"]) {
+  const normalized = String(value || "").trim().toLowerCase();
+  if (normalized === "anthropic") return "anthropic";
+  if (normalized === "openai" || normalized === "openai_compatible") return "openai_compatible";
+  return fallback;
+}
+
+export function getArticleReviewProviderConfigs(): ArticleReviewProviderConfig[] {
+  const mimoBaseUrl = (process.env.MIMO_BASE_URL || "").replace(/\/+$/, "");
+  const providers: ArticleReviewProviderConfig[] = [
+    {
+      id: "openai",
+      label: process.env.OPENAI_REVIEW_LABEL || "GPT",
+      model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+      apiKey: process.env.OPENAI_API_KEY,
+      baseUrl: (process.env.OPENAI_BASE_URL || "https://api.openai.com/v1").replace(/\/+$/, ""),
+      weight: parseModelWeight(process.env.OPENAI_REVIEW_WEIGHT, 1),
+      protocol: "openai_compatible"
+    },
+    {
+      id: "mimo",
+      label: process.env.MIMO_REVIEW_LABEL || "Xiaomi MiMo",
+      model: process.env.MIMO_MODEL || "MiMo-V2.5-Pro",
+      apiKey: process.env.MIMO_API_KEY || process.env.MIMO_AUTH_TOKEN,
+      baseUrl: mimoBaseUrl,
+      weight: parseModelWeight(process.env.MIMO_REVIEW_WEIGHT, 1),
+      protocol: reviewProtocol(
+        process.env.MIMO_PROTOCOL,
+        mimoBaseUrl.toLowerCase().includes("/anthropic") ? "anthropic" : "openai_compatible"
+      )
+    },
+    {
+      id: "minimax",
+      label: process.env.MINIMAX_REVIEW_LABEL || "MiniMax",
+      model: process.env.MINIMAX_MODEL || "MiniMax-M2.7-highspeed",
+      apiKey: process.env.MINIMAX_API_KEY,
+      baseUrl: (process.env.MINIMAX_BASE_URL || "https://minnimax.chat/v1").replace(/\/+$/, ""),
+      weight: parseModelWeight(process.env.MINIMAX_REVIEW_WEIGHT, 1),
+      protocol: "openai_compatible"
+    },
+    {
+      id: "deepseek",
+      label: process.env.DEEPSEEK_REVIEW_LABEL || "DeepSeek",
+      model: process.env.DEEPSEEK_MODEL || "deepseek-v4-pro",
+      apiKey: process.env.DEEPSEEK_API_KEY,
+      baseUrl: (process.env.DEEPSEEK_BASE_URL || "https://api.deepseek.com").replace(/\/+$/, ""),
+      weight: parseModelWeight(process.env.DEEPSEEK_REVIEW_WEIGHT, 1),
+      protocol: "openai_compatible"
+    },
+    {
+      id: "anthropic",
+      label: process.env.ANTHROPIC_REVIEW_LABEL || "Claude",
+      model: process.env.ANTHROPIC_MODEL || "claude-3-5-sonnet-latest",
+      apiKey: process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN,
+      baseUrl: (process.env.ANTHROPIC_BASE_URL || "https://api.anthropic.com").replace(/\/+$/, ""),
+      weight: parseModelWeight(process.env.ANTHROPIC_REVIEW_WEIGHT, 1),
+      protocol: "anthropic"
+    }
+  ];
+
+  const requested = (process.env.ARTICLE_REVIEW_PROVIDERS || "")
+    .split(",")
+    .map((item) => item.trim().toLowerCase())
+    .filter(Boolean);
+  const requestedSet = requested.length ? new Set(requested) : null;
+
+  return providers.filter((provider) => {
+    if (requestedSet && !requestedSet.has(provider.id)) return false;
+    return envEnabled(process.env[`ARTICLE_REVIEW_${provider.id.toUpperCase()}_ENABLED`], true);
+  });
+}
+
+function buildArticleReviewPrompt(input: {
+  title: string;
+  content: string;
+  articleUrl: string;
+  contentSource?: "x_live" | "snapshot_fallback";
+  xFetchError?: string;
+  reviewTarget?: ArticleContestReviewTarget;
+  imageVisible?: boolean;
+}) {
+  const reviewTarget = input.reviewTarget || getArticleContestReviewTarget();
+  const sourceInstruction = input.contentSource === "snapshot_fallback"
+    ? [
+        "The content field is the user-submitted article text because live X fetching failed.",
+        "You may score it, but the review must explicitly say it used article text fallback and should note lower confidence.",
+        input.xFetchError ? `X fetch failure: ${input.xFetchError}` : ""
+      ].filter(Boolean).join(" ")
+    : "The content field is live text fetched from the submitted X URL. Judge only that fetched X content.";
+
+  const system = [
+    "You score X article submissions for AI2Human.",
+    sourceInstruction,
+    "Return strict JSON with keys: score, review, rubric.",
+    "Rubric keys must be relevance, originality, clarity, evidence, narrative.",
+    "Each rubric value is 0-20. score is 0-100.",
+    "Do not wrap the JSON in markdown. Do not add prose outside JSON.",
+    "This is a community article contest, not a strict security audit.",
+    "Project relevance is a hard gate.",
+    `Contest target project: ${reviewTarget.projectName}.`,
+    `Accepted project signals: ${[
+      ...reviewTarget.projectAliases,
+      ...reviewTarget.projectHandles.map((handle) => `@${handle}`),
+      ...reviewTarget.projectUrls,
+      ...reviewTarget.tokenSymbols.map((symbol) => `$${symbol}`),
+      ...reviewTarget.contractAddresses
+    ].join(", ") || reviewTarget.projectName}.`,
+    reviewTarget.thesis ? `Contest thesis: ${reviewTarget.thesis}` : "",
+    reviewTarget.requiredTopics.length ? `Preferred topics: ${reviewTarget.requiredTopics.join("; ")}` : "",
+    `The article must explicitly discuss ${reviewTarget.projectName} or clearly connect its thesis to ${reviewTarget.projectName}'s contest topic.`,
+    "General AI agent, DeFAI, trading, crypto, or web3 posts must score below 25 unless they directly connect the idea back to the contest target project.",
+    "A post about another project can score above 25 only if it clearly compares that project to the contest target project or explains what the target project should learn from it.",
+    "If project relevance is weak, set relevance <= 4 and total score <= 20 even if the writing is clear.",
+    `Reward clear explanations of ${reviewTarget.projectName}, the configured task theme, concrete workflows, proof, verification, settlement, and why the workflow matters.`,
+    "Do not require transaction hashes or production-grade proof to give a fair medium score.",
+    "Score 70-90 for strong original writing with specific workflow detail, examples, and a clear AI2Human thesis.",
+    "Score 45-69 for relevant posts that explain the concept but stay somewhat promotional or light on specifics.",
+    "Score 25-44 for short but relevant posts with limited detail.",
+    "Score below 25 for pure token hype, copied text, off-topic content, or claims with almost no explanation.",
+    input.imageVisible
+      ? "This submission includes an attached image from the live X post. Inspect it and include visual brand fit, readability, and originality in your judgment."
+      : "",
+    "Keep the review balanced and public-facing: mention the strongest point first, then the main limitation, without insulting the author."
+  ].filter(Boolean).join(" ");
+  const user = JSON.stringify({
+    articleUrl: input.articleUrl,
+    title: input.title,
+    content: input.content
+  });
+  return { system, user };
+}
+
+function buildBannerImageReviewPrompt(input: {
+  title: string;
+  content: string;
+  articleUrl: string;
+  reviewTarget?: ArticleContestReviewTarget;
+  imageVisible: boolean;
+}) {
+  const reviewTarget = input.reviewTarget || getArticleContestReviewTarget();
+  const system = [
+    "You score banner image submissions for AI2Human.",
+    "Return strict JSON with keys: score, review, rubric.",
+    "Rubric keys must be relevance, originality, clarity, evidence, narrative.",
+    "Each rubric value is 0-20. score is 0-100.",
+    "Do not wrap the JSON in markdown. Do not add prose outside JSON.",
+    `Target project: ${reviewTarget.projectName}.`,
+    "The submitted asset is intended to be a DexScreener banner for the target project.",
+    input.imageVisible
+      ? "Inspect the banner image directly and judge the actual visual quality, readability, composition, and brand fit."
+      : "The image itself is not visible in this request. Score conservatively from the design note only and explicitly say confidence is lower because visual inspection was unavailable.",
+    "Interpret rubric keys like this:",
+    "relevance = fit for the target project and DexScreener banner use case.",
+    "originality = whether the concept feels distinct instead of generic.",
+    "clarity = readability, hierarchy, and whether the message is easy to grasp quickly.",
+    "evidence = craftsmanship, polish, and whether the design note supports clear execution choices.",
+    "narrative = visual energy, emotional pull, and whether the composition makes someone want to click or remember the project.",
+    "Penalize generic crypto banners with weak branding, clutter, low readability, or no clear connection to the target project.",
+    "Reward banners that make the project look more credible, memorable, and clickable.",
+    "Keep the review balanced and public-facing: mention the strongest point first, then the main limitation, without insulting the submitter."
+  ].join(" ");
+  const user = JSON.stringify({
+    imageUrl: input.articleUrl,
+    title: input.title,
+    designNote: input.content
+  });
+  return { system, user };
+}
+
+function buildImagePostReviewPrompt(input: {
+  title: string;
+  content: string;
+  articleUrl: string;
+  contentSource?: "x_live" | "snapshot_fallback";
+  xFetchError?: string;
+  reviewTarget?: ArticleContestReviewTarget;
+  imageVisible: boolean;
+}) {
+  const reviewTarget = input.reviewTarget || getArticleContestReviewTarget();
+  const sourceInstruction = input.contentSource === "snapshot_fallback"
+    ? [
+        "The text field is the user-submitted fallback because live X fetching failed or was partial.",
+        "Lower confidence slightly and say clearly that fallback text was used.",
+        input.xFetchError ? `X fetch failure: ${input.xFetchError}` : ""
+      ].filter(Boolean).join(" ")
+    : "The text field is live text fetched from the submitted X post or thread.";
+
+  const system = [
+    "You score image-post submissions for an AI2Human creative reward event.",
+    sourceInstruction,
+    "Return strict JSON with keys: score, review, rubric.",
+    "Rubric keys must be relevance, originality, clarity, evidence, narrative.",
+    "Each rubric value is 0-20. score is 0-100.",
+    "Do not wrap JSON in markdown. Do not add prose outside JSON.",
+    `Target project: ${reviewTarget.projectName}.`,
+    "This contest is for an X post with an attached image that could work as a DexScreener-style header/banner.",
+    input.imageVisible
+      ? "Inspect the attached image directly. The image is the main judging surface."
+      : "The attached image could not be inspected directly. Score conservatively and say confidence is lower.",
+    "The post text is only a short supporting rationale for the banner.",
+    "Weight your judgment roughly like this: image quality and brand fit 75%, text rationale 25%.",
+    "Do not reward longer text. Ignore filler, repeated slogans, generic promo claims, token price talk, or copied marketing copy.",
+    "A short, clear reason is better than a long thread.",
+    "If the text does not explain the banner idea, cap evidence and narrative even if the image is decent.",
+    "Reward submissions where the image clearly fits AI2Human's identity: execution network, human fallback, proof, verification, settlement, serious product energy.",
+    "Penalize off-topic memes, unrelated market screenshots, cluttered layouts, unreadable text, weak composition, or generic crypto art with no clear AI2Human connection.",
+    "Relevance = fit for AI2Human and DexScreener banner use.",
+    "Originality = whether the creative concept feels distinct, not template-like.",
+    "Clarity = readability, hierarchy, and whether the banner works quickly at header size.",
+    "Evidence = whether the short reason clearly explains the design decision and matches the visual.",
+    "Narrative = whether the image and reason together create a memorable AI2Human story.",
+    "Keep the review balanced and public-facing: mention the strongest point first, then the main limitation, without insulting the author."
+  ].filter(Boolean).join(" ");
+
+  const user = JSON.stringify({
+    articleUrl: input.articleUrl,
+    title: input.title,
+    textReason: input.content
+  });
+  return { system, user };
+}
+
+function normalizeModelReview(input: {
+  provider: ArticleReviewProviderConfig;
+  content: string;
+  latencyMs: number;
+}): ArticleModelReviewResult {
+  const parsed = tryParseModelJson(input.content) as {
+    score?: number;
+    review?: string;
+    rubric?: Record<string, number>;
+  };
+  const rubric = parsed.rubric || {};
+  return {
+    providerId: input.provider.id,
+    providerLabel: input.provider.label,
+    model: input.provider.model,
+    weight: input.provider.weight,
+    status: "scored",
+    score: clampScore(parsed.score),
+    review: String(parsed.review || "AI review completed.").slice(0, 1600),
+    latencyMs: input.latencyMs,
+    rubric: {
+      relevance: clampRubricScore(rubric.relevance),
+      originality: clampRubricScore(rubric.originality),
+      clarity: clampRubricScore(rubric.clarity),
+      evidence: clampRubricScore(rubric.evidence),
+      narrative: clampRubricScore(rubric.narrative)
+    }
+  };
+}
+
+async function requestOpenAiCompatibleArticleReview(input: {
+  provider: ArticleReviewProviderConfig;
+  system: string;
+  user: string;
+  imageUrl?: string;
+}): Promise<ArticleModelReviewResult> {
+  const startedAt = Date.now();
+  const { provider } = input;
+  if (!provider.apiKey) {
+    return {
+      providerId: provider.id,
+      providerLabel: provider.label,
+      model: provider.model,
+      weight: provider.weight,
+      status: "skipped",
+      latencyMs: 0,
+      error: `${provider.label} API key is not configured`
+    };
+  }
+  if (!provider.baseUrl) {
+    return {
+      providerId: provider.id,
+      providerLabel: provider.label,
+      model: provider.model,
+      weight: provider.weight,
+      status: "skipped",
+      latencyMs: 0,
+      error: `${provider.label} base URL is not configured`
+    };
+  }
+
+  let response: Response;
+  try {
+    response = await fetch(`${provider.baseUrl}/chat/completions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${provider.apiKey}`
+      },
+      body: JSON.stringify({
+        model: provider.model,
+        temperature: 0.2,
+        response_format: { type: "json_object" },
+        messages: [
+          {
+            role: "system",
+            content: input.system
+          },
+          {
+            role: "user",
+            content: input.imageUrl
+              ? [
+                  { type: "text", text: input.user },
+                  { type: "image_url", image_url: { url: input.imageUrl } }
+                ]
+              : input.user
+          }
+        ]
+      })
+    });
+  } catch (error) {
+    return {
+      providerId: provider.id,
+      providerLabel: provider.label,
+      model: provider.model,
+      weight: provider.weight,
+      status: "failed",
+      latencyMs: Date.now() - startedAt,
+      error: `request failed (${error instanceof Error ? error.message : "network error"})`
+    };
+  }
+
+  if (!response.ok) {
+    return {
+      providerId: provider.id,
+      providerLabel: provider.label,
+      model: provider.model,
+      weight: provider.weight,
+      status: "failed",
+      latencyMs: Date.now() - startedAt,
+      error: `HTTP ${response.status}`
+    };
+  }
+
+  const data = await response.json().catch(() => null) as { choices?: Array<{ message?: { content?: string } }> } | null;
+  const content = data?.choices?.[0]?.message?.content;
+  if (!content) {
+    return {
+      providerId: provider.id,
+      providerLabel: provider.label,
+      model: provider.model,
+      weight: provider.weight,
+      status: "failed",
+      latencyMs: Date.now() - startedAt,
+      error: "empty response"
+    };
+  }
+
+  try {
+    return normalizeModelReview({ provider, content, latencyMs: Date.now() - startedAt });
+  } catch (error) {
+    return {
+      providerId: provider.id,
+      providerLabel: provider.label,
+      model: provider.model,
+      weight: provider.weight,
+      status: "failed",
+      latencyMs: Date.now() - startedAt,
+      error: `invalid JSON (${error instanceof Error ? error.message : "unknown parse error"})`
+    };
+  }
+}
+
+async function requestAnthropicArticleReview(input: {
+  provider: ArticleReviewProviderConfig;
+  system: string;
+  user: string;
+  imageUrl?: string;
+}): Promise<ArticleModelReviewResult> {
+  const startedAt = Date.now();
+  const { provider } = input;
+  if (!provider.apiKey) {
+    return {
+      providerId: provider.id,
+      providerLabel: provider.label,
+      model: provider.model,
+      weight: provider.weight,
+      status: "skipped",
+      latencyMs: 0,
+      error: `${provider.label} API key is not configured`
+    };
+  }
+
+  let response: Response;
+  const baseUrl = (provider.baseUrl || "https://api.anthropic.com").replace(/\/+$/, "");
+  if (input.imageUrl) {
+    return {
+      providerId: provider.id,
+      providerLabel: provider.label,
+      model: provider.model,
+      weight: provider.weight,
+      status: "skipped",
+      latencyMs: 0,
+      error: `${provider.label} image review is not supported in the current adapter`
+    };
+  }
+  try {
+    response = await fetch(`${baseUrl}/v1/messages`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${provider.apiKey}`,
+        "x-api-key": provider.apiKey,
+        "anthropic-version": process.env.ANTHROPIC_VERSION || "2023-06-01"
+      },
+      body: JSON.stringify({
+        model: provider.model,
+        max_tokens: parseModelMaxTokens(provider, provider.id === "mimo" ? 3000 : 1800),
+        temperature: 0.2,
+        system: input.system,
+        messages: [{ role: "user", content: input.user }]
+      })
+    });
+  } catch (error) {
+    return {
+      providerId: provider.id,
+      providerLabel: provider.label,
+      model: provider.model,
+      weight: provider.weight,
+      status: "failed",
+      latencyMs: Date.now() - startedAt,
+      error: `request failed (${error instanceof Error ? error.message : "network error"})`
+    };
+  }
+
+  if (!response.ok) {
+    return {
+      providerId: provider.id,
+      providerLabel: provider.label,
+      model: provider.model,
+      weight: provider.weight,
+      status: "failed",
+      latencyMs: Date.now() - startedAt,
+      error: `HTTP ${response.status}`
+    };
+  }
+
+  const data = await response.json().catch(() => null) as { content?: Array<{ type?: string; text?: string; thinking?: string }> } | null;
+  const contentItems = Array.isArray(data?.content) ? data.content : [];
+  const content = contentItems.map((item) => item.text || "").join("\n").trim();
+  if (!content) {
+    const thinkingLength = contentItems.reduce((sum, item) => sum + String(item.thinking || "").length, 0);
+    return {
+      providerId: provider.id,
+      providerLabel: provider.label,
+      model: provider.model,
+      weight: provider.weight,
+      status: "failed",
+      latencyMs: Date.now() - startedAt,
+      error: thinkingLength > 0
+        ? `empty text response (thinking-only response, ${thinkingLength} chars)`
+        : "empty response"
+    };
+  }
+
+  try {
+    return normalizeModelReview({ provider, content, latencyMs: Date.now() - startedAt });
+  } catch (error) {
+    return {
+      providerId: provider.id,
+      providerLabel: provider.label,
+      model: provider.model,
+      weight: provider.weight,
+      status: "failed",
+      latencyMs: Date.now() - startedAt,
+      error: `invalid JSON (${error instanceof Error ? error.message : "unknown parse error"})`
+    };
+  }
+}
+
+function mergeRubricScores(results: ArticleModelReviewResult[]) {
+  const totalWeight = results.reduce((sum, item) => sum + item.weight, 0) || 1;
+  const metric = (key: keyof Omit<ArticleReviewRubric, "audit">) =>
+    clampRubricScore(results.reduce((sum, item) => sum + (Number(item.rubric?.[key]) || 0) * item.weight, 0) / totalWeight);
+  return {
+    relevance: metric("relevance"),
+    originality: metric("originality"),
+    clarity: metric("clarity"),
+    evidence: metric("evidence"),
+    narrative: metric("narrative")
+  };
+}
+
+function aggregateArticleModelReviews(input: {
+  modelReviews: ArticleModelReviewResult[];
+  startedAt: number;
+}): ArticleScoreResult {
+  const scored = input.modelReviews.filter((item) => item.status === "scored" && item.score != null);
+  if (!scored.length) {
+    const configured = input.modelReviews.map((item) => `${item.providerLabel}: ${item.error || item.status}`).join("; ");
+    return failedArticleScore(`No AI review provider returned a usable score. ${configured}`, "multi-model-consensus", input.startedAt);
+  }
+
+  const totalWeight = scored.reduce((sum, item) => sum + item.weight, 0) || 1;
+  const score = clampScore(scored.reduce((sum, item) => sum + Number(item.score) * item.weight, 0) / totalWeight);
+  const strongest = [...scored].sort((a, b) => (b.score || 0) - (a.score || 0))[0];
+  const weakest = [...scored].sort((a, b) => (a.score || 0) - (b.score || 0))[0];
+  const modelSummary = scored.map((item) => `${item.providerLabel} ${Number(item.score).toFixed(1)}`).join(", ");
+  const disagreement = strongest && weakest ? Math.abs((strongest.score || 0) - (weakest.score || 0)) : 0;
+
+  return {
+    score,
+    provider: scored.length > 1 ? "multi_model" : "ai",
+    model: scored.length > 1 ? "weighted-consensus" : scored[0]?.model,
+    latencyMs: Date.now() - input.startedAt,
+    modelReviews: input.modelReviews,
+    review: [
+      scored.length > 1
+        ? `Weighted multi-model review used ${scored.length} models (${modelSummary}). Final score is the weighted consensus.`
+        : `${scored[0]?.providerLabel || "AI"} review used ${scored[0]?.model || "configured model"}.`,
+      strongest?.review ? `Strongest positive signal: ${strongest.review}` : "",
+      disagreement >= 18
+        ? `Model disagreement was noticeable (${disagreement.toFixed(1)} points), so admin should treat this as a review requiring human judgment before public announcement.`
+        : ""
+    ].filter(Boolean).join(" ").slice(0, 1800),
+    rubric: mergeRubricScores(scored)
+  };
+}
+
 export async function scoreArticleSubmission(input: {
   title: string;
   content: string;
   articleUrl: string;
   contentSource?: "x_live" | "snapshot_fallback";
   xFetchError?: string;
+  reviewTarget?: ArticleContestReviewTarget;
+  imageUrl?: string;
 }): Promise<ArticleScoreResult> {
-  const apiKey = process.env.OPENAI_API_KEY;
-  const baseUrl = (process.env.OPENAI_BASE_URL || "https://api.openai.com/v1").replace(/\/+$/, "");
-  const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
   const startedAt = Date.now();
-  if (!apiKey) {
-    return failedArticleScore("OPENAI_API_KEY is not configured", model, startedAt);
-  }
-  const sourceInstruction = input.contentSource === "snapshot_fallback"
-    ? [
-        "The content field is the user-submitted snapshot because live X fetching failed.",
-        "You may score it, but the review must explicitly say it used snapshot fallback and should note lower confidence.",
-        input.xFetchError ? `X fetch failure: ${input.xFetchError}` : ""
-      ].filter(Boolean).join(" ")
-    : "The content field is live text fetched from the submitted X URL. Judge only that fetched X content.";
-
-  const response = await fetch(`${baseUrl}/chat/completions`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`
-    },
-    body: JSON.stringify({
-      model,
-      temperature: 0.2,
-      response_format: { type: "json_object" },
-      messages: [
-        {
-          role: "system",
-          content: [
-            "You score X article submissions for ai2human.",
-            sourceInstruction,
-            "Return strict JSON with keys: score, review, rubric.",
-            "Rubric keys must be relevance, originality, clarity, evidence, narrative.",
-            "Each rubric value is 0-20. score is 0-100.",
-            "Do not wrap the JSON in markdown. Do not add prose outside JSON.",
-            "This is a community article contest, not a strict security audit.",
-            "Reward clear explanations of ai2human, agent-human cooperation, proof, verification, settlement, and why the workflow matters.",
-            "Do not require transaction hashes or production-grade proof to give a fair medium score.",
-            "Score 70-90 for strong original writing with specific workflow detail, examples, and a clear ai2human thesis.",
-            "Score 45-69 for relevant posts that explain the concept but stay somewhat promotional or light on specifics.",
-            "Score 25-44 for short but relevant posts with limited detail.",
-            "Score below 25 for pure token hype, copied text, off-topic content, or claims with almost no explanation.",
-            "Keep the review balanced and public-facing: mention the strongest point first, then the main limitation, without insulting the author."
-          ].join(" ")
-        },
-        {
-          role: "user",
-          content: JSON.stringify({
-            articleUrl: input.articleUrl,
-            title: input.title,
-            content: input.content
-          })
-        }
-      ]
-    })
+  const reviewTarget = input.reviewTarget || getArticleContestReviewTarget();
+  const relevanceGate = projectRelevanceGateScore({
+    title: input.title,
+    content: input.content,
+    articleUrl: input.articleUrl,
+    startedAt,
+    reviewTarget
   });
+  if (relevanceGate) return relevanceGate;
 
-  if (!response.ok) {
-    return failedArticleScore(`AI provider returned HTTP ${response.status}`, model, startedAt);
+  const providers = getArticleReviewProviderConfigs();
+  if (!providers.length) {
+    return failedArticleScore("No article review providers are enabled", "multi-model-consensus", startedAt);
   }
 
-  const data = await response.json().catch(() => null) as { choices?: Array<{ message?: { content?: string } }> } | null;
-  const content = data?.choices?.[0]?.message?.content;
-  if (!content) {
-    return failedArticleScore("AI provider returned an empty response", model, startedAt);
+  const prompt = buildArticleReviewPrompt({ ...input, reviewTarget, imageVisible: Boolean(input.imageUrl) });
+  const modelReviews = await Promise.all(
+    providers.map((provider) =>
+      provider.protocol === "anthropic"
+        ? requestAnthropicArticleReview({ provider, ...prompt, imageUrl: input.imageUrl })
+        : requestOpenAiCompatibleArticleReview({ provider, ...prompt, imageUrl: input.imageUrl })
+    )
+  );
+  if (modelReviews.some((item) => item.status === "scored")) {
+    return aggregateArticleModelReviews({ modelReviews, startedAt });
   }
 
-  try {
-    const parsed = tryParseModelJson(content) as {
-      score?: number;
-      review?: string;
-      rubric?: Record<string, number>;
+  const fallbackPrompt = buildArticleReviewPrompt({ ...input, reviewTarget, imageVisible: false });
+  const fallbackReviews = await Promise.all(
+    providers.map((provider) =>
+      provider.protocol === "anthropic"
+        ? requestAnthropicArticleReview({ provider, ...fallbackPrompt })
+        : requestOpenAiCompatibleArticleReview({ provider, ...fallbackPrompt })
+    )
+  );
+  if (!fallbackReviews.some((item) => item.status === "scored")) {
+    return failedArticleScore("No article review provider returned a usable score", "multi-model-consensus", startedAt);
+  }
+  const aggregated = aggregateArticleModelReviews({ modelReviews: fallbackReviews, startedAt });
+  return input.imageUrl
+    ? {
+        ...aggregated,
+        review: `Attached image was not inspected directly. ${aggregated.review}`
+      }
+    : aggregated;
+}
+
+async function scoreImagePostSubmission(input: {
+  title: string;
+  content: string;
+  articleUrl: string;
+  contentSource?: "x_live" | "snapshot_fallback";
+  xFetchError?: string;
+  reviewTarget?: ArticleContestReviewTarget;
+  imageUrl: string;
+}): Promise<ArticleScoreResult> {
+  const startedAt = Date.now();
+  const reviewTarget = input.reviewTarget || getArticleContestReviewTarget();
+  const providers = getArticleReviewProviderConfigs();
+  if (!providers.length) {
+    return failedArticleScore("No image-post review providers are enabled", "image-post-consensus", startedAt);
+  }
+
+  const prompt = buildImagePostReviewPrompt({
+    ...input,
+    reviewTarget,
+    imageVisible: true
+  });
+  const modelReviews = await Promise.all(
+    providers.map((provider) =>
+      provider.protocol === "anthropic"
+        ? requestAnthropicArticleReview({ provider, ...prompt, imageUrl: input.imageUrl })
+        : requestOpenAiCompatibleArticleReview({ provider, ...prompt, imageUrl: input.imageUrl })
+    )
+  );
+  if (modelReviews.some((item) => item.status === "scored")) {
+    return aggregateArticleModelReviews({ modelReviews, startedAt });
+  }
+
+  const fallbackPrompt = buildImagePostReviewPrompt({
+    ...input,
+    reviewTarget,
+    imageVisible: false
+  });
+  const fallbackReviews = await Promise.all(
+    providers.map((provider) =>
+      provider.protocol === "anthropic"
+        ? requestAnthropicArticleReview({ provider, ...fallbackPrompt })
+        : requestOpenAiCompatibleArticleReview({ provider, ...fallbackPrompt })
+    )
+  );
+  if (!fallbackReviews.some((item) => item.status === "scored")) {
+    return failedArticleScore("No image-post review provider returned a usable score", "image-post-consensus", startedAt);
+  }
+  const aggregated = aggregateArticleModelReviews({ modelReviews: fallbackReviews, startedAt });
+  return {
+    ...aggregated,
+    review: `Attached image was not inspected directly. ${aggregated.review}`
+  };
+}
+
+async function scoreBannerImageSubmission(input: {
+  title: string;
+  content: string;
+  articleUrl: string;
+  reviewTarget?: ArticleContestReviewTarget;
+}): Promise<ArticleScoreResult> {
+  const startedAt = Date.now();
+  const reviewTarget = input.reviewTarget || getArticleContestReviewTarget();
+  const providers = getArticleReviewProviderConfigs();
+  if (!providers.length) {
+    return failedArticleScore("No image review providers are enabled", "banner-image-consensus", startedAt);
+  }
+
+  const visionPrompt = buildBannerImageReviewPrompt({
+    ...input,
+    reviewTarget,
+    imageVisible: true
+  });
+  const visionReviews = await Promise.all(
+    providers.map((provider) =>
+      provider.protocol === "anthropic"
+        ? requestAnthropicArticleReview({ provider, ...visionPrompt, imageUrl: input.articleUrl })
+        : requestOpenAiCompatibleArticleReview({ provider, ...visionPrompt, imageUrl: input.articleUrl })
+    )
+  );
+  if (visionReviews.some((item) => item.status === "scored")) {
+    return aggregateArticleModelReviews({ modelReviews: visionReviews, startedAt });
+  }
+
+  const fallbackPrompt = buildBannerImageReviewPrompt({
+    ...input,
+    reviewTarget,
+    imageVisible: false
+  });
+  const fallbackReviews = await Promise.all(
+    providers.map((provider) =>
+      provider.protocol === "anthropic"
+        ? requestAnthropicArticleReview({ provider, ...fallbackPrompt })
+        : requestOpenAiCompatibleArticleReview({ provider, ...fallbackPrompt })
+    )
+  );
+  if (!fallbackReviews.some((item) => item.status === "scored")) {
+    return failedArticleScore("No model returned a usable banner review score", "banner-image-consensus", startedAt);
+  }
+  const aggregated = aggregateArticleModelReviews({ modelReviews: fallbackReviews, startedAt });
+  return {
+    ...aggregated,
+    review: `Image not inspected directly. ${aggregated.review}`
+  };
+}
+
+export async function reviewArticleSubmission(input: {
+  submission: ArticleSubmission;
+  minimumWinnerScore: number;
+  reviewTarget?: ArticleContestReviewTarget;
+  task?: Pick<Task, "campaign" | "rewardDistribution">;
+  now?: string;
+}): Promise<ArticleSubmissionReviewResult> {
+  const { submission, minimumWinnerScore } = input;
+  const reviewTarget = input.reviewTarget || getArticleContestReviewTarget();
+  const now = input.now || new Date().toISOString();
+  const requiresAttachedImage = Boolean(input.task?.campaign?.requiresImage);
+  if (isBannerImageContestTask(input.task)) {
+    const imageAsset = await fetchPublicImageAsset(submission.articleUrl);
+    const reviewContent = submission.contentSnapshot.trim();
+    const audit: ArticleReviewAudit = {
+      contentSource: imageAsset.ok ? "x_live" : "snapshot_fallback",
+      fetchSource: imageAsset.ok ? "html" : "snapshot_fallback",
+      fetchAttempts: imageAsset.attempts,
+      xFetchError: imageAsset.ok ? undefined : imageAsset.error,
+      reviewedTextExcerpt: reviewedTextExcerpt(reviewContent),
+      reviewedTextLength: reviewContent.length,
+      minimumWinnerScore
     };
-    const rubric = parsed.rubric || {};
+
+    if (!imageAsset.ok) {
+      const error = `${imageAsset.error} Attempts: ${imageAsset.attempts.join(" -> ")}`;
+      return {
+        submission: {
+          ...submission,
+          status: "invalid",
+          aiScore: 0,
+          aiReview: error,
+          aiRubric: {
+            relevance: 0,
+            originality: 0,
+            clarity: 0,
+            evidence: 0,
+            narrative: 0,
+            audit: {
+              ...audit,
+              provider: "ai_error"
+            }
+          },
+          rank: undefined,
+          prizeAmount: undefined,
+          reviewedAt: now,
+          updatedAt: now
+        },
+        debug: {
+          submissionId: submission.id,
+          xHandle: submission.xHandle,
+          walletAddress: submission.walletAddress,
+          provider: "ai_error",
+          source: "image_not_found",
+          contentSource: "snapshot_fallback",
+          contentLength: reviewContent.length,
+          excerpt: reviewedTextExcerpt(reviewContent),
+          fetchAttempts: imageAsset.attempts,
+          error
+        }
+      };
+    }
+
+    const score = await scoreBannerImageSubmission({
+      title: submission.title,
+      content: reviewContent,
+      articleUrl: imageAsset.url,
+      reviewTarget
+    });
+    const sourceLabel = "Banner image submission";
+    const debug = {
+      submissionId: submission.id,
+      xHandle: submission.xHandle,
+      walletAddress: submission.walletAddress,
+      score: score.score,
+      provider: score.provider,
+      model: score.model,
+      latencyMs: score.latencyMs,
+      source: "banner_image",
+      contentSource: "x_live",
+      contentLength: reviewContent.length,
+      excerpt: reviewedTextExcerpt(reviewContent),
+      fetchAttempts: imageAsset.attempts,
+      fallbackReason: score.fallbackReason
+    };
+
+    if (score.provider === "ai_error") {
+      return {
+        submission: {
+          ...submission,
+          status: "submitted",
+          aiScore: undefined,
+          aiReview: `Source: ${sourceLabel}. ${score.review}`,
+          aiRubric: {
+            ...score.rubric,
+            audit: {
+              ...audit,
+              provider: score.provider,
+              model: score.model,
+              latencyMs: score.latencyMs,
+              modelReviews: score.modelReviews,
+              activeModelCount: score.modelReviews?.filter((item) => item.status === "scored").length,
+              skippedModelCount: score.modelReviews?.filter((item) => item.status !== "scored").length
+            }
+          },
+          rank: undefined,
+          prizeAmount: undefined,
+          reviewedAt: now,
+          updatedAt: now
+        },
+        debug
+      };
+    }
+
     return {
-      score: clampScore(parsed.score),
-      review: String(parsed.review || "AI review completed.").slice(0, 1600),
-      provider: "ai",
-      model,
-      latencyMs: Date.now() - startedAt,
-      rubric: {
-        relevance: clampRubricScore(rubric.relevance),
-        originality: clampRubricScore(rubric.originality),
-        clarity: clampRubricScore(rubric.clarity),
-        evidence: clampRubricScore(rubric.evidence),
-        narrative: clampRubricScore(rubric.narrative)
+      submission: {
+        ...submission,
+        status: "submitted",
+        aiScore: score.score,
+        aiReview: `Source: ${sourceLabel}. ${score.review}`,
+        aiRubric: {
+          ...score.rubric,
+          audit: {
+            ...audit,
+            provider: score.provider,
+            model: score.model,
+            latencyMs: score.latencyMs,
+            reviewTargetProject: reviewTarget.projectName,
+            aggregateStrategy: score.provider === "multi_model" ? "weighted_consensus" : undefined,
+            activeModelCount: score.modelReviews?.filter((item) => item.status === "scored").length,
+            skippedModelCount: score.modelReviews?.filter((item) => item.status !== "scored").length,
+            modelReviews: score.modelReviews
+          }
+        },
+        rank: undefined,
+        prizeAmount: undefined,
+        reviewedAt: now,
+        updatedAt: now
+      },
+      debug
+    };
+  }
+  const liveContent = await fetchXArticleContent(submission.articleUrl);
+  const reviewContent = liveContent.ok ? liveContent.text : submission.contentSnapshot.trim();
+  const contentSource = liveContent.ok ? "x_live" as const : "snapshot_fallback" as const;
+  const xFetchError = liveContent.ok ? "" : `${liveContent.error} Attempts: ${liveContent.attempts.join(" -> ")}`;
+  const attachedImageUrl = liveContent.ok ? liveContent.mediaUrls?.[0] : undefined;
+  const audit = {
+    contentSource,
+    fetchSource: liveContent.ok ? liveContent.source : "snapshot_fallback" as const,
+    fetchAttempts: liveContent.attempts,
+    xFetchError: liveContent.ok ? undefined : xFetchError,
+    reviewedTextExcerpt: reviewedTextExcerpt(reviewContent),
+    reviewedTextLength: reviewContent.length,
+    imageUrl: attachedImageUrl,
+    minimumWinnerScore
+  };
+
+  if (
+    liveContent.ok &&
+    liveContent.authorHandle &&
+    (!xHandlesMatch(liveContent.authorHandle, submission.authorHandle) ||
+      !xHandlesMatch(liveContent.authorHandle, submission.xHandle))
+  ) {
+    const error = `Live X author @${liveContent.authorHandle} does not match submitted author @${submission.authorHandle}.`;
+    return {
+      submission: {
+        ...submission,
+        status: "invalid",
+        aiScore: 0,
+        aiReview: error,
+        aiRubric: {
+          relevance: 0,
+          originality: 0,
+          clarity: 0,
+          evidence: 0,
+          narrative: 0,
+          audit: {
+            ...audit,
+            provider: "ai_error"
+          }
+        },
+        rank: undefined,
+        prizeAmount: undefined,
+        reviewedAt: now,
+        updatedAt: now
+      },
+      debug: {
+        submissionId: submission.id,
+        xHandle: submission.xHandle,
+        walletAddress: submission.walletAddress,
+        provider: "ai_error",
+        source: liveContent.source,
+        contentSource,
+        contentLength: reviewContent.length,
+        excerpt: reviewedTextExcerpt(reviewContent),
+        fetchAttempts: liveContent.attempts,
+        error
       }
     };
-  } catch (error) {
-    return failedArticleScore(
-      `AI response was not valid JSON (${error instanceof Error ? error.message : "unknown parse error"})`,
-      model,
-      startedAt
-    );
   }
+
+  if (requiresAttachedImage && !attachedImageUrl) {
+    const error = liveContent.ok
+      ? "The submitted X post does not include a detectable image attachment. This contest requires at least one attached image."
+      : `We could not verify an attached image on this X post. ${xFetchError}`;
+    return {
+      submission: {
+        ...submission,
+        status: "invalid",
+        aiScore: 0,
+        aiReview: error,
+        aiRubric: {
+          relevance: 0,
+          originality: 0,
+          clarity: 0,
+          evidence: 0,
+          narrative: 0,
+          audit: {
+            ...audit,
+            provider: "ai_error"
+          }
+        },
+        rank: undefined,
+        prizeAmount: undefined,
+        reviewedAt: now,
+        updatedAt: now
+      },
+      debug: {
+        submissionId: submission.id,
+        xHandle: submission.xHandle,
+        walletAddress: submission.walletAddress,
+        provider: "ai_error",
+        source: liveContent.ok ? liveContent.source : "image_required",
+        contentSource,
+        contentLength: reviewContent.length,
+        excerpt: reviewedTextExcerpt(reviewContent),
+        fetchAttempts: liveContent.attempts,
+        error
+      }
+    };
+  }
+
+  if (!liveContent.ok && hasDefinitiveXNotFound(liveContent.attempts)) {
+    const error = `The submitted X link could not be found. Please submit a public, existing X post, article, or thread URL. ${xFetchError}`;
+    return {
+      submission: {
+        ...submission,
+        status: "invalid",
+        aiScore: 0,
+        aiReview: error,
+        aiRubric: {
+          relevance: 0,
+          originality: 0,
+          clarity: 0,
+          evidence: 0,
+          narrative: 0,
+          audit: {
+            ...audit,
+            provider: "ai_error"
+          }
+        },
+        rank: undefined,
+        prizeAmount: undefined,
+        reviewedAt: now,
+        updatedAt: now
+      },
+      debug: {
+        submissionId: submission.id,
+        xHandle: submission.xHandle,
+        walletAddress: submission.walletAddress,
+        provider: "ai_error",
+        source: "x_not_found",
+        contentSource,
+        contentLength: reviewContent.length,
+        excerpt: reviewedTextExcerpt(reviewContent),
+        fetchAttempts: liveContent.attempts,
+        error
+      }
+    };
+  }
+
+  if (!liveContent.ok && reviewContent.length < 200) {
+    const error = `X live content fetch failed and no usable article text fallback was provided. ${xFetchError}`;
+    return {
+      submission: {
+        ...submission,
+        status: "invalid",
+        aiScore: 0,
+        aiReview: error,
+        aiRubric: {
+          relevance: 0,
+          originality: 0,
+          clarity: 0,
+          evidence: 0,
+          narrative: 0,
+          audit: {
+            ...audit,
+            provider: "ai_error"
+          }
+        },
+        rank: undefined,
+        prizeAmount: undefined,
+        reviewedAt: now,
+        updatedAt: now
+      },
+      debug: {
+        submissionId: submission.id,
+        xHandle: submission.xHandle,
+        walletAddress: submission.walletAddress,
+        provider: "ai_error",
+        source: "snapshot_fallback",
+        contentSource,
+        contentLength: reviewContent.length,
+        excerpt: reviewedTextExcerpt(reviewContent),
+        fetchAttempts: liveContent.attempts,
+        error
+      }
+    };
+  }
+
+  if (requiresAttachedImage && attachedImageUrl) {
+    const imageCheck = await validateDexscreenerHeaderImage(attachedImageUrl);
+    if (!imageCheck.ok) {
+      const error = imageCheck.error;
+      return {
+        submission: {
+          ...submission,
+          status: "invalid",
+          aiScore: 0,
+          aiReview: error,
+          aiRubric: {
+            relevance: 0,
+            originality: 0,
+            clarity: 0,
+            evidence: 0,
+            narrative: 0,
+            audit: {
+              ...audit,
+              provider: "ai_error"
+            }
+          },
+          rank: undefined,
+          prizeAmount: undefined,
+          reviewedAt: now,
+          updatedAt: now
+        },
+        debug: {
+          submissionId: submission.id,
+          xHandle: submission.xHandle,
+          walletAddress: submission.walletAddress,
+          provider: "ai_error",
+          source: liveContent.ok ? liveContent.source : "image_validation_failed",
+          contentSource,
+          contentLength: reviewContent.length,
+          excerpt: reviewedTextExcerpt(reviewContent),
+          fetchAttempts: imageCheck.attempts,
+          error
+        }
+      };
+    }
+  }
+
+  const score = requiresAttachedImage && attachedImageUrl
+    ? await scoreImagePostSubmission({
+        title: submission.title,
+        content: reviewContent,
+        articleUrl: submission.articleUrl,
+        contentSource,
+        xFetchError,
+        reviewTarget,
+        imageUrl: attachedImageUrl
+      })
+    : await scoreArticleSubmission({
+        title: submission.title,
+        content: reviewContent,
+        articleUrl: submission.articleUrl,
+        contentSource,
+        xFetchError,
+        reviewTarget,
+        imageUrl: attachedImageUrl
+      });
+  const sourceLabel = liveContent.ok
+    ? `X live content (${liveContent.source})${attachedImageUrl ? " with attached image" : ""}`
+    : `submitted article text fallback; live X fetch failed (${xFetchError})`;
+  const debug = {
+    submissionId: submission.id,
+    xHandle: submission.xHandle,
+    walletAddress: submission.walletAddress,
+    score: score.score,
+    provider: score.provider,
+    model: score.model,
+    latencyMs: score.latencyMs,
+    source: liveContent.ok ? liveContent.source : "snapshot_fallback",
+    contentSource,
+    contentLength: reviewContent.length,
+    excerpt: reviewedTextExcerpt(reviewContent),
+    fetchAttempts: liveContent.attempts,
+    fallbackReason: score.fallbackReason
+  };
+
+  if (score.provider === "ai_error") {
+    return {
+      submission: {
+        ...submission,
+        status: "submitted",
+        aiScore: undefined,
+        aiReview: `Source: ${sourceLabel}. ${score.review}`,
+        aiRubric: {
+          ...score.rubric,
+          audit: {
+            ...audit,
+            provider: score.provider,
+            model: score.model,
+            latencyMs: score.latencyMs,
+            modelReviews: score.modelReviews,
+            activeModelCount: score.modelReviews?.filter((item) => item.status === "scored").length,
+            skippedModelCount: score.modelReviews?.filter((item) => item.status !== "scored").length
+          }
+        },
+        rank: undefined,
+        prizeAmount: undefined,
+        reviewedAt: now,
+        updatedAt: now
+      },
+      debug
+    };
+  }
+
+  return {
+    submission: {
+      ...submission,
+      status: "submitted",
+      aiScore: score.score,
+      aiReview: `Source: ${sourceLabel}. ${score.review}`,
+      aiRubric: {
+        ...score.rubric,
+        audit: {
+          ...audit,
+          provider: score.provider,
+          model: score.model,
+          latencyMs: score.latencyMs,
+          relevanceGate: score.model === "project-relevance-gate",
+          relevanceSignals: detectProjectSignals(`${submission.articleUrl}\n${submission.title}\n${reviewContent}`, reviewTarget),
+          reviewTargetProject: reviewTarget.projectName,
+          aggregateStrategy: score.provider === "multi_model" ? "weighted_consensus" : undefined,
+          activeModelCount: score.modelReviews?.filter((item) => item.status === "scored").length,
+          skippedModelCount: score.modelReviews?.filter((item) => item.status !== "scored").length,
+          modelReviews: score.modelReviews
+        }
+      },
+      rank: undefined,
+      prizeAmount: undefined,
+      reviewedAt: now,
+      updatedAt: now
+    },
+    debug
+  };
 }
 
 export function assignArticleContestPrizes(
@@ -781,7 +2518,22 @@ export function assignArticleContestPrizes(
 ) {
   const prizes = getArticleContestPrizes(distribution);
   const minimumWinnerScore = getArticleContestMinimumWinnerScore(distribution);
-  const ranked = submissions
+  const copyRisks = detectSubmissionCopyRisks(submissions);
+  const annotatedSubmissions = submissions.map((submission) => {
+    const copyRisk = copyRisks.get(submission.id);
+    if (!copyRisk || !submission.aiRubric) return submission;
+    return {
+      ...submission,
+      aiRubric: {
+        ...submission.aiRubric,
+        audit: {
+          ...(submission.aiRubric.audit || {}),
+          ...copyRisk
+        }
+      }
+    };
+  });
+  const ranked = annotatedSubmissions
     .filter((submission) => {
       if (submission.status === "invalid" || submission.status === "rejected") return false;
       if (submission.status === "paid") return true;
@@ -804,7 +2556,7 @@ export function assignArticleContestPrizes(
     }
   }
 
-  return submissions.map((submission) => {
+  return annotatedSubmissions.map((submission) => {
     const winner = winners.get(submission.id);
     if (!winner) {
       const audit: ArticleReviewAudit = {
@@ -816,7 +2568,11 @@ export function assignArticleContestPrizes(
         : undefined;
       return {
         ...submission,
-        status: submission.status === "paid" ? submission.status : "reviewed" as const,
+        status: (
+          submission.status === "paid" ||
+          submission.status === "invalid" ||
+          submission.status === "rejected"
+        ) ? submission.status : "reviewed" as const,
         aiRubric,
         rank: undefined,
         prizeAmount: undefined
@@ -834,6 +2590,85 @@ export function assignArticleContestPrizes(
       prizeAmount: winner.amount
     };
   });
+}
+
+function normalizeCopyText(text: string) {
+  return text
+    .replace(/https?:\/\/\S+/gi, " ")
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function compactCopyText(text: string) {
+  return normalizeCopyText(text).replace(/\s+/g, "");
+}
+
+function charShingles(value: string, size = 12) {
+  const compact = compactCopyText(value);
+  const shingles = new Set<string>();
+  if (compact.length < size) return shingles;
+  for (let index = 0; index <= compact.length - size; index += 3) {
+    shingles.add(compact.slice(index, index + size));
+  }
+  return shingles;
+}
+
+function shingleContainment(a: Set<string>, b: Set<string>) {
+  const smaller = a.size <= b.size ? a : b;
+  const larger = a.size <= b.size ? b : a;
+  if (!smaller.size || !larger.size) return 0;
+  let overlap = 0;
+  for (const item of smaller) {
+    if (larger.has(item)) overlap += 1;
+  }
+  return Math.round((overlap / smaller.size) * 1000) / 1000;
+}
+
+function detectSubmissionCopyRisks(submissions: ArticleSubmission[]) {
+  const risks = new Map<string, Pick<ArticleReviewAudit, "copyRisk" | "copyRiskReason" | "copyMatchedSubmissionId" | "copySimilarity">>();
+  const reviewed = submissions
+    .filter((submission) => {
+      if (submission.status === "invalid" || submission.status === "rejected") return false;
+      return compactCopyText(submission.contentSnapshot || "").length >= 320;
+    })
+    .sort((a, b) => +new Date(a.submittedAt) - +new Date(b.submittedAt));
+
+  const fingerprints = reviewed.map((submission) => ({
+    submission,
+    compact: compactCopyText(submission.contentSnapshot || ""),
+    shingles: charShingles(submission.contentSnapshot || "")
+  }));
+
+  for (let index = 0; index < fingerprints.length; index += 1) {
+    const current = fingerprints[index];
+    for (let previousIndex = 0; previousIndex < index; previousIndex += 1) {
+      const previous = fingerprints[previousIndex];
+      if (!current.compact || !previous.compact) continue;
+      const similarity = current.compact === previous.compact
+        ? 1
+        : shingleContainment(current.shingles, previous.shingles);
+      const minLength = Math.min(current.compact.length, previous.compact.length);
+      const copyRisk = similarity >= 0.94 && minLength >= 500
+        ? "high"
+        : similarity >= 0.86 && minLength >= 700
+          ? "possible"
+          : undefined;
+      if (!copyRisk) continue;
+      risks.set(current.submission.id, {
+        copyRisk,
+        copySimilarity: similarity,
+        copyMatchedSubmissionId: previous.submission.id,
+        copyRiskReason: copyRisk === "high"
+          ? "Very similar article text to an earlier submission. Soft flag only; admin should review before payout."
+          : "Possible article text overlap with an earlier submission. Soft flag only; not automatically disqualified."
+      });
+      break;
+    }
+  }
+
+  return risks;
 }
 
 export function xHandlesMatch(a: string, b: string) {

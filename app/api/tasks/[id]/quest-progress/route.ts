@@ -3,6 +3,7 @@ import crypto from "crypto";
 import { getAuthContext } from "../../../../lib/auth";
 import { readDb, updateDb, type QuestProgressStatus } from "../../../../lib/store";
 import { getBoundXAccountForWallet, normalizeXHandle } from "../../../../lib/xIdentity";
+import { getOperatorAccessForWallet, taskAccessError } from "../../../../lib/operatorAccess";
 
 export const runtime = "nodejs";
 
@@ -39,6 +40,7 @@ export async function GET(
     return NextResponse.json({ error: "Task not found" }, { status: 404 });
   }
   const { xAccount } = await getBoundXAccountForWallet(db, wallet);
+  const access = await getOperatorAccessForWallet(db, wallet);
 
   const progress = db.questProgress.filter(
     (qp) => qp.taskId === taskId && qp.walletAddress === wallet
@@ -70,6 +72,10 @@ export async function GET(
     subtasks,
     claimed,
     xAccount,
+    requirements: {
+      ok: access.ok,
+      missing: access.missing
+    },
     ...(claimedPayment ? { payment: claimedPayment } : {}),
     ...(xAccount?.username ? { xHandle: xAccount.username } : participant?.xHandle ? { xHandle: participant.xHandle } : {})
   });
@@ -116,13 +122,14 @@ export async function POST(
   if (!task) {
     return NextResponse.json({ error: "Task not found" }, { status: 404 });
   }
-  const { xAccount } = await getBoundXAccountForWallet(db, wallet);
-  if (!xAccount) {
+  const access = await getOperatorAccessForWallet(db, wallet);
+  if (!access.ok) {
     return NextResponse.json(
-      { error: "Bind your X account before doing tasks." },
+      { error: taskAccessError(access, "do_tasks"), missing: access.missing },
       { status: 403 }
     );
   }
+  const xAccount = access.xAccount!;
   if (xHandle && normalizeXHandle(xHandle) !== normalizeXHandle(xAccount.username)) {
     return NextResponse.json(
       { error: "Submitted X handle does not match your bound X account." },

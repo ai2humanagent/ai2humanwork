@@ -13,7 +13,7 @@ export function RhTopbar({ active = "humans" }: RhTopbarProps) {
       <div className={styles.topbarInner}>
         <Link href="/browse" className={styles.brand}>
           <span className={styles.brandMark} aria-hidden />
-          <span className={styles.brandText}>ai2human // market</span>
+          <span className={styles.brandText}>AI2Human // market</span>
         </Link>
 
         <nav className={styles.navLinks}>

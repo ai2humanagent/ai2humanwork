@@ -43,7 +43,7 @@ export default function AdminLoginClient({
     <main className={styles.loginPage}>
       <form className={styles.loginPanel} onSubmit={submit}>
         <div className={styles.loginHeader}>
-          <span className={styles.loginKicker}>ai2human admin</span>
+          <span className={styles.loginKicker}>AI2Human admin</span>
           <h1>Admin login</h1>
           <p>Access user, task, identity, and payout operations.</p>
         </div>

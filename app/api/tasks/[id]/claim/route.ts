@@ -3,6 +3,7 @@ import { getAuthContext } from "../../../../lib/auth";
 import { readDb, updateDb } from "../../../../lib/store";
 import { canTransition, explainInvalidTransition } from "../../../../lib/taskStateMachine";
 import { appendEvidence, appendTransitionEvidence } from "../../../../lib/taskEvidence";
+import { getOperatorAccessForWallet, taskAccessError } from "../../../../lib/operatorAccess";
 
 export const runtime = "nodejs";
 
@@ -30,6 +31,13 @@ export async function POST(
     return NextResponse.json(
       { error: "Connect a payout wallet before claiming tasks." },
       { status: 400 }
+    );
+  }
+  const access = await getOperatorAccessForWallet(db, user.walletAddress);
+  if (!access.ok) {
+    return NextResponse.json(
+      { error: taskAccessError(access, "claim_task") },
+      { status: 403 }
     );
   }
 

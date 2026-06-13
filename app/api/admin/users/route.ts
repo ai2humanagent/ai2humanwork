@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminAuthContext } from "../../../lib/adminAuth";
+import { getUserContactEmail } from "../../../lib/operatorAccess";
 import { readDb } from "../../../lib/store";
 
 export const runtime = "nodejs";
@@ -77,10 +78,12 @@ export async function GET(request: Request) {
       const claimedAmount = payments.reduce((sum, payment) => sum + parseUsdcAmount(payment.amount), 0);
 
       const xSubject = user.xAccount?.subject || "";
+      const contactEmail = getUserContactEmail(user);
 
       return {
         id: user.id,
         email: user.email || null,
+        contactEmail: contactEmail || null,
         createdAt: user.createdAt,
         authProvider: user.authProvider || "local",
         privyUserId: user.privyUserId || null,
@@ -129,6 +132,7 @@ export async function GET(request: Request) {
         readiness: {
           hasWallet: Boolean(wallet),
           hasX: Boolean(user.xAccount?.username),
+          hasContactEmail: Boolean(contactEmail),
           hasProfile: Boolean(human),
           profileCompletePercent: Math.round((profileCompleteCount / profileFields.length) * 100)
         },
@@ -136,6 +140,7 @@ export async function GET(request: Request) {
           duplicateWallet: wallet ? (walletCounts.get(wallet) || 0) > 1 : false,
           duplicateXAccount: xSubject ? (xSubjectCounts.get(xSubject) || 0) > 1 : false,
           missingX: !user.xAccount?.username,
+          missingContactEmail: !contactEmail,
           missingWallet: !wallet,
           missingProfile: !human
         }

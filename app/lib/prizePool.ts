@@ -454,6 +454,132 @@ export async function getPrizePoolInfo(poolAddress: string) {
   }
 }
 
+export type PrizePoolPayoutPreflightResult = {
+  ok: boolean;
+  issues: string[];
+  poolAddress: string;
+  owner?: string;
+  signer?: string;
+  agent?: string;
+  expectedAgent?: string;
+  deadline?: number;
+  deadlineIso?: string;
+  secondsUntilDeadline?: number;
+  poolBalance?: string;
+  expectedPayoutTotal?: string;
+  slotsLeft?: number;
+  expectedWinners?: number;
+  isPaused?: boolean;
+};
+
+export async function getPrizePoolPayoutPreflight(input: {
+  poolAddress: string;
+  expectedPayoutTotal: string;
+  expectedWinners: number;
+  expectedAgent?: string;
+}): Promise<PrizePoolPayoutPreflightResult> {
+  const cfg = getPoolConfig();
+  const issues: string[] = [];
+  const base: PrizePoolPayoutPreflightResult = {
+    ok: false,
+    issues,
+    poolAddress: input.poolAddress,
+    expectedPayoutTotal: parseAmount(input.expectedPayoutTotal),
+    expectedWinners: input.expectedWinners,
+    expectedAgent: input.expectedAgent || undefined
+  };
+
+  if (!cfg.enabled) {
+    issues.push("PrizePool signer is not configured.");
+    return base;
+  }
+  if (!isAddress(input.poolAddress)) {
+    issues.push("Invalid PrizePool address.");
+    return base;
+  }
+  if (input.expectedAgent && !isAddress(input.expectedAgent)) {
+    issues.push("Expected refund agent address is invalid.");
+    return base;
+  }
+
+  const chain = buildViemChain(cfg.chainId);
+  const account = privateKeyToAccount(normalizePrivateKey(cfg.privateKey));
+  const publicClient = createPublicClient({ chain, transport: http(cfg.rpcUrl) });
+  const expectedPayoutTotal = parseUnits(parseAmount(input.expectedPayoutTotal), USDC_DECIMALS);
+
+  try {
+    const [owner, agent, deadline, poolInfo] = await Promise.all([
+      publicClient.readContract({
+        address: input.poolAddress as `0x${string}`,
+        abi: prizePoolAbi,
+        functionName: "owner",
+        args: []
+      }) as Promise<string>,
+      publicClient.readContract({
+        address: input.poolAddress as `0x${string}`,
+        abi: prizePoolAbi,
+        functionName: "agent",
+        args: []
+      }) as Promise<string>,
+      publicClient.readContract({
+        address: input.poolAddress as `0x${string}`,
+        abi: prizePoolAbi,
+        functionName: "deadline",
+        args: []
+      }) as Promise<bigint>,
+      publicClient.readContract({
+        address: input.poolAddress as `0x${string}`,
+        abi: prizePoolAbi,
+        functionName: "getPoolInfo",
+        args: []
+      }) as Promise<[bigint, bigint, bigint, boolean, boolean, bigint]>
+    ]);
+
+    const nowSeconds = Math.floor(Date.now() / 1000);
+    const deadlineSeconds = Number(deadline);
+    const poolBalance = poolInfo[0];
+    const slotsLeft = Number(poolInfo[5]);
+
+    if (owner.toLowerCase() !== account.address.toLowerCase()) {
+      issues.push(`Backend signer ${account.address} is not PrizePool owner ${owner}.`);
+    }
+    if (input.expectedAgent && agent.toLowerCase() !== input.expectedAgent.toLowerCase()) {
+      issues.push(`Refund agent mismatch. Pool agent is ${agent}, expected ${input.expectedAgent}.`);
+    }
+    if (deadlineSeconds <= nowSeconds) {
+      issues.push("PrizePool claim deadline has passed. Extend the pool deadline before paying winners.");
+    }
+    if (poolInfo[3]) {
+      issues.push("PrizePool is paused.");
+    }
+    if (slotsLeft < input.expectedWinners) {
+      issues.push(`Not enough winner slots left. ${slotsLeft} slots left, ${input.expectedWinners} payouts pending.`);
+    }
+    if (poolBalance < expectedPayoutTotal) {
+      issues.push(
+        `Insufficient pool balance. Balance ${formatUnits(poolBalance, USDC_DECIMALS)} USDC, expected ${formatUnits(expectedPayoutTotal, USDC_DECIMALS)} USDC.`
+      );
+    }
+
+    return {
+      ...base,
+      ok: issues.length === 0,
+      owner,
+      signer: account.address,
+      agent,
+      deadline: deadlineSeconds,
+      deadlineIso: new Date(deadlineSeconds * 1000).toISOString(),
+      secondsUntilDeadline: deadlineSeconds - nowSeconds,
+      poolBalance: formatUnits(poolBalance, USDC_DECIMALS),
+      slotsLeft,
+      isPaused: poolInfo[3]
+    };
+  } catch (err) {
+    issues.push(`Unable to read PrizePool state: ${err instanceof Error ? err.message : "unknown error"}`);
+    return base;
+  }
+}
+
 // ============================================================
 // refundRemaining — agent calls refund after deadline
 // ============================================================

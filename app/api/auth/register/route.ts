@@ -40,6 +40,11 @@ export async function POST(request: Request) {
       passwordHash: hashPassword(password),
       createdAt: now,
       humanId: undefined,
+      contactEmail: email,
+      notificationPreferences: {
+        emailTaskAlerts: true,
+        emailRewardAlerts: true
+      },
       authProvider: "local" as const
     };
 

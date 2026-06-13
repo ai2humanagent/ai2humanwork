@@ -3,7 +3,7 @@ import {
   formatSettlementBudget
 } from "./assetLabels.js";
 
-const DEFAULT_REQUESTER_NAME = "ai2human Official";
+const DEFAULT_REQUESTER_NAME = "AI2Human Official";
 const DEFAULT_REQUESTER_HANDLE = "@ai2humanwork";
 export const DEFAULT_TARGET_URL = "https://x.com/ai2humanwork/status/2057669148281651651";
 export const DEFAULT_REPLY_TARGET_URL = "https://x.com/ai2humanwork/status/2021889560729321898";
@@ -408,7 +408,7 @@ export function buildOfficialCampaignTask(input = {}) {
 
 export function buildRealWorldTask(input = {}) {
   const template = findRealWorldTemplate(input.templateId);
-  const requesterName = String(input.requesterName || "ai2human Ops Desk").trim();
+  const requesterName = String(input.requesterName || "AI2Human Ops Desk").trim();
   const requesterHandle = normalizeHandle(input.requesterHandle || "");
   const targetUrl = String(input.targetUrl || template.defaultTargetUrl || "").trim();
   const proofPhrase = String(input.proofPhrase || template.defaultProofPhrase || "").trim();

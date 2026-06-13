@@ -3,6 +3,7 @@ import crypto from "crypto";
 import {
   readDb,
   updateDb,
+  type Notification,
   type PaymentEntry,
   type RewardDistribution,
   type Task
@@ -13,9 +14,11 @@ import type { SettlementReceipt } from "../../../../lib/settlementTypes";
 import { verifyWalletSignature } from "../../../../lib/walletVerification";
 import { supabase } from "../../../../lib/supabase";
 import { claimForPrizePool } from "../../../../lib/prizePool";
-import { getBoundXAccountForWallet, normalizeXHandle } from "../../../../lib/xIdentity";
+import { normalizeXHandle } from "../../../../lib/xIdentity";
 import { getAuthContext } from "../../../../lib/auth";
 import { generateNextBoundedLuckyDrawAmount } from "../../../../lib/luckyDraw.js";
+import { getOperatorAccessForWallet, taskAccessError } from "../../../../lib/operatorAccess";
+import { addNotification, sendEmailNotification } from "../../../../lib/notificationDelivery";
 
 export const runtime = "nodejs";
 
@@ -29,7 +32,7 @@ function parseAmount(raw: string): number {
 
 function buildClaimMessage(taskId: string, wallet: string): string {
   return [
-    "ai2human Reward Claim",
+    "AI2Human Reward Claim",
     `Task: ${taskId}`,
     `Wallet: ${wallet.toLowerCase()}`,
     "I am claiming my lucky draw reward."
@@ -204,13 +207,14 @@ export async function POST(
   if (!task) {
     return NextResponse.json({ error: "Task not found" }, { status: 404 });
   }
-  const { xAccount } = await getBoundXAccountForWallet(db, wallet);
-  if (!xAccount) {
+  const access = await getOperatorAccessForWallet(db, wallet);
+  if (!access.ok) {
     return NextResponse.json(
-      { error: "Bind your X account before claiming rewards." },
+      { error: taskAccessError(access, "claim_rewards"), missing: access.missing },
       { status: 403 }
     );
   }
+  const xAccount = access.xAccount!;
   if (xHandle && normalizeXHandle(xHandle) !== normalizeXHandle(xAccount.username)) {
     return NextResponse.json(
       { error: "Submitted X handle does not match your bound X account." },
@@ -226,6 +230,28 @@ export async function POST(
   const result = await updateDbClaim(db, taskId, wallet, xAccount.username, mode, maxWinners, dist, task);
   if (result.error) {
     return NextResponse.json({ error: result.error }, { status: 400 });
+  }
+  if (result.payment && !result.alreadyClaimed) {
+    const rewardNotifications: Array<{ user: NonNullable<typeof access.user>; notification: Notification }> = [];
+    await updateDb((draft) => {
+      const user = draft.users.find((item) => item.id === access.user?.id);
+      if (!user) return;
+      const notification = addNotification(draft, {
+        userId: user.id,
+        type: "task_completed",
+        title: "Reward paid",
+        body: `Your reward for "${task.title}" was paid: ${result.payment!.amount} ${result.payment!.tokenSymbol || "USDC"}.`,
+        taskId
+      });
+      rewardNotifications.push({ user: { ...user }, notification });
+    });
+    await Promise.allSettled(rewardNotifications.map((item) =>
+      sendEmailNotification({
+        user: item.user,
+        notification: item.notification,
+        reason: "reward"
+      })
+    ));
   }
   return NextResponse.json({ success: true, alreadyClaimed: Boolean(result.alreadyClaimed), payment: result.payment });
 }

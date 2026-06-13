@@ -71,11 +71,11 @@ export default function AppChrome({ children }: { children: ReactNode }) {
             <Image
               className={styles.logo}
               src="/icon.png"
-              alt="ai2human"
+              alt="AI2Human"
               width={28}
               height={28}
             />
-            <span className={styles.brandName}>ai2human</span>
+            <span className={styles.brandName}>AI2Human</span>
           </Link>
 
           <nav className={styles.nav}>

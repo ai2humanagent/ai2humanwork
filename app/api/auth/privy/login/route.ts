@@ -8,6 +8,7 @@ import {
 } from "../../../../lib/auth";
 import { extractPrivyIdentity, getPrivyClient, isPrivyServerConfigured } from "../../../../lib/privy";
 import { updateDb, type UserAccount } from "../../../../lib/store";
+import { isUsableContactEmail } from "../../../../lib/operatorAccess";
 
 export const runtime = "nodejs";
 
@@ -71,6 +72,15 @@ export async function POST(request: Request) {
         authProvider: "privy",
         privyUserId: identity.privyUserId,
         walletAddress,
+        ...(isUsableContactEmail(identity.email)
+          ? {
+              contactEmail: identity.email,
+              notificationPreferences: {
+                emailTaskAlerts: true,
+                emailRewardAlerts: true
+              }
+            }
+          : {}),
         ...(identity.xAccount
           ? {
               xAccount: {
@@ -82,12 +92,21 @@ export async function POST(request: Request) {
       };
       db.users.unshift(user);
     } else {
-      user.email = identity.email;
+      if (isUsableContactEmail(identity.email) || !isUsableContactEmail(user.email)) {
+        user.email = identity.email;
+      }
       user.authProvider = "privy";
       user.privyUserId = identity.privyUserId;
       if (walletAddress) {
         user.walletAddress = walletAddress;
       }
+      if (!user.contactEmail && isUsableContactEmail(identity.email)) {
+        user.contactEmail = identity.email;
+      }
+      user.notificationPreferences = {
+        emailTaskAlerts: user.notificationPreferences?.emailTaskAlerts !== false,
+        emailRewardAlerts: user.notificationPreferences?.emailRewardAlerts !== false
+      };
       if (identity.xAccount) {
         user.xAccount = {
           ...identity.xAccount,

@@ -806,6 +806,66 @@
   max-width: 460px;
 }
 
+.reviewConclusion {
+  border-left: 2px solid #60a5fa;
+  padding-left: 10px;
+}
+
+.reviewConclusion > span {
+  display: block;
+  color: #93c5fd;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.reviewConclusion .sourceBadge {
+  margin-top: 8px;
+}
+
+.articleLinkCell {
+  min-width: 210px;
+  max-width: 280px;
+}
+
+.articleUrlLink {
+  display: inline-flex;
+  max-width: 260px;
+  color: #93c5fd;
+  font-family: "SF Mono", "Fira Code", monospace;
+  font-size: 11px;
+  line-height: 1.45;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.articleUrlLink:hover {
+  color: #bfdbfe;
+  text-decoration: underline;
+}
+
+.articleTextCell {
+  min-width: 300px;
+  max-width: 420px;
+}
+
+.articleTextCell p {
+  margin: 0;
+  color: #d4d9e5;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.articleTextCell span {
+  display: block;
+  margin-top: 8px;
+  color: #70798a;
+  font-size: 10px;
+  line-height: 1.4;
+}
+
 .reviewShowcase {
   margin: 14px 0 22px;
   border: 1px solid #263244;
@@ -993,6 +1053,42 @@
   padding: 6px 8px;
 }
 
+.consensusBadge {
+  display: inline-flex;
+  width: fit-content;
+  max-width: 100%;
+  margin-top: 8px;
+  border: 1px solid rgba(34, 197, 94, 0.35);
+  border-radius: 999px;
+  color: #bbf7d0;
+  background: rgba(34, 197, 94, 0.08);
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.25;
+  padding: 6px 8px;
+}
+
+.copyRiskBadge {
+  display: inline-flex;
+  width: fit-content;
+  max-width: 100%;
+  margin-top: 8px;
+  border: 1px solid rgba(251, 191, 36, 0.36);
+  border-radius: 999px;
+  color: #f8d58a;
+  background: rgba(251, 191, 36, 0.08);
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.25;
+  padding: 6px 8px;
+}
+
+.copyRiskHigh {
+  border-color: rgba(248, 113, 113, 0.42);
+  color: #fecaca;
+  background: rgba(248, 113, 113, 0.08);
+}
+
 .sourceSubline {
   margin-top: 6px;
   color: #6b7280;
@@ -1071,6 +1167,32 @@
   font-size: 13px;
 }
 
+.modelReviewList {
+  display: grid;
+  gap: 6px;
+  margin-top: 12px;
+  border-top: 1px solid #1f2937;
+  padding-top: 10px;
+}
+
+.modelReviewItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border: 1px solid #263244;
+  border-radius: 8px;
+  background: #0a1018;
+  color: #8b95a7;
+  font-size: 11px;
+  line-height: 1.2;
+  padding: 8px 10px;
+}
+
+.modelReviewItem strong {
+  color: #d7deea;
+}
+
 .reviewFootnote {
   display: flex;
   justify-content: space-between;
@@ -1108,6 +1230,76 @@
   margin-top: 8px;
   color: #7b8495;
   font-size: 10px;
+}
+
+.auditTrail {
+  margin-top: 12px;
+  border: 1px dashed #334155;
+  border-radius: 8px;
+  background: #080d13;
+  padding: 0;
+}
+
+.auditTrail summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  list-style: none;
+  padding: 9px 10px;
+}
+
+.auditTrail summary::-webkit-details-marker {
+  display: none;
+}
+
+.auditTrail summary span {
+  color: #7b8495;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.auditTrail summary strong {
+  color: #cbd5e1;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.auditTrail[open] summary {
+  border-bottom: 1px solid #1f2937;
+}
+
+.auditTrail p {
+  margin: 0;
+  padding: 10px;
+  color: #b8c2d2;
+  font-family: "SF Mono", "Fira Code", monospace;
+  font-size: 11px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.auditMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  border-top: 1px solid #1f2937;
+  padding: 8px 10px 10px;
+}
+
+.auditMeta span {
+  border: 1px solid #263244;
+  border-radius: 999px;
+  background: #0d1420;
+  color: #7b8495;
+  font-size: 10px;
+  line-height: 1;
+  padding: 5px 7px;
 }
 
 .tableWrap {

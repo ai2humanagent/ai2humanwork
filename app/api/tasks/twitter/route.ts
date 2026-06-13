@@ -77,7 +77,7 @@ export async function POST(request: Request) {
     acceptance: config.acceptance,
     taskType: type as TaskType,
     campaign: {
-      requesterName: "ai2human Official",
+      requesterName: "AI2Human Official",
       requesterHandle: "@ai2humanwork",
       platform: config.platform,
       action: config.action,
@@ -125,7 +125,7 @@ export async function PUT() {
       acceptance: "Follow the @ai2humanwork X account and click Verify to claim your reward.",
       taskType: "twitter_follow",
       campaign: {
-        requesterName: "ai2human Official",
+        requesterName: "AI2Human Official",
         requesterHandle: "@ai2humanwork",
         platform: "x",
         action: "follow",
@@ -152,7 +152,7 @@ export async function PUT() {
       acceptance: "Find and like our latest announcement post, then click Verify.",
       taskType: "twitter_like",
       campaign: {
-        requesterName: "ai2human Official",
+        requesterName: "AI2Human Official",
         requesterHandle: "@ai2humanwork",
         platform: "x",
         action: "like",
@@ -179,7 +179,7 @@ export async function PUT() {
       acceptance: "Repost the announcement to your timeline and click Verify.",
       taskType: "twitter_retweet",
       campaign: {
-        requesterName: "ai2human Official",
+        requesterName: "AI2Human Official",
         requesterHandle: "@ai2humanwork",
         platform: "x",
         action: "retweet",
@@ -206,7 +206,7 @@ export async function PUT() {
       acceptance: "Follow @base on X and click Verify to claim your reward.",
       taskType: "twitter_follow",
       campaign: {
-        requesterName: "ai2human Official",
+        requesterName: "AI2Human Official",
         requesterHandle: "@ai2humanwork",
         platform: "x",
         action: "follow",
@@ -233,7 +233,7 @@ export async function PUT() {
       acceptance: "Find and like the latest @base tweet, then click Verify.",
       taskType: "twitter_like",
       campaign: {
-        requesterName: "ai2human Official",
+        requesterName: "AI2Human Official",
         requesterHandle: "@ai2humanwork",
         platform: "x",
         action: "like",
@@ -260,7 +260,7 @@ export async function PUT() {
       acceptance: "Follow @bankrbot on X and click Verify to claim your reward.",
       taskType: "twitter_follow",
       campaign: {
-        requesterName: "ai2human Official",
+        requesterName: "AI2Human Official",
         requesterHandle: "@ai2humanwork",
         platform: "x",
         action: "follow",

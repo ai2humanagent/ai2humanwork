@@ -7,6 +7,7 @@ import { readDb } from "../../../../lib/store";
 import {
   X_OAUTH_STATE_COOKIE,
   createCodeChallenge,
+  encodeXOAuth1RequestState,
   encodeXOAuthState,
   getXOAuth1Config,
   getXOAuthConfig,
@@ -186,18 +187,29 @@ async function startOAuth1(request: Request, userId: string) {
     return redirectToProfile(request, { x_error: "x_oauth_failed" });
   }
 
-  saveXOAuth1RequestState({
+  const statePayload = {
     requestToken: payload.oauth_token,
     requestTokenSecret: payload.oauth_token_secret,
     userId,
     returnTo: "/app/profile",
     callbackUri,
     expiresAt: Date.now() + 10 * 60 * 1000
-  });
+  };
+  saveXOAuth1RequestState(statePayload);
 
   const authorizeUrl = new URL(`${apiBaseUrl}/oauth/authorize`);
   authorizeUrl.searchParams.set("oauth_token", payload.oauth_token);
-  return NextResponse.redirect(authorizeUrl);
+  const redirect = NextResponse.redirect(authorizeUrl);
+  redirect.cookies.set({
+    name: X_OAUTH_STATE_COOKIE,
+    value: encodeXOAuth1RequestState(statePayload),
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 10 * 60
+  });
+  return redirect;
 }
 
 export async function GET(request: Request) {
@@ -207,7 +219,8 @@ export async function GET(request: Request) {
   }
   const requestedWallet = normalizeWalletAddress(new URL(request.url).searchParams.get("wallet"));
   let userId = auth.user.id;
-  if (requestedWallet) {
+  const authWallet = normalizeWalletAddress(auth.user.walletAddress);
+  if (requestedWallet && requestedWallet !== authWallet) {
     const db = await readDb();
     const walletUser = db.users.find(
       (user) => String(user.walletAddress || "").toLowerCase() === requestedWallet

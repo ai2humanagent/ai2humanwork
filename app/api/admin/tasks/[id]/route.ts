@@ -68,6 +68,7 @@ export async function GET(
       budget: task.budget,
       deadline: task.deadline,
       campaign: task.campaign,
+      reviewAnchor: task.reviewAnchor,
       evidence: task.evidence,
       assignee: task.assignee,
       drawResult: task.drawResult,

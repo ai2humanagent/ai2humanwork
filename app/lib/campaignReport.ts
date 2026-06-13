@@ -22,6 +22,13 @@ export type PublicArticleWinner = {
   prizeAmount: string;
   status: string;
   sourceLabel: string;
+  modelConsensusLabel: string;
+  modelReviews: Array<{
+    providerLabel: string;
+    model?: string;
+    status: string;
+    score?: number;
+  }>;
   reviewedTextExcerpt: string;
   reviewSummary: string;
   rubric: Array<{ key: string; value: number }>;
@@ -51,7 +58,7 @@ function splitSourceAndReason(review: string | undefined) {
 export function articleReviewSourceLabel(submission: ArticleSubmission) {
   const audit = submission.aiRubric?.audit;
   if (audit?.contentSource === "snapshot_fallback") {
-    return "Snapshot fallback";
+    return "Article text fallback";
   }
   if (audit?.contentSource === "x_live") {
     if (audit.fetchSource === "oembed") return "Live X embed";
@@ -100,6 +107,28 @@ function rubricEntries(submission: ArticleSubmission) {
     });
 }
 
+function modelReviews(submission: ArticleSubmission) {
+  return (submission.aiRubric?.audit?.modelReviews || []).map((item) => ({
+    providerLabel: item.providerLabel,
+    model: item.model,
+    status: item.status,
+    score: item.score
+  }));
+}
+
+function modelConsensusLabel(submission: ArticleSubmission) {
+  const reviews = submission.aiRubric?.audit?.modelReviews || [];
+  if (!reviews.length) {
+    return submission.aiRubric?.audit?.model ? `Model: ${submission.aiRubric.audit.model}` : "";
+  }
+  const active = reviews.filter((item) => item.status === "scored").length;
+  const total = reviews.length;
+  if (submission.aiRubric?.audit?.aggregateStrategy === "weighted_consensus" || active > 1) {
+    return `Weighted consensus · ${active}/${total} models`;
+  }
+  return `${active}/${total} model active`;
+}
+
 export function getPublicArticleWinners(task: Task, submissions: ArticleSubmission[]) {
   const minimumScore = getArticleContestMinimumWinnerScore(task.rewardDistribution);
   return submissions
@@ -125,6 +154,8 @@ export function getPublicArticleWinners(task: Task, submissions: ArticleSubmissi
       prizeAmount: submission.prizeAmount || "",
       status: submission.status,
       sourceLabel: articleReviewSourceLabel(submission),
+      modelConsensusLabel: modelConsensusLabel(submission),
+      modelReviews: modelReviews(submission),
       reviewedTextExcerpt: submission.aiRubric?.audit?.reviewedTextExcerpt || "",
       reviewSummary: publicReviewSummary(submission),
       rubric: rubricEntries(submission),
@@ -144,7 +175,9 @@ export function deriveCampaignLifecycle(input: {
   const mode = task.rewardDistribution?.mode || "fcfs";
   const isArticleContest = mode === "ranked_article_contest";
   const hasSubmissions = submissions.length > 0;
-  const hasReviewed = isArticleContest && submissions.some((submission) => submission.aiScore != null);
+  const hasFinalReview = isArticleContest && (task.evidence || []).some((item) =>
+    String(item.content || "").startsWith("article_review:")
+  );
   const publicWinners = isArticleContest ? getPublicArticleWinners(task, submissions) : [];
   const hasWinners = isArticleContest
     ? publicWinners.length > 0
@@ -167,7 +200,7 @@ export function deriveCampaignLifecycle(input: {
       ? "completed"
       : isPaying
         ? "paying"
-        : hasReviewed
+        : hasFinalReview
           ? "reviewed"
           : isClosed
             ? "closed"

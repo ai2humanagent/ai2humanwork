@@ -50,6 +50,9 @@ type Task = {
     requesterHandle?: string;
     platform: "x" | "real_world";
     action: string;
+    requiresImage?: boolean;
+    requiredMentions?: string[];
+    requiredHashtags?: string[];
     label?: string;
     targetUrl?: string;
     targetLabel?: string;
@@ -86,7 +89,9 @@ type Task = {
 type AuthPayload = {
   user: {
     id: string;
+    email?: string;
     walletAddress?: string;
+    contactEmail?: string;
     xAccount?: {
       subject: string;
       username: string;
@@ -193,11 +198,15 @@ function useCountdown(targetDate: string | undefined) {
   return remaining;
 }
 
-function distributionModeLabel(mode?: string): string {
+function distributionModeLabel(mode?: string, action?: string, requiresImage?: boolean): string {
   if (mode === "fcfs") return "FCFS";
   if (mode === "lucky_draw") return "Lucky Draw";
   if (mode === "equal") return "Equal Split";
-  if (mode === "ranked_article_contest") return "Ranked Article";
+  if (mode === "ranked_article_contest") {
+    if (action === "banner_image_contest") return "Banner Contest";
+    if (requiresImage) return "Image Post Contest";
+    return "Ranked Article";
+  }
   return "FCFS";
 }
 
@@ -230,9 +239,18 @@ function actionLabel(task: Task) {
 }
 
 function canClaim(task: Task, auth: AuthPayload | null) {
+  if (task.rewardDistribution?.mode === "ranked_article_contest" || task.taskType === "x_article" || task.campaign?.action === "x_article_contest") return false;
   if (!["created", "ai_failed"].includes(task.status)) return false;
   if (!auth?.human?.id || !auth?.user?.walletAddress) return false;
+  if (!hasUsableEmail(auth.user.contactEmail) && !hasUsableEmail(auth.user.email)) return false;
+  if (!auth.user.xAccount?.username) return false;
   return true;
+}
+
+function hasUsableEmail(email?: string) {
+  const value = String(email || "").trim().toLowerCase();
+  if (!value || value.endsWith("@privy.local")) return false;
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
 
 function isClaimedByCurrentUser(task: Task, auth: AuthPayload | null) {
@@ -333,8 +351,10 @@ export default function TaskDetailClient({
   const [articleSubmission, setArticleSubmission] = useState<ArticleSubmission | null>(null);
   const [articleSubmissionLoaded, setArticleSubmissionLoaded] = useState(false);
   const [articleSubmitting, setArticleSubmitting] = useState(false);
+  const [articleSubmitStatus, setArticleSubmitStatus] = useState("");
+  const [articleErrorModal, setArticleErrorModal] = useState("");
+  const [articleUpdateLocked, setArticleUpdateLocked] = useState(false);
   const [articleUrl, setArticleUrl] = useState("");
-  const [articleTitle, setArticleTitle] = useState("");
   const [articleContent, setArticleContent] = useState("");
   // Prioritize external wallet (MetaMask etc.) over Privy embedded wallet
   const rawWallet =
@@ -347,19 +367,20 @@ export default function TaskDetailClient({
 
   const isTwitterTask = ["twitter_follow", "twitter_like", "twitter_retweet", "twitter_comment"].includes(task.taskType || "");
   const isArticleContest = task.rewardDistribution?.mode === "ranked_article_contest";
+  const isBannerImageContest = isArticleContest && task.campaign?.action === "banner_image_contest";
+  const requiresAttachedImage = isArticleContest && !isBannerImageContest && Boolean(task.campaign?.requiresImage);
 
   // Countdown for reward card
   const dist = task.rewardDistribution;
   const countdownTarget = dist?.drawTime || task.deadline || undefined;
   const countdown = useCountdown(countdownTarget);
-  const distMode = distributionModeLabel(dist?.mode);
+  const distMode = distributionModeLabel(dist?.mode, task.campaign?.action, task.campaign?.requiresImage);
   const maxWinners = dist?.maxWinners || 1;
   const boundXAccount = auth?.user.xAccount;
   const hasBoundXAccount = Boolean(boundXAccount?.username);
+  const hasContactEmail = hasUsableEmail(auth?.user.contactEmail) || hasUsableEmail(auth?.user.email);
   const isTestArticleContest = isArticleContest && task.id.startsWith("x-article-contest-test-");
-  const articleWallet = isTestArticleContest
-    ? connectedWallet || auth?.user.walletAddress || rawWallet
-    : connectedWallet;
+  const articleWallet = connectedWallet;
 
   function cacheXHandle(handle: string) {
     setXHandle(handle);
@@ -368,17 +389,48 @@ export default function TaskDetailClient({
     }
   }
 
-  function requireBoundXAccount() {
+  function requireTaskAccess(action: "do tasks" | "claim rewards" | "submit an article" = "do tasks") {
     if (!connectedWallet) {
       login();
       return false;
     }
+    if (action === "submit an article" && (isTestArticleContest || isBannerImageContest)) {
+      if (!hasContactEmail) {
+        setError(`Add a contact email from Profile before you ${isBannerImageContest ? "submit a banner" : "submit an article"}.`);
+        router.push("/app/profile");
+        return false;
+      }
+      return true;
+    }
+    if (!hasContactEmail && !hasBoundXAccount) {
+      setError(`Add a contact email and bind your X account from Profile before you ${action}.`);
+      router.push("/app/profile");
+      return false;
+    }
+    if (!hasContactEmail) {
+      setError(`Add a contact email from Profile before you ${action}.`);
+      router.push("/app/profile");
+      return false;
+    }
     if (!hasBoundXAccount) {
-      setError("Bind your X account from Profile before doing tasks.");
+      setError(`Bind your X account from Profile before you ${action}.`);
       router.push("/app/profile");
       return false;
     }
     return true;
+  }
+
+  async function refreshAndCheckTaskAccess(action: "do tasks" | "claim rewards" | "submit an article") {
+    const latestAuth = await loadAuth();
+    if (!latestAuth) {
+      return false;
+    }
+    const latestHasContactEmail = hasUsableEmail(latestAuth.user.contactEmail) || hasUsableEmail(latestAuth.user.email);
+    const latestHasBoundXAccount = Boolean(latestAuth.user.xAccount?.username);
+    if (action === "submit an article" && (isTestArticleContest || isBannerImageContest)) {
+      return latestHasContactEmail;
+    }
+    return latestHasContactEmail && latestHasBoundXAccount;
   }
 
   // Load quest progress from API
@@ -425,10 +477,10 @@ export default function TaskDetailClient({
       if (!res.ok) return;
       const data = await res.json();
       const submission = data.submission as ArticleSubmission | null;
+      setArticleUpdateLocked(Boolean(data.updateLocked));
       if (submission) {
         setArticleSubmission(submission);
         setArticleUrl(submission.articleUrl);
-        setArticleTitle(submission.title);
         setArticleContent(submission.contentSnapshot);
       }
       setArticleSubmissionLoaded(true);
@@ -438,9 +490,24 @@ export default function TaskDetailClient({
   }
 
   // Per-task action click handler — persists to DB
-  async function handleTaskAction(taskKey: string) {
+  async function handleTaskAction(taskKey: string, intentUrl?: string) {
     const walletAddress = connectedWallet;
-    if (!requireBoundXAccount() || !walletAddress) return;
+    if (!walletAddress) {
+      login();
+      return;
+    }
+    const popup = intentUrl && typeof window !== "undefined"
+      ? window.open("about:blank", "_blank", "width=600,height=400,toolbar=no,menubar=no")
+      : null;
+    const hasLatestAccess = await refreshAndCheckTaskAccess("do tasks");
+    if (!hasLatestAccess) {
+      popup?.close();
+      if (!requireTaskAccess("do tasks")) return;
+      return;
+    }
+    if (popup && intentUrl) {
+      popup.location.href = intentUrl;
+    }
     try {
       const res = await fetch(`/api/tasks/${initialTask.id}/quest-progress`, {
         method: "POST",
@@ -467,7 +534,15 @@ export default function TaskDetailClient({
   // Per-task verify handler — simple DB write, no wallet signature needed
   async function handleTaskVerify(taskKey: string) {
     const walletAddress = connectedWallet;
-    if (!requireBoundXAccount() || !walletAddress) return;
+    if (!walletAddress) {
+      login();
+      return;
+    }
+    const hasLatestAccess = await refreshAndCheckTaskAccess("do tasks");
+    if (!hasLatestAccess) {
+      if (!requireTaskAccess("do tasks")) return;
+      return;
+    }
     const state = taskStates[taskKey];
     if (!state?.actionClicked || state.verifying || state.verified) {
       return;
@@ -513,7 +588,7 @@ export default function TaskDetailClient({
   // Build the claim message (must match server-side)
   function buildClaimMessage(taskId: string, wallet: string): string {
     return [
-      "ai2human Reward Claim",
+      "AI2Human Reward Claim",
       `Task: ${taskId}`,
       `Wallet: ${wallet.toLowerCase()}`,
       "I am claiming my lucky draw reward."
@@ -618,11 +693,8 @@ export default function TaskDetailClient({
 
   // Claim reward — triggers Google reCAPTCHA first
   async function handleClaimReward() {
-    if (!requireBoundXAccount()) return;
-    if (!boundXAccount?.username) {
-      setError("Bind your X account from Profile before claiming.");
-      return;
-    }
+    if (!requireTaskAccess("claim rewards")) return;
+    if (!boundXAccount?.username) return;
     cacheXHandle(boundXAccount.username);
     setError("");
     const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
@@ -687,7 +759,7 @@ export default function TaskDetailClient({
     }
   }
 
-  async function loadAuth() {
+  async function loadAuth(): Promise<AuthPayload | null> {
     const payload = await loadAuthWithPrivySession<AuthPayload>({
       authenticated,
       getAccessToken,
@@ -695,7 +767,7 @@ export default function TaskDetailClient({
     });
     if (!payload) {
       setAuth(null);
-      return;
+      return null;
     }
     setAuth(payload);
     if (payload.user.xAccount?.username) {
@@ -704,6 +776,7 @@ export default function TaskDetailClient({
     if (payload.human?.handle) {
       setExecutorHandle((current) => current || `@${payload.human?.handle}`);
     }
+    return payload;
   }
 
   useEffect(() => {
@@ -956,15 +1029,64 @@ export default function TaskDetailClient({
   async function submitArticle() {
     setError("");
     setMessage("");
+    setArticleErrorModal("");
+    setArticleSubmitStatus("Preparing submission...");
     const walletAddress = articleWallet;
     if (!walletAddress) {
+      setArticleSubmitStatus("");
       login();
       return;
     }
-    if (!isTestArticleContest && !requireBoundXAccount()) return;
 
     setArticleSubmitting(true);
+    const latestAuth = await loadAuth();
+    if (!latestAuth) {
+      setArticleSubmitting(false);
+      setArticleSubmitStatus("");
+      login();
+      return;
+    }
+    setArticleSubmitStatus("Checking profile requirements...");
+    const latestHasContactEmail = hasUsableEmail(latestAuth.user.contactEmail) || hasUsableEmail(latestAuth.user.email);
+    const latestHasBoundXAccount = Boolean(latestAuth.user.xAccount?.username);
+    if (isTestArticleContest || isBannerImageContest) {
+      if (!latestHasContactEmail) {
+        setArticleSubmitting(false);
+        setArticleSubmitStatus("");
+        setError(`Add a contact email from Profile before you ${isBannerImageContest ? "submit a banner" : "submit an article"}.`);
+        router.push("/app/profile");
+        return;
+      }
+    } else {
+      if (!latestHasContactEmail && !latestHasBoundXAccount) {
+        setArticleSubmitting(false);
+        setArticleSubmitStatus("");
+        setError("Add a contact email and bind your X account from Profile before you submit an article.");
+        router.push("/app/profile");
+        return;
+      }
+      if (!latestHasContactEmail) {
+        setArticleSubmitting(false);
+        setArticleSubmitStatus("");
+        setError("Add a contact email from Profile before you submit an article.");
+        router.push("/app/profile");
+        return;
+      }
+      if (!latestHasBoundXAccount) {
+        setArticleSubmitting(false);
+        setArticleSubmitStatus("");
+        setError("Bind your X account from Profile before you submit an article.");
+        router.push("/app/profile");
+        return;
+      }
+    }
+
     try {
+      setArticleSubmitStatus(
+        isBannerImageContest
+          ? "Checking banner image URL. This can take a few seconds..."
+          : "Checking live X link. This can take a few seconds..."
+      );
       const response = await fetch(`/api/tasks/${task.id}/article-submissions`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -972,13 +1094,13 @@ export default function TaskDetailClient({
         body: JSON.stringify({
           wallet: walletAddress.toLowerCase(),
           articleUrl,
-          title: articleTitle,
           contentSnapshot: articleContent
         })
       });
       const payload = (await response.json().catch(() => ({}))) as {
         error?: string;
         submission?: ArticleSubmission;
+        updateLocked?: boolean;
       };
       if (!response.ok) {
         throw new Error(payload.error || "Unable to submit article.");
@@ -986,14 +1108,22 @@ export default function TaskDetailClient({
       if (payload.submission) {
         setArticleSubmission(payload.submission);
         setArticleUrl(payload.submission.articleUrl);
-        setArticleTitle(payload.submission.title);
         setArticleContent(payload.submission.contentSnapshot);
       }
-      setMessage("Article submitted. It will be reviewed after the deadline.");
+      setArticleSubmitStatus("Saved.");
+      setArticleUpdateLocked(Boolean(payload.updateLocked));
+      setMessage(
+        isBannerImageContest
+          ? "Banner submitted. Final scores and ranking will be shown after the contest ends."
+          : "Article submitted. Final scores and ranking will be shown after the contest ends."
+      );
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : "Unable to submit article.");
+      const errorMessage = submitError instanceof Error ? submitError.message : "Unable to submit article.";
+      setError(errorMessage);
+      setArticleErrorModal(errorMessage);
     } finally {
       setArticleSubmitting(false);
+      setArticleSubmitStatus("");
     }
   }
 
@@ -1176,13 +1306,18 @@ export default function TaskDetailClient({
         : [
             { rank: 1, amount: "50 USDC", slots: 1, label: "1st place" },
             { rank: 2, amount: "20 USDC", slots: 1, label: "2nd place" },
-            { rank: 3, amount: "10 USDC", slots: 2, label: "3rd place" }
+            { rank: 3, amount: "10 USDC", slots: 3, label: "3rd place" }
           ];
       const articleDeadlineEnded = countdown.ended || task.taskState === "closed" || task.taskState === "refunded";
       const articleStatus = articleSubmission?.status || "not submitted";
       const canSubmitArticle = Boolean(
-        articleWallet && (hasBoundXAccount || isTestArticleContest) && !articleDeadlineEnded
+        articleWallet &&
+          hasContactEmail &&
+          (hasBoundXAccount || isTestArticleContest || isBannerImageContest) &&
+          !articleDeadlineEnded &&
+          !articleUpdateLocked
       );
+      const articleFormLocked = articleUpdateLocked || articleSubmission?.status === "paid";
 
       return (
         <main className={styles.page}>
@@ -1218,19 +1353,85 @@ export default function TaskDetailClient({
                   </div>
 
                   <div className={styles.qnDesc}>
-                    <p className={styles.qnDescTitle}>Submit your X article</p>
-                    <div className={styles.qnDescContent}>
-                      <p>{task.campaign?.brief || task.acceptance}</p>
-                      {isTestArticleContest ? (
-                        <p>
-                          Test mode: X binding is bypassed. The X URL author handle will be used for this submission.
-                        </p>
-                      ) : (
-                        <p>
-                          Your article URL must be from X and the author handle in the URL must match your bound X account
-                          {boundXAccount?.username ? ` (@${boundXAccount.username})` : ""}.
-                        </p>
+                    <div className={styles.articleBriefHeader}>
+                      <span className={styles.articleEyebrow}>{isBannerImageContest ? "Creative contest" : requiresAttachedImage ? "Image post contest" : "Writing contest"}</span>
+                      <p className={styles.qnDescTitle}>{isBannerImageContest ? "Submit your banner image" : requiresAttachedImage ? "Submit your X post with image" : "Submit your X article or thread"}</p>
+                      <p className={styles.articleBriefLead}>{task.campaign?.brief || task.acceptance}</p>
+                      {!isBannerImageContest && (
+                      <div className={styles.articleRequiredTags}>
+                        <span>Required in your X post</span>
+                        <strong>@ai2humanwork</strong>
+                        <strong>#A2H</strong>
+                      </div>
                       )}
+                    </div>
+
+                    <div className={styles.articleResourcePanel}>
+                      <div>
+                        <p className={styles.articleMiniTitle}>Reference material</p>
+                        <p className={styles.articleMiniCopy}>
+                          {isBannerImageContest
+                            ? "Use these pages to understand the AI2Human brand before designing. Strong banner submissions should feel sharp, recognizable, and native to our execution-network story."
+                            : "Use these pages to understand AI2Human before writing. Strong submissions should explain the loop: task, human execution, proof, verification, and settlement."}
+                        </p>
+                      </div>
+                      <div className={styles.articleResourceLinks}>
+                        <Link href="/whitepaper">Whitepaper</Link>
+                        <Link href="/protocol">Protocol</Link>
+                        <Link href="/livedemo">Live demo</Link>
+                        <Link href="/token">$A2H token</Link>
+                      </div>
+                    </div>
+
+                    <div className={styles.articlePrizePanel}>
+                      <div className={styles.articlePrizeHeader}>
+                        <div>
+                          <span className={styles.articlePrizeEyebrow}>Prize ranking</span>
+                          <p>Winners are ranked after final results are locked.</p>
+                        </div>
+                        <strong>{dist?.totalPool || task.budget}</strong>
+                      </div>
+                      <div className={styles.articlePrizeGrid}>
+                        {articlePrizes.map((prize, index) => (
+                          <div key={`${prize.rank}-${index}`} className={styles.articlePrizeCard}>
+                            <span>{prize.label || `Rank #${prize.rank}`}</span>
+                            <strong>{prize.amount}</strong>
+                            {prize.slots && prize.slots > 1 && <p>{prize.slots} slots</p>}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className={styles.articleRuleGrid}>
+                      <div className={styles.articleRuleCard}>
+                        <span className={styles.articleRuleIndex}>01</span>
+                        <p className={styles.articleRuleTitle}>{isBannerImageContest ? "Public image URL required" : "X link required"}</p>
+                        <p>
+                          {isBannerImageContest
+                            ? "Submit a direct public image URL for your banner design. Add a contact email first so we can send task and payout updates."
+                            : requiresAttachedImage
+                            ? `Submit a public X post or thread with at least one attached image. The author must match your bound X account${boundXAccount?.username ? ` (@${boundXAccount.username})` : ""}. The image must fit DexScreener header specs: 3:1 ratio, at least 600px wide, PNG/JPG/WEBP/GIF, and 4.5MB or smaller. Add a contact email first so we can send task and payout updates.`
+                            : isTestArticleContest
+                            ? "Test mode only requires a contact email. The X URL author will be used for this submission."
+                            : `Your X URL author must match your bound X account${boundXAccount?.username ? ` (@${boundXAccount.username})` : ""}.`}
+                          {!isBannerImageContest && !requiresAttachedImage && " Add a contact email first so we can send task and payout updates."}
+                        </p>
+                      </div>
+                      <div className={styles.articleRuleCard}>
+                        <span className={styles.articleRuleIndex}>02</span>
+                        <p className={styles.articleRuleTitle}>One update only</p>
+                        <p>
+                          Submit carefully. Your {isBannerImageContest ? "image URL and design note" : requiresAttachedImage ? "X link and post text" : "X link and article text"} can only be updated once, then the submission is locked for fair review.
+                        </p>
+                      </div>
+                      <div className={styles.articleRuleCard}>
+                        <span className={styles.articleRuleIndex}>03</span>
+                        <p className={styles.articleRuleTitle}>Paid after review</p>
+                        <p>
+                          Winners are selected after final results are locked and paid by AI2Human. There is no manual claim
+                          button for this contest.
+                        </p>
+                      </div>
                     </div>
                   </div>
 
@@ -1241,26 +1442,25 @@ export default function TaskDetailClient({
                     </div>
                   )}
 
-                  {articleWallet && !hasBoundXAccount && !isTestArticleContest && (
+                  {articleWallet && (!hasContactEmail || (!hasBoundXAccount && !isTestArticleContest)) && (
                     <div className={styles.qnProfileNotice}>
-                      Bind your X account before submitting an article.
-                      <a href="/app/profile">→ Bind X Account</a>
-                    </div>
-                  )}
-
-                  {articleWallet && !hasBoundXAccount && isTestArticleContest && (
-                    <div className={styles.qnProfileNotice}>
-                      Test mode: X binding is bypassed for this article contest.
+                      {isBannerImageContest
+                        ? "Add a contact email before submitting a banner."
+                        : isTestArticleContest
+                          ? "Add a contact email before submitting an article."
+                          : "Add a contact email and bind your X account before submitting an article."}
+                      <a href="/app/profile">→ Complete Profile</a>
                     </div>
                   )}
 
                   {articleSubmission && (
                     <div className={styles.notice}>
                       <strong>Status:</strong> {articleStatus}
-                      {articleSubmission.aiScore != null ? ` · Score: ${articleSubmission.aiScore}/100` : ""}
-                      {articleSubmission.rank ? ` · Rank: #${articleSubmission.rank}` : ""}
-                      {articleSubmission.prizeAmount ? ` · Prize: ${articleSubmission.prizeAmount}` : ""}
-                      {articleSubmission.paymentExplorerUrl && (
+                      {!articleDeadlineEnded && " · Scores and ranking are hidden until the contest ends."}
+                      {articleDeadlineEnded && articleSubmission.aiScore != null ? ` · Score: ${articleSubmission.aiScore}/100` : ""}
+                      {articleDeadlineEnded && articleSubmission.rank ? ` · Rank: #${articleSubmission.rank}` : ""}
+                      {articleDeadlineEnded && articleSubmission.prizeAmount ? ` · Prize: ${articleSubmission.prizeAmount}` : ""}
+                      {articleDeadlineEnded && articleSubmission.paymentExplorerUrl && (
                         <>
                           {" · "}
                           <a href={articleSubmission.paymentExplorerUrl} target="_blank" rel="noreferrer">
@@ -1268,7 +1468,7 @@ export default function TaskDetailClient({
                           </a>
                         </>
                       )}
-                      {articleSubmission.aiReview && (
+                      {articleDeadlineEnded && articleSubmission.aiReview && (
                         <p className={styles.fieldHelp}>{articleSubmission.aiReview}</p>
                       )}
                     </div>
@@ -1276,43 +1476,41 @@ export default function TaskDetailClient({
 
                   <div className={styles.form}>
                     <div className={styles.field}>
-                      <label htmlFor="article-url">X article or thread link</label>
+                      <label htmlFor="article-url">{isBannerImageContest ? "Banner image URL" : requiresAttachedImage ? "X post or thread link" : "X article or thread link"}</label>
                       <input
                         id="article-url"
                         className={styles.input}
                         value={articleUrl}
                         onChange={(event) => setArticleUrl(event.target.value)}
-                        placeholder="https://x.com/yourhandle/status/..."
-                        disabled={articleSubmitting || articleSubmission?.status === "paid"}
+                        placeholder={isBannerImageContest ? "https://.../banner.png" : "https://x.com/yourhandle/status/..."}
+                        disabled={articleSubmitting || articleFormLocked}
                       />
-                      <p className={styles.fieldHelp}>Use the public X URL for the article, post, or first post of a thread.</p>
+                      <p className={styles.fieldHelp}>
+                        {isBannerImageContest
+                          ? "Use a direct public image URL for your banner design. PNG, JPG, WEBP, GIF, or AVIF all work. This link can only be changed once after submission."
+                          : requiresAttachedImage
+                            ? "Use the public X URL for the post or the first post of a thread. The X post must include at least one attached image, plus @ai2humanwork and #A2H. The image must fit DexScreener header specs: 3:1 ratio, at least 600px wide, PNG/JPG/WEBP/GIF, max 4.5MB. This link can only be changed once after submission."
+                            : "Use the public X URL for the article, post, or first post of a thread. This link can only be changed once after submission."}
+                      </p>
                     </div>
 
                     <div className={styles.field}>
-                      <label htmlFor="article-title">Title</label>
-                      <input
-                        id="article-title"
-                        className={styles.input}
-                        value={articleTitle}
-                        onChange={(event) => setArticleTitle(event.target.value)}
-                        placeholder="Your article title"
-                        disabled={articleSubmitting || articleSubmission?.status === "paid"}
-                      />
-                    </div>
-
-                    <div className={styles.field}>
-                      <label htmlFor="article-content">Article / thread text snapshot</label>
+                      <label htmlFor="article-content">{isBannerImageContest ? "Design note" : requiresAttachedImage ? "Post text" : "Article text"}</label>
                       <textarea
                         id="article-content"
                         className={styles.textarea}
                         value={articleContent}
                         onChange={(event) => setArticleContent(event.target.value)}
-                        placeholder="Paste the full article or full thread text here so it can be reviewed after the deadline."
+                        placeholder={isBannerImageContest ? "Explain the concept, style, layout choices, and why this banner fits AI2Human." : requiresAttachedImage ? "Paste the X post text here and include a short banner reason, for example: clean 3:1 layout, AI2Human colors, and readable logo for DexScreener." : "Paste the full article or full thread text here so it can be reviewed after the deadline."}
                         rows={10}
-                        disabled={articleSubmitting || articleSubmission?.status === "paid"}
+                        disabled={articleSubmitting || articleFormLocked}
                       />
                       <p className={styles.fieldHelp}>
-                        We try to fetch live X content first. For threads, paste the full thread here because X may only return the first post.
+                        {isBannerImageContest
+                          ? "AI review uses your banner image first and this note as supporting context. This field can only be updated once."
+                          : requiresAttachedImage
+                            ? "AI review ranks mainly from the attached image, and uses your short banner reason as supporting context. Longer filler text does not help. We reject images that do not match DexScreener header specs. If X blocks crawling or only returns part of a thread, this text is used as fallback. Keep it brief, ideally one or two sentences. This field can only be updated once."
+                            : "We read the X link first. If X blocks crawling or only returns part of a thread, this text is used for review. This field can only be updated once."}
                       </p>
                     </div>
 
@@ -1321,9 +1519,16 @@ export default function TaskDetailClient({
                         type="button"
                         className={styles.button}
                         onClick={submitArticle}
-                        disabled={!canSubmitArticle || articleSubmitting || articleSubmission?.status === "paid"}
+                        disabled={!canSubmitArticle || articleSubmitting || articleFormLocked}
                       >
-                        {articleSubmitting ? "Submitting..." : articleSubmission ? "Update submission" : "Submit article"}
+                        {articleSubmitting && <span className={styles.buttonSpinner} aria-hidden="true" />}
+                        <span>
+                          {articleSubmitting
+                            ? articleSubmitStatus || "Checking X link..."
+                            : articleSubmission
+                              ? "Update submission (1x max)"
+                              : isBannerImageContest ? "Submit banner" : requiresAttachedImage ? "Submit post" : "Submit article"}
+                        </span>
                       </button>
                       {articleSubmission?.articleUrl && (
                         <a
@@ -1332,32 +1537,24 @@ export default function TaskDetailClient({
                           rel="noreferrer"
                           className={styles.buttonGhost}
                         >
-                          Open X link
+                          {isBannerImageContest ? "Open image" : "Open X link"}
                         </a>
                       )}
                     </div>
-                  </div>
-                </div>
-
-                <div className={styles.qnForYou}>
-                  <div className={styles.qnForYouHead}>
-                    <h3 className={styles.qnForYouTitle}>Prize ranking</h3>
-                  </div>
-                  <div className={styles.qnForYouGrid}>
-                    {articlePrizes.map((prize, index) => (
-                      <div key={`${prize.rank}-${index}`} className={styles.qnQuestCard}>
-                        <div className={styles.qnQuestCardBg} />
-                        <div className={styles.qnQuestCardBody}>
-                          <p className={styles.qnQuestCardTitle}>
-                            {prize.label || `Rank #${prize.rank}`}
-                          </p>
-                          <div className={styles.qnQuestCardReward}>
-                            {prize.amount}
-                            {prize.slots && prize.slots > 1 ? ` · ${prize.slots} slots` : ""}
-                          </div>
-                        </div>
+                    {articleSubmitting && (
+                      <p className={styles.submitProgressHint}>
+                        {isBannerImageContest
+                          ? "We are validating the image URL and preparing it for AI review. This can take 10-20 seconds if the image host is slow."
+                          : requiresAttachedImage
+                            ? "We are validating the X URL, checking that the post includes an attached image, and fetching public post/thread text. This can take 10-20 seconds when X is slow."
+                            : "We are validating the X URL and fetching public post/thread text. This can take 10-20 seconds when X is slow."}
+                      </p>
+                    )}
+                    {articleUpdateLocked && (
+                      <div className={styles.articleLockedNotice}>
+                        Submission locked. You already used your one allowed update, so the {isBannerImageContest ? "image URL and design note" : requiresAttachedImage ? "X link and post text" : "X link and article text"} can no longer be changed.
                       </div>
-                    ))}
+                    )}
                   </div>
                 </div>
               </div>
@@ -1414,13 +1611,32 @@ export default function TaskDetailClient({
                       <span className={styles.qnChainName}>Base · USDC after review</span>
                     </div>
                   </div>
-                  <div className={styles.notice}>
-                    Submit first. After the deadline, admin runs AI review, ranks all articles, then pays ranked winners on-chain.
-                  </div>
+                    <div className={styles.notice}>
+                    Submit first. Your score is created when you submit or update. After the deadline, admin locks the final ranking from the current scores, then pays winners on-chain.
+                    </div>
                 </div>
               </div>
             </div>
           </div>
+
+          {articleErrorModal && (
+            <div className={styles.articleErrorOverlay} role="dialog" aria-modal="true" aria-labelledby="article-error-title">
+              <div className={styles.articleErrorModal}>
+                <div className={styles.articleErrorIcon}>!</div>
+                <h2 id="article-error-title" className={styles.articleErrorTitle}>Submission blocked</h2>
+                <p className={styles.articleErrorMessage}>{articleErrorModal}</p>
+                <p className={styles.articleErrorHelp}>
+                  We check the submitted X URL before saving. If X/FxTwitter/oEmbed/HTML checks return not found, the
+                  submission is rejected so fake links cannot enter the contest.
+                </p>
+                <div className={styles.articleErrorActions}>
+                  <button type="button" className={styles.articleErrorPrimary} onClick={() => setArticleErrorModal("")}>
+                    Edit X link
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </main>
       );
     }
@@ -1536,9 +1752,7 @@ export default function TaskDetailClient({
                                         type="button"
                                         className={styles.btn3dFace}
                                         onClick={() => {
-                                          if (!requireBoundXAccount()) return;
-                                          window.open(item.intentUrl, "_blank", "width=600,height=400,toolbar=no,menubar=no");
-                                          handleTaskAction(item.key);
+                                          handleTaskAction(item.key, item.intentUrl);
                                         }}
                                       >
                                         {item.icon}
@@ -1590,10 +1804,10 @@ export default function TaskDetailClient({
                 </div>
               )}
 
-              {connectedWallet && auth && !hasBoundXAccount && !isDone && (
+              {connectedWallet && auth && (!hasContactEmail || !hasBoundXAccount) && !isDone && (
                 <div className={styles.qnProfileNotice}>
-                  Bind your X account before doing tasks.
-                  <a href="/app/profile">→ Bind X Account</a>
+                  Add a contact email and bind your X account before doing tasks.
+                  <a href="/app/profile">→ Complete Profile</a>
                 </div>
               )}
 
@@ -1801,7 +2015,7 @@ export default function TaskDetailClient({
                       <button
                         type="button"
                         className={styles.btn3dFace}
-                        disabled={claimingReward || !hasBoundXAccount}
+                        disabled={claimingReward || !hasContactEmail || !hasBoundXAccount}
                         onClick={handleClaimReward}
                       >
                         {claimingReward ? "Claiming..." : "Claim Reward"}
@@ -1827,10 +2041,10 @@ export default function TaskDetailClient({
                 {!connectedWallet && (
                   <p className={styles.qnClaimTips}>Connect wallet to start earning</p>
                 )}
-                {connectedWallet && !hasBoundXAccount && !claimResult && (
-                  <p className={styles.qnClaimTips}>Bind your X account from Profile before doing tasks</p>
+                {connectedWallet && (!hasContactEmail || !hasBoundXAccount) && !claimResult && (
+                  <p className={styles.qnClaimTips}>Add contact email and bind X from Profile before doing tasks</p>
                 )}
-                {connectedWallet && hasBoundXAccount && !allTasksVerified && !claimResult && (
+                {connectedWallet && hasContactEmail && hasBoundXAccount && !allTasksVerified && !claimResult && (
                   <p className={styles.qnClaimTips}>Complete all tasks to claim</p>
                 )}
               </div>

@@ -1,22 +1,22 @@
-# ai2human — Human Fallback Infrastructure for AI Agents
+# AI2Human — Human Fallback Infrastructure for AI Agents
 
 > **Where blocked work becomes completed work, provable and payable onchain.**
 
-[![ai2human](public/brand/ai2human-social-hero.png)](https://ai2human.work)
+[![AI2Human](public/brand/ai2human-social-hero.png)](https://ai2human.work)
 
 **Website:** [ai2human.work](https://ai2human.work) | **Whitepaper:** [ai2human.work/whitepaper](https://ai2human.work/whitepaper)
 
 ---
 
-## What Is ai2human
+## What Is AI2Human
 
-ai2human is the two-way labor market where humans hire AI to take digital jobs, and AI hires humans when reality is required.
+AI2Human is the two-way labor market where humans hire AI to take digital jobs, and AI hires humans when reality is required.
 
 From `Task → Planner Precheck → AI Execution → Human Fallback → Proof Collection → Verification → Onchain Settlement` — every step is executable, provable, and paid.
 
 **We are not building a chatbot. We are building an execution market.** Our thesis is simple: the market does not need more generated answers. It needs completed tasks.
 
-Most AI products stop at output. ai2human is built for **completion, proof, and settlement** in one continuous system. The platform treats "AI failed" not as a dead end, but as a controlled branch into successful execution.
+Most AI products stop at output. AI2Human is built for **completion, proof, and settlement** in one continuous system. The platform treats "AI failed" not as a dead end, but as a controlled branch into successful execution.
 
 ---
 

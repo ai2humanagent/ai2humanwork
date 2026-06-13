@@ -10,10 +10,26 @@ export function normalizeXHandle(value: unknown) {
     .toLowerCase();
 }
 
+function hasUsableEmail(value: unknown) {
+  const email = String(value || "").trim().toLowerCase();
+  return Boolean(email && !email.endsWith("@privy.local") && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email));
+}
+
+function userIdentityScore(user: UserAccount) {
+  let score = 0;
+  if (hasUsableEmail(user.contactEmail) || hasUsableEmail(user.email)) score += 4;
+  if (user.xAccount?.username) score += 4;
+  if (user.humanId) score += 2;
+  if (user.privyUserId) score += 1;
+  return score;
+}
+
 export function findUserByWallet(db: Db, wallet: string): UserAccount | null {
   const normalized = String(wallet || "").trim().toLowerCase();
   if (!normalized) return null;
-  return db.users.find((user) => (user.walletAddress || "").toLowerCase() === normalized) || null;
+  const matches = db.users.filter((user) => (user.walletAddress || "").toLowerCase() === normalized);
+  if (!matches.length) return null;
+  return [...matches].sort((a, b) => userIdentityScore(b) - userIdentityScore(a))[0];
 }
 
 export async function getBoundXAccountForUser(user: UserAccount | null): Promise<BoundXAccount | null> {

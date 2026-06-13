@@ -6,11 +6,15 @@ import {
   type Task,
   type RewardDistribution,
   type RewardDistributionMode,
-  type EscrowDeposit
+  type EscrowDeposit,
+  type Notification,
+  type UserAccount
 } from "../../lib/store";
 import { appendEvidence } from "../../lib/taskEvidence";
 import { buildOfficialCampaignTask } from "../../lib/officialCampaignTasks.js";
 import { sortTasksForBoard } from "../../lib/taskBoard.js";
+import { isReadyForTaskNotifications } from "../../lib/operatorAccess";
+import { addNotification, sendEmailNotification } from "../../lib/notificationDelivery";
 import {
   executeEscrowDeposit,
   getEscrowWalletAddress,
@@ -204,16 +208,39 @@ export async function POST(request: Request) {
     });
   }
 
+  const taskNotifications: Array<{ user: UserAccount; notification: Notification }> = [];
+
   await updateDb((db) => {
     if (escrowDepositRecord) {
       db.escrowDeposits.unshift(escrowDepositRecord);
     }
     db.tasks.unshift(task);
+    for (const user of db.users) {
+      if (!isReadyForTaskNotifications(user)) continue;
+      const notification = addNotification(db, {
+        userId: user.id,
+        type: "task_assigned",
+        title: "New task available",
+        body: `"${task.title}" is now available. Open the task, complete the required proof, and settle after verification.`,
+        taskId: task.id
+      });
+      taskNotifications.push({ user: { ...user }, notification });
+    }
     if (agentId) {
       const ag = db.agents.find((a) => a.id === agentId);
       if (ag) ag.tasksPublished += 1;
     }
   });
+
+  await Promise.allSettled(
+    taskNotifications.map((item) =>
+      sendEmailNotification({
+        user: item.user,
+        notification: item.notification,
+        reason: "task"
+      })
+    )
+  );
 
   const response: Record<string, unknown> = { task };
   if (escrowDepositRecord) {

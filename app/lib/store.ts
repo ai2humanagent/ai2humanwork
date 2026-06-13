@@ -22,6 +22,7 @@ import {
 } from "./officialCampaignTasks.js";
 import { formatSettlementBudget } from "./assetLabels.js";
 import { supabase, isSupabaseEnabled } from "./supabase";
+import { parseArticleReviewAnchor, type ReviewAnchorRecord } from "./reviewAnchor";
 
 export type TaskType =
   | "twitter_follow"
@@ -74,6 +75,9 @@ export type Task = {
     requesterHandle?: string;
     platform: "x" | "real_world";
     action: string;
+    requiresImage?: boolean;
+    requiredMentions?: string[];
+    requiredHashtags?: string[];
     label?: string;
     targetUrl?: string;
     targetLabel?: string;
@@ -82,6 +86,16 @@ export type Task = {
     proofRequirements: string[];
     verificationChecks: string[];
     submissionFields?: string[];
+    reviewTarget?: {
+      projectName?: string;
+      projectAliases?: string[];
+      projectHandles?: string[];
+      projectUrls?: string[];
+      tokenSymbols?: string[];
+      contractAddresses?: string[];
+      requiredTopics?: string[];
+      thesis?: string;
+    };
   };
   agentId?: string;
   rewardDistribution?: RewardDistribution;
@@ -102,6 +116,8 @@ export type Task = {
   poolAddress?: string;
   /** Lucky draw result — set after draw is executed (when first winner claims) */
   drawResult?: LuckyDrawResult;
+  /** Final review anchor on Base, derived from evidence logs. */
+  reviewAnchor?: ReviewAnchorRecord;
 };
 
 export type EscrowDepositStatus = "pending" | "active" | "partial_refund" | "refunded" | "failed";
@@ -206,6 +222,11 @@ export type UserAccount = {
   authProvider?: "local" | "privy";
   privyUserId?: string;
   walletAddress?: string;
+  contactEmail?: string;
+  notificationPreferences?: {
+    emailTaskAlerts?: boolean;
+    emailRewardAlerts?: boolean;
+  };
   xAccount?: {
     subject: string;
     username: string;
@@ -299,12 +320,40 @@ export type ArticleReviewAudit = {
   fetchSource?: "fxtwitter_thread" | "fxtwitter_status" | "x_api_thread" | "x_api" | "syndication" | "oembed" | "html" | "snapshot_fallback";
   fetchAttempts?: string[];
   xFetchError?: string;
+  relevanceGate?: boolean;
+  relevanceSignals?: string[];
+  reviewTargetProject?: string;
+  copyRisk?: "possible" | "high";
+  copyRiskReason?: string;
+  copyMatchedSubmissionId?: string;
+  copySimilarity?: number;
   reviewedTextExcerpt?: string;
   reviewedTextLength?: number;
   model?: string;
-  provider?: "ai" | "ai_error";
+  provider?: "ai" | "ai_error" | "multi_model";
   latencyMs?: number;
   minimumWinnerScore?: number;
+  aggregateStrategy?: "weighted_consensus";
+  activeModelCount?: number;
+  skippedModelCount?: number;
+  modelReviews?: Array<{
+    providerId: string;
+    providerLabel: string;
+    model?: string;
+    weight: number;
+    status: "scored" | "failed" | "skipped";
+    score?: number;
+    review?: string;
+    rubric?: {
+      relevance?: number;
+      originality?: number;
+      clarity?: number;
+      evidence?: number;
+      narrative?: number;
+    };
+    latencyMs?: number;
+    error?: string;
+  }>;
 };
 
 export type ArticleReviewRubric = {
@@ -356,6 +405,14 @@ export type Db = {
   escrowDeposits: EscrowDeposit[];
   luckyDrawParticipants: LuckyDrawParticipant[];
   articleSubmissions: ArticleSubmission[];
+};
+
+type ProfileWriteSet<T> = {
+  result: T;
+  user?: UserAccount | null;
+  human?: Human | null;
+  task?: Task | null;
+  notifications?: Notification[];
 };
 
 export function makeSeedTasks(count: number): Task[] {
@@ -437,7 +494,7 @@ export function makeSeedTasks(count: number): Task[] {
       scenario.kind === "x"
         ? buildOfficialCampaignTask({
             templateId: template.id,
-            requesterName: "ai2human Official",
+            requesterName: "AI2Human Official",
             requesterHandle: "@ai2humanwork",
             targetUrl: targetUrls[i % targetUrls.length],
             budget: DEFAULT_X_TASK_BUDGET,
@@ -796,7 +853,7 @@ async function readDbFromFile(): Promise<Db> {
     Array.isArray(bundled?.payments) ? bundled.payments : []
   );
   return {
-    tasks: tasks.length > 0 ? tasks : makeSeedTasks(60),
+    tasks: (tasks.length > 0 ? tasks : makeSeedTasks(60)).map(attachDerivedTaskFields),
     waitlist: parsed.waitlist ?? [],
     payments,
     humans,
@@ -823,6 +880,11 @@ async function writeDbToFile(db: Db): Promise<void> {
 // ---- Supabase-backed storage ----
 // Maps snake_case DB columns to camelCase TypeScript fields
 
+type StoredXAccount = (Partial<UserAccount["xAccount"]> & {
+  __contactEmail?: string;
+  __notificationPreferences?: UserAccount["notificationPreferences"];
+}) | null;
+
 interface SbUser {
   id: string;
   email: string | null;
@@ -830,9 +892,11 @@ interface SbUser {
   created_at: string;
   human_id: string | null;
   wallet_address: string | null;
+  contact_email?: string | null;
+  notification_preferences?: UserAccount["notificationPreferences"] | null;
   auth_provider: string | null;
   privy_user_id?: string | null;
-  x_account?: UserAccount["xAccount"] | null;
+  x_account?: StoredXAccount;
 }
 interface SbHuman { id: string; name: string; handle: string; role: string; location: string; city: string; country: string; verified: boolean; rating: number; completed_jobs: number; hourly_rate: number; skills: string[]; languages: string[]; avatar_seed: number; avatar_url?: string | null; created_at: string; }
 interface SbTask { id: string; title: string; budget: string; deadline: string | null; acceptance: string; task_type: string | null; status: string; task_state: string; evidence: unknown[]; agent_id: string | null; reward_distribution: unknown; escrow_deposit_id: string | null; assignee: unknown; draw_result: unknown; campaign: unknown; pool_address?: string | null; verify_cooldown_hours: number; created_at: string; updated_at: string; }
@@ -888,7 +952,65 @@ const TASK_SELECT_COLUMNS = [
   "updated_at"
 ].join(",");
 
-function sbUserToHuman(s: SbUser): UserAccount { return { id: s.id, email: s.email || "", passwordHash: s.password_hash || "", createdAt: s.created_at, humanId: s.human_id || undefined, walletAddress: s.wallet_address || undefined, authProvider: (s.auth_provider || undefined) as "privy" | "local" | undefined, privyUserId: s.privy_user_id || undefined, xAccount: s.x_account || undefined }; }
+function readStoredXAccount(value: StoredXAccount | undefined): Record<string, unknown> {
+  return value && typeof value === "object" ? value as Record<string, unknown> : {};
+}
+
+function isRealEmail(value: string | null | undefined): value is string {
+  return Boolean(value && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) && !value.endsWith("@privy.local"));
+}
+
+function readContactEmailFromSbUser(s: SbUser): string | undefined {
+  const xAccount = readStoredXAccount(s.x_account);
+  const embedded = xAccount.__contactEmail;
+  if (isRealEmail(s.contact_email)) return s.contact_email;
+  if (typeof embedded === "string" && isRealEmail(embedded)) return embedded;
+  if (isRealEmail(s.email)) return s.email;
+  return undefined;
+}
+
+function readNotificationPreferencesFromSbUser(s: SbUser): UserAccount["notificationPreferences"] | undefined {
+  const xAccount = readStoredXAccount(s.x_account);
+  const embedded = xAccount.__notificationPreferences;
+  if (s.notification_preferences) return s.notification_preferences;
+  if (embedded && typeof embedded === "object") {
+    return {
+      emailTaskAlerts: (embedded as UserAccount["notificationPreferences"])?.emailTaskAlerts !== false,
+      emailRewardAlerts: (embedded as UserAccount["notificationPreferences"])?.emailRewardAlerts !== false
+    };
+  }
+  return undefined;
+}
+
+function readPublicXAccountFromSbUser(s: SbUser): UserAccount["xAccount"] | undefined {
+  const xAccount = readStoredXAccount(s.x_account);
+  if (typeof xAccount.subject !== "string" || typeof xAccount.username !== "string") {
+    return undefined;
+  }
+  return {
+    subject: xAccount.subject,
+    username: xAccount.username,
+    ...(typeof xAccount.name === "string" ? { name: xAccount.name } : {}),
+    ...(typeof xAccount.profilePictureUrl === "string" ? { profilePictureUrl: xAccount.profilePictureUrl } : {}),
+    ...(typeof xAccount.linkedAt === "string" ? { linkedAt: xAccount.linkedAt } : {})
+  };
+}
+
+function sbUserToHuman(s: SbUser): UserAccount {
+  return {
+    id: s.id,
+    email: s.email || "",
+    passwordHash: s.password_hash || "",
+    createdAt: s.created_at,
+    humanId: s.human_id || undefined,
+    walletAddress: s.wallet_address || undefined,
+    contactEmail: readContactEmailFromSbUser(s),
+    notificationPreferences: readNotificationPreferencesFromSbUser(s),
+    authProvider: (s.auth_provider || undefined) as "privy" | "local" | undefined,
+    privyUserId: s.privy_user_id || undefined,
+    xAccount: readPublicXAccountFromSbUser(s)
+  };
+}
 function sbHumanToHuman(s: SbHuman): Human { return { id: s.id, name: s.name, handle: s.handle, role: s.role, location: s.location, city: s.city, country: s.country, verified: s.verified, rating: s.rating, completedJobs: s.completed_jobs, hourlyRate: s.hourly_rate, skills: s.skills, languages: s.languages, avatarSeed: s.avatar_seed, ...(s.avatar_url ? { avatarUrl: s.avatar_url } : {}) }; }
 function readPoolAddressFromCampaign(campaign: unknown): string | undefined {
   if (!campaign || typeof campaign !== "object") return undefined;
@@ -896,7 +1018,14 @@ function readPoolAddressFromCampaign(campaign: unknown): string | undefined {
   return typeof value === "string" && value.trim() ? value.trim() : undefined;
 }
 
-function sbTaskToTask(s: SbTask): Task { return { id: s.id, title: s.title, budget: s.budget, deadline: s.deadline || "", acceptance: s.acceptance, taskType: (s.task_type || undefined) as Task["taskType"], status: s.status as Task["status"], taskState: (s.task_state || undefined) as Task["taskState"], evidence: (s.evidence || []) as Task["evidence"], agentId: s.agent_id || undefined, rewardDistribution: (s.reward_distribution || undefined) as Task["rewardDistribution"], escrowDepositId: s.escrow_deposit_id || undefined, assignee: (s.assignee || undefined) as Task["assignee"], drawResult: (s.draw_result || undefined) as Task["drawResult"], campaign: (s.campaign || undefined) as Task["campaign"], poolAddress: s.pool_address || readPoolAddressFromCampaign(s.campaign), verifyCooldownHours: s.verify_cooldown_hours, createdAt: s.created_at, updatedAt: s.updated_at }; }
+function attachDerivedTaskFields(task: Task): Task {
+  return {
+    ...task,
+    reviewAnchor: parseArticleReviewAnchor(task.evidence) || undefined
+  };
+}
+
+function sbTaskToTask(s: SbTask): Task { return attachDerivedTaskFields({ id: s.id, title: s.title, budget: s.budget, deadline: s.deadline || "", acceptance: s.acceptance, taskType: (s.task_type || undefined) as Task["taskType"], status: s.status as Task["status"], taskState: (s.task_state || undefined) as Task["taskState"], evidence: (s.evidence || []) as Task["evidence"], agentId: s.agent_id || undefined, rewardDistribution: (s.reward_distribution || undefined) as Task["rewardDistribution"], escrowDepositId: s.escrow_deposit_id || undefined, assignee: (s.assignee || undefined) as Task["assignee"], drawResult: (s.draw_result || undefined) as Task["drawResult"], campaign: (s.campaign || undefined) as Task["campaign"], poolAddress: s.pool_address || readPoolAddressFromCampaign(s.campaign), verifyCooldownHours: s.verify_cooldown_hours, createdAt: s.created_at, updatedAt: s.updated_at }); }
 function sbQpToQp(s: SbQuestProgress): QuestProgress { return { id: s.id, walletAddress: s.wallet_address, taskId: s.task_id, subtaskKey: s.subtask_key, status: s.status as QuestProgress["status"], verifiedAt: s.verified_at || undefined, createdAt: s.created_at }; }
 function sbPaymentToPayment(s: SbPayment): PaymentEntry { return { id: s.id, taskId: s.task_id || undefined, fallbackOrderId: s.fallback_order_id || undefined, idempotencyKey: s.idempotency_key || undefined, amount: s.amount, receiver: s.receiver, receiverAddress: s.receiver_address, payerAddress: s.payer_address, method: s.method as PaymentEntry["method"], status: s.status as PaymentEntry["status"], source: (s.source || undefined) as PaymentEntry["source"] | undefined, network: (s.network || undefined) as SettlementNetwork | undefined, chainId: s.chain_id || undefined, tokenSymbol: s.token_symbol || undefined, tokenAddress: s.token_address || undefined, txHash: s.tx_hash || undefined, explorerUrl: s.explorer_url || undefined, createdAt: s.created_at }; }
 function sbNotifToNotif(s: SbNotification): Notification { return { id: s.id, userId: s.user_id, type: s.type as Notification["type"], title: s.title, body: s.body, taskId: s.task_id || undefined, read: s.read, createdAt: s.created_at }; }
@@ -931,7 +1060,100 @@ function sbEscrowToEscrow(s: SbEscrowDeposit): EscrowDeposit { return { id: s.id
 function sbServiceToService(s: SbService): HumanService { return { id: s.id, providerId: s.provider_id || "", title: s.title, shortDescription: s.short_description, description: s.description, category: s.category as HumanService["category"], price: s.price, pricing: s.pricing as HumanService["pricing"], durationMinutes: s.duration_minutes, verified: s.verified, ratingCount: s.rating_count }; }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function humanToSbUser(h: UserAccount): any { return { id: h.id, email: h.email, password_hash: h.passwordHash || null, created_at: h.createdAt, human_id: h.humanId ?? null, wallet_address: h.walletAddress ?? null, auth_provider: h.authProvider ?? null, privy_user_id: h.privyUserId ?? null, x_account: h.xAccount ?? null }; }
+function humanToSbUser(h: UserAccount, includeContactColumns = false): any {
+  const storedXAccount: Record<string, unknown> = h.xAccount ? { ...h.xAccount } : {};
+  if (!includeContactColumns) {
+    if (h.contactEmail) {
+      storedXAccount.__contactEmail = h.contactEmail;
+    }
+    if (h.notificationPreferences) {
+      storedXAccount.__notificationPreferences = h.notificationPreferences;
+    }
+  }
+
+  return {
+    id: h.id,
+    email: h.email,
+    password_hash: h.passwordHash || null,
+    created_at: h.createdAt,
+    human_id: h.humanId ?? null,
+    wallet_address: h.walletAddress ?? null,
+    ...(includeContactColumns
+      ? {
+          contact_email: h.contactEmail ?? null,
+          notification_preferences: h.notificationPreferences ?? null
+        }
+      : {}),
+    auth_provider: h.authProvider ?? null,
+    privy_user_id: h.privyUserId ?? null,
+    x_account: Object.keys(storedXAccount).length > 0 ? storedXAccount : null
+  };
+}
+
+function userToSbProfileUpdate(h: UserAccount, includeContactColumns = false): Record<string, unknown> {
+  const storedXAccount: Record<string, unknown> = h.xAccount ? { ...h.xAccount } : {};
+  if (!includeContactColumns) {
+    if (h.contactEmail) {
+      storedXAccount.__contactEmail = h.contactEmail;
+    } else {
+      delete storedXAccount.__contactEmail;
+    }
+    if (h.notificationPreferences) {
+      storedXAccount.__notificationPreferences = h.notificationPreferences;
+    } else {
+      delete storedXAccount.__notificationPreferences;
+    }
+  }
+
+  return {
+    human_id: h.humanId ?? null,
+    ...(includeContactColumns
+      ? {
+          contact_email: h.contactEmail ?? null,
+          notification_preferences: h.notificationPreferences ?? null
+        }
+      : {
+          x_account: Object.keys(storedXAccount).length > 0 ? storedXAccount : null
+        })
+  };
+}
+
+async function preserveExistingXAccountsForWrite(users: UserAccount[]): Promise<UserAccount[]> {
+  if (!supabase || users.length === 0) return users;
+
+  const { data, error } = await supabase
+    .from("users")
+    .select("id,wallet_address,x_account")
+    .not("x_account", "is", null);
+  if (error || !data?.length) return users;
+
+  const byId = new Map<string, UserAccount["xAccount"]>();
+  const byWallet = new Map<string, UserAccount["xAccount"]>();
+  for (const row of data as Array<{ id: string; wallet_address: string | null; x_account: StoredXAccount }>) {
+    const xAccount = readPublicXAccountFromSbUser({
+      id: row.id,
+      email: null,
+      created_at: "",
+      human_id: null,
+      wallet_address: row.wallet_address,
+      auth_provider: null,
+      x_account: row.x_account
+    });
+    if (!xAccount) continue;
+    byId.set(row.id, xAccount);
+    const wallet = String(row.wallet_address || "").trim().toLowerCase();
+    if (wallet && !byWallet.has(wallet)) {
+      byWallet.set(wallet, xAccount);
+    }
+  }
+
+  return users.map((user) => {
+    if (user.xAccount?.username) return user;
+    const wallet = String(user.walletAddress || "").trim().toLowerCase();
+    const preserved = byId.get(user.id) || (wallet ? byWallet.get(wallet) : undefined);
+    return preserved ? { ...user, xAccount: preserved } : user;
+  });
+}
 
 function mergeLocalUserMetadata(users: UserAccount[], localUsers: UserAccount[]): UserAccount[] {
   return users.map((user) => {
@@ -1137,6 +1359,7 @@ let _supportsHumanAvatarUrl: boolean | null = null;
 let _supportsTaskPoolAddress: boolean | null = null;
 let _supportsArticleSubmissions: boolean | null = null;
 let _supportsPaymentIdempotency: boolean | null = null;
+let _supportsUserContactColumns: boolean | null = null;
 
 async function supportsHumanAvatarUrl(): Promise<boolean> {
   if (!supabase) return false;
@@ -1144,6 +1367,14 @@ async function supportsHumanAvatarUrl(): Promise<boolean> {
   const { error } = await supabase.from("humans").select("avatar_url").limit(1);
   _supportsHumanAvatarUrl = !error;
   return _supportsHumanAvatarUrl;
+}
+
+async function supportsUserContactColumns(): Promise<boolean> {
+  if (!supabase) return false;
+  if (_supportsUserContactColumns !== null) return _supportsUserContactColumns;
+  const { error } = await supabase.from("users").select("contact_email,notification_preferences").limit(1);
+  _supportsUserContactColumns = !error;
+  return _supportsUserContactColumns;
 }
 
 async function supportsTaskPoolAddress(): Promise<boolean> {
@@ -1181,8 +1412,10 @@ async function writeDbToSupabase(db: Db): Promise<void> {
   const includeTaskPoolAddress = await supportsTaskPoolAddress();
   const includeArticleSubmissions = await supportsArticleSubmissions();
   const includePaymentIdempotency = await supportsPaymentIdempotencyColumns();
+  const includeUserContactColumns = await supportsUserContactColumns();
+  const usersForWrite = await preserveExistingXAccountsForWrite(db.users);
   const writeRequests = [
-    { table: "users", request: supabase.from("users").upsert(db.users.map(humanToSbUser), { onConflict: "id" }) },
+    { table: "users", request: supabase.from("users").upsert(usersForWrite.map((user) => humanToSbUser(user, includeUserContactColumns)), { onConflict: "id" }) },
     { table: "humans", request: supabase.from("humans").upsert(db.humans.map((human) => humanToSbHuman(human, includeHumanAvatarUrl)), { onConflict: "id" }) },
     { table: "tasks", request: supabase.from("tasks").upsert(db.tasks.map((task) => taskToSbTask(task, includeTaskPoolAddress)), { onConflict: "id" }) },
     { table: "quest_progress", request: supabase.from("quest_progress").upsert(db.questProgress.map(qpToSbQp), { onConflict: "id" }) },
@@ -1205,6 +1438,48 @@ async function writeDbToSupabase(db: Db): Promise<void> {
   if (writeErrors.length > 0) {
     throw new Error(
       `Supabase write failed: ${writeErrors
+        .map(([table, error]) => `${table}: ${error?.message || "unknown error"}`)
+        .join("; ")}`
+    );
+  }
+}
+
+async function writeProfileSetToSupabase<T>(writeSet: ProfileWriteSet<T>): Promise<void> {
+  if (!supabase) return;
+
+  const includeHumanAvatarUrl = await supportsHumanAvatarUrl();
+  const includeTaskPoolAddress = await supportsTaskPoolAddress();
+  const includeUserContactColumns = await supportsUserContactColumns();
+  const writeRequests = [
+    ...(writeSet.user
+      ? [{
+          table: "users",
+          request: supabase
+            .from("users")
+            .update(userToSbProfileUpdate(writeSet.user, includeUserContactColumns))
+            .eq("id", writeSet.user.id)
+        }]
+      : []),
+    ...(writeSet.human
+      ? [{ table: "humans", request: supabase.from("humans").upsert([humanToSbHuman(writeSet.human, includeHumanAvatarUrl)], { onConflict: "id" }) }]
+      : []),
+    ...(writeSet.task
+      ? [{ table: "tasks", request: supabase.from("tasks").upsert([taskToSbTask(writeSet.task, includeTaskPoolAddress)], { onConflict: "id" }) }]
+      : []),
+    ...((writeSet.notifications || []).length > 0
+      ? [{ table: "notifications", request: supabase.from("notifications").upsert((writeSet.notifications || []).map(notifToSbNotif), { onConflict: "id" }) }]
+      : [])
+  ];
+
+  const writes = await Promise.all(
+    writeRequests.map(async ({ table, request }) => [table, await request] as const)
+  );
+  const writeErrors = writes
+    .map(([table, result]) => [table, result.error] as const)
+    .filter(([, error]) => error);
+  if (writeErrors.length > 0) {
+    throw new Error(
+      `Supabase profile write failed: ${writeErrors
         .map(([table, error]) => `${table}: ${error?.message || "unknown error"}`)
         .join("; ")}`
     );
@@ -1266,6 +1541,40 @@ export async function updateDb<T>(
     const result = await updater(db);
     await writeDb(db);
     return result;
+  } finally {
+    resolve!();
+  }
+}
+
+export async function updateProfileDb<T>(
+  updater: (db: Db) => ProfileWriteSet<T> | Promise<ProfileWriteSet<T>>
+): Promise<T> {
+  let resolve: () => void;
+  const prev = _dbLock;
+  _dbLock = new Promise<void>((r) => { resolve = r; });
+  await prev;
+  try {
+    const db = await readDb();
+    const writeSet = await updater(db);
+    if (isSupabaseEnabled) {
+      try {
+        await writeProfileSetToSupabase(writeSet);
+        if (!isProductionRuntime()) {
+          await writeDbToFile(db);
+        }
+        return writeSet.result;
+      } catch (err) {
+        if (isProductionRuntime()) {
+          throw err;
+        }
+        console.error("[Supabase] profile write failed, falling back to file:", err);
+      }
+    }
+    if (isProductionRuntime()) {
+      throw new Error("Supabase is required in production.");
+    }
+    await writeDbToFile(db);
+    return writeSet.result;
   } finally {
     resolve!();
   }

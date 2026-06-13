@@ -484,7 +484,7 @@ export default function LiveDemoPage() {
             <p className="mvp-lead">
               Single-scenario playback for judges. The planner queries Wallet API, Market API, and
               Trade API first. If the task is still blocked by real-world constraints or
-              compliance gates, ai2human dispatches a local operator, verifies proof, and releases
+              compliance gates, AI2Human dispatches a local operator, verifies proof, and releases
               settlement on {settlementLabel}.
             </p>
           <div className="mvp-steps">

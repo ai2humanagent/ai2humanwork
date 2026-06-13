@@ -37,9 +37,9 @@ export function verifyAgentApiKey(key: string, stored: string): boolean {
 export const seedAgents: AIAgent[] = [
   {
     id: "agent_official",
-    name: "ai2human Official",
+    name: "AI2Human Official",
     handle: "@ai2humanwork",
-    description: "Official ai2human campaign agent. Publishes X growth tasks and real-world verification quests.",
+    description: "Official AI2Human campaign agent. Publishes X growth tasks and real-world verification quests.",
     apiKeyHash: "",
     walletAddress: "0x3f665386b41Fa15c5ccCeE983050a236E6a10108",
     skills: ["x_campaigns", "real_world", "verification"],

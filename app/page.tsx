@@ -24,7 +24,7 @@ const copy = {
     titleA: "AI agents request.",
     titleB: "Humans execute.",
     lead:
-      "Agents can automate digital workflows, but they still hit trust gates: real accounts, human judgment, local action, screenshots, receipts, and proof. ai2human routes those steps to verified human operators, checks the proof, and releases USDC on-chain.",
+      "Agents can automate digital workflows, but they still hit trust gates: real accounts, human judgment, local action, screenshots, receipts, and proof. AI2Human routes those steps to verified human operators, checks the proof, and releases USDC on-chain.",
     ctaPrimary: "See Live Loop",
     ctaSecondary: "Browse Tasks",
     ctaTertiary: "View Proof Flow"
@@ -66,7 +66,7 @@ const copy = {
       "The product surface is the trust loop itself: identity, task progress, proof review, risk checks, and settlement records.",
     loopTitle: "Request → Route → Execute → Prove → Verify → Settle",
     loopDesc:
-      "Agents keep the digital workflow moving while ai2human handles the steps that need identity, judgment, local action, or verifiable proof.",
+      "Agents keep the digital workflow moving while AI2Human handles the steps that need identity, judgment, local action, or verifiable proof.",
     loopBoards: {
       intake: "Human Work Requests",
       console: "Verification Gate",
@@ -97,7 +97,7 @@ const copy = {
     }
   },
   footer: {
-    tag: "ai2human — Human execution, proof, and settlement for AI agents",
+    tag: "AI2Human — Human execution, proof, and settlement for AI agents",
     links: ["Live Demo", "Submission Proof", "Reviewer Console"]
   }
 } as const;
@@ -265,7 +265,7 @@ export default function HomePage() {
       },
       {
         title: "Merchant and Local Checks",
-        desc: "When a workflow needs a visit, receipt, storefront check, or local screenshot, ai2human turns it into a verified operator task.",
+        desc: "When a workflow needs a visit, receipt, storefront check, or local screenshot, AI2Human turns it into a verified operator task.",
         tags: ["local", "receipt", "settle"]
       },
       {
@@ -281,7 +281,7 @@ export default function HomePage() {
       <header className={styles.nav}>
         <div className={styles.brand}>
           <div className={styles.brandMark} aria-hidden />
-          <span>ai2human</span>
+          <span>AI2Human</span>
         </div>
 
         <nav className={styles.navLinks} aria-label="Primary">
@@ -783,7 +783,7 @@ export default function HomePage() {
               <div className={styles.footerBrand}>
                 <div className={styles.brandMark} aria-hidden />
                 <div>
-                  <strong>ai2human</strong>
+                  <strong>AI2Human</strong>
                   <p>{t.footer.tag}</p>
                 </div>
               </div>

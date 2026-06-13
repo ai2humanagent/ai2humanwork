@@ -5,17 +5,28 @@ import {
   readDb,
   supportsArticleSubmissionsTable,
   updateDb,
-  type ArticleSubmission
+  type ArticleSubmission,
+  type Task
 } from "../../../../lib/store";
 import { isSupabaseEnabled } from "../../../../lib/supabase";
 import { appendEvidence } from "../../../../lib/taskEvidence";
 import {
+  fetchPublicImageAsset,
+  fetchXArticleContent,
+  getSubmissionContestKind,
+  getArticleContestReviewTarget,
+  getArticleContestMinimumWinnerScore,
+  hasDefinitiveXNotFound,
   isArticleContestDistribution,
   isSubmissionDeadlinePassed,
   parseXArticleUrl,
+  reviewArticleSubmission,
+  sanitizeArticleSubmissionForUser,
+  shortWalletLabel,
+  validateDexscreenerHeaderImage,
   xHandlesMatch
 } from "../../../../lib/articleContest";
-import { getBoundXAccountForWallet } from "../../../../lib/xIdentity";
+import { getOperatorAccessForWallet, hasUsableContactEmail, taskAccessError } from "../../../../lib/operatorAccess";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -26,8 +37,95 @@ async function requireArticleSubmissionsStorage() {
   return ok ? null : "article_submissions table is missing. Run SUPABASE_ARTICLE_CONTEST_PATCH.sql first.";
 }
 
-function isTestArticleContestTask(taskId: string) {
-  return taskId.startsWith("x-article-contest-test-");
+const MAX_ARTICLE_SUBMISSION_UPDATES = 1;
+
+function deriveArticleTitle(input: {
+  explicitTitle?: string;
+  articleText: string;
+  authorHandle: string;
+  articleId: string;
+}) {
+  const explicit = String(input.explicitTitle || "").replace(/\s+/g, " ").trim();
+  if (explicit) return explicit.slice(0, 180);
+
+  const firstLine = input.articleText
+    .split(/\r?\n/)
+    .map((line) => line.replace(/\s+/g, " ").trim())
+    .find((line) => line.length >= 8);
+  if (firstLine) return firstLine.slice(0, 180);
+
+  return `X submission by @${input.authorHandle} (${input.articleId})`;
+}
+
+function deriveBannerTitle(input: {
+  note: string;
+  walletAddress: string;
+}) {
+  const firstLine = String(input.note || "")
+    .split(/\r?\n/)
+    .map((line) => line.replace(/\s+/g, " ").trim())
+    .find((line) => line.length >= 6);
+  if (firstLine) return firstLine.slice(0, 180);
+  return `Banner submission by ${shortWalletLabel(input.walletAddress)}`;
+}
+
+function countArticleSubmissionUpdates(
+  task: Task | undefined,
+  input: { submissionId: string; walletAddress: string; xHandle: string }
+) {
+  if (!task?.evidence?.length) return 0;
+  return task.evidence.filter((item) => {
+    if (!item.content.startsWith("article_submission:")) return false;
+    try {
+      const payload = JSON.parse(item.content.slice("article_submission:".length)) as {
+        action?: string;
+        submissionId?: string;
+        walletAddress?: string;
+        xHandle?: string;
+      };
+      if (payload.action !== "update") return false;
+      if (payload.submissionId && payload.submissionId === input.submissionId) return true;
+      if (
+        payload.walletAddress?.toLowerCase() === input.walletAddress.toLowerCase() &&
+        payload.xHandle?.toLowerCase() === input.xHandle.toLowerCase()
+      ) {
+        return true;
+      }
+    } catch {
+      return false;
+    }
+    return false;
+  }).length;
+}
+
+function readRequiredStrings(task: Task, key: "requiredMentions" | "requiredHashtags") {
+  const campaign = task.campaign as Record<string, unknown> | undefined;
+  const values = campaign?.[key];
+  return Array.isArray(values)
+    ? values.map((item) => String(item || "").trim()).filter(Boolean)
+    : [];
+}
+
+function readCampaignBoolean(task: Task, key: "requiresImage") {
+  const campaign = task.campaign as Record<string, unknown> | undefined;
+  return Boolean(campaign?.[key]);
+}
+
+function missingRequiredArticleSignals(input: {
+  text: string;
+  mentions: string[];
+  hashtags: string[];
+}) {
+  const normalized = ` ${input.text.toLowerCase().replace(/\s+/g, " ")} `;
+  const missingMentions = input.mentions.filter((mention) => {
+    const handle = mention.toLowerCase().replace(/^@/, "");
+    return !new RegExp(`(^|[^a-z0-9_])@?${handle}([^a-z0-9_]|$)`, "i").test(normalized);
+  });
+  const missingHashtags = input.hashtags.filter((tag) => {
+    const value = tag.toLowerCase().replace(/^#/, "");
+    return !new RegExp(`(^|[^a-z0-9_])#${value}([^a-z0-9_]|$)`, "i").test(normalized);
+  });
+  return [...missingMentions, ...missingHashtags];
 }
 
 export async function GET(
@@ -50,11 +148,26 @@ export async function GET(
   }
 
   const db = await readDb();
+  const task = db.tasks.find((item) => item.id === taskId);
   const submission = db.articleSubmissions.find(
     (item) => item.taskId === taskId && item.walletAddress.toLowerCase() === wallet
   );
+  const updateCount = submission && task
+    ? countArticleSubmissionUpdates(task, {
+        submissionId: submission.id,
+        walletAddress: wallet,
+        xHandle: submission.xHandle
+      })
+    : 0;
 
-  return NextResponse.json({ submission: submission || null });
+  return NextResponse.json({
+    submission: submission && task
+      ? sanitizeArticleSubmissionForUser(submission, { deadline: task.deadline, taskState: task.taskState })
+      : submission || null,
+    updateCount,
+    updateLocked: Boolean(submission && updateCount >= MAX_ARTICLE_SUBMISSION_UPDATES),
+    maxUpdates: MAX_ARTICLE_SUBMISSION_UPDATES
+  });
 }
 
 export async function POST(
@@ -70,25 +183,11 @@ export async function POST(
   const body = await request.json().catch(() => ({}));
   const wallet = String(body.wallet || "").trim().toLowerCase();
   const articleUrl = String(body.articleUrl || "").trim();
-  const title = String(body.title || "").trim();
+  const requestedTitle = String(body.title || "").trim();
   const contentSnapshot = String(body.contentSnapshot || "").trim();
 
   if (!wallet) {
     return NextResponse.json({ error: "wallet is required." }, { status: 400 });
-  }
-  if (!title || title.length < 8) {
-    return NextResponse.json({ error: "Add a clear article title." }, { status: 400 });
-  }
-  if (!contentSnapshot || contentSnapshot.length < 200) {
-    return NextResponse.json({ error: "Paste at least 200 characters from your article so it can be reviewed." }, { status: 400 });
-  }
-  if (contentSnapshot.length > 20000) {
-    return NextResponse.json({ error: "Article snapshot is too long. Keep it under 20,000 characters." }, { status: 400 });
-  }
-
-  const parsedUrl = parseXArticleUrl(articleUrl);
-  if (!parsedUrl.ok) {
-    return NextResponse.json({ error: parsedUrl.error }, { status: 400 });
   }
 
   const auth = await getAuthContext(request);
@@ -105,30 +204,176 @@ export async function POST(
     return NextResponse.json({ error: "Task not found." }, { status: 404 });
   }
   if (!isArticleContestDistribution(task.rewardDistribution)) {
-    return NextResponse.json({ error: "This task does not accept X article submissions." }, { status: 400 });
+    return NextResponse.json({ error: "This task does not accept ranked contest submissions." }, { status: 400 });
   }
-  const testBypassEnabled = isTestArticleContestTask(taskId);
   if (isSubmissionDeadlinePassed(task.deadline)) {
     return NextResponse.json({ error: "Submission deadline has passed." }, { status: 400 });
   }
 
-  const { xAccount } = await getBoundXAccountForWallet(db, wallet);
-  if (!xAccount?.username && !testBypassEnabled) {
-    return NextResponse.json({ error: "Bind your X account before submitting an article." }, { status: 403 });
+  const contestKind = getSubmissionContestKind(task);
+  const isBannerImageContest = contestKind === "banner_image";
+  const requiresAttachedImage = !isBannerImageContest && readCampaignBoolean(task, "requiresImage");
+
+  if (isBannerImageContest) {
+    if (!contentSnapshot || contentSnapshot.length < 30) {
+      return NextResponse.json({ error: "Add a short design note so the banner can be reviewed fairly." }, { status: 400 });
+    }
+    if (contentSnapshot.length > 5000) {
+      return NextResponse.json({ error: "Design note is too long. Keep it under 5,000 characters." }, { status: 400 });
+    }
+  } else {
+    const minimumSnapshotChars = requiresAttachedImage ? 12 : 200;
+    if (!contentSnapshot || contentSnapshot.length < minimumSnapshotChars) {
+      return NextResponse.json(
+        {
+          error: requiresAttachedImage
+            ? "Add a short banner reason in the post text so the image can be judged fairly."
+            : "Paste at least 200 characters from your article so it can be reviewed."
+        },
+        { status: 400 }
+      );
+    }
+    if (requiresAttachedImage && contentSnapshot.length > 600) {
+      return NextResponse.json({ error: "Keep the banner reason brief. Use 600 characters or less." }, { status: 400 });
+    }
+    if (!requiresAttachedImage && contentSnapshot.length > 20000) {
+      return NextResponse.json({ error: "Article text is too long. Keep it under 20,000 characters." }, { status: 400 });
+    }
   }
-  if (xAccount?.username && !xHandlesMatch(parsedUrl.authorHandle, xAccount.username) && !testBypassEnabled) {
+
+  const parsedUrl = isBannerImageContest ? null : parseXArticleUrl(articleUrl);
+  if (!isBannerImageContest && (!parsedUrl || !parsedUrl.ok)) {
+    return NextResponse.json({ error: parsedUrl?.error || "Submit a valid X article URL." }, { status: 400 });
+  }
+  const parsedXUrl = !isBannerImageContest && parsedUrl && parsedUrl.ok ? parsedUrl : null;
+
+  const isTestArticleContest = task.id.startsWith("x-article-contest-test-");
+  const access = await getOperatorAccessForWallet(db, wallet);
+  if (isBannerImageContest || isTestArticleContest) {
+    const sessionUser = db.users.find((item) => item.id === auth.user.id) || auth.user;
+    const hasContactEmail = hasUsableContactEmail(access.user) || hasUsableContactEmail(sessionUser);
+    if (!sessionUser.walletAddress || sessionUser.walletAddress.toLowerCase() !== wallet || !hasContactEmail) {
+      return NextResponse.json(
+        {
+          error: isBannerImageContest
+            ? "Add a contact email in Profile before you submit a banner."
+            : "Add a contact email in Profile before you submit an article.",
+          missing: access.missing.filter((item) => item !== "x_account")
+        },
+        { status: 403 }
+      );
+    }
+  } else if (!access.ok) {
     return NextResponse.json(
-      { error: `The article author @${parsedUrl.authorHandle} must match your bound X account @${xAccount.username}.` },
+      { error: taskAccessError(access, "submit_article"), missing: access.missing },
+      { status: 403 }
+    );
+  }
+  const xAccount = access.xAccount;
+  if (!isBannerImageContest && !isTestArticleContest && (!xAccount?.username || !xHandlesMatch(parsedXUrl!.authorHandle, xAccount.username))) {
+    return NextResponse.json(
+      { error: `The article author @${parsedXUrl!.authorHandle} must match your bound X account @${xAccount?.username || "unknown"}.` },
       { status: 400 }
     );
   }
 
   const now = new Date().toISOString();
-  const xBindingBypassed = testBypassEnabled && (
-    !xAccount?.username || !xHandlesMatch(parsedUrl.authorHandle, xAccount.username)
-  );
-  const normalizedUrl = parsedUrl.url;
-  const normalizedXHandle = (xBindingBypassed ? parsedUrl.authorHandle : xAccount?.username || parsedUrl.authorHandle).replace(/^@/, "");
+  const normalizedUrl = isBannerImageContest ? articleUrl : parsedXUrl!.url;
+  const normalizedXHandle = isBannerImageContest
+    ? wallet
+    : (isTestArticleContest ? parsedXUrl!.authorHandle : xAccount?.username || parsedXUrl!.authorHandle).replace(/^@/, "");
+  let xPrecheck: Awaited<ReturnType<typeof fetchXArticleContent>> | null = null;
+
+  if (isBannerImageContest) {
+    const imageCheck = await fetchPublicImageAsset(normalizedUrl);
+    if (!imageCheck.ok) {
+      return NextResponse.json(
+        {
+          error: imageCheck.error,
+          details: imageCheck.attempts
+        },
+        { status: 400 }
+      );
+    }
+  } else {
+    xPrecheck = await fetchXArticleContent(normalizedUrl);
+    const precheck = xPrecheck;
+    if (precheck.ok) {
+      if (
+        precheck.authorHandle &&
+        (!xHandlesMatch(precheck.authorHandle, parsedXUrl!.authorHandle) ||
+          !xHandlesMatch(precheck.authorHandle, normalizedXHandle))
+      ) {
+        return NextResponse.json(
+          {
+            error: `The live X post belongs to @${precheck.authorHandle}, not @${parsedXUrl!.authorHandle}. Submit your own public X link.`
+          },
+          { status: 400 }
+        );
+      }
+      if (requiresAttachedImage && (!precheck.mediaUrls || precheck.mediaUrls.length === 0)) {
+        return NextResponse.json(
+          {
+            error: "This contest requires a public X post or thread with at least one attached image.",
+            details: precheck.attempts
+          },
+          { status: 400 }
+        );
+      }
+      if (requiresAttachedImage && precheck.mediaUrls?.[0]) {
+        const imageCheck = await validateDexscreenerHeaderImage(precheck.mediaUrls[0]);
+        if (!imageCheck.ok) {
+          return NextResponse.json(
+            {
+              error: imageCheck.error,
+              details: imageCheck.attempts
+            },
+            { status: 400 }
+          );
+        }
+      }
+    } else if (hasDefinitiveXNotFound(precheck.attempts)) {
+      return NextResponse.json(
+        {
+          error: "This X link could not be found. Please submit a public, existing X post, article, or thread URL.",
+          details: precheck.attempts
+        },
+        { status: 400 }
+      );
+    }
+  }
+
+  if (!isBannerImageContest) {
+    const requiredMentions = readRequiredStrings(task, "requiredMentions");
+    const requiredHashtags = readRequiredStrings(task, "requiredHashtags");
+    const precheck = xPrecheck || await fetchXArticleContent(normalizedUrl);
+    const requiredSignalText = precheck.ok ? precheck.text : contentSnapshot;
+    const missingSignals = missingRequiredArticleSignals({
+      text: requiredSignalText,
+      mentions: requiredMentions,
+      hashtags: requiredHashtags
+    });
+    if (missingSignals.length > 0) {
+      return NextResponse.json(
+        {
+          error: `Your X post/thread must include ${missingSignals.join(" and ")} before submitting.`
+        },
+        { status: 400 }
+      );
+    }
+  }
+
+  const title = isBannerImageContest
+    ? deriveBannerTitle({
+        note: contentSnapshot,
+        walletAddress: wallet
+      })
+    : deriveArticleTitle({
+        explicitTitle: requestedTitle,
+        articleText: contentSnapshot,
+        authorHandle: parsedXUrl!.authorHandle,
+        articleId: parsedXUrl!.articleId || "unknown"
+      });
   const requestId = crypto.randomUUID();
   let saved: ArticleSubmission | null = null;
   let wasUpdate = false;
@@ -145,14 +390,14 @@ export async function POST(
         item.walletAddress.toLowerCase() !== wallet
     );
     if (duplicateUrl) {
-      return { error: "This X article link has already been submitted by another wallet." };
+      return { error: isBannerImageContest ? "This banner image URL has already been submitted by another wallet." : "This X article link has already been submitted by another wallet." };
     }
 
-    const duplicateArticleId = parsedUrl.articleId
+    const duplicateArticleId = !isBannerImageContest && parsedXUrl?.articleId
       ? nextDb.articleSubmissions.find(
           (item) =>
             item.taskId === taskId &&
-            item.articleId === parsedUrl.articleId &&
+            item.articleId === parsedXUrl.articleId &&
             item.walletAddress.toLowerCase() !== wallet
         )
       : null;
@@ -167,7 +412,11 @@ export async function POST(
         item.walletAddress.toLowerCase() !== wallet
     );
     if (duplicateX) {
-      return { error: "This X account already submitted an article for this task." };
+      return {
+        error: isBannerImageContest
+          ? "This wallet already submitted a banner for this task."
+          : "This X account already submitted an article for this task."
+      };
     }
 
     const existing = nextDb.articleSubmissions.find(
@@ -179,10 +428,25 @@ export async function POST(
       if (existing.status === "paid") {
         return { error: "This submission has already been paid and cannot be changed." };
       }
+      const targetTask = nextDb.tasks.find((item) => item.id === taskId);
+      const updateCount = countArticleSubmissionUpdates(targetTask, {
+        submissionId: existing.id,
+        walletAddress: wallet,
+        xHandle: existing.xHandle
+      });
+      if (updateCount >= MAX_ARTICLE_SUBMISSION_UPDATES) {
+        return {
+          error: isBannerImageContest
+            ? "This submission has already been updated once. To keep the contest fair, the image URL and design note are now locked."
+            : requiresAttachedImage
+              ? "This submission has already been updated once. To keep the contest fair, the X link and post text are now locked."
+              : "This submission has already been updated once. To keep the contest fair, the X link and article text are now locked."
+        };
+      }
       existing.xHandle = normalizedXHandle;
       existing.articleUrl = normalizedUrl;
-      existing.articleId = parsedUrl.articleId;
-      existing.authorHandle = parsedUrl.authorHandle;
+      existing.articleId = isBannerImageContest ? undefined : parsedXUrl!.articleId;
+      existing.authorHandle = isBannerImageContest ? wallet : parsedXUrl!.authorHandle;
       existing.title = title;
       existing.contentSnapshot = contentSnapshot;
       existing.status = "submitted";
@@ -202,8 +466,8 @@ export async function POST(
         userId: auth.user.id,
         xHandle: normalizedXHandle,
         articleUrl: normalizedUrl,
-        articleId: parsedUrl.articleId,
-        authorHandle: parsedUrl.authorHandle,
+        articleId: isBannerImageContest ? undefined : parsedXUrl!.articleId,
+        authorHandle: isBannerImageContest ? wallet : parsedXUrl!.authorHandle,
         title,
         contentSnapshot,
         status: "submitted",
@@ -222,14 +486,12 @@ export async function POST(
           requestId,
           taskId,
           action: existing ? "update" : "create",
-          testBypassEnabled,
-          xBindingBypassed,
           submissionId: saved?.id,
           walletAddress: wallet,
           xHandle: normalizedXHandle,
           articleUrl: normalizedUrl,
-          articleId: parsedUrl.articleId,
-          authorHandle: parsedUrl.authorHandle,
+          articleId: isBannerImageContest ? undefined : parsedXUrl!.articleId,
+          authorHandle: isBannerImageContest ? wallet : parsedXUrl!.authorHandle,
           titleLength: title.length,
           contentLength: contentSnapshot.length
         })}`,
@@ -247,8 +509,6 @@ export async function POST(
     walletAddress: wallet,
     xHandle: normalizedXHandle,
     articleUrl: normalizedUrl,
-    testBypassEnabled,
-    xBindingBypassed,
     error: result.error
     });
     return NextResponse.json({ error: result.error }, { status: 400 });
@@ -262,13 +522,77 @@ export async function POST(
     walletAddress: wallet,
     xHandle: normalizedXHandle,
     articleUrl: normalizedUrl,
-    testBypassEnabled,
-    xBindingBypassed,
-    articleId: parsedUrl.articleId,
-    authorHandle: parsedUrl.authorHandle,
+    articleId: isBannerImageContest ? undefined : parsedXUrl!.articleId,
+    authorHandle: isBannerImageContest ? wallet : parsedXUrl!.authorHandle,
     titleLength: title.length,
     contentLength: contentSnapshot.length
   });
 
-  return NextResponse.json({ success: true, requestId, submission: result.submission });
+  if (!result.submission) {
+    return NextResponse.json({ success: true, requestId, submission: result.submission });
+  }
+
+  let reviewedSubmission = result.submission;
+  try {
+    const reviewResult = await reviewArticleSubmission({
+      submission: result.submission,
+      minimumWinnerScore: getArticleContestMinimumWinnerScore(task.rewardDistribution),
+      reviewTarget: getArticleContestReviewTarget(task),
+      task,
+      now
+    });
+    reviewedSubmission = reviewResult.submission;
+    await updateDb((nextDb) => {
+      nextDb.articleSubmissions = nextDb.articleSubmissions.map((submission) =>
+        submission.id === reviewedSubmission.id ? reviewedSubmission : submission
+      );
+      const targetTask = nextDb.tasks.find((item) => item.id === taskId);
+      if (targetTask) {
+        appendEvidence(targetTask, {
+          by: "system",
+          type: "log",
+          content: `article_submission_prereview:${JSON.stringify({
+            requestId,
+            taskId,
+            submissionId: reviewedSubmission.id,
+            xHandle: reviewedSubmission.xHandle,
+            walletAddress: reviewedSubmission.walletAddress,
+            score: reviewedSubmission.aiScore,
+            status: reviewedSubmission.status,
+            debug: reviewResult.debug
+          })}`,
+          createdAt: new Date().toISOString()
+        });
+      }
+    });
+    console.info("[ArticleContest] submission:prereview_complete", {
+      requestId,
+      taskId,
+      submissionId: reviewedSubmission.id,
+      score: reviewedSubmission.aiScore,
+      status: reviewedSubmission.status,
+      provider: reviewResult.debug.provider,
+      source: reviewResult.debug.source,
+      contentSource: reviewResult.debug.contentSource
+    });
+  } catch (error) {
+    console.warn("[ArticleContest] submission:prereview_failed", {
+      requestId,
+      taskId,
+      submissionId: result.submission.id,
+      error: error instanceof Error ? error.message : "unknown"
+    });
+  }
+
+  return NextResponse.json({
+    success: true,
+    requestId,
+    submission: sanitizeArticleSubmissionForUser(reviewedSubmission, {
+      deadline: task.deadline,
+      taskState: task.taskState
+    }),
+    updateCount: wasUpdate ? MAX_ARTICLE_SUBMISSION_UPDATES : 0,
+    updateLocked: wasUpdate,
+    maxUpdates: MAX_ARTICLE_SUBMISSION_UPDATES
+  });
 }

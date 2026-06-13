@@ -1,4 +1,4 @@
-# ai2human Product Stack
+# AI2Human Product Stack
 
 The product should be explained as a connected stack, not as disconnected pages.
 
@@ -41,10 +41,10 @@ The routable human capability layer: X operators, local verifiers, proof collect
 
 ## 8. Agent SDK / Skill
 
-The developer-facing entry point explaining when and how an agent should call ai2human.
+The developer-facing entry point explaining when and how an agent should call AI2Human.
 
 Example instruction:
 
 ```text
-When your workflow needs a real account, local action, manual judgment, screenshot, receipt, or verified proof, call ai2human.
+When your workflow needs a real account, local action, manual judgment, screenshot, receipt, or verified proof, call AI2Human.
 ```

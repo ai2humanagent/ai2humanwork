@@ -6,6 +6,7 @@ import { updateDb } from "../../../../lib/store";
 import { normalizeXHandle } from "../../../../lib/xIdentity";
 import {
   X_OAUTH_STATE_COOKIE,
+  decodeXOAuth1RequestState,
   decodeXOAuthState,
   getXOAuth1Config,
   getXOAuthConfig,
@@ -287,8 +288,15 @@ async function bindXAccount(input: {
   try {
     await updateDb((db) => {
       const currentUser = db.users.find((item) => item.id === input.userId);
+      const currentWallet = String(currentUser?.walletAddress || "").trim().toLowerCase();
       conflict = db.users.some((user) => {
         if (user.id === input.userId) return false;
+        if (
+          currentWallet &&
+          String(user.walletAddress || "").trim().toLowerCase() === currentWallet
+        ) {
+          return false;
+        }
         const account = user.xAccount;
         if (!account) return false;
         const sameSubject = Boolean(incomingSubject && account.subject === incomingSubject);
@@ -299,13 +307,22 @@ async function bindXAccount(input: {
       if (conflict) return;
 
       if (!currentUser) return;
-      currentUser.xAccount = {
+      const nextXAccount = {
         subject: incomingSubject,
         username: input.xUser.username.replace(/^@/, ""),
         name: input.xUser.name || undefined,
         profilePictureUrl: input.xUser.profilePictureUrl || undefined,
         linkedAt: now
       };
+      for (const user of db.users) {
+        const sameUser = user.id === currentUser.id;
+        const sameWallet =
+          currentWallet &&
+          String(user.walletAddress || "").trim().toLowerCase() === currentWallet;
+        if (sameUser || sameWallet) {
+          user.xAccount = nextXAccount;
+        }
+      }
       updated = true;
     });
   } catch (err) {
@@ -527,7 +544,13 @@ async function handleOAuth1Callback(request: Request, url: URL) {
 
   const requestToken = url.searchParams.get("oauth_token") || "";
   const verifier = url.searchParams.get("oauth_verifier") || "";
-  const savedState = requestToken ? takeXOAuth1RequestState(requestToken) : null;
+  const cookieState = decodeXOAuth1RequestState(getCookie(request, X_OAUTH_STATE_COOKIE));
+  const savedState =
+    cookieState && cookieState.requestToken === requestToken
+      ? cookieState
+      : requestToken
+        ? takeXOAuth1RequestState(requestToken)
+        : null;
   if (!requestToken || !verifier || !savedState) {
     return redirectToProfile(request, { x_error: "invalid_x_oauth_state" });
   }

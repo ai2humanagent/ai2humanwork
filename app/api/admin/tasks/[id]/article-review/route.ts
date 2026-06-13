@@ -1,23 +1,68 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { getAdminAuthContext } from "../../../../../lib/adminAuth";
-import { readDb, updateDb } from "../../../../../lib/store";
+import { readDb, updateDb, type ArticleSubmission, type Task } from "../../../../../lib/store";
 import { appendEvidence } from "../../../../../lib/taskEvidence";
 import {
   assignArticleContestPrizes,
-  fetchXArticleContent,
+  getArticleReviewProviderConfigs,
+  getArticleContestReviewTarget,
   getArticleContestMinimumWinnerScore,
   isArticleContestDistribution,
   isSubmissionDeadlinePassed,
-  scoreArticleSubmission,
-  xHandlesMatch
+  reviewArticleSubmission
 } from "../../../../../lib/articleContest";
+import { anchorArticleReviewOnBase, ARTICLE_REVIEW_ANCHOR_PREFIX } from "../../../../../lib/reviewAnchor";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-function reviewedTextExcerpt(text: string) {
-  return text.replace(/\s+/g, " ").trim().slice(0, 900);
+function hasFinalArticleReview(task: Task) {
+  return (task.evidence || []).some((item) => String(item.content || "").startsWith("article_review:"));
+}
+
+function buildAnchorPayload(input: {
+  task: Task;
+  ranked: Awaited<ReturnType<typeof assignArticleContestPrizes>>;
+  minimumWinnerScore: number;
+  reviewTarget: ReturnType<typeof getArticleContestReviewTarget>;
+  reviewedAt: string;
+  requestId: string;
+}) {
+  return {
+    version: "a2h-review-anchor-v1",
+    requestId: input.requestId,
+    task: {
+      id: input.task.id,
+      title: input.task.title,
+      deadline: input.task.deadline,
+      mode: input.task.rewardDistribution?.mode,
+      totalPool: input.task.rewardDistribution?.totalPool || input.task.budget,
+      minimumWinnerScore: input.minimumWinnerScore,
+      reviewTarget: {
+        projectName: input.reviewTarget.projectName,
+        projectHandles: input.reviewTarget.projectHandles,
+        projectAliases: input.reviewTarget.projectAliases
+      }
+    },
+    reviewedAt: input.reviewedAt,
+    submissions: [...input.ranked]
+      .sort((a, b) => a.id.localeCompare(b.id))
+      .map((submission) => ({
+        id: submission.id,
+        walletAddress: submission.walletAddress,
+        xHandle: submission.xHandle,
+        articleUrl: submission.articleUrl,
+        title: submission.title,
+        status: submission.status,
+        aiScore: submission.aiScore ?? null,
+        aiReview: submission.aiReview ?? null,
+        aiRubric: submission.aiRubric ?? null,
+        rank: submission.rank ?? null,
+        prizeAmount: submission.prizeAmount ?? null,
+        reviewedAt: submission.reviewedAt ?? null
+      }))
+  };
 }
 
 export async function POST(
@@ -31,8 +76,9 @@ export async function POST(
 
   const { id: taskId } = await params;
   const body = await request.json().catch(() => ({}));
-  const force = Boolean(body.force);
+  const requestedForce = Boolean(body.force);
   const closeNow = Boolean(body.closeNow);
+  const refreshOnly = requestedForce && !closeNow;
   const requestId = crypto.randomUUID();
   const db = await readDb();
   const task = db.tasks.find((item) => item.id === taskId);
@@ -42,7 +88,13 @@ export async function POST(
   if (!isArticleContestDistribution(task.rewardDistribution)) {
     return NextResponse.json({ error: "This task is not a ranked article contest." }, { status: 400 });
   }
-  if (!force && !closeNow && !isSubmissionDeadlinePassed(task.deadline)) {
+  if (hasFinalArticleReview(task)) {
+    return NextResponse.json(
+      { error: "This article contest has already been finalized. Duplicate AI review is blocked." },
+      { status: 409 }
+    );
+  }
+  if (!refreshOnly && !closeNow && !isSubmissionDeadlinePassed(task.deadline)) {
     return NextResponse.json({ error: "Submission deadline has not passed yet." }, { status: 400 });
   }
 
@@ -50,13 +102,19 @@ export async function POST(
   console.info("[ArticleContest] review:start", {
     requestId,
     taskId,
-    force,
+    requestedForce,
+    force: requestedForce,
+    refreshOnly,
     closeNow,
     deadline: task.deadline,
     submissionCount: submissions.length,
-    model: process.env.OPENAI_MODEL || "gpt-4o-mini",
-    baseUrl: process.env.OPENAI_BASE_URL || "https://api.openai.com/v1",
-    hasApiKey: Boolean(process.env.OPENAI_API_KEY)
+    providers: getArticleReviewProviderConfigs().map((provider) => ({
+      id: provider.id,
+      label: provider.label,
+      model: provider.model,
+      weight: provider.weight,
+      configured: Boolean(provider.apiKey)
+    }))
   });
   if (!submissions.length) {
     return NextResponse.json({ error: "No article submissions to review." }, { status: 400 });
@@ -64,6 +122,7 @@ export async function POST(
 
   const now = new Date().toISOString();
   const minimumWinnerScore = getArticleContestMinimumWinnerScore(task.rewardDistribution);
+  const reviewTarget = getArticleContestReviewTarget(task);
   const scoreDebug: Array<{
     submissionId: string;
     xHandle: string;
@@ -80,153 +139,76 @@ export async function POST(
     fallbackReason?: string;
     error?: string;
   }> = [];
-  const scored = await Promise.all(
-    submissions.map(async (submission) => {
-      if (submission.status === "paid") return submission;
-      const liveContent = await fetchXArticleContent(submission.articleUrl);
-      const reviewContent = liveContent.ok ? liveContent.text : submission.contentSnapshot.trim();
-      const contentSource = liveContent.ok ? "x_live" as const : "snapshot_fallback" as const;
-      const xFetchError = liveContent.ok ? "" : `${liveContent.error} Attempts: ${liveContent.attempts.join(" -> ")}`;
-      const audit = {
-        contentSource,
-        fetchSource: liveContent.ok ? liveContent.source : "snapshot_fallback" as const,
-        fetchAttempts: liveContent.attempts,
-        xFetchError: liveContent.ok ? undefined : xFetchError,
-        reviewedTextExcerpt: reviewedTextExcerpt(reviewContent),
-        reviewedTextLength: reviewContent.length,
-        minimumWinnerScore
-      };
+  const scored: ArticleSubmission[] = [];
+  let reprocessed = 0;
+  let reusedPreviews = 0;
+  const missingScores: string[] = [];
+  for (const submission of submissions) {
+    if (submission.status === "paid") {
+      scored.push(submission);
+      continue;
+    }
+    if (submission.aiScore != null && submission.reviewedAt) {
+      reusedPreviews += 1;
+      scored.push(submission);
+      continue;
+    }
+    if (!requestedForce) {
+      missingScores.push(submission.id);
+      scored.push(submission);
+      continue;
+    }
+    const result = await reviewArticleSubmission({ submission, minimumWinnerScore, reviewTarget, task, now });
+    reprocessed += 1;
+    scoreDebug.push(result.debug);
+    scored.push(result.submission);
+  }
+  if (missingScores.length > 0 && !requestedForce) {
+    return NextResponse.json(
+      {
+        error: `Cannot lock final results yet. ${missingScores.length} submission${missingScores.length === 1 ? "" : "s"} do not have a current score. Scores should only change when a user submits or updates. Use the explicit rerun action only if you need to fill missing scores.`,
+        missingScores
+      },
+      { status: 409 }
+    );
+  }
 
-      if (
-        liveContent.ok &&
-        liveContent.authorHandle &&
-        (!xHandlesMatch(liveContent.authorHandle, submission.authorHandle) ||
-          !xHandlesMatch(liveContent.authorHandle, submission.xHandle))
-      ) {
-        const error = `Live X author @${liveContent.authorHandle} does not match submitted author @${submission.authorHandle}.`;
-        scoreDebug.push({
-          submissionId: submission.id,
-          xHandle: submission.xHandle,
-          walletAddress: submission.walletAddress,
-          provider: "ai_error",
-          source: liveContent.source,
-          contentSource,
-          contentLength: reviewContent.length,
-          excerpt: reviewedTextExcerpt(reviewContent),
-          fetchAttempts: liveContent.attempts,
-          error
+  if (refreshOnly) {
+    await updateDb((nextDb) => {
+      nextDb.articleSubmissions = nextDb.articleSubmissions.map((submission) => {
+        if (submission.taskId !== taskId) return submission;
+        return scored.find((item) => item.id === submission.id) || submission;
+      });
+      const targetTask = nextDb.tasks.find((item) => item.id === taskId);
+      if (targetTask) {
+        appendEvidence(targetTask, {
+          by: "system",
+          type: "log",
+          content: `article_score_refresh:${JSON.stringify({
+            requestId,
+            taskId,
+            refreshed: reprocessed,
+            reusedPreviews,
+            missingScores,
+            scoreDebug
+          })}`,
+          createdAt: now
         });
-        return {
-          ...submission,
-          status: "invalid" as const,
-          aiScore: 0,
-          aiReview: error,
-          aiRubric: {
-            relevance: 0,
-            originality: 0,
-            clarity: 0,
-            evidence: 0,
-            narrative: 0,
-            audit: {
-              ...audit,
-              provider: "ai_error" as const
-            }
-          },
-          rank: undefined,
-          prizeAmount: undefined,
-          reviewedAt: now,
-          updatedAt: now
-        };
       }
+    });
 
-      if (!liveContent.ok && reviewContent.length < 200) {
-        return {
-          ...submission,
-          status: "invalid" as const,
-          aiScore: 0,
-          aiReview: `X live content fetch failed and no usable snapshot fallback was provided. ${xFetchError}`,
-          aiRubric: {
-            relevance: 0,
-            originality: 0,
-            clarity: 0,
-            evidence: 0,
-            narrative: 0,
-            audit: {
-              ...audit,
-              provider: "ai_error" as const
-            }
-          },
-          rank: undefined,
-          prizeAmount: undefined,
-          reviewedAt: now,
-          updatedAt: now
-        };
-      }
-      const score = await scoreArticleSubmission({
-        title: submission.title,
-        content: reviewContent,
-        articleUrl: submission.articleUrl,
-        contentSource,
-        xFetchError
-      });
-      scoreDebug.push({
-        submissionId: submission.id,
-        xHandle: submission.xHandle,
-        walletAddress: submission.walletAddress,
-        score: score.score,
-        provider: score.provider,
-        model: score.model,
-        latencyMs: score.latencyMs,
-        source: liveContent.ok ? liveContent.source : "snapshot_fallback",
-        contentSource,
-        contentLength: reviewContent.length,
-        excerpt: reviewedTextExcerpt(reviewContent),
-        fetchAttempts: liveContent.attempts,
-        fallbackReason: score.fallbackReason
-      });
-      const sourceLabel = liveContent.ok
-        ? `X live content (${liveContent.source})`
-        : `submitted snapshot fallback; live X fetch failed (${xFetchError})`;
-      if (score.provider !== "ai") {
-        return {
-          ...submission,
-          status: "invalid" as const,
-          aiScore: 0,
-          aiReview: `Source: ${sourceLabel}. ${score.review}`,
-          aiRubric: {
-            ...score.rubric,
-            audit: {
-              ...audit,
-              provider: score.provider,
-              model: score.model,
-              latencyMs: score.latencyMs
-            }
-          },
-          rank: undefined,
-          prizeAmount: undefined,
-          reviewedAt: now,
-          updatedAt: now
-        };
-      }
-      return {
-        ...submission,
-        status: "reviewed" as const,
-        aiScore: score.score,
-        aiReview: `Source: ${sourceLabel}. ${score.review}`,
-        aiRubric: {
-          ...score.rubric,
-          audit: {
-            ...audit,
-            provider: score.provider,
-            model: score.model,
-            latencyMs: score.latencyMs
-          }
-        },
-        reviewedAt: now,
-        updatedAt: now
-      };
-    })
-  );
+    return NextResponse.json({
+      success: true,
+      requestId,
+      refreshOnly: true,
+      reviewed: scored.length,
+      reprocessed,
+      reusedPreviews,
+      winners: assignArticleContestPrizes(scored, task.rewardDistribution).filter((submission) => submission.rank && submission.prizeAmount).length,
+      submissions: assignArticleContestPrizes(scored, task.rewardDistribution)
+    });
+  }
+
   const ranked = assignArticleContestPrizes(scored, task.rewardDistribution);
   const winners = ranked.filter((submission) => submission.status === "winner" || submission.status === "paid");
   const providerCounts = scoreDebug.reduce<Record<string, number>>((counts, item) => {
@@ -238,10 +220,14 @@ export async function POST(
     requestId,
     taskId,
     closedNow: closeNow,
-    force,
+    requestedForce,
+    force: requestedForce,
     reviewed: ranked.length,
+    reprocessed,
+    reusedPreviews,
     winners: winners.length,
     minimumWinnerScore,
+    reviewTarget,
     providerCounts,
     top: ranked
       .filter((submission) => submission.rank)
@@ -257,6 +243,33 @@ export async function POST(
       })),
     scoreDebug
   };
+  const anchorPayload = buildAnchorPayload({
+    task,
+    ranked,
+    minimumWinnerScore,
+    reviewTarget,
+    reviewedAt: now,
+    requestId
+  });
+  const anchorResult = await anchorArticleReviewOnBase({
+    taskId,
+    reviewedAt: now,
+    reviewedCount: ranked.length,
+    winnerCount: winners.length,
+    payload: anchorPayload
+  });
+  if (!anchorResult.ok) {
+    console.error("[ArticleContest] review:anchor_failed", {
+      requestId,
+      taskId,
+      error: anchorResult.error
+    });
+    return NextResponse.json(
+      { error: `Final review could not be anchored on Base: ${anchorResult.error}` },
+      { status: 500 }
+    );
+  }
+  const reviewAnchor = anchorResult.record;
   console.info("[ArticleContest] review:complete", reviewLog);
 
   await updateDb((nextDb) => {
@@ -279,6 +292,12 @@ export async function POST(
         content: `article_review:${JSON.stringify(reviewLog)}`,
         createdAt: now
       });
+      appendEvidence(targetTask, {
+        by: "system",
+        type: "log",
+        content: `${ARTICLE_REVIEW_ANCHOR_PREFIX}${JSON.stringify(reviewAnchor)}`,
+        createdAt: now
+      });
     }
   });
 
@@ -288,7 +307,10 @@ export async function POST(
     deadline: closeNow ? now : task.deadline,
     closedNow: closeNow,
     reviewed: ranked.length,
+    reprocessed,
+    reusedPreviews,
     winners: winners.length,
+    reviewAnchor,
     submissions: ranked
   });
 }

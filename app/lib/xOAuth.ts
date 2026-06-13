@@ -6,6 +6,7 @@ export type XOAuthState = {
   state: string;
   codeVerifier: string;
   userId: string;
+  walletAddress?: string;
   returnTo: string;
   redirectUri?: string;
   expiresAt: number;
@@ -15,6 +16,7 @@ export type XOAuth1RequestState = {
   requestToken: string;
   requestTokenSecret: string;
   userId: string;
+  walletAddress?: string;
   returnTo: string;
   callbackUri: string;
   expiresAt: number;
@@ -77,6 +79,11 @@ export function encodeXOAuthState(state: XOAuthState) {
   return `${payload}.${sign(payload)}`;
 }
 
+export function encodeXOAuth1RequestState(state: XOAuth1RequestState) {
+  const payload = base64Url(JSON.stringify(state));
+  return `${payload}.${sign(payload)}`;
+}
+
 export function saveXOAuthState(state: XOAuthState) {
   const store = getStateStore();
   const now = Date.now();
@@ -119,6 +126,25 @@ export function decodeXOAuthState(value: string): XOAuthState | null {
   try {
     const state = JSON.parse(Buffer.from(payload, "base64url").toString("utf-8")) as XOAuthState;
     if (!state.state || !state.codeVerifier || !state.userId || Date.now() > state.expiresAt) {
+      return null;
+    }
+    return state;
+  } catch {
+    return null;
+  }
+}
+
+export function decodeXOAuth1RequestState(value: string): XOAuth1RequestState | null {
+  const [payload, signature] = value.split(".");
+  if (!payload || !signature || sign(payload) !== signature) return null;
+  try {
+    const state = JSON.parse(Buffer.from(payload, "base64url").toString("utf-8")) as XOAuth1RequestState;
+    if (
+      !state.requestToken ||
+      !state.requestTokenSecret ||
+      !state.userId ||
+      Date.now() > state.expiresAt
+    ) {
       return null;
     }
     return state;

@@ -1,0 +1,95 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="80" y1="34" x2="944" y2="990" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#040806"/>
+      <stop offset="0.48" stop-color="#07100F"/>
+      <stop offset="1" stop-color="#10132A"/>
+    </linearGradient>
+    <radialGradient id="auraHuman" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(286 446) rotate(90) scale(280)">
+      <stop stop-color="#FFC794" stop-opacity="0.34"/>
+      <stop offset="1" stop-color="#FFC794" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="auraBot" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(754 440) rotate(90) scale(300)">
+      <stop stop-color="#80FFEA" stop-opacity="0.28"/>
+      <stop offset="0.56" stop-color="#7C5CFF" stop-opacity="0.16"/>
+      <stop offset="1" stop-color="#7C5CFF" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="humanSkin" x1="196" y1="254" x2="360" y2="748" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFD9A8"/>
+      <stop offset="0.54" stop-color="#FFC38B"/>
+      <stop offset="1" stop-color="#FFAE72"/>
+    </linearGradient>
+    <linearGradient id="botBlue" x1="640" y1="246" x2="866" y2="744" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#85F5F1"/>
+      <stop offset="0.52" stop-color="#83A4FF"/>
+      <stop offset="1" stop-color="#7C5CFF"/>
+    </linearGradient>
+    <linearGradient id="arrow" x1="404" y1="512" x2="642" y2="512" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#80FFEA"/>
+      <stop offset="0.5" stop-color="#83A4FF"/>
+      <stop offset="1" stop-color="#7C5CFF"/>
+    </linearGradient>
+    <filter id="humanGlow" x="88" y="106" width="372" height="756" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="0" stdDeviation="20" flood-color="#FFC38B" flood-opacity="0.28"/>
+      <feDropShadow dx="0" dy="28" stdDeviation="36" flood-color="#000000" flood-opacity="0.34"/>
+    </filter>
+    <filter id="botGlow" x="550" y="118" width="382" height="740" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="0" stdDeviation="22" flood-color="#80FFEA" flood-opacity="0.25"/>
+      <feDropShadow dx="0" dy="0" stdDeviation="28" flood-color="#7C5CFF" flood-opacity="0.24"/>
+      <feDropShadow dx="0" dy="28" stdDeviation="36" flood-color="#000000" flood-opacity="0.34"/>
+    </filter>
+    <filter id="arrowGlow" x="318" y="352" width="410" height="320" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="0" stdDeviation="20" flood-color="#80FFEA" flood-opacity="0.3"/>
+      <feDropShadow dx="0" dy="0" stdDeviation="22" flood-color="#7C5CFF" flood-opacity="0.28"/>
+    </filter>
+  </defs>
+
+  <rect width="1024" height="1024" fill="#05070B"/>
+  <rect width="1024" height="1024" rx="226" fill="url(#bg)"/>
+  <rect x="42" y="42" width="940" height="940" rx="196" stroke="#FFFFFF" stroke-opacity="0.08" stroke-width="4"/>
+  <rect width="1024" height="1024" fill="url(#auraHuman)"/>
+  <rect width="1024" height="1024" fill="url(#auraBot)"/>
+
+  <g opacity="0.14">
+    <path d="M132 238H892M132 390H892M132 542H892M132 694H892M132 846H892" stroke="#F4F6FF" stroke-width="2"/>
+    <path d="M178 132V892M330 132V892M482 132V892M634 132V892M786 132V892" stroke="#F4F6FF" stroke-width="2"/>
+  </g>
+
+  <g opacity="0.34">
+    <circle cx="512" cy="512" r="290" stroke="#80FFEA" stroke-opacity="0.18" stroke-width="2"/>
+    <circle cx="512" cy="512" r="224" stroke="#7C5CFF" stroke-opacity="0.18" stroke-width="2"/>
+  </g>
+
+  <g filter="url(#humanGlow)">
+    <circle cx="284" cy="350" r="104" fill="url(#humanSkin)"/>
+    <path d="M176 628C176 534.112 224.353 480 284 480C343.647 480 392 534.112 392 628V704C392 726.091 374.091 744 352 744H216C193.909 744 176 726.091 176 704V628Z" fill="url(#humanSkin)"/>
+    <path d="M192 704H376" stroke="#FFE0B8" stroke-opacity="0.25" stroke-width="8" stroke-linecap="round"/>
+  </g>
+
+  <g filter="url(#arrowGlow)">
+    <path d="M390 512H656" stroke="url(#arrow)" stroke-width="58" stroke-linecap="round"/>
+    <path d="M410 418L316 512L410 606" stroke="#80FFEA" stroke-width="58" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M636 418L730 512L636 606" stroke="#7C5CFF" stroke-width="58" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M390 512H656" stroke="#F8FAFF" stroke-opacity="0.2" stroke-width="14" stroke-linecap="round"/>
+  </g>
+
+  <g filter="url(#botGlow)">
+    <rect x="642" y="238" width="222" height="234" rx="48" fill="url(#botBlue)"/>
+    <rect x="660" y="256" width="186" height="198" rx="34" stroke="#FFFFFF" stroke-opacity="0.16" stroke-width="4"/>
+    <rect x="684" y="322" width="138" height="60" rx="30" fill="#0B1821" fill-opacity="0.55"/>
+    <circle cx="718" cy="352" r="16" fill="#80FFEA"/>
+    <circle cx="754" cy="352" r="16" fill="#80FFEA"/>
+    <circle cx="790" cy="352" r="16" fill="#80FFEA"/>
+    <rect x="676" y="510" width="154" height="172" rx="42" fill="url(#botBlue)"/>
+    <path d="M708 510H798" stroke="#F8FAFF" stroke-opacity="0.14" stroke-width="8" stroke-linecap="round"/>
+  </g>
+
+  <g opacity="0.72">
+    <circle cx="174" cy="214" r="5" fill="#80FFEA"/>
+    <circle cx="848" cy="210" r="5" fill="#FFC46B"/>
+    <circle cx="876" cy="776" r="5" fill="#7C5CFF"/>
+    <path d="M174 214H246" stroke="#80FFEA" stroke-opacity="0.35" stroke-width="2"/>
+    <path d="M848 210H782" stroke="#FFC46B" stroke-opacity="0.35" stroke-width="2"/>
+    <path d="M876 776H804" stroke="#7C5CFF" stroke-opacity="0.35" stroke-width="2"/>
+  </g>
+</svg>

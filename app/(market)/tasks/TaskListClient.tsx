@@ -28,6 +28,7 @@ type Task = {
     | "verified"
     | "paid";
   updatedAt: string;
+  taskType?: "twitter_follow" | "twitter_like" | "twitter_retweet" | "twitter_comment" | "x_article" | "physical";
   campaign?: {
     requesterName: string;
     requesterHandle?: string;
@@ -90,7 +91,19 @@ function actionLabel(task: Task) {
   return task.campaign.action.replace(/_/g, " ");
 }
 
+function isArticleContest(task: Task) {
+  return task.taskType === "x_article" || task.rewardDistribution?.mode === "ranked_article_contest" || task.campaign?.action === "x_article_contest";
+}
+
+function articleContestActionLabel(task: Task) {
+  if (task.taskState === "closed" || task.taskState === "full" || task.taskState === "refunded" || task.status === "paid") {
+    return "View report";
+  }
+  return "Submit";
+}
+
 function canClaim(task: Task, auth: AuthPayload | null) {
+  if (isArticleContest(task)) return false;
   if (!["created", "ai_failed"].includes(task.status)) return false;
   if (task.taskState === "full" || task.taskState === "closed" || task.taskState === "refunded") return false;
   if (!auth?.human?.id || !auth?.user?.walletAddress) return false;
@@ -344,6 +357,7 @@ export default function TaskListClient({ justCreated, searchQuery }: { justCreat
         {filtered.map((task) => {
           const claimedByMe = isClaimedByCurrentUser(task, auth);
           const claimable = canClaim(task, auth);
+          const articleContest = isArticleContest(task);
           return (
             <article key={task.id} className={styles.questCard}>
               <Link href={`/tasks/${task.id}`} className={styles.questCardLink}>
@@ -371,7 +385,14 @@ export default function TaskListClient({ justCreated, searchQuery }: { justCreat
                   ) : null}
                 </div>
                 <div className={styles.footerRight}>
-                  {claimable ? (
+                  {articleContest ? (
+                    <Link
+                      href={articleContestActionLabel(task) === "View report" ? `/tasks/${task.id}/report` : `/tasks/${task.id}`}
+                      className={styles.questClaimBtn}
+                    >
+                      {articleContestActionLabel(task)}
+                    </Link>
+                  ) : claimable ? (
                     <button
                       type="button"
                       className={styles.questClaimBtn}

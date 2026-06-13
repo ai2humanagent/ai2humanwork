@@ -1,0 +1,44 @@
+<svg width="400" height="400" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="28" y1="20" x2="372" y2="380" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#05070B"/>
+      <stop offset="0.48" stop-color="#081018"/>
+      <stop offset="1" stop-color="#10132A"/>
+    </linearGradient>
+    <linearGradient id="loopA" x1="72" y1="94" x2="306" y2="316" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#80FFEA"/>
+      <stop offset="1" stop-color="#7C5CFF"/>
+    </linearGradient>
+    <linearGradient id="loopB" x1="322" y1="92" x2="104" y2="318" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFC46B"/>
+      <stop offset="1" stop-color="#7C5CFF"/>
+    </linearGradient>
+    <radialGradient id="pulse" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(200 200) rotate(90) scale(168)">
+      <stop stop-color="#80FFEA" stop-opacity="0.26"/>
+      <stop offset="0.52" stop-color="#7C5CFF" stop-opacity="0.1"/>
+      <stop offset="1" stop-color="#05070B" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="softGlow" x="-40" y="-40" width="480" height="480" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="0" stdDeviation="16" flood-color="#80FFEA" flood-opacity="0.2"/>
+      <feDropShadow dx="0" dy="0" stdDeviation="24" flood-color="#7C5CFF" flood-opacity="0.2"/>
+    </filter>
+  </defs>
+
+  <rect width="400" height="400" rx="88" fill="url(#bg)"/>
+  <rect x="18" y="18" width="364" height="364" rx="76" stroke="#FFFFFF" stroke-opacity="0.08" stroke-width="2"/>
+  <circle cx="200" cy="200" r="174" fill="url(#pulse)"/>
+
+  <g opacity="0.12">
+    <path d="M76 118H324M76 200H324M76 282H324" stroke="#F4F6FF" stroke-width="1"/>
+    <path d="M118 76V324M200 76V324M282 76V324" stroke="#F4F6FF" stroke-width="1"/>
+  </g>
+
+  <g filter="url(#softGlow)" opacity="0.9">
+    <circle cx="150" cy="200" r="96" stroke="url(#loopA)" stroke-width="19"/>
+    <circle cx="250" cy="200" r="96" stroke="url(#loopB)" stroke-width="19"/>
+    <circle cx="200" cy="200" r="24" fill="#E9FFFB" fill-opacity="0.46"/>
+  </g>
+
+  <rect x="62" y="138" width="276" height="124" rx="34" fill="#05070B" fill-opacity="0.68" stroke="#FFFFFF" stroke-opacity="0.1"/>
+  <text x="200" y="224" text-anchor="middle" fill="#F8FAFF" font-family="Inter, Sora, Space Grotesk, Arial, sans-serif" font-size="94" font-weight="900">A2H</text>
+</svg>

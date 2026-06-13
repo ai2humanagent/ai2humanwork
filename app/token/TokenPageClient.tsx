@@ -94,7 +94,7 @@ const venueGroups = [
     venues: [
       {
         name: "Telegram",
-        desc: "Join the ai2human community.",
+        desc: "Join the AI2Human community.",
         href: "https://t.me/ai2humanwork"
       }
     ]
@@ -116,7 +116,7 @@ const venueGroups = [
     venues: [
       {
         name: "X",
-        desc: "Follow ai2human updates and campaigns.",
+        desc: "Follow AI2Human updates and campaigns.",
         href: "https://x.com/ai2humanwork"
       }
     ]
@@ -125,9 +125,9 @@ const venueGroups = [
 
 function RootLogo() {
   return (
-    <span className={styles.logoMark} aria-label="ai2human">
+    <span className={styles.logoMark} aria-label="AI2Human">
       <span className={styles.logoNode}>A</span>
-      <span className={styles.logoText}>ai2human</span>
+      <span className={styles.logoText}>AI2Human</span>
     </span>
   );
 }
@@ -249,7 +249,7 @@ export default function TokenPage() {
 
       <section className={styles.hero}>
         <h1>$A2H</h1>
-        <p>The ai2human token on Base, connected to task access, operator trust, and the proof-to-settlement network.</p>
+        <p>The AI2Human token on Base, connected to task access, operator trust, and the proof-to-settlement network.</p>
         <div className={styles.contractPill}>
           <span>Contract</span>
           <code>{contractAddress}</code>
@@ -320,7 +320,7 @@ export default function TokenPage() {
           </div>
         </div>
         <div className={styles.footerBottom}>
-          <p>© 2026 ai2human. All rights reserved.</p>
+          <p>© 2026 AI2Human. All rights reserved.</p>
           <div>
             <a href="https://x.com/ai2humanwork" target="_blank" rel="noopener noreferrer" aria-label="X">
               X

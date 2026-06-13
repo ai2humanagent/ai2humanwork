@@ -7,6 +7,7 @@ import type {
   QuestProgress,
   Task
 } from "./store";
+import { parseArticleReviewAnchor } from "./reviewAnchor";
 import { supportsArticleSubmissionsTable } from "./store";
 import { supabase } from "./supabase";
 
@@ -151,7 +152,7 @@ function readPoolAddressFromCampaign(campaign: unknown): string | undefined {
 }
 
 function taskFromRow(row: TaskRow): Task {
-  return {
+  const task: Task = {
     id: row.id,
     title: row.title,
     budget: row.budget,
@@ -172,6 +173,8 @@ function taskFromRow(row: TaskRow): Task {
     createdAt: row.created_at,
     updatedAt: row.updated_at
   };
+  task.reviewAnchor = parseArticleReviewAnchor(task.evidence) || undefined;
+  return task;
 }
 
 function paymentFromRow(row: PaymentRow): PaymentEntry {

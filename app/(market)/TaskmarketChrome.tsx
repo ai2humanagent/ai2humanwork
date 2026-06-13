@@ -112,7 +112,7 @@ export default function TaskmarketChrome({
           <div className={styles.sidebarTop}>
             <Link href="/" className={styles.brand} onClick={() => setSidebarOpen(false)}>
               <img className={styles.brandMark} src="/icon.png" alt="" />
-              <span>ai2human</span>
+              <span>AI2Human</span>
             </Link>
 
             <nav className={styles.navGroup}>

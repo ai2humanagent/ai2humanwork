@@ -10,7 +10,7 @@ export function buildVerificationMessage(
   walletAddress: string
 ): string {
   return [
-    "ai2human Task Verification",
+    "AI2Human Task Verification",
     `Task: ${taskId}`,
     `Subtask: ${subtaskKey}`,
     `Wallet: ${walletAddress.toLowerCase()}`,

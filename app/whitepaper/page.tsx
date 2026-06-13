@@ -39,7 +39,7 @@ export default function WhitepaperPage() {
         <div className={styles.navLeft}>
           <Link href="/" className={styles.brand}>
             <div className={styles.brandMark} />
-            <span>ai2human</span>
+            <span>AI2Human</span>
           </Link>
         </div>
         <div className={styles.navRight}>

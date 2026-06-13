@@ -69,7 +69,7 @@ function CampaignFields(props: FieldsProps) {
             className={styles.input}
             value={props.requesterName}
             onChange={(event) => props.setRequesterName(event.target.value)}
-            placeholder="ai2human Official"
+            placeholder="AI2Human Official"
             required
           />
         </div>
@@ -160,7 +160,7 @@ function CampaignFields(props: FieldsProps) {
 
 function NewTaskStatic() {
   const [templateId, setTemplateId] = useState(TEMPLATES[0]?.id || "x_quote_launch");
-  const [requesterName, setRequesterName] = useState("ai2human Official");
+  const [requesterName, setRequesterName] = useState("AI2Human Official");
   const [requesterHandle, setRequesterHandle] = useState("@ai2humanwork");
   const [targetUrl, setTargetUrl] = useState(getDefaultTargetUrlForTemplate(TEMPLATES[0]?.id));
   const [reward, setReward] = useState(stripBudgetAmount(DEFAULT_X_TASK_BUDGET));
@@ -204,7 +204,7 @@ function NewTaskPrivy() {
   const router = useRouter();
   const { ready, authenticated, login } = usePrivy();
   const [templateId, setTemplateId] = useState(TEMPLATES[0]?.id || "x_quote_launch");
-  const [requesterName, setRequesterName] = useState("ai2human Official");
+  const [requesterName, setRequesterName] = useState("AI2Human Official");
   const [requesterHandle, setRequesterHandle] = useState("@ai2humanwork");
   const [targetUrl, setTargetUrl] = useState(getDefaultTargetUrlForTemplate(TEMPLATES[0]?.id));
   const [reward, setReward] = useState(stripBudgetAmount(DEFAULT_X_TASK_BUDGET));

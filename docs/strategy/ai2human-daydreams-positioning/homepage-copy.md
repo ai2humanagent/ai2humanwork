@@ -6,7 +6,7 @@
 
 AI agents can automate digital workflows, but they still hit trust gates: real accounts, human judgment, local action, screenshots, receipts, and proof.
 
-ai2human routes those steps to verified human operators, collects structured proof, verifies completion, and releases USDC on-chain.
+AI2Human routes those steps to verified human operators, collects structured proof, verifies completion, and releases USDC on-chain.
 
 ## Primary CTA
 

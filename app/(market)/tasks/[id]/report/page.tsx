@@ -5,7 +5,10 @@ import {
   deriveCampaignLifecycle,
   getPublicArticleWinners
 } from "../../../../lib/campaignReport";
-import { getArticleContestMinimumWinnerScore } from "../../../../lib/articleContest";
+import {
+  getArticleContestMinimumWinnerScore,
+  isArticleContestResultsVisible
+} from "../../../../lib/articleContest";
 import { formatDateTimeUtc8 } from "../../../../lib/dateTime";
 import styles from "./report.module.css";
 
@@ -18,9 +21,13 @@ function findLatestTaskById(tasks: Task[], taskId: string) {
   return matches.sort((a, b) => +new Date(b.updatedAt) - +new Date(a.updatedAt))[0];
 }
 
-function modeLabel(mode: string | undefined) {
+function modeLabel(mode: string | undefined, action?: string, requiresImage?: boolean) {
   if (mode === "lucky_draw") return "Lucky Draw";
-  if (mode === "ranked_article_contest") return "Ranked Article";
+  if (mode === "ranked_article_contest") {
+    if (action === "banner_image_contest") return "Banner Contest";
+    if (requiresImage) return "Image Post Contest";
+    return "Ranked Article";
+  }
   if (mode === "equal") return "Equal Split";
   return "Task Campaign";
 }
@@ -32,6 +39,15 @@ function formatDate(value: string | undefined) {
 function shortAddress(value: string | undefined) {
   if (!value) return "-";
   return `${value.slice(0, 6)}...${value.slice(-4)}`;
+}
+
+function currentLifecycleLabel(lifecycle: ReturnType<typeof deriveCampaignLifecycle>) {
+  return lifecycle.find((step) => step.state === "current")?.label || "Draft";
+}
+
+function paymentLabel(winner: { status: string; paymentTxHash?: string }) {
+  if (winner.status === "paid" || winner.paymentTxHash) return "Paid";
+  return "Ready";
 }
 
 export default async function CampaignReportPage({
@@ -47,25 +63,36 @@ export default async function CampaignReportPage({
   const mode = task.rewardDistribution?.mode || "fcfs";
   const articleSubmissions = db.articleSubmissions.filter((submission) => submission.taskId === task.id);
   const payments = db.payments.filter((payment) => payment.taskId === task.id);
+  const articleResultsVisible = mode !== "ranked_article_contest" || isArticleContestResultsVisible({
+    deadline: task.deadline,
+    taskState: task.taskState
+  });
   const lifecycle = deriveCampaignLifecycle({ task, articleSubmissions, payments });
-  const publicWinners = mode === "ranked_article_contest"
+  const publicWinners = mode === "ranked_article_contest" && articleResultsVisible
     ? getPublicArticleWinners(task, articleSubmissions)
     : [];
-  const reviewedCount = articleSubmissions.filter((submission) => submission.aiScore != null).length;
+  const reviewedCount = articleResultsVisible
+    ? articleSubmissions.filter((submission) => submission.aiScore != null).length
+    : 0;
   const hasAuditResults = articleSubmissions.some((submission) => Boolean(submission.aiRubric?.audit));
   const minimumWinnerScore = getArticleContestMinimumWinnerScore(task.rewardDistribution);
   const totalPool = task.rewardDistribution?.totalPool || task.budget;
-  const reportReady = mode !== "ranked_article_contest" || hasAuditResults;
+  const reportReady = mode !== "ranked_article_contest" || (articleResultsVisible && hasAuditResults);
+  const currentStep = currentLifecycleLabel(lifecycle);
+  const paidWinnerCount = publicWinners.filter((winner) => winner.status === "paid" || winner.paymentTxHash).length;
+  const firstWinner = publicWinners[0];
+  const otherWinners = publicWinners.slice(1);
+  const isBannerContest = task.campaign?.action === "banner_image_contest";
+  const isImagePostContest = Boolean(task.campaign?.requiresImage);
 
   return (
     <main className={styles.page}>
       <section className={styles.hero}>
         <div className={styles.heroCopy}>
-          <div className={styles.kicker}>AI2Human Campaign Report</div>
+          <div className={styles.kicker}>AI2Human Campaign Results</div>
           <h1>{task.title}</h1>
           <p>
-            Public summary of campaign status, entries, AI-assisted review, winner selection,
-            and USDC settlement readiness.
+            Public result report for entries, AI-assisted scoring, winner selection, and Base USDC payout readiness.
           </p>
           <div className={styles.heroActions}>
             <Link href={`/tasks/${task.id}`} className={styles.primaryLink}>
@@ -77,21 +104,21 @@ export default async function CampaignReportPage({
           </div>
         </div>
         <div className={styles.reportCard}>
-          <span>{modeLabel(mode)}</span>
-          <strong>{totalPool}</strong>
-          <p>Prize pool</p>
+          <span>{currentStep}</span>
+          <strong>{publicWinners.length || "-"}</strong>
+          <p>public winners selected</p>
           <div className={styles.reportMeta}>
             <div>
-              <strong>{articleSubmissions.length}</strong>
-              <span>Submissions</span>
+              <strong>{totalPool}</strong>
+              <span>Prize pool</span>
             </div>
             <div>
               <strong>{reviewedCount}</strong>
               <span>Reviewed</span>
             </div>
             <div>
-              <strong>{publicWinners.length}</strong>
-              <span>Public winners</span>
+              <strong>{paidWinnerCount}/{publicWinners.length || task.rewardDistribution?.maxWinners || 0}</strong>
+              <span>Paid</span>
             </div>
           </div>
         </div>
@@ -99,16 +126,18 @@ export default async function CampaignReportPage({
 
       {!reportReady && (
         <div className={styles.notice}>
-          This report is showing legacy review data. Admin should re-run AI Review to publish
-          source-audited results and reviewed text excerpts.
+          {isBannerContest
+            ? "Banner contest results are hidden until the contest ends. Final scores, winners, and review excerpts will be published after admin locks the final results."
+            : isImagePostContest
+              ? "Image post contest results are hidden until the contest ends. Final scores, winners, and review excerpts will be published after admin locks the final results."
+            : "Article contest results are hidden until the contest ends. Final scores, winners, and review excerpts will be published after admin locks the final results."}
         </div>
       )}
 
-      <section className={styles.lifecycle}>
+      <section className={styles.statusStrip} aria-label="Campaign lifecycle">
         {lifecycle.map((step) => (
-          <div key={step.key} className={`${styles.lifecycleStep} ${styles[step.state]}`}>
+          <div key={step.key} className={`${styles.statusStep} ${styles[step.state]}`}>
             <span>{step.label}</span>
-            <p>{step.description}</p>
           </div>
         ))}
       </section>
@@ -116,11 +145,11 @@ export default async function CampaignReportPage({
       <section className={styles.summaryGrid}>
         <div>
           <span>Campaign mode</span>
-          <strong>{modeLabel(mode)}</strong>
+          <strong>{modeLabel(mode, task.campaign?.action, task.campaign?.requiresImage)}</strong>
         </div>
         <div>
           <span>Minimum public winner score</span>
-          <strong>{mode === "ranked_article_contest" ? minimumWinnerScore : "-"}</strong>
+          <strong>{mode === "ranked_article_contest" && articleResultsVisible ? minimumWinnerScore : "-"}</strong>
         </div>
         <div>
           <span>Deadline</span>
@@ -130,49 +159,78 @@ export default async function CampaignReportPage({
           <span>Settlement</span>
           <strong>Base USDC</strong>
         </div>
+        <div>
+          <span>Review Anchor</span>
+          <strong>
+            {task.reviewAnchor?.txHash ? (
+              <a href={task.reviewAnchor.explorerUrl} target="_blank" rel="noreferrer">
+                Base anchored
+              </a>
+            ) : "-"}
+          </strong>
+        </div>
       </section>
 
-      {mode === "ranked_article_contest" && (
+      {mode === "ranked_article_contest" && articleResultsVisible && (
         <section className={styles.results}>
           <div className={styles.sectionHeader}>
             <div>
               <span>AI Review Results</span>
-              <h2>Qualified Winners</h2>
+              <h2>Winners & Review Notes</h2>
             </div>
             <p>
-              Scored by relevance, originality, clarity, evidence, and narrative.
-              Live X embed/API text is preferred; submitted snapshot text is only used as fallback when live fetching fails.
+              Scores are created when each submission is submitted or updated. Live X content is preferred;
+              submitted fallback text is used only when live fetching fails.
             </p>
           </div>
+          {task.reviewAnchor?.txHash && (
+            <div className={styles.notice}>
+              Final review anchored on Base:{" "}
+              <a href={task.reviewAnchor.explorerUrl} target="_blank" rel="noreferrer">
+                {task.reviewAnchor.txHash}
+              </a>
+            </div>
+          )}
 
           {publicWinners.length === 0 ? (
             <div className={styles.empty}>
-              No public winners are ready yet. Run AI Review, confirm qualified winners,
+              No public winners are ready yet. Lock the final results after the deadline,
               then use this report for sharing.
             </div>
           ) : (
-            <div className={styles.winnerGrid}>
-              {publicWinners.map((winner) => (
-                <article key={winner.id} className={`${styles.winnerCard} ${winner.rank === 1 ? styles.first : ""}`}>
+            <>
+              {firstWinner && (
+                <article className={`${styles.winnerCard} ${styles.first}`}>
                   <div className={styles.winnerTop}>
                     <div>
-                      <span>{winner.rankLabel}</span>
-                      <h3>@{winner.xHandle}</h3>
+                      <span>{firstWinner.rankLabel}</span>
+                      <h3>@{firstWinner.xHandle}</h3>
                     </div>
-                    <strong>{winner.prizeAmount}</strong>
+                    <strong>{firstWinner.prizeAmount}</strong>
                   </div>
                   <div className={styles.scoreRow}>
-                    <strong>{winner.score.toFixed(1)}</strong>
+                    <strong>{firstWinner.score.toFixed(1)}</strong>
                     <span>/100</span>
                   </div>
-                  <h4>{winner.title}</h4>
-                  <p className={styles.reviewSummary}>{winner.reviewSummary}</p>
-                  <div className={styles.sourceLine}>{winner.sourceLabel}</div>
-                  {winner.reviewedTextExcerpt && (
-                    <blockquote>{winner.reviewedTextExcerpt}</blockquote>
+                  <h4>{firstWinner.title}</h4>
+                  <p className={styles.reviewSummary}>{firstWinner.reviewSummary}</p>
+                  <div className={styles.resultBadges}>
+                    <span>{firstWinner.sourceLabel}</span>
+                    {firstWinner.modelConsensusLabel && <span>{firstWinner.modelConsensusLabel}</span>}
+                    <span>{paymentLabel(firstWinner)}</span>
+                    <span>{shortAddress(firstWinner.walletAddress)}</span>
+                  </div>
+                  {firstWinner.modelReviews.length > 0 && (
+                    <div className={styles.modelStrip}>
+                      {firstWinner.modelReviews.map((item) => (
+                        <span key={`${firstWinner.id}-${item.providerLabel}`}>
+                          {item.providerLabel}: {item.status === "scored" && item.score != null ? item.score.toFixed(1) : item.status}
+                        </span>
+                      ))}
+                    </div>
                   )}
                   <div className={styles.rubric}>
-                    {winner.rubric.map((entry) => (
+                    {firstWinner.rubric.map((entry) => (
                       <div key={entry.key}>
                         <span>{entry.key}</span>
                         <strong>{entry.value.toFixed(1)}</strong>
@@ -180,20 +238,90 @@ export default async function CampaignReportPage({
                     ))}
                   </div>
                   <div className={styles.cardLinks}>
-                    <a href={winner.articleUrl} target="_blank" rel="noreferrer">Open X link</a>
-                    <span>{shortAddress(winner.walletAddress)}</span>
+                    <a href={firstWinner.articleUrl} target="_blank" rel="noreferrer">Open X link</a>
+                    {firstWinner.paymentExplorerUrl ? (
+                      <a href={firstWinner.paymentExplorerUrl} target="_blank" rel="noreferrer">View payout</a>
+                    ) : (
+                      <span>USDC payout pending</span>
+                    )}
                   </div>
                 </article>
-              ))}
-            </div>
+              )}
+
+              {otherWinners.length > 0 && (
+                <div className={styles.runnerGrid}>
+                  {otherWinners.map((winner) => (
+                    <article key={winner.id} className={styles.runnerCard}>
+                      <div className={styles.runnerRank}>
+                        <span>{winner.rankLabel}</span>
+                        <strong>{winner.prizeAmount}</strong>
+                      </div>
+                      <h3>@{winner.xHandle}</h3>
+                      <p>{winner.title}</p>
+                      <div className={styles.runnerScore}>
+                        <strong>{winner.score.toFixed(1)}</strong>
+                        <span>/100</span>
+                      </div>
+                      <p className={styles.runnerReview}>{winner.reviewSummary}</p>
+                      {winner.modelConsensusLabel && <div className={styles.runnerModel}>{winner.modelConsensusLabel}</div>}
+                      {winner.modelReviews.length > 0 && (
+                        <div className={styles.modelStrip}>
+                          {winner.modelReviews.map((item) => (
+                            <span key={`${winner.id}-${item.providerLabel}`}>
+                              {item.providerLabel}: {item.status === "scored" && item.score != null ? item.score.toFixed(1) : item.status}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      <div className={styles.cardLinks}>
+                        <a href={winner.articleUrl} target="_blank" rel="noreferrer">Open X</a>
+                        <span>{paymentLabel(winner)}</span>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </>
           )}
+        </section>
+      )}
+
+      {mode === "ranked_article_contest" && articleResultsVisible && publicWinners.length > 0 && (
+        <section className={styles.auditSection}>
+          <div className={styles.sectionHeader}>
+            <div>
+              <span>Audit Trail</span>
+              <h2>Reviewed Text Sources</h2>
+            </div>
+            <p>Compact excerpts show what the AI actually scored. Full X posts remain linked above.</p>
+          </div>
+          <div className={styles.auditGrid}>
+            {publicWinners.map((winner) => (
+              <article key={`audit-${winner.id}`} className={styles.auditCard}>
+                <div>
+                  <strong>@{winner.xHandle}</strong>
+                  <span>{winner.sourceLabel}</span>
+                </div>
+                {winner.modelReviews.length > 0 && (
+                  <div className={styles.auditModels}>
+                    {winner.modelReviews.map((item) => (
+                      <span key={`audit-model-${winner.id}-${item.providerLabel}`}>
+                        {item.providerLabel}: {item.status === "scored" && item.score != null ? item.score.toFixed(1) : item.status}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <p>{winner.reviewedTextExcerpt || "Reviewed source text is recorded in the internal audit log."}</p>
+              </article>
+            ))}
+          </div>
         </section>
       )}
 
       <section className={styles.footerNote}>
         <strong>Task - Human action - Proof - Verification - USDC settlement</strong>
         <p>
-          ai2human keeps campaign execution and payout evidence in one auditable loop,
+          AI2Human keeps campaign execution and payout evidence in one auditable loop,
           so agents and humans can coordinate work without losing settlement traceability.
         </p>
       </section>

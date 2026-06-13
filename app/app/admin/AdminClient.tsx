@@ -12,6 +12,10 @@ type TaskSummary = {
   taskState: string;
   lifecycleStatus?: string;
   mode: string;
+  campaign?: {
+    action?: string;
+    requiresImage?: boolean;
+  } | null;
   totalPool: string;
   maxWinners: number;
   claimedCount: number;
@@ -20,6 +24,21 @@ type TaskSummary = {
   createdAt: string;
   deadline: string | null;
   escrowDepositId: string | null;
+  reviewAnchor?: {
+    chainId: number;
+    network: string;
+    txHash: string;
+    explorerUrl: string;
+    anchorHash: string;
+    anchoredAt: string;
+    signerAddress: string;
+    payload: {
+      taskId: string;
+      reviewedAt: string;
+      reviewedCount: number;
+      winnerCount: number;
+    };
+  } | null;
 };
 
 type Winner = {
@@ -58,6 +77,11 @@ type TaskPayment = {
   createdAt: string;
 };
 
+type EvidenceItem = {
+  content?: string;
+  createdAt?: string;
+};
+
 type ArticleSubmission = {
   id: string;
   taskId: string;
@@ -65,6 +89,7 @@ type ArticleSubmission = {
   xHandle: string;
   articleUrl: string;
   title: string;
+  contentSnapshot: string;
   status: string;
   aiScore: number | null;
   aiReview: string | null;
@@ -81,10 +106,35 @@ type ArticleSubmission = {
       xFetchError?: string;
       reviewedTextExcerpt?: string;
       reviewedTextLength?: number;
+      copyRisk?: "possible" | "high";
+      copyRiskReason?: string;
+      copyMatchedSubmissionId?: string;
+      copySimilarity?: number;
       model?: string;
       provider?: string;
       latencyMs?: number;
       minimumWinnerScore?: number;
+      aggregateStrategy?: string;
+      activeModelCount?: number;
+      skippedModelCount?: number;
+      modelReviews?: Array<{
+        providerId: string;
+        providerLabel: string;
+        model?: string;
+        weight: number;
+        status: "scored" | "failed" | "skipped";
+        score?: number;
+        review?: string;
+        rubric?: {
+          relevance?: number;
+          originality?: number;
+          clarity?: number;
+          evidence?: number;
+          narrative?: number;
+        };
+        latencyMs?: number;
+        error?: string;
+      }>;
     };
   } | null;
   rank: number | null;
@@ -103,13 +153,18 @@ type TaskDetail = TaskSummary & {
   payments: TaskPayment[];
   articleSubmissions: ArticleSubmission[];
   escrow: object | null;
-  campaign: object | null;
-  evidence: object[];
+  campaign: {
+    poolAddress?: string;
+    [key: string]: unknown;
+  } | null;
+  reviewAnchor?: TaskSummary["reviewAnchor"];
+  evidence: EvidenceItem[];
 };
 
 type AdminUser = {
   id: string;
   email: string | null;
+  contactEmail: string | null;
   createdAt: string;
   authProvider: string;
   privyUserId: string | null;
@@ -149,6 +204,7 @@ type AdminUser = {
   readiness: {
     hasWallet: boolean;
     hasX: boolean;
+    hasContactEmail: boolean;
     hasProfile: boolean;
     profileCompletePercent: number;
   };
@@ -156,6 +212,7 @@ type AdminUser = {
     duplicateWallet: boolean;
     duplicateXAccount: boolean;
     missingX: boolean;
+    missingContactEmail: boolean;
     missingWallet: boolean;
     missingProfile: boolean;
   };
@@ -187,10 +244,14 @@ function timeAgo(dateStr: string) {
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
-function modeLabel(mode: string) {
+function modeLabel(mode: string, action?: string, requiresImage?: boolean) {
   if (mode === "lucky_draw") return "Lucky Draw";
   if (mode === "equal") return "Equal Split";
-  if (mode === "ranked_article_contest") return "Ranked Article";
+  if (mode === "ranked_article_contest") {
+    if (action === "banner_image_contest") return "Banner Contest";
+    if (requiresImage) return "Image Post Contest";
+    return "Ranked Article";
+  }
   return "FCFS";
 }
 
@@ -203,6 +264,10 @@ function formatLogin(email: string | null) {
 function formatDate(dateStr: string | null) {
   if (!dateStr) return "—";
   return formatDateTimeUtc8(dateStr);
+}
+
+function hasTaskEvidence(task: Pick<TaskDetail, "evidence">, prefix: string) {
+  return (task.evidence || []).some((item) => String(item.content || "").startsWith(prefix));
 }
 
 function lifecycleLabel(status: string | undefined) {
@@ -233,7 +298,7 @@ function statusBadge(status: string, taskState: string, lifecycleStatus?: string
 function deriveAdminLifecycle(task: TaskDetail, articleSubmissions: ArticleSubmission[]) {
   const mode = task.mode;
   const isArticleContest = mode === "ranked_article_contest";
-  const reviewed = isArticleContest && articleSubmissions.some((submission) => submission.aiScore != null);
+  const finalReviewed = isArticleContest && hasTaskEvidence(task, "article_review:");
   const publicWinnerCount = isArticleContest
     ? articleSubmissions.filter((submission) => submission.rank && submission.prizeAmount && (submission.aiScore || 0) >= 25).length
     : task.winners.length;
@@ -249,7 +314,7 @@ function deriveAdminLifecycle(task: TaskDetail, articleSubmissions: ArticleSubmi
       ? "Completed"
       : paidCount > 0
         ? "Paying"
-        : reviewed
+        : finalReviewed
           ? "Reviewed"
           : task.taskState === "closed" || deadlinePassed
             ? "Closed"
@@ -460,7 +525,7 @@ export default function AdminPage() {
                   {statusBadge(task.status, task.taskState, task.lifecycleStatus)}
                 </div>
                 <div className={styles.taskCardMeta}>
-                  <span>{modeLabel(task.mode)}</span>
+                  <span>{modeLabel(task.mode, task.campaign?.action, task.campaign?.requiresImage)}</span>
                   <span>{task.totalPool}</span>
                   <span>{task.claimedCount}/{task.maxWinners} claimed</span>
                 </div>
@@ -652,6 +717,7 @@ function FlagList({ user, compact = false }: { user: AdminUser; compact?: boolea
     user.flags.duplicateWallet ? `Wallet x${user.walletDuplicateCount}` : "",
     user.flags.duplicateXAccount ? `X x${user.xAccount?.duplicateCount || 0}` : "",
     user.flags.missingWallet ? "No wallet" : "",
+    user.flags.missingContactEmail ? "No email" : "",
     user.flags.missingX ? "No X" : "",
     user.flags.missingProfile ? "No profile" : ""
   ].filter(Boolean);
@@ -716,6 +782,7 @@ function UserDetail({ user }: { user: AdminUser | null }) {
         <InfoLine label="X handle" value={user.xAccount ? `@${user.xAccount.username}` : "Not linked"} />
         <InfoLine label="X id" value={user.xAccount?.subject || "—"} mono />
         <InfoLine label="X linked" value={formatDate(user.xAccount?.linkedAt || null)} />
+        <InfoLine label="Contact email" value={user.contactEmail || "Missing"} />
         <InfoLine label="Login" value={formatLogin(user.email)} />
         <InfoLine label="Auth" value={user.authProvider} />
       </div>
@@ -799,11 +866,27 @@ function rubricEntries(rubric?: ArticleSubmission["aiRubric"]) {
 
 function auditLabel(audit?: ArticleReviewAudit) {
   if (!audit) return "Review source unknown";
-  if (audit.contentSource === "snapshot_fallback") return "Snapshot fallback";
+  if (audit.contentSource === "snapshot_fallback") return "Article text fallback";
   if (audit.fetchSource === "oembed") return "Live X embed";
   if (audit.fetchSource === "x_api") return "Live X API";
   if (audit.fetchSource === "syndication") return "Live X syndication";
   return `Live X${audit.fetchSource ? ` · ${audit.fetchSource}` : ""}`;
+}
+
+function modelConsensusLabel(audit?: ArticleReviewAudit) {
+  if (!audit?.modelReviews?.length) {
+    return audit?.model ? `Model: ${audit.model}` : "";
+  }
+  const active = audit.modelReviews.filter((item) => item.status === "scored").length;
+  const total = audit.modelReviews.length;
+  if (audit.aggregateStrategy === "weighted_consensus" || active > 1) {
+    return `Weighted consensus · ${active}/${total} models`;
+  }
+  return `${active}/${total} model active`;
+}
+
+function modelReviewRows(audit?: ArticleReviewAudit) {
+  return audit?.modelReviews || [];
 }
 
 function sourceLabelFromReview(submission: ArticleSubmission) {
@@ -813,6 +896,31 @@ function sourceLabelFromReview(submission: ArticleSubmission) {
   if (review.source.toLowerCase().includes("x live content")) return review.source.replace("X live content", "Live X");
   if (review.source.toLowerCase().includes("snapshot")) return review.source;
   return "Legacy review";
+}
+
+function articleTextPreview(submission: ArticleSubmission) {
+  const text = (submission.contentSnapshot || submission.aiRubric?.audit?.reviewedTextExcerpt || "").replace(/\s+/g, " ").trim();
+  if (!text) return "—";
+  return text.length > 320 ? `${text.slice(0, 320)}...` : text;
+}
+
+function compactUrl(url: string) {
+  try {
+    const parsed = new URL(url);
+    return `${parsed.hostname}${parsed.pathname}`.replace(/^www\./, "");
+  } catch {
+    return url;
+  }
+}
+
+function articleAdminStatus(submission: ArticleSubmission, minimumScore: number) {
+  if (submission.status === "paid") return "paid";
+  if (submission.status === "winner") return "winner";
+  if (submission.status === "invalid" || submission.status === "rejected") return submission.status;
+  if (submission.rank && submission.prizeAmount) return "winner";
+  if (submission.aiScore != null && submission.aiScore >= minimumScore) return "qualified";
+  if (submission.aiScore != null) return "reviewed";
+  return "submitted";
 }
 
 function PrizeCard({ submission, featured = false }: { submission: ArticleSubmission; featured?: boolean }) {
@@ -837,11 +945,17 @@ function PrizeCard({ submission, featured = false }: { submission: ArticleSubmis
 
       <p className={styles.prizeTitle}>{submission.title}</p>
       <div className={styles.sourceBadge}>{sourceLabelFromReview(submission)}</div>
+      {modelConsensusLabel(audit) && <div className={styles.consensusBadge}>{modelConsensusLabel(audit)}</div>}
       <div className={styles.sourceSubline}>{review.source}</div>
+      {audit?.copyRisk && (
+        <div className={`${styles.copyRiskBadge} ${audit.copyRisk === "high" ? styles.copyRiskHigh : ""}`}>
+          Copy risk: {audit.copyRisk}
+        </div>
+      )}
       {review.reason && <p className={styles.prizeReason}>{review.reason}</p>}
       {audit?.reviewedTextExcerpt && (
         <div className={styles.reviewExcerpt}>
-          <span>Reviewed text</span>
+          <span>Audit excerpt</span>
           <p>{audit.reviewedTextExcerpt}</p>
         </div>
       )}
@@ -856,6 +970,16 @@ function PrizeCard({ submission, featured = false }: { submission: ArticleSubmis
           ))}
         </div>
       )}
+      {modelReviewRows(audit).length > 0 && (
+        <div className={styles.modelReviewList}>
+          {modelReviewRows(audit).map((item) => (
+            <div key={`${submission.id}-${item.providerId}`} className={styles.modelReviewItem}>
+              <span>{item.providerLabel}</span>
+              <strong>{item.status === "scored" && item.score != null ? item.score.toFixed(1) : item.status}</strong>
+            </div>
+          ))}
+        </div>
+      )}
     </article>
   );
 }
@@ -863,10 +987,12 @@ function PrizeCard({ submission, featured = false }: { submission: ArticleSubmis
 function TaskDetailPanel({ task }: { task: TaskDetail }) {
   const [tab, setTab] = useState<"overview" | "participants" | "submissions" | "winners" | "payments">("overview");
   const [articleSubmissions, setArticleSubmissions] = useState<ArticleSubmission[]>(task.articleSubmissions || []);
-  const [actionBusy, setActionBusy] = useState<"" | "review" | "close_review" | "payout">("");
+  const [actionBusy, setActionBusy] = useState<"" | "review" | "close_review" | "rerun_review" | "payout">("");
   const [actionMessage, setActionMessage] = useState("");
+  const [finalReviewLocked, setFinalReviewLocked] = useState(hasTaskEvidence(task, "article_review:"));
   const isArticleContest = task.mode === "ranked_article_contest";
   const reviewedSubmissions = articleSubmissions.filter((submission) => submission.aiScore != null);
+  const unscoredSubmissions = articleSubmissions.filter((submission) => submission.aiScore == null);
   const hasAuditResults = reviewedSubmissions.some((submission) => Boolean(submission.aiRubric?.audit));
   const rankedSubmissions = [...reviewedSubmissions].sort((a, b) => {
     const rankDelta = (a.rank || 999) - (b.rank || 999);
@@ -883,6 +1009,17 @@ function TaskDetailPanel({ task }: { task: TaskDetail }) {
   const qualifiedSubmissions = minimumWinnerScore == null
     ? reviewedSubmissions.filter((submission) => (submission.aiScore || 0) >= displayMinimumWinnerScore)
     : reviewedSubmissions.filter((submission) => (submission.aiScore || 0) >= minimumWinnerScore);
+  const submitterCount = new Set(articleSubmissions.map((submission) => submission.walletAddress.toLowerCase())).size;
+  const validArticleSubmissions = articleSubmissions.filter((submission) => submission.status !== "invalid" && submission.status !== "rejected");
+  const paidArticleSubmissions = articleSubmissions.filter((submission) => submission.status === "paid");
+  const articlePayoutDisabled = isArticleContest && task.campaign?.poolAddress === "TEST_PAYOUT_DISABLED";
+  const unpaidWinnerSubmissions = winnerSubmissions.filter(
+    (submission) => submission.status === "winner" && submission.prizeAmount && !submission.paymentTxHash
+  );
+  const deadlinePassed = task.deadline ? Date.now() > +new Date(task.deadline) : false;
+  const canCloseAndReview = isArticleContest && !finalReviewLocked && !deadlinePassed;
+  const canRunReview = isArticleContest && !finalReviewLocked && deadlinePassed;
+  const canPayWinners = isArticleContest && finalReviewLocked && unpaidWinnerSubmissions.length > 0 && !articlePayoutDisabled;
   const firstPrize = winnerSubmissions.find((submission) => submission.rank === 1);
   const runnerUpPrizes = winnerSubmissions.filter((submission) => submission.rank !== 1);
   const hasReviewResults = reviewedSubmissions.length > 0;
@@ -908,11 +1045,12 @@ function TaskDetailPanel({ task }: { task: TaskDetail }) {
     createdAt: submission.submittedAt
   }));
   const participantRows = isArticleContest ? articleParticipantRows : task.participants;
-  const displayedParticipantCount = isArticleContest ? articleSubmissions.length : task.participantCount;
+  const displayedParticipantCount = isArticleContest ? submitterCount : task.participantCount;
   const lifecycle = deriveAdminLifecycle(task, articleSubmissions);
 
   useEffect(() => {
     setArticleSubmissions(task.articleSubmissions || []);
+    setFinalReviewLocked(hasTaskEvidence(task, "article_review:"));
     setActionMessage("");
     if (!isArticleContest && tab === "submissions") {
       setTab("overview");
@@ -931,22 +1069,45 @@ function TaskDetailPanel({ task }: { task: TaskDetail }) {
     setArticleSubmissions(data.articleSubmissions || data.task?.articleSubmissions || []);
   }
 
-  async function runArticleAction(action: "review" | "close_review" | "payout") {
+  async function runArticleAction(action: "review" | "close_review" | "rerun_review" | "payout") {
+    if (action === "close_review" && !canCloseAndReview) {
+      setActionMessage(finalReviewLocked ? "Final results are already locked for this contest." : "Submission deadline has already passed. Use Lock Final Results.");
+      return;
+    }
+    if (action === "review" && !canRunReview) {
+      setActionMessage(finalReviewLocked ? "Final review is already locked for this contest." : "Submission deadline has not passed yet.");
+      return;
+    }
+    if (action === "rerun_review" && (finalReviewLocked || unscoredSubmissions.length === 0)) {
+      setActionMessage(finalReviewLocked ? "Final results are already locked for this contest." : "All submissions already have a current score.");
+      return;
+    }
+    if (action === "payout" && !canPayWinners) {
+      setActionMessage(
+        articlePayoutDisabled
+          ? "Payout is disabled for this test contest."
+          : !finalReviewLocked
+            ? "Lock final results before paying winners."
+            : "There are no unpaid winners."
+      );
+      return;
+    }
     setActionBusy(action);
     setActionMessage("");
     try {
-      const isReviewAction = action === "review" || action === "close_review";
+      const isReviewAction = action === "review" || action === "close_review" || action === "rerun_review";
       const response = await fetch(`/api/admin/tasks/${task.id}/article-${isReviewAction ? "review" : action}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "same-origin",
         body: isReviewAction
-          ? JSON.stringify({ force: action === "review", closeNow: action === "close_review" })
+          ? JSON.stringify({ closeNow: action === "close_review", force: action === "rerun_review" })
           : JSON.stringify({})
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok && response.status !== 207) {
-        throw new Error(data.error || `Article ${action} failed`);
+        const preflightIssues = Array.isArray(data.preflight?.issues) ? data.preflight.issues.join(" ") : "";
+        throw new Error(preflightIssues || data.error || `Article ${action} failed`);
       }
       if (Array.isArray(data.submissions)) {
         setArticleSubmissions(data.submissions);
@@ -954,11 +1115,21 @@ function TaskDetailPanel({ task }: { task: TaskDetail }) {
         await refreshArticleSubmissions();
       }
       if (isReviewAction) {
-        setActionMessage(
-          `${data.closedNow ? "Deadline closed. " : ""}Review complete: ${data.reviewed || 0} submissions, ${data.winners || 0} winners. Report updated below.`
-        );
+        if (action === "rerun_review") {
+          setActionMessage(
+            `Missing scores refreshed: ${data.reprocessed || 0} rescored, ${data.reusedPreviews || 0} existing scores kept.`
+          );
+        } else {
+          setFinalReviewLocked(true);
+          setActionMessage(
+            `${data.closedNow ? "Contest ended and deadline closed. " : ""}Final results locked from current submission scores: ${data.reviewed || 0} submissions, ${data.winners || 0} winners. ${data.reusedPreviews || 0} current scores kept, ${data.reprocessed || 0} rescored. Review anchored on Base${data.reviewAnchor?.txHash ? ` (${shortAddress(data.reviewAnchor.txHash)})` : ""}.`
+          );
+        }
       } else {
-        setActionMessage(`Payout complete: ${data.paid || 0} paid${data.failed?.length ? `, ${data.failed.length} failed` : ""}.`);
+        const preflightLine = data.preflight?.poolBalance
+          ? ` Pool ${data.preflight.poolBalance} USDC, ${data.preflight.slotsLeft} slots left.`
+          : "";
+        setActionMessage(`Payout complete: ${data.paid || 0} paid${data.failed?.length ? `, ${data.failed.length} failed` : ""}.${preflightLine}`);
       }
     } catch (err) {
       setActionMessage(err instanceof Error ? err.message : `Article ${action} failed`);
@@ -973,9 +1144,21 @@ function TaskDetailPanel({ task }: { task: TaskDetail }) {
         <h2>{task.title}</h2>
         <div className={styles.detailMeta}>
           <span className={styles.pool}>{task.totalPool} pool</span>
-          <span>{modeLabel(task.mode)}</span>
-          <span>{task.claimedCount}/{task.maxWinners} claimed</span>
-          <span>{displayedParticipantCount} participants</span>
+          <span>{modeLabel(task.mode, task.campaign?.action, task.campaign?.requiresImage)}</span>
+          <span>
+            {isArticleContest
+              ? `${paidArticleSubmissions.length}/${winnerSubmissions.length || task.maxWinners} paid`
+              : `${task.claimedCount}/${task.maxWinners} claimed`}
+          </span>
+          {isArticleContest ? (
+            <>
+              <span>{submitterCount} submitters</span>
+              <span>{articleSubmissions.length} articles</span>
+              <span>{validArticleSubmissions.length} valid</span>
+            </>
+          ) : (
+            <span>{displayedParticipantCount} participants</span>
+          )}
         </div>
         <div className={styles.detailHeaderActions}>
           <a href={`/tasks/${task.id}/report`} target="_blank" rel="noopener noreferrer" className={styles.reportLink}>
@@ -991,10 +1174,14 @@ function TaskDetailPanel({ task }: { task: TaskDetail }) {
             className={`${styles.tab} ${tab === t ? styles.tabActive : ""}`}
             onClick={() => setTab(t)}
           >
-            {t.charAt(0).toUpperCase() + t.slice(1)}
+            {isArticleContest && t === "participants" ? "Submitters"
+              : isArticleContest && t === "submissions" ? "Articles"
+                : isArticleContest && t === "winners" ? "Awards"
+                  : isArticleContest && t === "payments" ? "Payouts"
+                    : t.charAt(0).toUpperCase() + t.slice(1)}
             {t === "participants" && ` (${participantRows.length})`}
             {t === "submissions" && ` (${articleSubmissions.length})`}
-            {t === "winners" && ` (${task.winners.length})`}
+            {t === "winners" && ` (${isArticleContest ? winnerSubmissions.length : task.winners.length})`}
             {t === "payments" && ` (${task.payments.length})`}
           </button>
         ))}
@@ -1024,7 +1211,7 @@ function TaskDetailPanel({ task }: { task: TaskDetail }) {
             </div>
             <div className={styles.infoRow}>
               <span className={styles.infoLabel}>Mode</span>
-              <span className={styles.infoValue}>{modeLabel(task.mode)}</span>
+              <span className={styles.infoValue}>{modeLabel(task.mode, task.campaign?.action, task.campaign?.requiresImage)}</span>
             </div>
             <div className={styles.infoRow}>
               <span className={styles.infoLabel}>Total Pool</span>
@@ -1045,6 +1232,16 @@ function TaskDetailPanel({ task }: { task: TaskDetail }) {
             <div className={styles.infoRow}>
               <span className={styles.infoLabel}>Created</span>
               <span className={styles.infoValue}>{formatDate(task.createdAt)}</span>
+            </div>
+            <div className={styles.infoRow}>
+              <span className={styles.infoLabel}>Review Anchor</span>
+              <span className={styles.infoValue}>
+                {task.reviewAnchor?.txHash ? (
+                  <a href={task.reviewAnchor.explorerUrl} target="_blank" rel="noopener noreferrer" className={styles.txLink}>
+                    {shortAddress(task.reviewAnchor.txHash)} · {task.reviewAnchor.network}
+                  </a>
+                ) : "—"}
+              </span>
             </div>
           </div>
 
@@ -1115,7 +1312,48 @@ function TaskDetailPanel({ task }: { task: TaskDetail }) {
 
       {tab === "winners" && (
         <div className={styles.tableWrap}>
-          {task.winners.length === 0 ? (
+          {isArticleContest ? (
+            winnerSubmissions.length === 0 ? (
+              <div className={styles.empty}>No awards selected yet</div>
+            ) : (
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>Rank</th>
+                    <th>X</th>
+                    <th>Wallet</th>
+                    <th>Score</th>
+                    <th>Prize</th>
+                    <th>Status</th>
+                    <th>Payout</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {winnerSubmissions.map((submission) => (
+                    <tr key={submission.id}>
+                      <td>#{submission.rank}</td>
+                      <td className={styles.xHandle}>@{submission.xHandle}</td>
+                      <td><span className={styles.addr}>{shortAddress(submission.walletAddress)}</span></td>
+                      <td>{submission.aiScore != null ? `${submission.aiScore}/100` : "—"}</td>
+                      <td>{submission.prizeAmount || "—"}</td>
+                      <td>
+                        <span className={`${styles.badge} ${submission.status === "paid" ? styles.badgeGreen : styles.badgeYellow}`}>
+                          {submission.status}
+                        </span>
+                      </td>
+                      <td>
+                        {submission.paymentTxHash ? (
+                          <a href={submission.paymentExplorerUrl || "#"} target="_blank" rel="noopener noreferrer" className={styles.txLink}>
+                            {shortAddress(submission.paymentTxHash)}
+                          </a>
+                        ) : "—"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )
+          ) : task.winners.length === 0 ? (
             <div className={styles.empty}>No winners drawn yet</div>
           ) : (
             <table className={styles.table}>
@@ -1160,53 +1398,107 @@ function TaskDetailPanel({ task }: { task: TaskDetail }) {
             <button
               className={styles.backBtn}
               onClick={() => runArticleAction("close_review")}
-              disabled={actionBusy !== ""}
+              disabled={actionBusy !== "" || !canCloseAndReview}
+              title={
+                finalReviewLocked
+                  ? "Final review is already locked for this contest."
+                  : deadlinePassed
+                    ? "Submission deadline has already passed. Use Lock Final Results."
+                    : undefined
+              }
             >
               {actionBusy === "close_review"
-                ? hasReviewResults ? "Review saved..." : "Closing..."
-                : "Close Now & Review"}
+                ? "Ending contest..."
+                : finalReviewLocked ? "Final Results Locked" : "End Contest Now & Lock Final Results"}
             </button>
             <button
               className={styles.backBtn}
               onClick={() => runArticleAction("review")}
-              disabled={actionBusy !== ""}
+              disabled={actionBusy !== "" || !canRunReview}
+              title={
+                finalReviewLocked
+                  ? "Final review is already locked for this contest."
+                  : !deadlinePassed
+                    ? "Only available after the configured deadline. To end early, use End Contest Now & Lock Final Results."
+                    : undefined
+              }
             >
               {actionBusy === "review"
-                ? hasReviewResults ? "Review saved..." : "Reviewing..."
-                : hasReviewResults ? "Re-run AI Review" : "Run AI Review"}
+                ? "Locking final results..."
+                : finalReviewLocked ? "Final Results Locked" : "Lock Final Results After Deadline"}
+            </button>
+            <button
+              className={styles.backBtn}
+              onClick={() => runArticleAction("rerun_review")}
+              disabled={actionBusy !== "" || finalReviewLocked || unscoredSubmissions.length === 0}
+              title={
+                finalReviewLocked
+                  ? "Final results are already locked for this contest."
+                  : unscoredSubmissions.length === 0
+                    ? "All submissions already have a current score."
+                    : "Only use this if a submission is missing its current score."
+              }
+            >
+              {actionBusy === "rerun_review"
+                ? "Refreshing missing scores..."
+                : "Fill Missing Scores"}
             </button>
             <button
               className={styles.backBtn}
               onClick={() => runArticleAction("payout")}
-              disabled={actionBusy !== ""}
+              disabled={actionBusy !== "" || !canPayWinners}
+              title={
+                articlePayoutDisabled
+                  ? "Payout is disabled for this test contest."
+                  : !finalReviewLocked
+                    ? "Lock final results before paying winners."
+                    : unpaidWinnerSubmissions.length === 0
+                      ? "There are no unpaid winners."
+                      : undefined
+              }
             >
-              {actionBusy === "payout" ? "Paying..." : "Pay Winners"}
+              {actionBusy === "payout"
+                ? "Paying..."
+                : !finalReviewLocked
+                  ? "Pay Winners"
+                  : unpaidWinnerSubmissions.length === 0
+                    ? "Payout Complete"
+                    : "Pay Winners"}
             </button>
           </div>
+          {articlePayoutDisabled && (
+            <div className={styles.reviewWarning}>
+              Test payout disabled for this contest. Review, ranking, and public report can be tested, but Pay Winners will not send USDC.
+            </div>
+          )}
           {actionMessage && <div className={styles.empty}>{actionMessage}</div>}
           {hasReviewResults && !hasAuditResults && (
             <div className={styles.reviewWarning}>
-              This is a legacy review. Re-run AI Review to refresh scores, source audit, reviewed text excerpts, and the current winner threshold.
+              This is a legacy review without full audit details. New contests lock one final result set with source audit, reviewed text excerpts, and the active winner threshold.
             </div>
           )}
           {reviewedSubmissions.length > 0 && (
             <div className={styles.reviewShowcase}>
               <div className={styles.reviewHero}>
                 <div className={styles.reviewHeroCopy}>
-                  <span className={styles.reviewKicker}>AI Article Contest Results</span>
+                  <span className={styles.reviewKicker}>
+                    {finalReviewLocked ? "AI Article Contest Results" : "Current Scores - Not Final"}
+                  </span>
                   <h3>{task.title}</h3>
                   <p>
-                    Ranked from live X content when available. Snapshot text is only used when live X fetching fails, and the report records exactly what was reviewed.
+                    {finalReviewLocked
+                      ? "Final winners are locked from live X content when available. Submitted article text is only used when live X fetching fails, and the report records exactly what was reviewed."
+                      : "These are the current scores saved when each submission was created or updated. They stay unchanged unless the user edits the submission or you explicitly refill a missing score."}
                   </p>
                 </div>
                 <div className={styles.reviewStatsPanel}>
                   <div>
                     <strong>{reviewedSubmissions.length}</strong>
-                    <span>Reviewed</span>
+                    <span>{finalReviewLocked ? "Reviewed" : "Scored"}</span>
                   </div>
                   <div>
                     <strong>{winnerSubmissions.length}</strong>
-                    <span>Winners</span>
+                    <span>{finalReviewLocked ? "Winners" : "Locked winners"}</span>
                   </div>
                   <div>
                     <strong>{qualifiedSubmissions.length}</strong>
@@ -1223,11 +1515,11 @@ function TaskDetailPanel({ task }: { task: TaskDetail }) {
                 </div>
               </div>
 
-              {firstPrize && (
+              {finalReviewLocked && firstPrize && (
                 <PrizeCard submission={firstPrize} featured />
               )}
 
-              {runnerUpPrizes.length > 0 && (
+              {finalReviewLocked && runnerUpPrizes.length > 0 && (
                 <div className={styles.prizeGrid}>
                   {runnerUpPrizes.map((submission) => (
                     <PrizeCard key={submission.id} submission={submission} />
@@ -1236,8 +1528,20 @@ function TaskDetailPanel({ task }: { task: TaskDetail }) {
               )}
 
               <div className={styles.reviewFootnote}>
-                <span>Rubric: relevance, originality, clarity, evidence, narrative. Minimum winner score is intentionally light, but very weak submissions stay unawarded.</span>
+                <span>
+                  {finalReviewLocked
+                    ? "Rubric: relevance, originality, clarity, evidence, narrative. Minimum winner score is intentionally light, but very weak submissions stay unawarded."
+                    : "Scores are created on submit or update. To finish this contest, lock final results from the current scores. Until then, users can still update once and the ranking is not final."}
+                </span>
                 {latestReviewedAt && <span>Last reviewed {timeAgo(latestReviewedAt)}.</span>}
+                {task.reviewAnchor?.txHash && (
+                  <span>
+                    Review anchored on Base:{" "}
+                    <a href={task.reviewAnchor.explorerUrl} target="_blank" rel="noopener noreferrer" className={styles.txLink}>
+                      {shortAddress(task.reviewAnchor.txHash)}
+                    </a>
+                  </span>
+                )}
               </div>
             </div>
           )}
@@ -1249,55 +1553,69 @@ function TaskDetailPanel({ task }: { task: TaskDetail }) {
                 <thead>
                   <tr>
                     <th>Rank</th>
-                    <th>X</th>
+                    <th>Submitter</th>
                     <th>Wallet</th>
-                    <th>Title</th>
+                    <th>X Link</th>
+                    <th>Submitted Article Text</th>
                     <th>Score</th>
                     <th>Prize</th>
                     <th>Status</th>
-                    <th>Reason</th>
-                    <th>Article</th>
+                    <th>Review</th>
                     <th>Payout</th>
                     <th>Submitted</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {articleSubmissions.map((submission) => (
+                  {articleSubmissions.map((submission) => {
+                    const adminStatus = articleAdminStatus(submission, displayMinimumWinnerScore);
+                    return (
                     <tr key={submission.id}>
                       <td>{submission.rank ? `#${submission.rank}` : "—"}</td>
                       <td className={styles.xHandle}>@{submission.xHandle}</td>
                       <td><span className={styles.addr}>{shortAddress(submission.walletAddress)}</span></td>
-                      <td>{submission.title}</td>
+                      <td className={styles.articleLinkCell}>
+                        <a href={submission.articleUrl} target="_blank" rel="noopener noreferrer" className={styles.articleUrlLink}>
+                          {compactUrl(submission.articleUrl)}
+                        </a>
+                      </td>
+                      <td className={styles.articleTextCell}>
+                        <p>{articleTextPreview(submission)}</p>
+                        {submission.title && <span>{submission.title}</span>}
+                      </td>
                       <td>{submission.aiScore != null ? `${submission.aiScore}/100` : "—"}</td>
                       <td>{submission.prizeAmount || "—"}</td>
                       <td>
                         <span className={`${styles.badge} ${
-                          submission.status === "paid"
+                          adminStatus === "paid"
                             ? styles.badgeGreen
-                            : submission.status === "winner"
+                            : adminStatus === "winner" || adminStatus === "qualified"
                               ? styles.badgeYellow
-                              : submission.status === "rejected" || submission.status === "invalid"
-                                ? styles.badgeRed
-                                : styles.badgeGray
+                              : adminStatus === "reviewed"
+                                ? styles.badgeBlue
+                                : adminStatus === "rejected" || adminStatus === "invalid"
+                                  ? styles.badgeRed
+                                  : styles.badgeGray
                         }`}>
-                          {submission.status}
+                          {adminStatus}
                         </span>
                       </td>
                       <td className={styles.reviewReason}>
                         {submission.aiReview ? (
                           <>
-                            <div className={styles.sourceBadge}>{sourceLabelFromReview(submission)}</div>
-                            <p>{submission.aiReview}</p>
-                            {submission.aiRubric?.audit?.reviewedTextExcerpt && (
-                              <details className={styles.reviewDetails}>
-                                <summary>Reviewed text</summary>
-                                <p>{submission.aiRubric.audit.reviewedTextExcerpt}</p>
-                                <span>
-                                  {submission.aiRubric.audit.reviewedTextLength || 0} chars
-                                  {submission.aiRubric.audit.model ? ` · ${submission.aiRubric.audit.model}` : ""}
-                                </span>
-                              </details>
-                            )}
+                            <div className={styles.reviewConclusion}>
+                              <span>AI review</span>
+                              <div className={styles.sourceBadge}>{sourceLabelFromReview(submission)}</div>
+                              {modelConsensusLabel(submission.aiRubric?.audit) && (
+                                <div className={styles.consensusBadge}>{modelConsensusLabel(submission.aiRubric?.audit)}</div>
+                              )}
+                              {submission.aiRubric?.audit?.copyRisk && (
+                                <div className={`${styles.copyRiskBadge} ${submission.aiRubric.audit.copyRisk === "high" ? styles.copyRiskHigh : ""}`}>
+                                  Copy risk: {submission.aiRubric.audit.copyRisk}
+                                  {submission.aiRubric.audit.copySimilarity != null ? ` · ${(submission.aiRubric.audit.copySimilarity * 100).toFixed(0)}% overlap` : ""}
+                                </div>
+                              )}
+                              <p>{submission.aiReview}</p>
+                            </div>
                             {submission.aiRubric && (
                               <div className={styles.rubricInline}>
                                 {rubricEntries(submission.aiRubric).map(([key, value]) => (
@@ -1305,13 +1623,28 @@ function TaskDetailPanel({ task }: { task: TaskDetail }) {
                                 ))}
                               </div>
                             )}
+                            {submission.aiRubric?.audit?.reviewedTextExcerpt && (
+                              <details className={styles.auditTrail}>
+                                <summary>
+                                  <span>Audit trail</span>
+                                  <strong>Show exact text scored</strong>
+                                </summary>
+                                <p>{submission.aiRubric.audit.reviewedTextExcerpt}</p>
+                                <div className={styles.auditMeta}>
+                                  <span>Source: {sourceLabelFromReview(submission)}</span>
+                                  <span>{submission.aiRubric.audit.reviewedTextLength || 0} chars</span>
+                                  {submission.aiRubric.audit.model && <span>Model: {submission.aiRubric.audit.model}</span>}
+                                  {modelReviewRows(submission.aiRubric.audit).map((item) => (
+                                    <span key={`${submission.id}-audit-${item.providerId}`}>
+                                      {item.providerLabel}: {item.status === "scored" && item.score != null ? item.score.toFixed(1) : item.error || item.status}
+                                    </span>
+                                  ))}
+                                  {submission.aiRubric.audit.copyRiskReason && <span>{submission.aiRubric.audit.copyRiskReason}</span>}
+                                </div>
+                              </details>
+                            )}
                           </>
                         ) : "—"}
-                      </td>
-                      <td>
-                        <a href={submission.articleUrl} target="_blank" rel="noopener noreferrer" className={styles.txLink}>
-                          Open
-                        </a>
                       </td>
                       <td>
                         {submission.paymentTxHash ? (
@@ -1322,7 +1655,8 @@ function TaskDetailPanel({ task }: { task: TaskDetail }) {
                       </td>
                       <td>{submission.submittedAt ? timeAgo(submission.submittedAt) : "—"}</td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             )}

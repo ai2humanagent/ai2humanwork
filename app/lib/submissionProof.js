@@ -1,8 +1,8 @@
 export const SUBMISSION_PROJECT = {
-  name: "ai2human",
+  name: "AI2Human",
   tagline: "Human fallback infrastructure for AI agents",
   oneLiner:
-    "ai2human inserts a planner precheck before fallback: the system queries wallet, market, and trade routes, keeps work autonomous when possible, and dispatches a human operator only when identity, compliance, growth execution, or real-world constraints still block the task.",
+    "AI2Human inserts a planner precheck before fallback: the system queries wallet, market, and trade routes, keeps work autonomous when possible, and dispatches a human operator only when identity, compliance, growth execution, or real-world constraints still block the task.",
   githubUrl: "https://github.com/ai2humanagent/ai2humanwork",
   demoPath: "/livedemo",
   reviewerPath: "/reviewer",

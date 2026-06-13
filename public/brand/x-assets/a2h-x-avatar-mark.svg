@@ -1,0 +1,43 @@
+<svg width="400" height="400" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="26" y1="22" x2="376" y2="374" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#05070B"/>
+      <stop offset="0.52" stop-color="#081018"/>
+      <stop offset="1" stop-color="#10132A"/>
+    </linearGradient>
+    <linearGradient id="loopA" x1="60" y1="88" x2="306" y2="324" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#80FFEA"/>
+      <stop offset="1" stop-color="#7C5CFF"/>
+    </linearGradient>
+    <linearGradient id="loopB" x1="340" y1="88" x2="94" y2="324" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFC46B"/>
+      <stop offset="1" stop-color="#7C5CFF"/>
+    </linearGradient>
+    <radialGradient id="pulse" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(200 200) scale(170)">
+      <stop stop-color="#80FFEA" stop-opacity="0.24"/>
+      <stop offset="0.58" stop-color="#7C5CFF" stop-opacity="0.1"/>
+      <stop offset="1" stop-color="#05070B" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="glow" x="-30" y="-30" width="460" height="460" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="0" stdDeviation="18" flood-color="#80FFEA" flood-opacity="0.22"/>
+      <feDropShadow dx="0" dy="0" stdDeviation="24" flood-color="#7C5CFF" flood-opacity="0.2"/>
+    </filter>
+  </defs>
+
+  <rect width="400" height="400" rx="96" fill="url(#bg)"/>
+  <rect x="18" y="18" width="364" height="364" rx="82" stroke="#FFFFFF" stroke-opacity="0.08" stroke-width="2"/>
+  <circle cx="200" cy="200" r="176" fill="url(#pulse)"/>
+
+  <g opacity="0.1">
+    <path d="M88 126H312M88 200H312M88 274H312" stroke="#F4F6FF" stroke-width="1"/>
+    <path d="M126 88V312M200 88V312M274 88V312" stroke="#F4F6FF" stroke-width="1"/>
+  </g>
+
+  <g filter="url(#glow)">
+    <circle cx="146" cy="200" r="104" stroke="url(#loopA)" stroke-width="24"/>
+    <circle cx="254" cy="200" r="104" stroke="url(#loopB)" stroke-width="24"/>
+    <circle cx="200" cy="200" r="35" fill="#E9FFFB" fill-opacity="0.9"/>
+    <circle cx="200" cy="200" r="48" stroke="#E9FFFB" stroke-opacity="0.16" stroke-width="2"/>
+    <path d="M180 200l13 13 30-32" stroke="#05070B" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>

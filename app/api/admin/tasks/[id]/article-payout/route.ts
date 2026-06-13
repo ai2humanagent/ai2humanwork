@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { getAdminAuthContext } from "../../../../../lib/adminAuth";
-import { claimForPrizePool } from "../../../../../lib/prizePool";
+import { claimForPrizePool, getPrizePoolPayoutPreflight } from "../../../../../lib/prizePool";
 import { executeSettlement } from "../../../../../lib/settlement";
 import { DEFAULT_SETTLEMENT_TOKEN_SYMBOL } from "../../../../../lib/assetLabels";
-import { readDb, updateDb, type PaymentEntry } from "../../../../../lib/store";
+import { readDb, updateDb, type Notification, type PaymentEntry, type Task, type UserAccount } from "../../../../../lib/store";
 import { isArticleContestDistribution } from "../../../../../lib/articleContest";
 import { appendEvidence } from "../../../../../lib/taskEvidence";
+import { addNotification, sendEmailNotification } from "../../../../../lib/notificationDelivery";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,6 +17,21 @@ function readPoolAddress(task: Awaited<ReturnType<typeof readDb>>["tasks"][numbe
   const campaign = task.campaign as Record<string, unknown> | undefined;
   const poolAddress = campaign?.poolAddress;
   return typeof poolAddress === "string" ? poolAddress : "";
+}
+
+function parseUsdcAmount(raw: string) {
+  const match = String(raw || "").replace(/,/g, "").match(/\d+(?:\.\d+)?/);
+  return match ? Number(match[0]) : 0;
+}
+
+function readExpectedRefundAgent(db: Awaited<ReturnType<typeof readDb>>, taskId: string) {
+  const escrow = db.escrowDeposits.find((item) => item.taskId === taskId);
+  if (escrow?.agentWallet) return escrow.agentWallet;
+  return String(process.env.PRIZE_POOL_EXPECTED_AGENT_ADDRESS || "").trim();
+}
+
+function hasFinalArticleReview(task: Task) {
+  return (task.evidence || []).some((item) => String(item.content || "").startsWith("article_review:"));
 }
 
 export async function POST(
@@ -37,6 +53,18 @@ export async function POST(
   if (!isArticleContestDistribution(task.rewardDistribution)) {
     return NextResponse.json({ error: "This task is not a ranked article contest." }, { status: 400 });
   }
+  if (!hasFinalArticleReview(task)) {
+    return NextResponse.json(
+      { error: "Lock final results before paying winners." },
+      { status: 400 }
+    );
+  }
+  if (!task.reviewAnchor?.txHash || !task.reviewAnchor?.anchorHash) {
+    return NextResponse.json(
+      { error: "Final review is not anchored on Base yet. Anchor the review before paying winners." },
+      { status: 400 }
+    );
+  }
 
   const payable = db.articleSubmissions.filter(
     (submission) =>
@@ -55,15 +83,57 @@ export async function POST(
 
   if (!payable.length) {
     console.info("[ArticleContest] payout:skip", { requestId, taskId, reason: "No unpaid winners." });
-    return NextResponse.json({ success: true, paid: 0, skipped: true, message: "No unpaid winners." });
+    return NextResponse.json(
+      { success: false, paid: 0, skipped: true, error: "There are no unpaid article contest winners." },
+      { status: 409 }
+    );
   }
 
   const poolAddress = readPoolAddress(task);
+  if (poolAddress === "TEST_PAYOUT_DISABLED") {
+    return NextResponse.json(
+      {
+        success: false,
+        requestId,
+        error: "Payout is disabled for this test article contest."
+      },
+      { status: 400 }
+    );
+  }
+  let preflight: Awaited<ReturnType<typeof getPrizePoolPayoutPreflight>> | null = null;
+  if (poolAddress) {
+    const expectedPayoutTotal = payable
+      .reduce((sum, submission) => sum + parseUsdcAmount(submission.prizeAmount || ""), 0)
+      .toFixed(6);
+    preflight = await getPrizePoolPayoutPreflight({
+      poolAddress,
+      expectedPayoutTotal,
+      expectedWinners: payable.length,
+      expectedAgent: readExpectedRefundAgent(db, taskId)
+    });
+    if (!preflight.ok) {
+      console.warn("[ArticleContest] payout:preflight_failed", {
+        requestId,
+        taskId,
+        preflight
+      });
+      return NextResponse.json(
+        {
+          success: false,
+          requestId,
+          error: `PrizePool payout preflight failed: ${preflight.issues.join(" ")}`,
+          preflight
+        },
+        { status: 400 }
+      );
+    }
+  }
   console.info("[ArticleContest] payout:start", {
     requestId,
     taskId,
     payable: payable.length,
     poolAddress: poolAddress || null,
+    preflight,
     winners: payable.map((submission) => ({
       submissionId: submission.id,
       xHandle: submission.xHandle,
@@ -160,6 +230,8 @@ export async function POST(
       requestId,
       taskId,
       poolAddress: poolAddress || null,
+      reviewAnchor: task.reviewAnchor,
+      preflight,
       paid: paid.length,
       failed: failed.length,
       payments: paid.map((item) => ({
@@ -173,6 +245,7 @@ export async function POST(
       failures: failed
     };
     console.info("[ArticleContest] payout:complete", payoutLog);
+    const payoutNotifications: Array<{ user: UserAccount; notification: Notification }> = [];
     await updateDb((nextDb) => {
       for (const item of paid) {
         const alreadyRecorded = nextDb.payments.some(
@@ -190,6 +263,19 @@ export async function POST(
           submission.paymentTxHash = item.payment.txHash;
           submission.paymentExplorerUrl = item.payment.explorerUrl;
           submission.updatedAt = now;
+        }
+        const winnerUser = nextDb.users.find(
+          (user) => (user.walletAddress || "").toLowerCase() === (item.payment.receiverAddress || "").toLowerCase()
+        );
+        if (winnerUser) {
+          const notification = addNotification(nextDb, {
+            userId: winnerUser.id,
+            type: "task_completed",
+            title: "Article contest prize paid",
+            body: `Your article contest prize for "${task.title}" was paid: ${item.payment.amount} ${item.payment.tokenSymbol || "USDC"}.`,
+            taskId
+          });
+          payoutNotifications.push({ user: { ...winnerUser }, notification });
         }
       }
       const escrow = nextDb.escrowDeposits.find((item) => item.taskId === taskId);
@@ -211,6 +297,15 @@ export async function POST(
         });
       }
     });
+    await Promise.allSettled(
+      payoutNotifications.map((item) =>
+        sendEmailNotification({
+          user: item.user,
+          notification: item.notification,
+          reason: "reward"
+        })
+      )
+    );
   } else if (failed.length) {
     console.warn("[ArticleContest] payout:complete_no_payments", {
       requestId,
@@ -220,7 +315,7 @@ export async function POST(
   }
 
   return NextResponse.json(
-    { success: failed.length === 0, requestId, paid: paid.length, failed },
+    { success: failed.length === 0, requestId, paid: paid.length, failed, preflight },
     { status: failed.length ? 207 : 200 }
   );
 }
