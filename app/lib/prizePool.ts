@@ -30,6 +30,7 @@ import {
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { prizePoolAbi, prizePoolFactoryAbi, getChainConfig } from "./prizePoolContract";
+import { prizePoolBytecode } from "./prizePoolBytecode";
 
 const USDC_DECIMALS = 6;
 
@@ -392,8 +393,11 @@ export async function createPrizePoolCampaign(input: {
 }): Promise<CreateCampaignResult> {
   const cfg = getPoolConfig();
 
-  if (!cfg.enabled || !cfg.factoryAddress) {
-    return { ok: false, error: "PrizePool not configured. Set PRIZE_POOL_PRIVATE_KEY and PRIZE_POOL_FACTORY_ADDRESS." };
+  if (!cfg.enabled) {
+    return { ok: false, error: "PrizePool not configured. Set PRIZE_POOL_PRIVATE_KEY." };
+  }
+  if (!prizePoolBytecode || !prizePoolBytecode.startsWith("0x")) {
+    return { ok: false, error: "PrizePool bytecode is missing from the deployment bundle." };
   }
 
   if (!isAddress(input.agent)) {
@@ -415,12 +419,11 @@ export async function createPrizePoolCampaign(input: {
   const publicClient = createPublicClient({ chain, transport: http(cfg.rpcUrl) });
 
   try {
-    const hash = await walletClient.writeContract({
-      address: cfg.factoryAddress as `0x${string}`,
-      abi: prizePoolFactoryAbi,
-      functionName: "createPool",
+    const hash = await walletClient.deployContract({
+      abi: prizePoolAbi,
+      bytecode: prizePoolBytecode as `0x${string}`,
       args: [
-        BigInt(input.campaignId),
+        cfg.usdcAddress as `0x${string}`,
         (input.merkleRoot || "0x" + "0".repeat(64)) as `0x${string}`,
         BigInt(input.deadline),
         BigInt(input.maxWinners),
@@ -430,20 +433,30 @@ export async function createPrizePoolCampaign(input: {
 
     const receipt = await publicClient.waitForTransactionReceipt({ hash });
     if (receipt.status !== "success") {
-      return { ok: false, error: "createPool transaction failed on-chain." };
+      return { ok: false, error: "PrizePool deployment transaction failed on-chain." };
     }
 
-    const poolAddress = await resolvePrizePoolAddress({
-      publicClient,
-      factoryAddress: cfg.factoryAddress,
-      campaignId: input.campaignId,
-      logs: receipt.logs
-    });
+    const poolAddress = receipt.contractAddress && isUsablePrizePoolAddress(receipt.contractAddress)
+      ? getAddress(receipt.contractAddress)
+      : "";
 
     if (!poolAddress) {
       return {
         ok: false,
-        error: `Factory did not return a usable PrizePool address for campaign ${input.campaignId}. createPool tx=${hash}.`
+        error: `PrizePool deployment did not return a usable contract address for campaign ${input.campaignId}. tx=${hash}.`
+      };
+    }
+
+    const owner = await publicClient.readContract({
+      address: poolAddress as `0x${string}`,
+      abi: prizePoolAbi,
+      functionName: "owner",
+      args: []
+    }) as string;
+    if (owner.toLowerCase() !== account.address.toLowerCase()) {
+      return {
+        ok: false,
+        error: `Direct PrizePool owner mismatch after deploy. Owner=${owner}, signer=${account.address}, tx=${hash}.`
       };
     }
 
