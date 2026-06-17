@@ -146,13 +146,13 @@ The preview response can include:
     }
   ],
   "fundingPlan": {
-    "fundingMode": "test_no_payout",
-    "environment": "test",
-    "payoutDisabled": true
+    "fundingMode": "ai2human_managed_pool",
+    "environment": "production",
+    "payoutDisabled": false
   },
   "contractPreflight": {
-    "required": false,
-    "status": "not_required"
+    "required": true,
+    "status": "managed_pool_not_created"
   }
 }
 ```
@@ -198,6 +198,8 @@ curl https://ai2human.work/api/agent/campaigns \
 
 For production campaigns, projects should still review the generated task in the app before public promotion.
 
+For production reward campaigns, do not ask the requester for a `poolAddress` by default. Use `ai2human_managed_pool`. AI2Human will create the PrizePool and return a `fundingInvoice`; the requester project transfers USDC to that invoice recipient, then the agent calls publish after preflight passes.
+
 ## Expected API Result
 
 A successful task creation response returns the created task object.
@@ -218,17 +220,37 @@ Lucky draw campaigns must declare a funding mode:
 
 ```json
 {
-  "environment": "test",
-  "fundingMode": "test_no_payout"
+  "environment": "production",
+  "fundingMode": "ai2human_managed_pool"
 }
 ```
 
 Supported funding modes:
 
+- `ai2human_managed_pool`: recommended production mode. AI2Human deploys the PrizePool and returns a USDC funding invoice.
 - `test_no_payout`: test only, payout disabled
 - `unfunded_campaign`: production campaign can be staged, but payout remains disabled until funding is attached
 - `escrow_deposit`: requester agent deposits USDC into escrow before publish
-- `prize_pool_contract`: requester provides a PrizePool address and contract preflight must pass
+- `prize_pool_contract`: advanced mode for an already-created PrizePool address
+
+When using `ai2human_managed_pool`, creation returns:
+
+```json
+{
+  "preview": {
+    "fundingPlan": {
+      "fundingInvoice": {
+        "type": "usdc_transfer",
+        "network": "base",
+        "amount": "20 USDC",
+        "recipientAddress": "0x..."
+      }
+    }
+  }
+}
+```
+
+The requester project should transfer USDC to `recipientAddress`. Do not publish until `campaign_publish` returns success.
 
 For lucky draw campaigns, the requester agent/project must provide exact campaign links:
 

@@ -2,6 +2,11 @@
   "version": "0.1.0",
   "principle": "Every live campaign value must come from the requester agent/project. Examples are not defaults.",
   "fundingModes": {
+    "ai2human_managed_pool": {
+      "description": "Recommended production mode. AI2Human deploys the PrizePool, returns a USDC funding invoice, and publishes only after on-chain preflight confirms the pool is funded.",
+      "requires": ["environment=production"],
+      "settlement": "prize_pool_claim"
+    },
     "test_no_payout": {
       "description": "Test the activity flow only. Payout is disabled and the campaign must use environment=test.",
       "requires": ["environment=test"],
@@ -18,7 +23,7 @@
       "settlement": "escrow"
     },
     "prize_pool_contract": {
-      "description": "Campaign uses a PrizePool contract. Contract preflight must pass before publishing or payout.",
+      "description": "Advanced mode for an already-created PrizePool contract. Contract preflight must pass before publishing or payout.",
       "requires": ["poolAddress"],
       "settlement": "prize_pool_claim"
     }
@@ -32,7 +37,7 @@
       "optionalFields": ["proofPhrase"],
       "proofModel": ["X handle", "live URL or profile URL", "screenshot proof", "summary"],
       "verificationModel": ["same-account check", "screenshot/live URL check", "required phrase check when configured"],
-      "settlementModes": ["fcfs", "equal", "test_no_payout", "unfunded_campaign", "escrow_deposit", "prize_pool_contract"]
+      "settlementModes": ["fcfs", "equal", "ai2human_managed_pool", "test_no_payout", "unfunded_campaign", "escrow_deposit", "prize_pool_contract"]
     },
     {
       "id": "x_lucky_draw",
@@ -60,7 +65,7 @@
       "optionalFields": ["rewardDistribution.perWinner", "rewardDistribution.drawTime", "proofPhrase"],
       "proofModel": ["follow proof", "Telegram join proof", "repost proof", "like proof", "screenshot proof"],
       "verificationModel": ["bound X account", "same-account check", "all four subtasks verified", "payout/funding gate"],
-      "settlementModes": ["test_no_payout", "unfunded_campaign", "escrow_deposit", "prize_pool_contract"]
+      "settlementModes": ["ai2human_managed_pool", "test_no_payout", "unfunded_campaign", "escrow_deposit", "prize_pool_contract"]
     },
     {
       "id": "x_banner_contest",
@@ -69,7 +74,7 @@
       "requiredFields": ["requesterName", "requesterHandle", "targetUrl", "budget", "deadline", "brief", "requiredMentions", "requiredHashtags", "prizes"],
       "proofModel": ["live X post URL", "attached image", "short reason", "required mention/hashtag"],
       "verificationModel": ["live X fetch", "image presence", "relevance check", "copy/spam check", "ranked review"],
-      "settlementModes": ["test_no_payout", "unfunded_campaign", "prize_pool_contract"]
+      "settlementModes": ["ai2human_managed_pool", "test_no_payout", "unfunded_campaign", "prize_pool_contract"]
     },
     {
       "id": "x_article_contest",
@@ -78,7 +83,7 @@
       "requiredFields": ["requesterName", "requesterHandle", "targetUrl", "budget", "deadline", "brief", "reviewTarget", "prizes"],
       "proofModel": ["live X article/thread URL", "content snapshot", "audit text", "required mention/hashtag when configured"],
       "verificationModel": ["live X fetch", "project relevance gate", "copy-paste risk check", "multi-model review", "final review anchor"],
-      "settlementModes": ["test_no_payout", "unfunded_campaign", "prize_pool_contract"]
+      "settlementModes": ["ai2human_managed_pool", "test_no_payout", "unfunded_campaign", "prize_pool_contract"]
     }
   ],
   "recommendedFlow": [
@@ -87,9 +92,9 @@
     "ask the requester agent/project for every required field",
     "POST /api/agent/campaigns/preview",
     "if readyToCreate is false, ask nextQuestions",
-    "if contractPreflight.required is true, verify contract owner, agent, balance, deadline, pause state, and reuse risk",
     "POST /api/agent/campaigns to create a draft",
-    "fund escrow or pass PrizePool preflight when required",
+    "if fundingMode=ai2human_managed_pool, transfer USDC to preview/task.campaign.agentLifecycle.fundingPlan.fundingInvoice.recipientAddress",
+    "fund escrow, fund managed pool, or pass existing PrizePool preflight when required",
     "POST /api/agent/campaigns/{id}/publish only after preview/funding/preflight pass"
   ]
 }

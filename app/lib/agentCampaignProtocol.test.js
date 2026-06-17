@@ -64,3 +64,21 @@ test("agent campaign contract preflight blocks reused pool addresses", async () 
   assert.equal(result.contractPreflight.ok, false);
   assert.equal(result.contractPreflight.status, "pool_already_bound");
 });
+
+test("managed pool campaigns do not ask requester for a pool address before draft creation", async () => {
+  const db = { tasks: [] };
+  const payload = {
+    ...readExample("create-lucky-draw-task.json"),
+    environment: "production",
+    fundingMode: "ai2human_managed_pool",
+    poolAddress: undefined
+  };
+  const result = await buildAgentCampaignPreview(db, payload);
+
+  assert.equal(result.readyToCreate, true);
+  assert.equal(result.readyToPublish, false);
+  assert.equal(result.fundingPlan.createsManagedPrizePool, true);
+  assert.equal(result.contractPreflight.required, true);
+  assert.equal(result.contractPreflight.status, "managed_pool_not_created");
+  assert.equal(result.missingInputs.includes("poolAddress"), false);
+});

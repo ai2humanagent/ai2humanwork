@@ -10,6 +10,14 @@ export const VALID_REWARD_DISTRIBUTION_MODES = [
   "ranked_article_contest"
 ];
 
+export const VALID_FUNDING_MODES = [
+  "test_no_payout",
+  "unfunded_campaign",
+  "escrow_deposit",
+  "prize_pool_contract",
+  "ai2human_managed_pool"
+];
+
 export function parseRewardDistribution(raw, fallbackBudget) {
   if (!raw || typeof raw !== "object") return undefined;
   const mode = String(raw.mode || "").trim();
@@ -72,12 +80,14 @@ export function readFundingPlan(input = {}, rewardDistribution) {
     depositAmount,
     payoutDisabled,
     requiresFundingMode: isRewardCampaign,
-    requiresContractPreflight: fundingMode === "prize_pool_contract",
+    requiresContractPreflight: fundingMode === "prize_pool_contract" || fundingMode === "ai2human_managed_pool",
     requiresEscrowDeposit: fundingMode === "escrow_deposit",
+    createsManagedPrizePool: fundingMode === "ai2human_managed_pool",
     canSettleNow:
       isRewardCampaign &&
       !payoutDisabled &&
       ((fundingMode === "prize_pool_contract" && Boolean(poolAddress)) ||
+        (fundingMode === "ai2human_managed_pool" && Boolean(poolAddress)) ||
         (fundingMode === "escrow_deposit" && Boolean(depositAmount)))
   };
 }
@@ -120,12 +130,18 @@ export function getMissingAgentTaskInputs(input = {}, rewardDistribution) {
   if (isLuckyDraw) {
     if (isBlankOrPlaceholder(input.fundingMode)) missingInputs.push("fundingMode");
     if (isBlankOrPlaceholder(input.environment)) missingInputs.push("environment");
+    if (funding.fundingMode && !VALID_FUNDING_MODES.includes(funding.fundingMode)) {
+      missingInputs.push("validFundingMode");
+    }
     if (isBlankOrPlaceholder(links.followHandle)) missingInputs.push("campaignLinks.followHandle");
     if (isBlankOrPlaceholder(links.telegramUrl)) missingInputs.push("campaignLinks.telegramUrl");
     if (isBlankOrPlaceholder(links.repostUrl)) missingInputs.push("campaignLinks.repostUrl");
     if (isBlankOrPlaceholder(links.likeUrl)) missingInputs.push("campaignLinks.likeUrl");
     if (funding.fundingMode === "test_no_payout" && funding.environment !== "test") {
       missingInputs.push("environment=test");
+    }
+    if (funding.fundingMode === "ai2human_managed_pool" && funding.environment !== "production") {
+      missingInputs.push("environment=production");
     }
     if (funding.fundingMode === "prize_pool_contract" && !funding.poolAddress) {
       missingInputs.push("poolAddress");
@@ -146,9 +162,11 @@ export function buildNextQuestions(missingInputs = []) {
     budget: "What total reward budget should this activity use?",
     deadline: "What exact deadline or task window should this activity use?",
     brief: "What should humans do, what proof should they submit, and when is it complete?",
-    fundingMode: "Which funding mode should this campaign use: test_no_payout, unfunded_campaign, escrow_deposit, or prize_pool_contract?",
+    fundingMode: "Which funding mode should this campaign use: ai2human_managed_pool, test_no_payout, unfunded_campaign, escrow_deposit, or prize_pool_contract?",
+    validFundingMode: "Use a supported funding mode: ai2human_managed_pool, test_no_payout, unfunded_campaign, escrow_deposit, or prize_pool_contract.",
     environment: "Is this campaign test or production?",
     "environment=test": "For test_no_payout campaigns, confirm environment is test.",
+    "environment=production": "For ai2human_managed_pool campaigns, confirm environment is production.",
     "campaignLinks.followHandle": "What exact X handle should users follow?",
     "campaignLinks.telegramUrl": "What exact Telegram group link should users join?",
     "campaignLinks.repostUrl": "What exact X post URL should users repost?",

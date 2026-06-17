@@ -229,6 +229,12 @@ function getPoolConfig() {
   };
 }
 
+export function getPrizePoolSignerAddress(): string {
+  const cfg = getPoolConfig();
+  if (!cfg.enabled) return "";
+  return privateKeyToAccount(normalizePrivateKey(cfg.privateKey)).address;
+}
+
 function buildViemChain(chainId: number) {
   const cfg = getChainConfig(chainId);
   if (!cfg) throw new Error(`Unsupported chain: ${chainId}`);

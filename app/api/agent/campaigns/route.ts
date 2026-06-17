@@ -7,6 +7,7 @@ import {
   type UserAccount
 } from "../../../lib/store";
 import {
+  attachManagedPrizePool,
   buildAgentCampaignPreview,
   buildAgentCampaignTask
 } from "../../../lib/agentCampaignProtocol.js";
@@ -37,7 +38,11 @@ export async function POST(request: Request) {
       );
     }
 
-    const task = buildAgentCampaignTask(body, preview) as Task;
+    let task = buildAgentCampaignTask(body, preview) as Task;
+    let creationPreview = preview;
+    const managed = await attachManagedPrizePool(db, body, task, preview);
+    task = managed.task as Task;
+    creationPreview = managed.preview;
     const taskNotifications: Array<{ user: UserAccount; notification: Notification }> = [];
 
     await updateDb((draft) => {
@@ -71,7 +76,7 @@ export async function POST(request: Request) {
       )
     );
 
-    return NextResponse.json({ task, preview }, { status: 201 });
+    return NextResponse.json({ task, preview: creationPreview }, { status: 201 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unable to create campaign.";
     return NextResponse.json({ error: message }, { status: 400 });

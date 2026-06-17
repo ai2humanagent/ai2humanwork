@@ -53,7 +53,7 @@ type Task = {
     isTest?: boolean;
     environment?: "test" | "production";
     payoutDisabled?: boolean;
-    fundingMode?: "test_no_payout" | "unfunded_campaign" | "escrow_deposit" | "prize_pool_contract";
+    fundingMode?: "test_no_payout" | "unfunded_campaign" | "escrow_deposit" | "prize_pool_contract" | "ai2human_managed_pool";
     agentLifecycle?: {
       status?: "draft" | "preflight_passed" | "published" | "closed" | "reviewed" | "paying" | "completed" | "refunded";
       readyToCreate?: boolean;

@@ -19,7 +19,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 type CampaignEnvironment = "test" | "production";
-type CampaignFundingMode = "test_no_payout" | "unfunded_campaign" | "prize_pool_contract" | "escrow_deposit";
+type CampaignFundingMode = "test_no_payout" | "unfunded_campaign" | "prize_pool_contract" | "escrow_deposit" | "ai2human_managed_pool";
 
 function readCampaignEnvironment(value: unknown): CampaignEnvironment | undefined {
   return value === "test" || value === "production" ? value : undefined;
@@ -29,7 +29,8 @@ function readCampaignFundingMode(value: unknown): CampaignFundingMode | undefine
   return value === "test_no_payout" ||
     value === "unfunded_campaign" ||
     value === "prize_pool_contract" ||
-    value === "escrow_deposit"
+    value === "escrow_deposit" ||
+    value === "ai2human_managed_pool"
     ? value
     : undefined;
 }
@@ -37,7 +38,7 @@ function readCampaignFundingMode(value: unknown): CampaignFundingMode | undefine
 function canPublishWithFunding(task: Awaited<ReturnType<typeof readDb>>["tasks"][number], contractPreflight: { ok?: boolean }, fundingPlan: ReturnType<typeof readFundingPlan>) {
   if (fundingPlan.payoutDisabled) return { ok: true };
   if (fundingPlan.fundingMode === "unfunded_campaign") return { ok: true };
-  if (fundingPlan.fundingMode === "prize_pool_contract") {
+  if (fundingPlan.fundingMode === "prize_pool_contract" || fundingPlan.fundingMode === "ai2human_managed_pool") {
     return contractPreflight.ok
       ? { ok: true }
       : { ok: false, error: "PrizePool contract preflight has not passed." };
@@ -83,12 +84,20 @@ export async function POST(
     poolAddress: body.poolAddress || task.poolAddress || task.campaign?.poolAddress
   };
   const fundingPlan = readFundingPlan(input, task.rewardDistribution);
+  const existingFundingPlan =
+    task.campaign?.agentLifecycle?.fundingPlan && typeof task.campaign.agentLifecycle.fundingPlan === "object"
+      ? task.campaign.agentLifecycle.fundingPlan
+      : {};
+  const publishFundingPlan = {
+    ...existingFundingPlan,
+    ...fundingPlan
+  };
   const winnerDistribution = inferWinnerDistribution(input, task.rewardDistribution);
   const contractPreflight = await runAgentCampaignContractPreflight(db, input, task.rewardDistribution);
   const publishGate = canPublishWithFunding(task, contractPreflight, fundingPlan);
   if (!publishGate.ok) {
     return NextResponse.json(
-      { error: publishGate.error, fundingPlan, contractPreflight },
+      { error: publishGate.error, fundingPlan: publishFundingPlan, contractPreflight },
       { status: 400 }
     );
   }
@@ -117,7 +126,7 @@ export async function POST(
         readyToCreate: true,
         readyToPublish: true,
         publishedAt,
-        fundingPlan,
+        fundingPlan: publishFundingPlan,
         contractPreflight,
         winnerDistribution
       }
@@ -153,5 +162,5 @@ export async function POST(
     )
   );
 
-  return NextResponse.json({ success: true, taskId: id, publishedAt, fundingPlan, contractPreflight, notifications: notifications.length });
+  return NextResponse.json({ success: true, taskId: id, publishedAt, fundingPlan: publishFundingPlan, contractPreflight, notifications: notifications.length });
 }

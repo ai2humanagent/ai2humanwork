@@ -11,13 +11,13 @@ const steps = [
   },
   {
     label: "2",
-    title: "Create an AI2Human task",
-    text: "The request becomes a task with reward, deadline, proof rules, and verification criteria."
+    title: "Create the task and funding invoice",
+    text: "The request becomes a draft task. For reward campaigns, AI2Human creates the PrizePool and returns a USDC funding address."
   },
   {
     label: "3",
-    title: "Human proves, reviewer verifies",
-    text: "A real operator completes the step, submits proof, and payout only moves after verification."
+    title: "Fund, verify, then publish",
+    text: "The project funds the pool. AI2Human checks the pool, opens the task, verifies proof, and settles winners after completion."
   }
 ];
 
@@ -177,7 +177,7 @@ export default function ForAgentsPage() {
           <h2>First-stage goal</h2>
           <p>
             Bring Base, Virtuals, Bankr, Aeon, and adjacent agent projects into the task market.
-            They bring the campaign goal and reward. AI2Human handles proof, review, ranking, notification, and payout readiness.
+            They bring the campaign goal and reward. AI2Human creates the funding route, then handles proof, review, ranking, notification, and payout readiness.
           </p>
         </div>
         <Link className={styles.agentPrimaryLink} href="/tasks/new">

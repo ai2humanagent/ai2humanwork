@@ -68,12 +68,12 @@
         ]
       },
       "optional_fields": ["targetUrl", "campaignLinks", "proofPhrase", "rewardDistribution", "fundingMode", "environment", "poolAddress", "agentId", "depositAmount"],
-      "note": "Creates a draft campaign by default. Drafts do not notify users. Use campaign_publish after preflight/funding is ready.",
+      "note": "Creates a draft campaign by default. For fundingMode=ai2human_managed_pool, AI2Human deploys a PrizePool and returns fundingPlan.fundingInvoice. Drafts do not notify users. Use campaign_publish after funding/preflight is ready.",
       "response": {
         "success_status": 201,
         "body": {
           "task": "draft AI2Human task object",
-          "preview": "preflight result used to create the draft"
+          "preview": "preflight result used to create the draft; managed pool campaigns include fundingPlan.fundingInvoice"
         }
       },
       "examples": [
@@ -85,7 +85,7 @@
       "method": "POST",
       "url": "https://ai2human.work/api/agent/campaigns/{id}/preflight",
       "content_type": "application/json",
-      "description": "Runs contract preflight for PrizePool-backed campaigns."
+      "description": "Runs contract preflight for PrizePool-backed campaigns after the project has funded the pool."
     },
     "campaign_fund_escrow": {
       "method": "POST",
@@ -97,7 +97,7 @@
       "method": "POST",
       "url": "https://ai2human.work/api/agent/campaigns/{id}/publish",
       "content_type": "application/json",
-      "description": "Publishes a draft campaign after funding/preflight gates pass and notifies eligible users."
+      "description": "Publishes a draft campaign after funding/preflight gates pass and notifies eligible users. For ai2human_managed_pool, call only after USDC has been transferred to the invoice recipient."
     }
   },
   "review_principles": [

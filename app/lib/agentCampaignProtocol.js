@@ -13,6 +13,34 @@ function parseAmount(raw) {
   return match ? Number(match[0]) : 0;
 }
 
+function parseDeadlineUnix(raw) {
+  const value = readString(raw);
+  const timestamp = Date.parse(value);
+  if (Number.isFinite(timestamp)) return Math.floor(timestamp / 1000);
+  const fallback = Date.now() + 7 * 24 * 60 * 60 * 1000;
+  return Math.floor(fallback / 1000);
+}
+
+function createNumericCampaignId() {
+  return Math.floor(Date.now() / 1000) * 1000 + crypto.randomInt(100, 999);
+}
+
+function buildFundingInvoice(input = {}) {
+  const poolAddress = readString(input.poolAddress);
+  const amount = readString(input.amount || input.totalPool || input.budget);
+  return {
+    type: "usdc_transfer",
+    network: process.env.NEXT_PUBLIC_DEFAULT_SETTLEMENT_RAIL || process.env.DEFAULT_SETTLEMENT_RAIL || "base",
+    chainId: Number(process.env.BASE_CHAIN_ID || 8453),
+    tokenSymbol: process.env.BASE_SETTLEMENT_TOKEN_SYMBOL || "USDC",
+    tokenAddress: process.env.BASE_SETTLEMENT_TOKEN_ADDRESS || "",
+    amount,
+    recipientAddress: poolAddress,
+    memo: "Fund this AI2Human PrizePool before publishing. Transfer exact USDC amount, then call campaign_publish.",
+    nextAction: "POST /api/agent/campaigns/{id}/publish"
+  };
+}
+
 export function inferWinnerDistribution(input = {}, rewardDistribution) {
   const explicit = input.winnerDistribution && typeof input.winnerDistribution === "object"
     ? input.winnerDistribution
@@ -70,6 +98,15 @@ export async function runAgentCampaignContractPreflight(db, input = {}, rewardDi
   }
 
   if (!funding.poolAddress) {
+    if (funding.fundingMode === "ai2human_managed_pool") {
+      return {
+        required: true,
+        ok: false,
+        status: "managed_pool_not_created",
+        checks,
+        issues: ["Create the campaign draft first. AI2Human will deploy the PrizePool and return a funding invoice."]
+      };
+    }
     return {
       required: true,
       ok: false,
@@ -136,6 +173,91 @@ export async function buildAgentCampaignPreview(db, input = {}) {
     fundingPlan,
     winnerDistribution,
     contractPreflight
+  };
+}
+
+export async function attachManagedPrizePool(db, input = {}, task, preview) {
+  const rewardDistribution = task.rewardDistribution;
+  const fundingPlan = readFundingPlan(input, rewardDistribution);
+  if (fundingPlan.fundingMode !== "ai2human_managed_pool") {
+    return { task, preview };
+  }
+
+  if (fundingPlan.environment !== "production") {
+    throw new Error("ai2human_managed_pool requires environment=production.");
+  }
+
+  const { createPrizePoolCampaign, getPrizePoolSignerAddress } = await import("./prizePool");
+  const expectedAgent = readString(
+    input.expectedAgent ||
+      process.env.PRIZE_POOL_EXPECTED_AGENT_ADDRESS ||
+      getPrizePoolSignerAddress()
+  );
+  if (!expectedAgent) {
+    throw new Error("PrizePool signer is required to create managed PrizePools.");
+  }
+
+  const campaignId = Number(input.campaignId) || createNumericCampaignId();
+  const created = await createPrizePoolCampaign({
+    campaignId,
+    deadline: parseDeadlineUnix(task.deadline),
+    maxWinners: rewardDistribution?.maxWinners || 1,
+    agent: expectedAgent
+  });
+  if (!created.ok) {
+    throw new Error(created.error);
+  }
+
+  const updatedInput = {
+    ...input,
+    taskId: task.id,
+    budget: task.budget,
+    poolAddress: created.poolAddress,
+    expectedAgent
+  };
+  const updatedFundingPlan = {
+    ...readFundingPlan(updatedInput, rewardDistribution),
+    managedPool: {
+      campaignId: created.campaignId,
+      poolAddress: created.poolAddress,
+      createTxHash: created.txHash,
+      createExplorerUrl: created.explorerUrl,
+      expectedAgent
+    },
+    fundingInvoice: buildFundingInvoice({
+      poolAddress: created.poolAddress,
+      amount: expectedPayoutTotal(updatedInput, rewardDistribution)
+    })
+  };
+  const updatedPreflight = await runAgentCampaignContractPreflight(db, updatedInput, rewardDistribution);
+
+  task.poolAddress = created.poolAddress;
+  task.campaign = {
+    ...task.campaign,
+    poolAddress: created.poolAddress,
+    agentLifecycle: {
+      ...task.campaign?.agentLifecycle,
+      readyToPublish: updatedPreflight.ok,
+      fundingPlan: updatedFundingPlan,
+      contractPreflight: updatedPreflight
+    }
+  };
+  task.evidence.unshift({
+    id: crypto.randomUUID(),
+    by: "system",
+    type: "log",
+    content: `managed_prize_pool_created: campaignId=${created.campaignId} pool=${created.poolAddress} tx=${created.txHash}`,
+    createdAt: new Date().toISOString()
+  });
+
+  return {
+    task,
+    preview: {
+      ...preview,
+      readyToPublish: updatedPreflight.ok,
+      fundingPlan: updatedFundingPlan,
+      contractPreflight: updatedPreflight
+    }
   };
 }
 
