@@ -250,7 +250,28 @@ When using `ai2human_managed_pool`, creation returns:
 }
 ```
 
-The requester project should transfer USDC to `recipientAddress`. Do not publish until `campaign_publish` returns success.
+The requester project should transfer USDC to `recipientAddress`. Do not ask the requester to open the campaign page to find the funding address; the agent must use the API response directly. If the agent needs to re-check the invoice or repair a missing managed pool, call:
+
+```http
+POST /api/agent/campaigns/{taskId}/funding
+```
+
+That endpoint returns:
+
+```json
+{
+  "status": "awaiting_usdc_transfer",
+  "fundingInvoice": {
+    "network": "base",
+    "tokenSymbol": "USDC",
+    "amount": "20 USDC",
+    "recipientAddress": "0x..."
+  },
+  "nextAction": "Transfer 20 USDC to fundingInvoice.recipientAddress on Base..."
+}
+```
+
+Do not publish until `campaign_funding_status` returns `readyToPublish: true` or `campaign_publish` returns success.
 
 For lucky draw campaigns, the requester agent/project must provide exact campaign links:
 

@@ -18,6 +18,13 @@ export const VALID_FUNDING_MODES = [
   "ai2human_managed_pool"
 ];
 
+const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
+
+function isUsableAddressLike(value) {
+  const text = String(value || "").trim().toLowerCase();
+  return /^0x[a-f0-9]{40}$/.test(text) && text !== ZERO_ADDRESS;
+}
+
 export function parseRewardDistribution(raw, fallbackBudget) {
   if (!raw || typeof raw !== "object") return undefined;
   const mode = String(raw.mode || "").trim();
@@ -86,8 +93,8 @@ export function readFundingPlan(input = {}, rewardDistribution) {
     canSettleNow:
       isRewardCampaign &&
       !payoutDisabled &&
-      ((fundingMode === "prize_pool_contract" && Boolean(poolAddress)) ||
-        (fundingMode === "ai2human_managed_pool" && Boolean(poolAddress)) ||
+      ((fundingMode === "prize_pool_contract" && isUsableAddressLike(poolAddress)) ||
+        (fundingMode === "ai2human_managed_pool" && isUsableAddressLike(poolAddress)) ||
         (fundingMode === "escrow_deposit" && Boolean(depositAmount)))
   };
 }
@@ -143,7 +150,7 @@ export function getMissingAgentTaskInputs(input = {}, rewardDistribution) {
     if (funding.fundingMode === "ai2human_managed_pool" && funding.environment !== "production") {
       missingInputs.push("environment=production");
     }
-    if (funding.fundingMode === "prize_pool_contract" && !funding.poolAddress) {
+    if (funding.fundingMode === "prize_pool_contract" && !isUsableAddressLike(funding.poolAddress)) {
       missingInputs.push("poolAddress");
     }
     if (funding.fundingMode === "escrow_deposit") {

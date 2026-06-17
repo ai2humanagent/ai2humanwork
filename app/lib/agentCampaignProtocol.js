@@ -13,6 +13,13 @@ function parseAmount(raw) {
   return match ? Number(match[0]) : 0;
 }
 
+const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
+
+export function isUsablePoolAddress(value) {
+  const text = String(value || "").trim().toLowerCase();
+  return /^0x[a-f0-9]{40}$/.test(text) && text !== ZERO_ADDRESS;
+}
+
 function parseDeadlineUnix(raw) {
   const value = readString(raw);
   const timestamp = Date.parse(value);
@@ -25,8 +32,11 @@ function createNumericCampaignId() {
   return Math.floor(Date.now() / 1000) * 1000 + crypto.randomInt(100, 999);
 }
 
-function buildFundingInvoice(input = {}) {
+export function buildFundingInvoice(input = {}) {
   const poolAddress = readString(input.poolAddress);
+  if (!isUsablePoolAddress(poolAddress)) {
+    throw new Error("Cannot build funding invoice without a real PrizePool recipient address.");
+  }
   const amount = readString(input.amount || input.totalPool || input.budget);
   return {
     type: "usdc_transfer",
@@ -97,7 +107,7 @@ export async function runAgentCampaignContractPreflight(db, input = {}, rewardDi
     };
   }
 
-  if (!funding.poolAddress) {
+  if (!isUsablePoolAddress(funding.poolAddress)) {
     if (funding.fundingMode === "ai2human_managed_pool") {
       return {
         required: true,
@@ -206,6 +216,9 @@ export async function attachManagedPrizePool(db, input = {}, task, preview) {
   });
   if (!created.ok) {
     throw new Error(created.error);
+  }
+  if (!isUsablePoolAddress(created.poolAddress)) {
+    throw new Error(`Managed PrizePool creation returned an invalid pool address: ${created.poolAddress || "empty"}.`);
   }
 
   const updatedInput = {

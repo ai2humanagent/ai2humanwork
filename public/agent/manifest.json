@@ -68,7 +68,7 @@
         ]
       },
       "optional_fields": ["targetUrl", "campaignLinks", "proofPhrase", "rewardDistribution", "fundingMode", "environment", "poolAddress", "agentId", "depositAmount"],
-      "note": "Creates a draft campaign by default. For fundingMode=ai2human_managed_pool, AI2Human deploys a PrizePool and returns fundingPlan.fundingInvoice. Drafts do not notify users. Use campaign_publish after funding/preflight is ready.",
+      "note": "Creates a draft campaign by default. For fundingMode=ai2human_managed_pool, AI2Human deploys a PrizePool and returns fundingPlan.fundingInvoice with a real Base recipient address. Do not ask the requester to inspect the web page for the address. Drafts do not notify users. Use campaign_publish after funding/preflight is ready.",
       "response": {
         "success_status": 201,
         "body": {
@@ -80,6 +80,22 @@
         "https://ai2human.work/agent/examples/create-human-task.json",
         "https://ai2human.work/agent/examples/create-lucky-draw-task.json"
       ]
+    },
+    "campaign_funding_status": {
+      "method": "GET or POST",
+      "url": "https://ai2human.work/api/agent/campaigns/{id}/funding",
+      "content_type": "application/json",
+      "description": "Returns the machine-readable funding invoice and current funding/preflight status. POST also creates or repairs the managed PrizePool for ai2human_managed_pool drafts when no usable pool exists.",
+      "response": {
+        "success_status": 200,
+        "body": {
+          "status": "pool_missing_or_invalid | awaiting_usdc_transfer | funded_ready_to_publish",
+          "fundingInvoice": "Base USDC transfer invoice with recipientAddress when a usable PrizePool exists",
+          "poolAddress": "PrizePool address when available",
+          "readyToPublish": "true only after the pool is funded and preflight passes",
+          "nextAction": "specific next API or payment step for the agent"
+        }
+      }
     },
     "campaign_contract_preflight": {
       "method": "POST",

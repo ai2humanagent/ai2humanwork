@@ -20,10 +20,13 @@ import {
   createPublicClient,
   createWalletClient,
   defineChain,
+  decodeEventLog,
   erc20Abi,
   formatUnits,
+  getAddress,
   http,
-  isAddress
+  isAddress,
+  zeroAddress
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { prizePoolAbi, prizePoolFactoryAbi, getChainConfig } from "./prizePoolContract";
@@ -45,6 +48,11 @@ function parseAmount(raw: string): string {
 
 function buildExplorerUrl(baseUrl: string, txHash: string): string {
   return `${baseUrl.replace(/\/+$/, "")}/tx/${txHash}`;
+}
+
+export function isUsablePrizePoolAddress(value: string | undefined | null): boolean {
+  if (!value || !isAddress(value)) return false;
+  return value.toLowerCase() !== zeroAddress.toLowerCase();
 }
 
 // ============================================================
@@ -255,6 +263,126 @@ export type CreateCampaignResult =
   | { ok: true; campaignId: number; poolAddress: string; txHash: string; explorerUrl: string }
   | { ok: false; error: string };
 
+function readPoolCreatedAddressFromLogs(input: {
+  logs: ReadonlyArray<{ address: string; data: `0x${string}`; topics: readonly `0x${string}`[] }>;
+  factoryAddress: string;
+  campaignId: number;
+}) {
+  let eventPoolAddress = "";
+  for (const log of input.logs) {
+    if (log.address.toLowerCase() !== input.factoryAddress.toLowerCase()) continue;
+    try {
+      const decoded = decodeEventLog({
+        abi: prizePoolFactoryAbi,
+        data: log.data,
+        topics: [...log.topics] as [`0x${string}`, ...`0x${string}`[]]
+      });
+      if (decoded.eventName !== "PoolCreated") continue;
+      const args = decoded.args as unknown as {
+        campaignId?: bigint;
+        poolAddress?: string;
+      };
+      if (args.campaignId !== BigInt(input.campaignId)) continue;
+      eventPoolAddress = String(args.poolAddress || "");
+      break;
+    } catch {
+      // Ignore logs from other events/contracts in the same receipt.
+    }
+  }
+  return eventPoolAddress;
+}
+
+async function resolvePrizePoolAddress(input: {
+  publicClient: ReturnType<typeof createPublicClient>;
+  factoryAddress: string;
+  campaignId: number;
+  txHash?: `0x${string}`;
+  logs?: ReadonlyArray<{ address: string; data: `0x${string}`; topics: readonly `0x${string}`[] }>;
+}) {
+  let eventPoolAddress = "";
+  const logs = input.logs || (
+    input.txHash
+      ? (await input.publicClient.getTransactionReceipt({ hash: input.txHash })).logs
+      : []
+  );
+  if (logs.length) {
+    eventPoolAddress = readPoolCreatedAddressFromLogs({
+      logs,
+      factoryAddress: input.factoryAddress,
+      campaignId: input.campaignId
+    });
+  }
+
+  const mappedPoolAddress = String(await input.publicClient.readContract({
+    address: input.factoryAddress as `0x${string}`,
+    abi: prizePoolFactoryAbi,
+    functionName: "getPool",
+    args: [BigInt(input.campaignId)]
+  }));
+
+  if (
+    isUsablePrizePoolAddress(eventPoolAddress) &&
+    isUsablePrizePoolAddress(mappedPoolAddress) &&
+    eventPoolAddress.toLowerCase() !== mappedPoolAddress.toLowerCase()
+  ) {
+    throw new Error(
+      `Factory pool mismatch for campaign ${input.campaignId}. Event=${eventPoolAddress}, getPool=${mappedPoolAddress}.`
+    );
+  }
+
+  return isUsablePrizePoolAddress(eventPoolAddress)
+    ? getAddress(eventPoolAddress)
+    : isUsablePrizePoolAddress(mappedPoolAddress)
+      ? getAddress(mappedPoolAddress)
+      : "";
+}
+
+export type GetCampaignPoolAddressResult =
+  | { ok: true; campaignId: number; poolAddress: string; txHash?: string; explorerUrl?: string }
+  | { ok: false; error: string };
+
+export async function getPrizePoolCampaignAddress(input: {
+  campaignId: number;
+  txHash?: string;
+}): Promise<GetCampaignPoolAddressResult> {
+  const cfg = getPoolConfig();
+
+  if (!cfg.factoryAddress) {
+    return { ok: false, error: "PrizePool factory is not configured." };
+  }
+  if (!Number.isFinite(input.campaignId) || input.campaignId <= 0) {
+    return { ok: false, error: "Invalid campaign id." };
+  }
+
+  const chain = buildViemChain(cfg.chainId);
+  const publicClient = createPublicClient({ chain, transport: http(cfg.rpcUrl) });
+
+  try {
+    const poolAddress = await resolvePrizePoolAddress({
+      publicClient,
+      factoryAddress: cfg.factoryAddress,
+      campaignId: input.campaignId,
+      txHash: input.txHash as `0x${string}` | undefined
+    });
+    if (!poolAddress) {
+      return {
+        ok: false,
+        error: `No usable PrizePool address found for campaign ${input.campaignId}.`
+      };
+    }
+    return {
+      ok: true,
+      campaignId: input.campaignId,
+      poolAddress,
+      txHash: input.txHash,
+      explorerUrl: input.txHash ? buildExplorerUrl(cfg.explorerBaseUrl, input.txHash) : undefined
+    };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Unknown error";
+    return { ok: false, error: `Unable to resolve PrizePool address: ${msg}` };
+  }
+}
+
 export async function createPrizePoolCampaign(input: {
   campaignId: number;
   merkleRoot?: string;
@@ -270,6 +398,15 @@ export async function createPrizePoolCampaign(input: {
 
   if (!isAddress(input.agent)) {
     return { ok: false, error: "Invalid agent address." };
+  }
+  if (!Number.isFinite(input.campaignId) || input.campaignId <= 0) {
+    return { ok: false, error: "Invalid campaign id." };
+  }
+  if (!Number.isFinite(input.deadline) || input.deadline <= Math.floor(Date.now() / 1000)) {
+    return { ok: false, error: "PrizePool deadline must be in the future." };
+  }
+  if (!Number.isFinite(input.maxWinners) || input.maxWinners < 1) {
+    return { ok: false, error: "PrizePool maxWinners must be at least 1." };
   }
 
   const chain = buildViemChain(cfg.chainId);
@@ -296,18 +433,24 @@ export async function createPrizePoolCampaign(input: {
       return { ok: false, error: "createPool transaction failed on-chain." };
     }
 
-    // Read the pool address from the event
-    const poolAddress = await publicClient.readContract({
-      address: cfg.factoryAddress as `0x${string}`,
-      abi: prizePoolFactoryAbi,
-      functionName: "getPool",
-      args: [BigInt(input.campaignId)]
+    const poolAddress = await resolvePrizePoolAddress({
+      publicClient,
+      factoryAddress: cfg.factoryAddress,
+      campaignId: input.campaignId,
+      logs: receipt.logs
     });
+
+    if (!poolAddress) {
+      return {
+        ok: false,
+        error: `Factory did not return a usable PrizePool address for campaign ${input.campaignId}. createPool tx=${hash}.`
+      };
+    }
 
     return {
       ok: true,
       campaignId: input.campaignId,
-      poolAddress: poolAddress as string,
+      poolAddress,
       txHash: hash,
       explorerUrl: buildExplorerUrl(cfg.explorerBaseUrl, hash)
     };
@@ -435,6 +578,8 @@ export async function updatePrizePoolMerkleRoot(input: {
 // ============================================================
 
 export async function getPrizePoolInfo(poolAddress: string) {
+  if (!isUsablePrizePoolAddress(poolAddress)) return null;
+
   const cfg = getPoolConfig();
   const chain = buildViemChain(cfg.chainId);
   const publicClient = createPublicClient({ chain, transport: http(cfg.rpcUrl) });
@@ -499,7 +644,7 @@ export async function getPrizePoolPayoutPreflight(input: {
     issues.push("PrizePool signer is not configured.");
     return base;
   }
-  if (!isAddress(input.poolAddress)) {
+  if (!isUsablePrizePoolAddress(input.poolAddress)) {
     issues.push("Invalid PrizePool address.");
     return base;
   }
