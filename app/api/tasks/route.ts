@@ -12,6 +12,7 @@ import {
 } from "../../lib/store";
 import { appendEvidence } from "../../lib/taskEvidence";
 import { buildOfficialCampaignTask } from "../../lib/officialCampaignTasks.js";
+import { getMissingAgentTaskInputs, readFundingPlan } from "../../lib/agentTaskPreview.js";
 import { sortTasksForBoard } from "../../lib/taskBoard.js";
 import { isReadyForTaskNotifications } from "../../lib/operatorAccess";
 import { addNotification, sendEmailNotification } from "../../lib/notificationDelivery";
@@ -66,7 +67,8 @@ function parseRewardDistribution(raw: unknown, fallbackBudget: string): RewardDi
 
 export async function GET() {
   const db = await readDb();
-  const response = NextResponse.json(sortTasksForBoard(db.tasks));
+  const publicTasks = db.tasks.filter((task) => task.campaign?.agentLifecycle?.status !== "draft");
+  const response = NextResponse.json(sortTasksForBoard(publicTasks));
   response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
   response.headers.set("Pragma", "no-cache");
   response.headers.set("Expires", "0");
@@ -85,6 +87,10 @@ export async function POST(request: Request) {
   const targetUrl = String(body.targetUrl || "").trim();
   const proofPhrase = String(body.proofPhrase || "").trim();
   const brief = String(body.brief || "").trim();
+  const campaignLinks = body.campaignLinks && typeof body.campaignLinks === "object" ? body.campaignLinks : undefined;
+  const fundingMode = String(body.fundingMode || "").trim();
+  const environment = String(body.environment || "").trim();
+  const poolAddress = String(body.poolAddress || "").trim() || undefined;
   const agentId = String(body.agentId || "").trim() || undefined;
   const depositAmount = body.depositAmount != null ? String(body.depositAmount).trim() : undefined;
 
@@ -157,12 +163,33 @@ export async function POST(request: Request) {
         requesterHandle: requesterHandle || undefined,
         targetUrl: targetUrl || undefined,
         proofPhrase: proofPhrase || undefined,
-        brief: brief || undefined
+        brief: brief || undefined,
+        campaignLinks
       })
     : null;
 
   const finalBudget = campaignTask?.budget || budget || "TBD";
   const rewardDistribution = parseRewardDistribution(body.rewardDistribution, finalBudget);
+  const missingInputs = getMissingAgentTaskInputs(body, rewardDistribution);
+  if (missingInputs.length > 0) {
+    return NextResponse.json(
+      {
+        error: "Missing required campaign inputs. Ask the requester agent/project for exact links before creating this task.",
+        missingInputs
+      },
+      { status: 400 }
+    );
+  }
+  const fundingPlan = readFundingPlan(body, rewardDistribution);
+  const campaign = campaignTask?.campaign
+    ? {
+        ...campaignTask.campaign,
+        ...(environment ? { environment } : {}),
+        ...(fundingMode ? { fundingMode } : {}),
+        ...(fundingPlan.payoutDisabled ? { payoutDisabled: true } : {}),
+        ...(environment === "test" ? { isTest: true } : {})
+      }
+    : undefined;
 
   const task: Task = {
     id: crypto.randomUUID(),
@@ -170,9 +197,10 @@ export async function POST(request: Request) {
     budget: finalBudget,
     deadline: campaignTask?.deadline || deadline || "TBD",
     acceptance: campaignTask?.acceptance || acceptance || "Provide evidence/logs",
-    campaign: campaignTask?.campaign as Task["campaign"],
+    campaign: campaign as Task["campaign"],
     agentId,
     rewardDistribution,
+    poolAddress,
     status: "created" as const,
     taskState: "open" as const,
     createdAt: now,

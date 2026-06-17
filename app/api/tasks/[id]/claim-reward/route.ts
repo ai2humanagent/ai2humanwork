@@ -89,6 +89,10 @@ function isClaimedPaymentForTask(payment: PaymentEntry, task: Task): boolean {
   return payment.method === "prize_pool_claim" && Boolean(payment.txHash);
 }
 
+function isTestRewardTask(task: Task): boolean {
+  return Boolean(task.campaign?.isTest || task.campaign?.environment === "test" || task.campaign?.payoutDisabled);
+}
+
 /** POST /api/tasks/[id]/claim-reward
  *  Body: { wallet, xHandle, signature?, captchaToken?, captchaWord? }
  *
@@ -206,6 +210,12 @@ export async function POST(
   const task = db.tasks.find((t) => t.id === taskId);
   if (!task) {
     return NextResponse.json({ error: "Task not found" }, { status: 404 });
+  }
+  if (isTestRewardTask(task)) {
+    return NextResponse.json(
+      { error: "Reward payout is disabled for this test activity." },
+      { status: 400 }
+    );
   }
   const access = await getOperatorAccessForWallet(db, wallet);
   if (!access.ok) {

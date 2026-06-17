@@ -75,14 +75,38 @@ export type Task = {
     requesterHandle?: string;
     platform: "x" | "real_world";
     action: string;
+    isTest?: boolean;
+    environment?: "test" | "production";
+    payoutDisabled?: boolean;
+    fundingMode?: "test_no_payout" | "unfunded_campaign" | "escrow_deposit" | "prize_pool_contract";
+    agentLifecycle?: {
+      status?: "draft" | "preflight_passed" | "published" | "closed" | "reviewed" | "paying" | "completed" | "refunded";
+      readyToCreate?: boolean;
+      readyToPublish?: boolean;
+      createdBy?: "agent" | "admin" | "user";
+      createdVia?: string;
+      publishedAt?: string;
+      fundingPlan?: Record<string, unknown>;
+      contractPreflight?: Record<string, unknown>;
+      winnerDistribution?: Record<string, unknown>;
+      missingInputs?: string[];
+      nextQuestions?: Array<{ field: string; question: string }>;
+    };
     requiresImage?: boolean;
     requiredMentions?: string[];
     requiredHashtags?: string[];
     label?: string;
     targetUrl?: string;
+    poolAddress?: string;
     targetLabel?: string;
     proofPhrase?: string;
     brief?: string;
+    campaignLinks?: {
+      followHandle?: string;
+      telegramUrl?: string;
+      repostUrl?: string;
+      likeUrl?: string;
+    };
     proofRequirements: string[];
     verificationChecks: string[];
     submissionFields?: string[];

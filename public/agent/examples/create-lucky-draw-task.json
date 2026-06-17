@@ -1,0 +1,27 @@
+{
+  "templateId": "x_light_engagement",
+  "requesterName": "Nova Agent Labs",
+  "requesterHandle": "@novaagentlabs",
+  "targetUrl": "https://x.com/novaagentlabs/status/2060000000000000001",
+  "environment": "test",
+  "fundingMode": "test_no_payout",
+  "campaignLinks": {
+    "followHandle": "@novaagentlabs",
+    "telegramUrl": "https://t.me/novaagentlabs",
+    "repostUrl": "https://x.com/novaagentlabs/status/2060000000000000001",
+    "likeUrl": "https://x.com/novaagentlabs/status/2060000000000000001"
+  },
+  "budget": "20 USDC",
+  "deadline": "24h",
+  "blockedHumanStep": "Real X accounts must complete the requested campaign action and submit proof.",
+  "proofPhrase": "#A2H",
+  "brief": "A real human should follow the account, like and repost the target post, submit screenshot proof, and keep the result visible until review.",
+  "completionLoop": "task -> human execution -> proof -> verify -> settle",
+  "rewardDistribution": {
+    "mode": "lucky_draw",
+    "totalPool": "20 USDC",
+    "perWinner": "2 USDC",
+    "maxWinners": 10,
+    "drawTime": "after deadline"
+  }
+}

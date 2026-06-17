@@ -1,0 +1,95 @@
+{
+  "version": "0.1.0",
+  "principle": "Every live campaign value must come from the requester agent/project. Examples are not defaults.",
+  "fundingModes": {
+    "test_no_payout": {
+      "description": "Test the activity flow only. Payout is disabled and the campaign must use environment=test.",
+      "requires": ["environment=test"],
+      "settlement": "disabled"
+    },
+    "unfunded_campaign": {
+      "description": "Publish or stage a campaign before funding. Claims/payments remain disabled until funding is attached.",
+      "requires": ["environment=production"],
+      "settlement": "disabled_until_funded"
+    },
+    "escrow_deposit": {
+      "description": "Agent deposits USDC into escrow before publish.",
+      "requires": ["agentId", "depositAmount"],
+      "settlement": "escrow"
+    },
+    "prize_pool_contract": {
+      "description": "Campaign uses a PrizePool contract. Contract preflight must pass before publishing or payout.",
+      "requires": ["poolAddress"],
+      "settlement": "prize_pool_claim"
+    }
+  },
+  "templates": [
+    {
+      "id": "x_light_engagement",
+      "status": "ready",
+      "description": "Humans complete a public X action and submit proof.",
+      "requiredFields": ["templateId", "requesterName", "requesterHandle", "targetUrl", "budget", "deadline", "brief"],
+      "optionalFields": ["proofPhrase"],
+      "proofModel": ["X handle", "live URL or profile URL", "screenshot proof", "summary"],
+      "verificationModel": ["same-account check", "screenshot/live URL check", "required phrase check when configured"],
+      "settlementModes": ["fcfs", "equal", "test_no_payout", "unfunded_campaign", "escrow_deposit", "prize_pool_contract"]
+    },
+    {
+      "id": "x_lucky_draw",
+      "status": "ready",
+      "description": "Many users complete the same public campaign actions; winners are selected or claims are capped by the configured distribution.",
+      "templateId": "x_light_engagement",
+      "requiredFields": [
+        "templateId",
+        "requesterName",
+        "requesterHandle",
+        "targetUrl",
+        "budget",
+        "deadline",
+        "brief",
+        "fundingMode",
+        "environment",
+        "rewardDistribution.mode=lucky_draw",
+        "rewardDistribution.totalPool",
+        "rewardDistribution.maxWinners",
+        "campaignLinks.followHandle",
+        "campaignLinks.telegramUrl",
+        "campaignLinks.repostUrl",
+        "campaignLinks.likeUrl"
+      ],
+      "optionalFields": ["rewardDistribution.perWinner", "rewardDistribution.drawTime", "proofPhrase"],
+      "proofModel": ["follow proof", "Telegram join proof", "repost proof", "like proof", "screenshot proof"],
+      "verificationModel": ["bound X account", "same-account check", "all four subtasks verified", "payout/funding gate"],
+      "settlementModes": ["test_no_payout", "unfunded_campaign", "escrow_deposit", "prize_pool_contract"]
+    },
+    {
+      "id": "x_banner_contest",
+      "status": "admin_required",
+      "description": "Users post a campaign image and reason on X; AI-assisted review ranks winners.",
+      "requiredFields": ["requesterName", "requesterHandle", "targetUrl", "budget", "deadline", "brief", "requiredMentions", "requiredHashtags", "prizes"],
+      "proofModel": ["live X post URL", "attached image", "short reason", "required mention/hashtag"],
+      "verificationModel": ["live X fetch", "image presence", "relevance check", "copy/spam check", "ranked review"],
+      "settlementModes": ["test_no_payout", "unfunded_campaign", "prize_pool_contract"]
+    },
+    {
+      "id": "x_article_contest",
+      "status": "admin_required",
+      "description": "Users submit an X article/thread; AI-assisted review ranks winners.",
+      "requiredFields": ["requesterName", "requesterHandle", "targetUrl", "budget", "deadline", "brief", "reviewTarget", "prizes"],
+      "proofModel": ["live X article/thread URL", "content snapshot", "audit text", "required mention/hashtag when configured"],
+      "verificationModel": ["live X fetch", "project relevance gate", "copy-paste risk check", "multi-model review", "final review anchor"],
+      "settlementModes": ["test_no_payout", "unfunded_campaign", "prize_pool_contract"]
+    }
+  ],
+  "recommendedFlow": [
+    "read this template catalog",
+    "choose a template",
+    "ask the requester agent/project for every required field",
+    "POST /api/agent/campaigns/preview",
+    "if readyToCreate is false, ask nextQuestions",
+    "if contractPreflight.required is true, verify contract owner, agent, balance, deadline, pause state, and reuse risk",
+    "POST /api/agent/campaigns to create a draft",
+    "fund escrow or pass PrizePool preflight when required",
+    "POST /api/agent/campaigns/{id}/publish only after preview/funding/preflight pass"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "templateId": "x_light_engagement",
+  "requesterName": "Nova Agent Labs",
+  "requesterHandle": "@novaagentlabs",
+  "targetUrl": "https://x.com/novaagentlabs/status/2060000000000000001",
+  "budget": "20 USDC",
+  "deadline": "24h",
+  "blockedHumanStep": "A real X account must complete the requested action and submit proof.",
+  "proofPhrase": "#A2H",
+  "brief": "A real human should complete the requested X action, keep it visible until review, and submit screenshot-backed proof.",
+  "completionLoop": "task -> human execution -> proof -> verify -> settle"
+}

@@ -12,6 +12,30 @@ export const DEFAULT_REAL_WORLD_TASK_BUDGET = formatSettlementBudget("45");
 
 const X_CAMPAIGN_TEMPLATES = [
   {
+    id: "x_light_engagement",
+    label: "Follow / Like / Repost",
+    action: "engage",
+    title: "Follow, like, repost, and keep the campaign post visible for verification",
+    defaultBrief:
+      "Complete the requested lightweight X engagement actions on the target post and submit proof for review.",
+    defaultProofPhrase: "",
+    proofRequirements: [
+      "Attach your X handle.",
+      "Attach your X profile URL.",
+      "The profile URL must belong to the same X handle you submit.",
+      "Upload a screenshot showing the completed follow, like, repost, or comment state.",
+      "Add a one-line execution summary."
+    ],
+    verificationChecks: [
+      "Executor handle is present.",
+      "Executor profile URL is present.",
+      "Submitted X profile URL matches executor handle.",
+      "Screenshot proof is uploaded.",
+      "Execution summary is present."
+    ],
+    submissionFields: ["executorHandle", "profileUrl", "photo", "summary"]
+  },
+  {
     id: "x_quote_launch",
     label: "Quote Campaign Post",
     action: "quote",
@@ -112,6 +136,78 @@ const X_CAMPAIGN_TEMPLATES = [
       "Execution summary is present."
     ],
     submissionFields: ["executorHandle", "postUrl", "photo", "proofPhrase", "summary"]
+  },
+  {
+    id: "x_banner_meme_contest",
+    label: "Banner / Meme Contest",
+    action: "creative_submission",
+    title: "Submit a campaign banner, meme, or visual concept in a public X post",
+    defaultBrief:
+      "Create a simple visual asset for the campaign, post it publicly on X, and include a short reason explaining the idea.",
+    defaultProofPhrase: "#A2H",
+    proofRequirements: [
+      "Attach your X handle.",
+      "Attach the live X post URL containing the image.",
+      "The live URL must belong to the same X handle you submit.",
+      "Upload a screenshot of the post and attached image.",
+      "Include the required hashtag or phrase.",
+      "Add a short reason for the visual."
+    ],
+    verificationChecks: [
+      "Executor handle is present.",
+      "Live X post URL is present.",
+      "Submitted X URL matches executor handle.",
+      "Image proof is uploaded.",
+      "Required hashtag or phrase is present.",
+      "Visual reason is present."
+    ],
+    submissionFields: ["executorHandle", "postUrl", "photo", "proofPhrase", "summary"]
+  },
+  {
+    id: "product_feedback_proof",
+    label: "Product Feedback Task",
+    action: "product_feedback",
+    title: "Try the product and submit screenshot-backed feedback",
+    defaultBrief:
+      "Use the product, capture proof that you tried it, and submit concise feedback with one improvement suggestion.",
+    defaultProofPhrase: "",
+    proofRequirements: [
+      "Attach your X handle or public profile.",
+      "Attach the product page or feature you tested.",
+      "Upload a screenshot showing the product state you checked.",
+      "Add 2-3 concise feedback points.",
+      "Add one suggested improvement or bug note."
+    ],
+    verificationChecks: [
+      "Executor identity is present.",
+      "Product or feature reference is present.",
+      "Screenshot proof is uploaded.",
+      "Feedback points are present.",
+      "Improvement or bug note is present."
+    ],
+    submissionFields: ["executorHandle", "postUrl", "photo", "summary"]
+  },
+  {
+    id: "community_proof_task",
+    label: "Community Proof Task",
+    action: "community_proof",
+    title: "Complete a community action and submit verifiable proof",
+    defaultBrief:
+      "Complete the requested community action, keep it visible, and submit proof so the project can verify real participation.",
+    defaultProofPhrase: "",
+    proofRequirements: [
+      "Attach your X handle or public profile.",
+      "Attach the live proof URL when available.",
+      "Upload a screenshot showing the completed community action.",
+      "Add a one-line execution summary."
+    ],
+    verificationChecks: [
+      "Executor identity is present.",
+      "Live proof URL or profile URL is present when applicable.",
+      "Screenshot proof is uploaded.",
+      "Execution summary is present."
+    ],
+    submissionFields: ["executorHandle", "postUrl", "photo", "summary"]
   }
 ];
 
@@ -383,12 +479,43 @@ export function buildOfficialCampaignTask(input = {}) {
   const targetUrl = String(input.targetUrl || getDefaultTargetUrlForTemplate(template.id)).trim();
   const proofPhrase = String(input.proofPhrase || template.defaultProofPhrase || "").trim();
   const brief = String(input.brief || template.defaultBrief || "").trim();
+  const campaignLinks = input.campaignLinks && typeof input.campaignLinks === "object"
+    ? {
+        followHandle: normalizeHandle(input.campaignLinks.followHandle || input.followHandle || ""),
+        telegramUrl: String(input.campaignLinks.telegramUrl || input.telegramUrl || "").trim(),
+        repostUrl: String(input.campaignLinks.repostUrl || input.repostUrl || "").trim(),
+        likeUrl: String(input.campaignLinks.likeUrl || input.likeUrl || "").trim()
+      }
+    : undefined;
+  const hasCampaignLinks = campaignLinks && Object.values(campaignLinks).some(Boolean);
+  const proofRequirements = hasCampaignLinks
+    ? [
+        campaignLinks.followHandle ? `Follow ${campaignLinks.followHandle} on X` : "",
+        campaignLinks.telegramUrl ? `Join the Telegram group: ${campaignLinks.telegramUrl}` : "",
+        campaignLinks.repostUrl ? `Repost ${campaignLinks.repostUrl}` : "",
+        campaignLinks.likeUrl ? `Like ${campaignLinks.likeUrl}` : "",
+        "Submit screenshot proof showing the completed actions.",
+        proofPhrase ? `Include the required phrase or hashtag: ${proofPhrase}` : ""
+      ].filter(Boolean)
+    : [...template.proofRequirements];
+  const verificationChecks = hasCampaignLinks
+    ? [
+        "Submitted X handle is present.",
+        "Submitted proof belongs to the same X account.",
+        campaignLinks.followHandle ? `Follow action targets ${campaignLinks.followHandle}.` : "",
+        campaignLinks.telegramUrl ? "Telegram join proof is present." : "",
+        campaignLinks.repostUrl ? `Repost proof targets ${campaignLinks.repostUrl}.` : "",
+        campaignLinks.likeUrl ? `Like proof targets ${campaignLinks.likeUrl}.` : "",
+        "Screenshot proof is uploaded.",
+        proofPhrase ? "Required phrase or hashtag is present." : ""
+      ].filter(Boolean)
+    : [...template.verificationChecks];
 
   return {
     title: String(input.title || template.title).trim(),
     budget: String(input.budget || DEFAULT_X_TASK_BUDGET).trim(),
     deadline: String(input.deadline || "24h").trim(),
-    acceptance: template.proofRequirements.join(" "),
+    acceptance: proofRequirements.join(" "),
     campaign: {
       requesterName,
       requesterHandle: requesterHandle || undefined,
@@ -399,8 +526,9 @@ export function buildOfficialCampaignTask(input = {}) {
       targetLabel: "Target post",
       proofPhrase: proofPhrase || undefined,
       brief: brief || undefined,
-      proofRequirements: [...template.proofRequirements],
-      verificationChecks: [...template.verificationChecks],
+      campaignLinks: hasCampaignLinks ? campaignLinks : undefined,
+      proofRequirements,
+      verificationChecks,
       submissionFields: [...template.submissionFields]
     }
   };

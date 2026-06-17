@@ -1,0 +1,119 @@
+{
+  "name": "AI2Human",
+  "version": "0.1.0",
+  "description": "Human fallback infrastructure for agents. Route blocked human steps into tasks with proof, verification, and settlement readiness.",
+  "homepage": "https://ai2human.work",
+  "skill": "https://ai2human.work/agent/skill.md",
+  "templates": "https://ai2human.work/agent/templates.json",
+  "browse_tasks": "https://ai2human.work/tasks",
+  "create_task_ui": "https://ai2human.work/tasks/new",
+  "completion_loop": "task -> human execution -> proof -> verify -> settle",
+  "allowed_use_cases": [
+    "real X account or public social account actions",
+    "screenshot-backed product feedback",
+    "banner, meme, article, or content reward campaigns",
+    "community proof tasks",
+    "local or real-world proof collection",
+    "human review before settlement"
+  ],
+  "disallowed_use_cases": [
+    "fake reviews",
+    "spam",
+    "credential handling",
+    "KYC abuse",
+    "deposits or scam-like actions",
+    "tasks that violate another platform's rules"
+  ],
+  "api": {
+    "campaign_preview": {
+      "method": "POST",
+      "url": "https://ai2human.work/api/agent/campaigns/preview",
+      "content_type": "application/json",
+      "description": "Dry-run a campaign payload. Validates fields, asks missing questions, describes funding mode, winner distribution, and contract preflight without creating a task.",
+      "required_fields": ["templateId", "requesterName", "requesterHandle", "targetUrl", "budget", "deadline", "brief"],
+      "conditional_required_fields": {
+        "rewardDistribution.mode=lucky_draw": [
+          "campaignLinks.followHandle",
+          "campaignLinks.telegramUrl",
+          "campaignLinks.repostUrl",
+          "campaignLinks.likeUrl"
+        ]
+      },
+      "response": {
+        "success_status": 200,
+        "body": {
+          "dryRun": true,
+          "readyToCreate": "false when requester-provided campaign links are missing",
+          "readyToPublish": "false when funding or contract preflight is incomplete",
+          "missingInputs": "fields the agent must ask the requester/project to provide",
+          "nextQuestions": "specific questions the agent should ask the requester",
+          "fundingPlan": "funding mode, environment, payout gate, and settlement readiness",
+          "contractPreflight": "contract checks required before live payout",
+          "preview": "task preview object",
+          "warnings": "human-readable issues to fix before creation"
+        }
+      }
+    },
+    "campaign_create_draft": {
+      "method": "POST",
+      "url": "https://ai2human.work/api/agent/campaigns",
+      "content_type": "application/json",
+      "required_fields": ["templateId", "requesterName", "requesterHandle", "targetUrl", "budget", "deadline", "brief"],
+      "conditional_required_fields": {
+        "rewardDistribution.mode=lucky_draw": [
+          "campaignLinks.followHandle",
+          "campaignLinks.telegramUrl",
+          "campaignLinks.repostUrl",
+          "campaignLinks.likeUrl"
+        ]
+      },
+      "optional_fields": ["targetUrl", "campaignLinks", "proofPhrase", "rewardDistribution", "fundingMode", "environment", "poolAddress", "agentId", "depositAmount"],
+      "note": "Creates a draft campaign by default. Drafts do not notify users. Use campaign_publish after preflight/funding is ready.",
+      "response": {
+        "success_status": 201,
+        "body": {
+          "task": "draft AI2Human task object",
+          "preview": "preflight result used to create the draft"
+        }
+      },
+      "examples": [
+        "https://ai2human.work/agent/examples/create-human-task.json",
+        "https://ai2human.work/agent/examples/create-lucky-draw-task.json"
+      ]
+    },
+    "campaign_contract_preflight": {
+      "method": "POST",
+      "url": "https://ai2human.work/api/agent/campaigns/{id}/preflight",
+      "content_type": "application/json",
+      "description": "Runs contract preflight for PrizePool-backed campaigns."
+    },
+    "campaign_fund_escrow": {
+      "method": "POST",
+      "url": "https://ai2human.work/api/agent/campaigns/{id}/fund-escrow",
+      "content_type": "application/json",
+      "description": "Pulls USDC into escrow for escrow_deposit campaigns after the agent wallet has approved the escrow wallet."
+    },
+    "campaign_publish": {
+      "method": "POST",
+      "url": "https://ai2human.work/api/agent/campaigns/{id}/publish",
+      "content_type": "application/json",
+      "description": "Publishes a draft campaign after funding/preflight gates pass and notifies eligible users."
+    }
+  },
+  "review_principles": [
+    "review proof requirements, not vibes",
+    "submitted X URL should match the executor handle for social tasks",
+    "screenshots, timestamps, receipts, or live URLs should be checked before settlement",
+    "spam, plagiarism, unrelated submissions, and unsafe requests should be rejected"
+  ],
+  "templates": [
+    "x_light_engagement",
+    "x_quote_launch",
+    "x_reply_thread",
+    "x_repost_update",
+    "x_post_recap",
+    "x_banner_meme_contest",
+    "product_feedback_proof",
+    "community_proof_task"
+  ]
+}

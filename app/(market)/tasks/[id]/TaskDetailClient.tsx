@@ -50,14 +50,38 @@ type Task = {
     requesterHandle?: string;
     platform: "x" | "real_world";
     action: string;
+    isTest?: boolean;
+    environment?: "test" | "production";
+    payoutDisabled?: boolean;
+    fundingMode?: "test_no_payout" | "unfunded_campaign" | "escrow_deposit" | "prize_pool_contract";
+    agentLifecycle?: {
+      status?: "draft" | "preflight_passed" | "published" | "closed" | "reviewed" | "paying" | "completed" | "refunded";
+      readyToCreate?: boolean;
+      readyToPublish?: boolean;
+      createdBy?: "agent" | "admin" | "user";
+      createdVia?: string;
+      publishedAt?: string;
+      fundingPlan?: Record<string, unknown>;
+      contractPreflight?: Record<string, unknown>;
+      winnerDistribution?: Record<string, unknown>;
+      missingInputs?: string[];
+      nextQuestions?: Array<{ field: string; question: string }>;
+    };
     requiresImage?: boolean;
     requiredMentions?: string[];
     requiredHashtags?: string[];
     label?: string;
     targetUrl?: string;
+    poolAddress?: string;
     targetLabel?: string;
     proofPhrase?: string;
     brief?: string;
+    campaignLinks?: {
+      followHandle?: string;
+      telegramUrl?: string;
+      repostUrl?: string;
+      likeUrl?: string;
+    };
     proofRequirements: string[];
     verificationChecks?: string[];
     submissionFields?: string[];
@@ -238,8 +262,13 @@ function actionLabel(task: Task) {
   return task.campaign.action.replace(/_/g, " ");
 }
 
+function isTestRewardTask(task: Task) {
+  return Boolean(task.campaign?.isTest || task.campaign?.environment === "test" || task.campaign?.payoutDisabled);
+}
+
 function canClaim(task: Task, auth: AuthPayload | null) {
   if (task.rewardDistribution?.mode === "ranked_article_contest" || task.taskType === "x_article" || task.campaign?.action === "x_article_contest") return false;
+  if (isTestRewardTask(task)) return false;
   if (!["created", "ai_failed"].includes(task.status)) return false;
   if (!auth?.human?.id || !auth?.user?.walletAddress) return false;
   if (!hasUsableEmail(auth.user.contactEmail) && !hasUsableEmail(auth.user.email)) return false;
@@ -494,6 +523,10 @@ export default function TaskDetailClient({
     const walletAddress = connectedWallet;
     if (!walletAddress) {
       login();
+      return;
+    }
+    if (!intentUrl) {
+      setError("This task is missing its requester-provided action link. Ask the requester to update the campaign links.");
       return;
     }
     const popup = intentUrl && typeof window !== "undefined"
@@ -1230,16 +1263,14 @@ export default function TaskDetailClient({
     }
 
     function buildTwitterIntentUrl(taskType: string, campaign?: Task["campaign"]): string {
-      const DEFAULT_HANDLE = "ai2humanwork";
-      const DEFAULT_TWEET_URL = "https://x.com/ai2humanwork/status/2057669148281651651";
-
-      const handle = campaign?.requesterHandle?.replace("@", "") || DEFAULT_HANDLE;
+      const handle = campaign?.campaignLinks?.followHandle?.replace("@", "") || campaign?.requesterHandle?.replace("@", "") || "";
       if (taskType === "twitter_follow") {
+        if (!handle) return "";
         return `https://x.com/intent/follow?screen_name=${handle}`;
       }
 
       // Extract tweet ID from targetUrl (e.g. https://x.com/ai2humanwork/status/123456789)
-      const targetUrl = campaign?.targetUrl || DEFAULT_TWEET_URL;
+      const targetUrl = campaign?.targetUrl || "";
       const tweetIdMatch = targetUrl.match(/status\/(\d+)/);
       const tweetId = tweetIdMatch ? tweetIdMatch[1] : "";
 
@@ -1291,14 +1322,11 @@ export default function TaskDetailClient({
     }
 
     const telegramUrl =
-      extractRequirementUrl(task.campaign, ["Join"]) || "https://t.me/+G3U4loFH5H0zMmU1";
+      task.campaign?.campaignLinks?.telegramUrl || extractRequirementUrl(task.campaign, ["Join"]);
     const repostUrl =
-      extractRequirementUrl(task.campaign, ["Repost", "Retweet"]) ||
-      "https://x.com/ai2humanwork/status/2057437770902372396";
+      task.campaign?.campaignLinks?.repostUrl || extractRequirementUrl(task.campaign, ["Repost", "Retweet"]);
     const likeUrl =
-      extractRequirementUrl(task.campaign, ["Like"]) ||
-      task.campaign?.targetUrl ||
-      "https://x.com/ai2humanwork/status/2058166798005248452";
+      task.campaign?.campaignLinks?.likeUrl || extractRequirementUrl(task.campaign, ["Like"]) || task.campaign?.targetUrl || "";
 
     if (isArticleContest) {
       const articlePrizes = dist?.prizes?.length
@@ -1695,7 +1723,7 @@ export default function TaskDetailClient({
                 {/* Task List */}
                 <div className={styles.qnTaskList}>
                   {[
-                    { key: "0", icon: followSvg, label: task.campaign?.label || getTaskDisplayLabel("twitter_follow", task.campaign?.requesterHandle), actionLabel: getTaskActionLabel("twitter_follow"), intentUrl: "https://x.com/intent/follow?screen_name=ai2humanwork" },
+                    { key: "0", icon: followSvg, label: task.campaign?.label || getTaskDisplayLabel("twitter_follow", task.campaign?.requesterHandle), actionLabel: getTaskActionLabel("twitter_follow"), intentUrl: buildTwitterIntentUrl("twitter_follow", task.campaign) },
                     { key: "1", icon: joinSvg, label: "Join Telegram Group", actionLabel: "Join", intentUrl: telegramUrl },
                     { key: "2", icon: retweetSvg, label: "Repost announcement tweet", actionLabel: "Repost", intentUrl: buildTweetIntentFromUrl("retweet", repostUrl) },
                     { key: "3", icon: likeSvg, label: "Like announcement tweet", actionLabel: "Like", intentUrl: buildTweetIntentFromUrl("like", likeUrl) },
@@ -2005,6 +2033,15 @@ export default function TaskDetailClient({
                     <div className={styles.btn3dInner}>
                       <button type="button" className={styles.btn3dFace} disabled>
                         Ended
+                      </button>
+                      <span className={styles.btn3dShadow} />
+                    </div>
+                  </div>
+                ) : isTestRewardTask(task) ? (
+                  <div className={`${styles.qnClaimWrap} ${styles.btn3d} ${styles.btn3dDisabled}`}>
+                    <div className={styles.btn3dInner}>
+                      <button type="button" className={styles.btn3dFace} disabled>
+                        Test payout disabled
                       </button>
                       <span className={styles.btn3dShadow} />
                     </div>

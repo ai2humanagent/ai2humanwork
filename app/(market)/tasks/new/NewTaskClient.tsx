@@ -1,18 +1,14 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
+import type { ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import styles from "../../market.module.css";
 import {
-  DEFAULT_X_TASK_BUDGET,
-  getDefaultTargetUrlForTemplate,
   getOfficialCampaignTemplates
 } from "../../../lib/officialCampaignTasks.js";
-import {
-  DEFAULT_SETTLEMENT_TOKEN_SYMBOL,
-  stripBudgetAmount
-} from "../../../lib/assetLabels.js";
+import { DEFAULT_SETTLEMENT_TOKEN_SYMBOL } from "../../../lib/assetLabels.js";
 
 const TEMPLATES = getOfficialCampaignTemplates();
 
@@ -42,7 +38,7 @@ function CampaignFields(props: FieldsProps) {
   return (
     <div className={`${styles.filters} ${styles.filtersNewTask}`}>
       <div className={styles.field}>
-        <label>Campaign Template</label>
+        <label>Task Template</label>
         <select
           className={styles.select}
           value={props.templateId}
@@ -64,34 +60,35 @@ function CampaignFields(props: FieldsProps) {
 
       <div className={styles.row2}>
         <div className={styles.field}>
-          <label>Official Requester</label>
+          <label>Project / Requester</label>
           <input
             className={styles.input}
             value={props.requesterName}
             onChange={(event) => props.setRequesterName(event.target.value)}
-            placeholder="AI2Human Official"
+            placeholder="Your Project"
             required
           />
         </div>
         <div className={styles.field}>
-          <label>Official X Handle</label>
+          <label>Project X Handle</label>
           <input
             className={styles.input}
             value={props.requesterHandle}
             onChange={(event) => props.setRequesterHandle(event.target.value)}
-            placeholder="@ai2humanwork"
+            placeholder="@yourproject"
             required
           />
         </div>
       </div>
 
       <div className={styles.field}>
-        <label>Target Post URL</label>
+        <label>Target URL or Post</label>
         <input
           className={styles.input}
           value={props.targetUrl}
           onChange={(event) => props.setTargetUrl(event.target.value)}
           placeholder="https://x.com/yourbrand/status/..."
+          required
         />
       </div>
 
@@ -127,10 +124,10 @@ function CampaignFields(props: FieldsProps) {
       </div>
 
       <div className={styles.field}>
-        <label>Campaign Brief</label>
+        <label>Task Brief</label>
         <textarea
           className={styles.textarea}
-          placeholder="Explain what the executor should do and what angle or CTA should appear in the post..."
+          placeholder="Explain the human-needed step, required proof, and what completion should look like..."
           value={props.brief}
           onChange={(event) => props.setBrief(event.target.value)}
           required
@@ -158,45 +155,187 @@ function CampaignFields(props: FieldsProps) {
   );
 }
 
-function NewTaskStatic() {
-  const [templateId, setTemplateId] = useState(TEMPLATES[0]?.id || "x_quote_launch");
-  const [requesterName, setRequesterName] = useState("AI2Human Official");
-  const [requesterHandle, setRequesterHandle] = useState("@ai2humanwork");
-  const [targetUrl, setTargetUrl] = useState(getDefaultTargetUrlForTemplate(TEMPLATES[0]?.id));
-  const [reward, setReward] = useState(stripBudgetAmount(DEFAULT_X_TASK_BUDGET));
-  const [duration, setDuration] = useState("24");
-  const [proofPhrase, setProofPhrase] = useState("");
-  const [brief, setBrief] = useState("Amplify the official post and keep the result live for review.");
+function buildHandoffPacket({
+  templateId,
+  requesterName,
+  requesterHandle,
+  targetUrl,
+  reward,
+  duration,
+  proofPhrase,
+  brief
+}: {
+  templateId: string;
+  requesterName: string;
+  requesterHandle: string;
+  targetUrl: string;
+  reward: string;
+  duration: string;
+  proofPhrase: string;
+  brief: string;
+}) {
+  const selectedTemplate = TEMPLATES.find((template) => template.id === templateId) || TEMPLATES[0];
+  return {
+    routeTo: "AI2Human",
+    intent: "create_human_fallback_task",
+    templateId,
+    requesterName,
+    requesterHandle,
+    targetUrl,
+    budget: reward ? `${reward} ${DEFAULT_SETTLEMENT_TOKEN_SYMBOL}` : "",
+    deadline: duration ? `${duration}h` : "",
+    blockedHumanStep: selectedTemplate?.title || "Human execution step",
+    proofPhrase: proofPhrase || selectedTemplate?.defaultProofPhrase || "",
+    brief,
+    proofRequirements: selectedTemplate?.proofRequirements || [],
+    verificationChecks: selectedTemplate?.verificationChecks || [],
+    completionLoop: "task -> human execution -> proof -> verify -> settle"
+  };
+}
 
-  useEffect(() => {
-    setTargetUrl(getDefaultTargetUrlForTemplate(templateId));
-  }, [templateId]);
+function AgentHandoffPanel({
+  templateId,
+  requesterName,
+  requesterHandle,
+  targetUrl,
+  reward,
+  duration,
+  proofPhrase,
+  brief
+}: {
+  templateId: string;
+  requesterName: string;
+  requesterHandle: string;
+  targetUrl: string;
+  reward: string;
+  duration: string;
+  proofPhrase: string;
+  brief: string;
+}) {
+  const [copied, setCopied] = useState(false);
+  const packet = useMemo(
+    () =>
+      buildHandoffPacket({
+        templateId,
+        requesterName,
+        requesterHandle,
+        targetUrl,
+        reward,
+        duration,
+        proofPhrase,
+        brief
+      }),
+    [templateId, requesterName, requesterHandle, targetUrl, reward, duration, proofPhrase, brief]
+  );
+  const packetText = useMemo(() => JSON.stringify(packet, null, 2), [packet]);
+
+  async function copyPacket() {
+    await navigator.clipboard.writeText(packetText);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1600);
+  }
 
   return (
-    <form className={styles.formCard} onSubmit={(event) => event.preventDefault()}>
-      <h2 className={styles.formTitle}>Create Official Campaign Task</h2>
-      <CampaignFields
+    <aside className={styles.handoffPanel}>
+      <div className={styles.handoffHeader}>
+        <span>Agent handoff packet</span>
+        <button type="button" onClick={copyPacket}>
+          {copied ? "Copied" : "Copy JSON"}
+        </button>
+      </div>
+      <p>
+        This is the task packet an agent or project team can hand to AI2Human when a workflow
+        reaches a human gate.
+      </p>
+      <pre>{packetText}</pre>
+    </aside>
+  );
+}
+
+function CreateTaskShell({
+  children,
+  templateId,
+  requesterName,
+  requesterHandle,
+  targetUrl,
+  reward,
+  duration,
+  proofPhrase,
+  brief
+}: {
+  children: ReactNode;
+  templateId: string;
+  requesterName: string;
+  requesterHandle: string;
+  targetUrl: string;
+  reward: string;
+  duration: string;
+  proofPhrase: string;
+  brief: string;
+}) {
+  return (
+    <div className={styles.createGrid}>
+      {children}
+      <AgentHandoffPanel
         templateId={templateId}
-        setTemplateId={setTemplateId}
         requesterName={requesterName}
-        setRequesterName={setRequesterName}
         requesterHandle={requesterHandle}
-        setRequesterHandle={setRequesterHandle}
         targetUrl={targetUrl}
-        setTargetUrl={setTargetUrl}
         reward={reward}
-        setReward={setReward}
         duration={duration}
-        setDuration={setDuration}
         proofPhrase={proofPhrase}
-        setProofPhrase={setProofPhrase}
         brief={brief}
-        setBrief={setBrief}
       />
-      <button type="button" className={`${styles.submitButton} ${styles.submitButtonDisabled}`} disabled>
-        Connect Wallet to Create Task
-      </button>
-    </form>
+    </div>
+  );
+}
+
+function NewTaskStatic() {
+  const [templateId, setTemplateId] = useState(TEMPLATES[0]?.id || "x_quote_launch");
+  const [requesterName, setRequesterName] = useState("");
+  const [requesterHandle, setRequesterHandle] = useState("");
+  const [targetUrl, setTargetUrl] = useState("");
+  const [reward, setReward] = useState("");
+  const [duration, setDuration] = useState("");
+  const [proofPhrase, setProofPhrase] = useState("");
+  const [brief, setBrief] = useState("");
+
+  return (
+    <CreateTaskShell
+      templateId={templateId}
+      requesterName={requesterName}
+      requesterHandle={requesterHandle}
+      targetUrl={targetUrl}
+      reward={reward}
+      duration={duration}
+      proofPhrase={proofPhrase}
+      brief={brief}
+    >
+      <form className={styles.formCard} onSubmit={(event) => event.preventDefault()}>
+        <h2 className={styles.formTitle}>Create Human Task Campaign</h2>
+        <CampaignFields
+          templateId={templateId}
+          setTemplateId={setTemplateId}
+          requesterName={requesterName}
+          setRequesterName={setRequesterName}
+          requesterHandle={requesterHandle}
+          setRequesterHandle={setRequesterHandle}
+          targetUrl={targetUrl}
+          setTargetUrl={setTargetUrl}
+          reward={reward}
+          setReward={setReward}
+          duration={duration}
+          setDuration={setDuration}
+          proofPhrase={proofPhrase}
+          setProofPhrase={setProofPhrase}
+          brief={brief}
+          setBrief={setBrief}
+        />
+        <button type="button" className={`${styles.submitButton} ${styles.submitButtonDisabled}`} disabled>
+          Connect Wallet to Create Human Task
+        </button>
+      </form>
+    </CreateTaskShell>
   );
 }
 
@@ -204,13 +343,13 @@ function NewTaskPrivy() {
   const router = useRouter();
   const { ready, authenticated, login } = usePrivy();
   const [templateId, setTemplateId] = useState(TEMPLATES[0]?.id || "x_quote_launch");
-  const [requesterName, setRequesterName] = useState("AI2Human Official");
-  const [requesterHandle, setRequesterHandle] = useState("@ai2humanwork");
-  const [targetUrl, setTargetUrl] = useState(getDefaultTargetUrlForTemplate(TEMPLATES[0]?.id));
-  const [reward, setReward] = useState(stripBudgetAmount(DEFAULT_X_TASK_BUDGET));
-  const [duration, setDuration] = useState("24");
+  const [requesterName, setRequesterName] = useState("");
+  const [requesterHandle, setRequesterHandle] = useState("");
+  const [targetUrl, setTargetUrl] = useState("");
+  const [reward, setReward] = useState("");
+  const [duration, setDuration] = useState("");
   const [proofPhrase, setProofPhrase] = useState("");
-  const [brief, setBrief] = useState("Amplify the official post and keep the result live for review.");
+  const [brief, setBrief] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -218,10 +357,6 @@ function NewTaskPrivy() {
     () => TEMPLATES.find((template) => template.id === templateId) || TEMPLATES[0],
     [templateId]
   );
-
-  useEffect(() => {
-    setTargetUrl(getDefaultTargetUrlForTemplate(templateId));
-  }, [templateId]);
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
@@ -263,35 +398,46 @@ function NewTaskPrivy() {
   }
 
   return (
-    <form className={styles.formCard} onSubmit={onSubmit}>
-      <h2 className={styles.formTitle}>Create Official Campaign Task</h2>
-      {error ? <div className={styles.alert}>{error}</div> : null}
-      <CampaignFields
-        templateId={templateId}
-        setTemplateId={setTemplateId}
-        requesterName={requesterName}
-        setRequesterName={setRequesterName}
-        requesterHandle={requesterHandle}
-        setRequesterHandle={setRequesterHandle}
-        targetUrl={targetUrl}
-        setTargetUrl={setTargetUrl}
-        reward={reward}
-        setReward={setReward}
-        duration={duration}
-        setDuration={setDuration}
-        proofPhrase={proofPhrase}
-        setProofPhrase={setProofPhrase}
-        brief={brief}
-        setBrief={setBrief}
-      />
-      <button type="submit" className={styles.submitButton} disabled={!ready || submitting}>
-        {!authenticated
-          ? "Connect Wallet to Create Task"
-          : submitting
-            ? "Creating..."
-            : "Create Official Task"}
-      </button>
-    </form>
+    <CreateTaskShell
+      templateId={templateId}
+      requesterName={requesterName}
+      requesterHandle={requesterHandle}
+      targetUrl={targetUrl}
+      reward={reward}
+      duration={duration}
+      proofPhrase={proofPhrase}
+      brief={brief}
+    >
+      <form className={styles.formCard} onSubmit={onSubmit}>
+        <h2 className={styles.formTitle}>Create Human Task Campaign</h2>
+        {error ? <div className={styles.alert}>{error}</div> : null}
+        <CampaignFields
+          templateId={templateId}
+          setTemplateId={setTemplateId}
+          requesterName={requesterName}
+          setRequesterName={setRequesterName}
+          requesterHandle={requesterHandle}
+          setRequesterHandle={setRequesterHandle}
+          targetUrl={targetUrl}
+          setTargetUrl={setTargetUrl}
+          reward={reward}
+          setReward={setReward}
+          duration={duration}
+          setDuration={setDuration}
+          proofPhrase={proofPhrase}
+          setProofPhrase={setProofPhrase}
+          brief={brief}
+          setBrief={setBrief}
+        />
+        <button type="submit" className={styles.submitButton} disabled={!ready || submitting}>
+          {!authenticated
+            ? "Connect Wallet to Create Human Task"
+            : submitting
+              ? "Creating..."
+              : "Create Human Task"}
+        </button>
+      </form>
+    </CreateTaskShell>
   );
 }
 
