@@ -23,6 +23,7 @@ import {
 import { formatSettlementBudget } from "./assetLabels.js";
 import { supabase, isSupabaseEnabled } from "./supabase";
 import { parseArticleReviewAnchor, type ReviewAnchorRecord } from "./reviewAnchor";
+import { applyDeadlineAwareTaskState } from "./taskLifecycle.js";
 
 export type TaskType =
   | "twitter_follow"
@@ -1042,10 +1043,11 @@ function readPoolAddressFromCampaign(campaign: unknown): string | undefined {
   return typeof value === "string" && value.trim() ? value.trim() : undefined;
 }
 
-function attachDerivedTaskFields(task: Task): Task {
+export function attachDerivedTaskFields(task: Task): Task {
+  const deadlineAwareTask = applyDeadlineAwareTaskState(task) as Task;
   return {
-    ...task,
-    reviewAnchor: parseArticleReviewAnchor(task.evidence) || undefined
+    ...deadlineAwareTask,
+    reviewAnchor: parseArticleReviewAnchor(deadlineAwareTask.evidence) || undefined
   };
 }
 

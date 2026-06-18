@@ -8,7 +8,7 @@ import type {
   Task
 } from "./store";
 import { parseArticleReviewAnchor } from "./reviewAnchor";
-import { supportsArticleSubmissionsTable } from "./store";
+import { attachDerivedTaskFields, supportsArticleSubmissionsTable } from "./store";
 import { supabase } from "./supabase";
 
 type AdminTaskSnapshot = {
@@ -174,7 +174,7 @@ function taskFromRow(row: TaskRow): Task {
     updatedAt: row.updated_at
   };
   task.reviewAnchor = parseArticleReviewAnchor(task.evidence) || undefined;
-  return task;
+  return attachDerivedTaskFields(task);
 }
 
 function paymentFromRow(row: PaymentRow): PaymentEntry {

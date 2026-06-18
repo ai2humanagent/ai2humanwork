@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { readDb, type Task } from "../../../lib/store";
+import { attachDerivedTaskFields, readDb, type Task } from "../../../lib/store";
 import { getPrizePoolInfo } from "../../../lib/prizePool";
 import { supabase } from "../../../lib/supabase";
 
@@ -80,7 +80,7 @@ async function readTaskDirectlyFromSupabase(taskId: string): Promise<Task | null
   if (error || !data) return null;
   const row = data as unknown as DirectTaskRow;
 
-  return {
+  return attachDerivedTaskFields({
     id: row.id,
     title: row.title,
     budget: row.budget,
@@ -100,7 +100,7 @@ async function readTaskDirectlyFromSupabase(taskId: string): Promise<Task | null
     verifyCooldownHours: row.verify_cooldown_hours ?? undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at
-  };
+  });
 }
 
 function pickLatestTask(candidates: Array<Task | null | undefined>): Task | null {
