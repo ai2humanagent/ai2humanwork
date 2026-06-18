@@ -288,6 +288,13 @@ export async function POST(
       }
       const targetTask = nextDb.tasks.find((item) => item.id === taskId);
       if (targetTask) {
+        const unpaidWinners = nextDb.articleSubmissions.filter(
+          (submission) => submission.taskId === taskId && submission.status === "winner"
+        );
+        if (unpaidWinners.length === 0) {
+          targetTask.status = "paid";
+          targetTask.taskState = "full";
+        }
         targetTask.updatedAt = now;
         appendEvidence(targetTask, {
           by: "system",

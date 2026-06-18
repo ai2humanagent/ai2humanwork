@@ -340,6 +340,7 @@ export async function POST(
       if (targetTask.taskState !== "refunded" && targetTask.taskState !== "full") {
         targetTask.taskState = "closed";
       }
+      targetTask.status = "verified";
       targetTask.updatedAt = now;
       appendEvidence(targetTask, {
         by: "system",
