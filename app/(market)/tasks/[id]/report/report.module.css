@@ -517,6 +517,197 @@
   overflow: hidden;
 }
 
+.fullReportList {
+  display: grid;
+  gap: 10px;
+}
+
+.fullReportCard {
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 8px;
+  background: rgba(11, 17, 25, 0.92);
+  overflow: hidden;
+}
+
+.fullReportCard summary {
+  position: relative;
+  display: grid;
+  grid-template-columns: 56px 160px minmax(0, 1fr) 90px 132px;
+  gap: 10px;
+  align-items: center;
+  min-height: 58px;
+  padding: 12px 14px 12px 42px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.fullReportCard summary::-webkit-details-marker {
+  display: none;
+}
+
+.fullReportCard summary::before {
+  content: "+";
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 22px;
+  height: 22px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid rgba(128, 255, 234, 0.32);
+  border-radius: 999px;
+  color: #80ffea;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.fullReportCard[open] summary::before {
+  content: "-";
+}
+
+.reportRank {
+  grid-column: 1;
+  padding-left: 2px;
+  color: #fbbf24;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.reportHandle {
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 900;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reportTitle {
+  color: #aeb8c9;
+  font-size: 12px;
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fullReportCard summary strong {
+  color: #f8fafc;
+  font-size: 15px;
+  text-align: right;
+}
+
+.reportStatus {
+  justify-self: end;
+  border: 1px solid rgba(52, 211, 153, 0.26);
+  border-radius: 999px;
+  color: #bbf7d0;
+  background: rgba(13, 51, 32, 0.28);
+  padding: 6px 8px;
+  font-size: 10px;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+.fullReportBody {
+  border-top: 1px solid rgba(148, 163, 184, 0.13);
+  padding: 14px;
+}
+
+.reportFacts,
+.scoreBreakdown,
+.engagementGrid {
+  display: grid;
+  gap: 8px;
+}
+
+.reportFacts {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.scoreBreakdown {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 10px;
+}
+
+.engagementGrid {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  margin-top: 10px;
+}
+
+.reportFacts div,
+.scoreBreakdown div,
+.engagementGrid div {
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 8px;
+  background: rgba(3, 7, 18, 0.42);
+  padding: 9px;
+  min-width: 0;
+}
+
+.reportFacts span,
+.scoreBreakdown span,
+.engagementGrid span,
+.fullReviewBlock > span {
+  display: block;
+  color: #7b8495;
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.reportFacts strong,
+.scoreBreakdown strong,
+.engagementGrid strong {
+  display: block;
+  margin-top: 5px;
+  color: #dbeafe;
+  font-size: 13px;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.formula {
+  margin: 10px 0 0;
+  border: 1px solid rgba(147, 197, 253, 0.16);
+  border-radius: 8px;
+  background: rgba(10, 19, 32, 0.48);
+  color: #93c5fd;
+  padding: 9px 10px;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.fullReviewBlock {
+  margin-top: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 8px;
+  background: rgba(3, 7, 18, 0.42);
+  padding: 11px;
+}
+
+.fullReviewBlock p {
+  margin: 8px 0 0;
+  color: #aeb8c9;
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.reviewWarning {
+  margin-top: 10px;
+  border: 1px solid rgba(251, 191, 36, 0.34);
+  border-radius: 8px;
+  background: rgba(251, 191, 36, 0.08);
+  color: #f8d58a;
+  padding: 10px 11px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 .footerNote {
   margin-top: 20px;
   padding: 14px;
@@ -542,7 +733,10 @@
   .hero,
   .summaryGrid,
   .runnerGrid,
-  .auditGrid {
+  .auditGrid,
+  .reportFacts,
+  .scoreBreakdown,
+  .engagementGrid {
     grid-template-columns: 1fr;
   }
 
@@ -566,5 +760,26 @@
   .rubric,
   .reportMeta {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .fullReportCard summary {
+    grid-template-columns: 44px minmax(0, 1fr) 76px;
+  }
+
+  .reportRank {
+    grid-column: 1;
+  }
+
+  .reportHandle,
+  .reportTitle,
+  .fullReportCard summary strong,
+  .reportStatus {
+    grid-column: 2 / 4;
+    justify-self: stretch;
+    text-align: left;
+  }
+
+  .reportStatus {
+    width: fit-content;
   }
 }

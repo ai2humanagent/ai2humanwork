@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { readDb, type Task } from "../../../../lib/store";
 import {
   deriveCampaignLifecycle,
+  getPublicArticleReviewEntries,
   getPublicArticleWinners
 } from "../../../../lib/campaignReport";
 import {
@@ -50,6 +51,15 @@ function paymentLabel(winner: { status: string; paymentTxHash?: string }) {
   return "Ready";
 }
 
+function optionalScore(value: number | undefined) {
+  return typeof value === "number" && Number.isFinite(value) ? value.toFixed(1) : "-";
+}
+
+function optionalMetric(value: number | undefined) {
+  if (typeof value !== "number" || !Number.isFinite(value)) return "0";
+  return Number.isInteger(value) ? String(value) : value.toFixed(2);
+}
+
 export default async function CampaignReportPage({
   params
 }: {
@@ -70,6 +80,9 @@ export default async function CampaignReportPage({
   const lifecycle = deriveCampaignLifecycle({ task, articleSubmissions, payments });
   const publicWinners = mode === "ranked_article_contest" && articleResultsVisible
     ? getPublicArticleWinners(task, articleSubmissions)
+    : [];
+  const publicReviewEntries = mode === "ranked_article_contest" && articleResultsVisible
+    ? getPublicArticleReviewEntries(articleSubmissions)
     : [];
   const reviewedCount = articleResultsVisible
     ? articleSubmissions.filter((submission) => submission.aiScore != null).length
@@ -286,33 +299,121 @@ export default async function CampaignReportPage({
         </section>
       )}
 
-      {mode === "ranked_article_contest" && articleResultsVisible && publicWinners.length > 0 && (
+      {mode === "ranked_article_contest" && articleResultsVisible && publicReviewEntries.length > 0 && (
         <section className={styles.auditSection}>
           <div className={styles.sectionHeader}>
             <div>
-              <span>Audit Trail</span>
-              <h2>Reviewed Text Sources</h2>
+              <span>Full Transparency</span>
+              <h2>Complete Scoring Report</h2>
             </div>
-            <p>These are compact audit excerpts for readability. Open the X link on each winner card to view the full source post.</p>
+            <p>
+              Every reviewed submission is listed below with full AI review text, rubric, model status,
+              engagement weighting, source excerpt, X link, and payout record when applicable.
+            </p>
           </div>
-          <div className={styles.auditGrid}>
-            {publicWinners.map((winner) => (
-              <article key={`audit-${winner.id}`} className={styles.auditCard}>
-                <div>
-                  <strong>@{winner.xHandle}</strong>
-                  <span>{winner.sourceLabel}</span>
-                </div>
-                {winner.modelReviews.length > 0 && (
-                  <div className={styles.auditModels}>
-                    {winner.modelReviews.map((item) => (
-                      <span key={`audit-model-${winner.id}-${item.providerLabel}`}>
-                        {item.providerLabel}: {item.status === "scored" && item.score != null ? item.score.toFixed(1) : item.status}
-                      </span>
+          <div className={styles.fullReportList}>
+            {publicReviewEntries.map((entry) => (
+              <details key={`full-report-${entry.id}`} className={styles.fullReportCard} open={entry.isWinner}>
+                <summary>
+                  <span className={styles.reportRank}>{entry.rank ? `#${entry.rank}` : "—"}</span>
+                  <span className={styles.reportHandle}>@{entry.xHandle}</span>
+                  <span className={styles.reportTitle}>{entry.title}</span>
+                  <strong>{entry.score.toFixed(1)}/100</strong>
+                  <span className={styles.reportStatus}>{entry.statusLabel}</span>
+                </summary>
+                <div className={styles.fullReportBody}>
+                  <div className={styles.reportFacts}>
+                    <div>
+                      <span>Prize</span>
+                      <strong>{entry.prizeAmount || "-"}</strong>
+                    </div>
+                    <div>
+                      <span>Wallet</span>
+                      <strong>{shortAddress(entry.walletAddress)}</strong>
+                    </div>
+                    <div>
+                      <span>Source</span>
+                      <strong>{entry.sourceLabel}</strong>
+                    </div>
+                    <div>
+                      <span>Payment</span>
+                      <strong>{paymentLabel(entry)}</strong>
+                    </div>
+                  </div>
+
+                  <div className={styles.scoreBreakdown}>
+                    <div>
+                      <span>Content score</span>
+                      <strong>{optionalScore(entry.contentScore)}</strong>
+                    </div>
+                    <div>
+                      <span>Engagement score</span>
+                      <strong>{optionalScore(entry.engagementScore)}</strong>
+                    </div>
+                    <div>
+                      <span>Final score</span>
+                      <strong>{optionalScore(entry.finalScore || entry.score)}</strong>
+                    </div>
+                  </div>
+
+                  {entry.finalScoreFormula && (
+                    <p className={styles.formula}>{entry.finalScoreFormula}</p>
+                  )}
+
+                  <div className={styles.rubric}>
+                    {entry.rubric.map((rubricEntry) => (
+                      <div key={`${entry.id}-${rubricEntry.key}`}>
+                        <span>{rubricEntry.key}</span>
+                        <strong>{rubricEntry.value.toFixed(1)}</strong>
+                      </div>
                     ))}
                   </div>
-                )}
-                <p>{winner.reviewedTextExcerpt || "Reviewed source text is recorded in the internal audit log."}</p>
-              </article>
+
+                  {entry.modelReviews.length > 0 && (
+                    <div className={styles.modelStrip}>
+                      {entry.modelReviews.map((item) => (
+                        <span key={`full-model-${entry.id}-${item.providerLabel}`}>
+                          {item.providerLabel}: {item.status === "scored" && item.score != null ? item.score.toFixed(1) : item.status}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  {entry.engagementMetrics && (
+                    <div className={styles.engagementGrid}>
+                      <div><span>Likes</span><strong>{optionalMetric(entry.engagementMetrics.likes)}</strong></div>
+                      <div><span>Reposts</span><strong>{optionalMetric(entry.engagementMetrics.reposts)}</strong></div>
+                      <div><span>Replies</span><strong>{optionalMetric(entry.engagementMetrics.replies)}</strong></div>
+                      <div><span>Quotes</span><strong>{optionalMetric(entry.engagementMetrics.quotes)}</strong></div>
+                      <div><span>Views</span><strong>{optionalMetric(entry.engagementMetrics.views)}</strong></div>
+                      <div><span>Raw heat</span><strong>{optionalMetric(entry.engagementMetrics.rawScore)}</strong></div>
+                    </div>
+                  )}
+
+                  {entry.prizeIneligible && (
+                    <div className={styles.reviewWarning}>
+                      Prize eligibility: {entry.prizeIneligibleReason || "This entry was reviewed but excluded from prize ranking."}
+                    </div>
+                  )}
+
+                  <div className={styles.fullReviewBlock}>
+                    <span>Full AI Review</span>
+                    <p>{entry.fullReview}</p>
+                  </div>
+
+                  <div className={styles.fullReviewBlock}>
+                    <span>Reviewed Source Excerpt</span>
+                    <p>{entry.reviewedTextExcerpt || "Reviewed source text is recorded in the internal audit log."}</p>
+                  </div>
+
+                  <div className={styles.cardLinks}>
+                    <a href={entry.articleUrl} target="_blank" rel="noreferrer">Open full X post</a>
+                    {entry.paymentExplorerUrl && (
+                      <a href={entry.paymentExplorerUrl} target="_blank" rel="noreferrer">View payout</a>
+                    )}
+                  </div>
+                </div>
+              </details>
             ))}
           </div>
         </section>

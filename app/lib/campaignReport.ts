@@ -36,6 +36,31 @@ export type PublicArticleWinner = {
   paymentExplorerUrl?: string;
 };
 
+export type PublicArticleReviewEntry = PublicArticleWinner & {
+  isWinner: boolean;
+  submittedAt: string;
+  fullReview: string;
+  statusLabel: string;
+  prizeIneligible: boolean;
+  prizeIneligibleReason: string;
+  contentScore?: number;
+  engagementScore?: number;
+  finalScore?: number;
+  finalScoreFormula?: string;
+  engagementMetrics?: {
+    source?: string;
+    likes?: number;
+    reposts?: number;
+    replies?: number;
+    quotes?: number;
+    bookmarks?: number;
+    views?: number;
+    rawScore?: number;
+    normalizedScore?: number;
+    error?: string;
+  };
+};
+
 function isPast(date: string | undefined) {
   if (!date || date === "TBD") return false;
   const timestamp = +new Date(date);
@@ -103,6 +128,16 @@ function prizeLabel(value: string | undefined) {
   return /\bUSDC\b/i.test(raw) ? raw : `${raw} USDC`;
 }
 
+function statusLabel(submission: ArticleSubmission) {
+  if (submission.status === "paid") return "Paid";
+  if (submission.status === "winner") return "Winner";
+  if (submission.status === "invalid") return "Invalid";
+  if (submission.status === "rejected") return "Rejected";
+  if (submission.aiRubric?.audit?.prizeIneligible) return "Reviewed - prize ineligible";
+  if (submission.rank && submission.prizeAmount) return "Winner";
+  return "Reviewed";
+}
+
 function rubricEntries(submission: ArticleSubmission) {
   const rubric = submission.aiRubric;
   if (!rubric) return [];
@@ -135,6 +170,70 @@ function modelConsensusLabel(submission: ArticleSubmission) {
   return `${active}/${total} model active`;
 }
 
+function publicArticleEntry(submission: ArticleSubmission): PublicArticleReviewEntry {
+  const audit = submission.aiRubric?.audit;
+  return {
+    id: submission.id,
+    rank: submission.rank || 0,
+    rankLabel: submission.rank ? rankLabel(submission.rank) : "Not awarded",
+    xHandle: submission.xHandle,
+    walletAddress: submission.walletAddress,
+    articleUrl: submission.articleUrl,
+    title: submission.title,
+    score: submission.aiScore || 0,
+    prizeAmount: prizeLabel(submission.prizeAmount),
+    status: submission.status,
+    statusLabel: statusLabel(submission),
+    sourceLabel: articleReviewSourceLabel(submission),
+    modelConsensusLabel: modelConsensusLabel(submission),
+    modelReviews: modelReviews(submission),
+    reviewedTextExcerpt: audit?.reviewedTextExcerpt || "",
+    reviewSummary: publicReviewSummary(submission),
+    fullReview: submission.aiReview || "AI review is not available for this submission.",
+    rubric: rubricEntries(submission),
+    paymentTxHash: submission.paymentTxHash,
+    paymentExplorerUrl: submission.paymentExplorerUrl,
+    isWinner: Boolean(submission.rank && submission.prizeAmount && (submission.status === "winner" || submission.status === "paid")),
+    submittedAt: submission.submittedAt,
+    prizeIneligible: Boolean(audit?.prizeIneligible),
+    prizeIneligibleReason: audit?.prizeIneligibleReason || "",
+    contentScore: audit?.contentScore,
+    engagementScore: audit?.engagementScore,
+    finalScore: audit?.finalScore,
+    finalScoreFormula: audit?.finalScoreFormula,
+    engagementMetrics: audit?.engagementMetrics
+      ? {
+          source: audit.engagementMetrics.source,
+          likes: audit.engagementMetrics.likes,
+          reposts: audit.engagementMetrics.reposts,
+          replies: audit.engagementMetrics.replies,
+          quotes: audit.engagementMetrics.quotes,
+          bookmarks: audit.engagementMetrics.bookmarks,
+          views: audit.engagementMetrics.views,
+          rawScore: audit.engagementMetrics.rawScore,
+          normalizedScore: audit.engagementMetrics.normalizedScore,
+          error: audit.engagementMetrics.error
+        }
+      : undefined
+  };
+}
+
+export function getPublicArticleReviewEntries(submissions: ArticleSubmission[]) {
+  return submissions
+    .filter((submission) => submission.aiScore != null || submission.aiReview || submission.aiRubric)
+    .sort((a, b) => {
+      const aWinner = a.rank && a.prizeAmount ? 1 : 0;
+      const bWinner = b.rank && b.prizeAmount ? 1 : 0;
+      if (aWinner !== bWinner) return bWinner - aWinner;
+      const rankDelta = (a.rank || 999) - (b.rank || 999);
+      if (rankDelta !== 0) return rankDelta;
+      const scoreDelta = (b.aiScore || 0) - (a.aiScore || 0);
+      if (scoreDelta !== 0) return scoreDelta;
+      return +new Date(a.submittedAt) - +new Date(b.submittedAt);
+    })
+    .map(publicArticleEntry);
+}
+
 export function getPublicArticleWinners(task: Task, submissions: ArticleSubmission[]) {
   const minimumScore = getArticleContestMinimumWinnerScore(task.rewardDistribution);
   return submissions
@@ -148,26 +247,7 @@ export function getPublicArticleWinners(task: Task, submissions: ArticleSubmissi
       if (rankDelta !== 0) return rankDelta;
       return (b.aiScore || 0) - (a.aiScore || 0);
     })
-    .map<PublicArticleWinner>((submission) => ({
-      id: submission.id,
-      rank: submission.rank || 0,
-      rankLabel: rankLabel(submission.rank || 0),
-      xHandle: submission.xHandle,
-      walletAddress: submission.walletAddress,
-      articleUrl: submission.articleUrl,
-      title: submission.title,
-      score: submission.aiScore || 0,
-      prizeAmount: prizeLabel(submission.prizeAmount),
-      status: submission.status,
-      sourceLabel: articleReviewSourceLabel(submission),
-      modelConsensusLabel: modelConsensusLabel(submission),
-      modelReviews: modelReviews(submission),
-      reviewedTextExcerpt: submission.aiRubric?.audit?.reviewedTextExcerpt || "",
-      reviewSummary: publicReviewSummary(submission),
-      rubric: rubricEntries(submission),
-      paymentTxHash: submission.paymentTxHash,
-      paymentExplorerUrl: submission.paymentExplorerUrl
-    }));
+    .map(publicArticleEntry);
 }
 
 export function deriveCampaignLifecycle(input: {
