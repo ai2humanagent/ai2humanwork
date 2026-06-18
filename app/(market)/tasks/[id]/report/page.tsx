@@ -293,7 +293,7 @@ export default async function CampaignReportPage({
               <span>Audit Trail</span>
               <h2>Reviewed Text Sources</h2>
             </div>
-            <p>Compact excerpts show what the AI actually scored. Full X posts remain linked above.</p>
+            <p>These are compact audit excerpts for readability. Open the X link on each winner card to view the full source post.</p>
           </div>
           <div className={styles.auditGrid}>
             {publicWinners.map((winner) => (

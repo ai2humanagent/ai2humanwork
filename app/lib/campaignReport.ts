@@ -97,6 +97,12 @@ function rankLabel(rank: number) {
   return `Rank ${rank}`;
 }
 
+function prizeLabel(value: string | undefined) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  return /\bUSDC\b/i.test(raw) ? raw : `${raw} USDC`;
+}
+
 function rubricEntries(submission: ArticleSubmission) {
   const rubric = submission.aiRubric;
   if (!rubric) return [];
@@ -151,7 +157,7 @@ export function getPublicArticleWinners(task: Task, submissions: ArticleSubmissi
       articleUrl: submission.articleUrl,
       title: submission.title,
       score: submission.aiScore || 0,
-      prizeAmount: submission.prizeAmount || "",
+      prizeAmount: prizeLabel(submission.prizeAmount),
       status: submission.status,
       sourceLabel: articleReviewSourceLabel(submission),
       modelConsensusLabel: modelConsensusLabel(submission),
