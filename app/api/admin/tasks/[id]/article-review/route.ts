@@ -14,12 +14,61 @@ import {
   reviewArticleSubmission
 } from "../../../../../lib/articleContest";
 import { anchorArticleReviewOnBase, ARTICLE_REVIEW_ANCHOR_PREFIX } from "../../../../../lib/reviewAnchor";
+import { getPrizePoolSignerAddress } from "../../../../../lib/prizePool";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 function hasFinalArticleReview(task: Task) {
   return (task.evidence || []).some((item) => String(item.content || "").startsWith("article_review:"));
+}
+
+function csvSet(value: string | undefined) {
+  return new Set(
+    String(value || "")
+      .split(",")
+      .map((item) => item.trim().toLowerCase())
+      .filter(Boolean)
+  );
+}
+
+function normalizeHandle(value: string) {
+  return value.trim().replace(/^@/, "").toLowerCase();
+}
+
+function getPrizeIneligibleRules() {
+  const wallets = csvSet(process.env.ARTICLE_CONTEST_PRIZE_INELIGIBLE_WALLETS);
+  const handles = csvSet(process.env.ARTICLE_CONTEST_PRIZE_INELIGIBLE_HANDLES);
+  const signer = getPrizePoolSignerAddress().toLowerCase();
+  if (signer) wallets.add(signer);
+  return { wallets, handles };
+}
+
+function applyPrizeIneligibleRules(submissions: ArticleSubmission[]) {
+  const { wallets, handles } = getPrizeIneligibleRules();
+  return submissions.map((submission) => {
+    const walletIneligible = wallets.has((submission.walletAddress || "").toLowerCase());
+    const handleIneligible = handles.has(normalizeHandle(submission.xHandle)) || handles.has(normalizeHandle(submission.authorHandle));
+    if (!walletIneligible && !handleIneligible) return submission;
+    const reason = walletIneligible
+      ? "Official/backend signer wallet is prize-ineligible."
+      : "Official/team X handle is prize-ineligible.";
+    return {
+      ...submission,
+      aiReview: [
+        submission.aiReview || "",
+        `Prize eligibility: this submission is displayed for transparency but excluded from prize ranking. ${reason}`
+      ].filter(Boolean).join(" "),
+      aiRubric: {
+        ...(submission.aiRubric || {}),
+        audit: {
+          ...(submission.aiRubric?.audit || {}),
+          prizeIneligible: true,
+          prizeIneligibleReason: reason
+        }
+      }
+    };
+  });
 }
 
 function buildAnchorPayload(input: {
@@ -210,7 +259,7 @@ export async function POST(
     });
   }
 
-  const engagementWeighted = await applyArticleEngagementWeights(scored);
+  const engagementWeighted = applyPrizeIneligibleRules(await applyArticleEngagementWeights(scored));
   const ranked = assignArticleContestPrizes(engagementWeighted, task.rewardDistribution);
   const winners = ranked.filter((submission) => submission.status === "winner" || submission.status === "paid");
   const providerCounts = scoreDebug.reduce<Record<string, number>>((counts, item) => {

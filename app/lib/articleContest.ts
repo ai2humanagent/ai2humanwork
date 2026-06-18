@@ -2755,6 +2755,7 @@ export function assignArticleContestPrizes(
   const ranked = annotatedSubmissions
     .filter((submission) => {
       if (submission.status === "invalid" || submission.status === "rejected") return false;
+      if (submission.aiRubric?.audit?.prizeIneligible) return false;
       if (submission.status === "paid") return true;
       return (submission.aiScore || 0) >= minimumWinnerScore;
     })

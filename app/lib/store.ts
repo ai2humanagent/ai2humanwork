@@ -348,6 +348,8 @@ export type ArticleReviewAudit = {
   relevanceGate?: boolean;
   relevanceSignals?: string[];
   reviewTargetProject?: string;
+  prizeIneligible?: boolean;
+  prizeIneligibleReason?: string;
   copyRisk?: "possible" | "high";
   copyRiskReason?: string;
   copyMatchedSubmissionId?: string;
