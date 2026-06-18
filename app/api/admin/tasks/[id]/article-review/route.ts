@@ -4,6 +4,7 @@ import { getAdminAuthContext } from "../../../../../lib/adminAuth";
 import { readDb, updateDb, type ArticleSubmission, type Task } from "../../../../../lib/store";
 import { appendEvidence } from "../../../../../lib/taskEvidence";
 import {
+  applyArticleEngagementWeights,
   assignArticleContestPrizes,
   getArticleReviewProviderConfigs,
   getArticleContestReviewTarget,
@@ -209,7 +210,8 @@ export async function POST(
     });
   }
 
-  const ranked = assignArticleContestPrizes(scored, task.rewardDistribution);
+  const engagementWeighted = await applyArticleEngagementWeights(scored);
+  const ranked = assignArticleContestPrizes(engagementWeighted, task.rewardDistribution);
   const winners = ranked.filter((submission) => submission.status === "winner" || submission.status === "paid");
   const providerCounts = scoreDebug.reduce<Record<string, number>>((counts, item) => {
     const key = item.provider || "unknown";
@@ -227,6 +229,10 @@ export async function POST(
     reusedPreviews,
     winners: winners.length,
     minimumWinnerScore,
+    scoreWeights: {
+      content: 0.85,
+      engagement: 0.15
+    },
     reviewTarget,
     providerCounts,
     top: ranked

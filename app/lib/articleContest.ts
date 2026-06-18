@@ -93,6 +93,19 @@ export type XArticleContentResult = {
   attempts: string[];
 };
 
+export type XEngagementMetrics = {
+  source: "fxtwitter_status" | "x_api" | "unavailable";
+  attempts: string[];
+  likes: number;
+  reposts: number;
+  replies: number;
+  quotes: number;
+  bookmarks: number;
+  views: number;
+  rawScore: number;
+  error?: string;
+};
+
 type PublicImageAssetResult = {
   ok: true;
   url: string;
@@ -131,6 +144,8 @@ const DEFAULT_PRIZES = [
   { rank: 3, amount: "10 USDC", slots: 3, label: "3rd place" }
 ];
 const DEFAULT_MINIMUM_WINNER_SCORE = 25;
+const ARTICLE_CONTENT_SCORE_WEIGHT = 0.85;
+const ARTICLE_ENGAGEMENT_SCORE_WEIGHT = 0.15;
 
 export function getSubmissionContestKind(task?: Pick<Task, "campaign">): SubmissionContestKind {
   return task?.campaign?.action === "banner_image_contest" ? "banner_image" : "x_article";
@@ -154,6 +169,16 @@ function clampScore(value: unknown) {
   const num = Number(value);
   if (!Number.isFinite(num)) return 0;
   return Math.max(0, Math.min(100, Math.round(num * 10) / 10));
+}
+
+function readCount(value: unknown) {
+  const num = Number(value);
+  if (!Number.isFinite(num) || num < 0) return 0;
+  return Math.round(num);
+}
+
+function roundScore(value: number) {
+  return Math.max(0, Math.min(100, Math.round(value * 10) / 10));
 }
 
 function clampRubricScore(value: unknown) {
@@ -776,6 +801,12 @@ type FxTwitterStatus = {
   raw_text?: { text?: string };
   created_timestamp?: number;
   created_at?: string;
+  replies?: number;
+  retweets?: number;
+  likes?: number;
+  bookmarks?: number;
+  quotes?: number;
+  views?: number;
   author?: {
     screen_name?: string;
     name?: string;
@@ -827,6 +858,194 @@ function sortFxStatusesChronologically(statuses: FxTwitterStatus[]) {
     if (a.id && b.id) return BigInt(a.id) < BigInt(b.id) ? -1 : 1;
     return 0;
   });
+}
+
+function calculateEngagementRawScore(metrics: {
+  likes?: number;
+  reposts?: number;
+  replies?: number;
+  quotes?: number;
+  bookmarks?: number;
+  views?: number;
+}) {
+  return Math.round((
+    readCount(metrics.likes) * 3 +
+    readCount(metrics.reposts) * 6 +
+    readCount(metrics.replies) * 5 +
+    readCount(metrics.quotes) * 5 +
+    readCount(metrics.bookmarks) * 2 +
+    readCount(metrics.views) * 0.02
+  ) * 1000) / 1000;
+}
+
+function emptyEngagementMetrics(attempts: string[], error?: string): XEngagementMetrics {
+  return {
+    source: "unavailable",
+    attempts,
+    likes: 0,
+    reposts: 0,
+    replies: 0,
+    quotes: 0,
+    bookmarks: 0,
+    views: 0,
+    rawScore: 0,
+    error
+  };
+}
+
+export async function fetchXEngagementMetrics(articleUrl: string): Promise<XEngagementMetrics> {
+  const parsed = parseXArticleUrl(articleUrl);
+  if (!parsed.ok) return emptyEngagementMetrics(["parse_url"], parsed.error);
+  const attempts: string[] = [];
+  if (parsed.kind !== "status" || !parsed.articleId) {
+    return emptyEngagementMetrics(["unsupported_url_kind"], "Engagement metrics are only available for public X status URLs.");
+  }
+
+  try {
+    attempts.push("fxtwitter_status");
+    const { response, text } = await fetchText(`https://api.fxtwitter.com/status/${parsed.articleId}`);
+    if (response.ok) {
+      const data = JSON.parse(text) as { tweet?: FxTwitterStatus; status?: FxTwitterStatus } & FxTwitterStatus;
+      const status = data.tweet || data.status || data;
+      const metrics = {
+        likes: readCount(status.likes),
+        reposts: readCount(status.retweets),
+        replies: readCount(status.replies),
+        quotes: readCount(status.quotes),
+        bookmarks: readCount(status.bookmarks),
+        views: readCount(status.views)
+      };
+      return {
+        source: "fxtwitter_status",
+        attempts,
+        ...metrics,
+        rawScore: calculateEngagementRawScore(metrics)
+      };
+    }
+    attempts.push(`fxtwitter_status_http_${response.status}:${text.slice(0, 120)}`);
+  } catch (error) {
+    attempts.push(`fxtwitter_status_error:${error instanceof Error ? error.message.slice(0, 120) : "unknown"}`);
+  }
+
+  try {
+    attempts.push("x_api_bearer");
+    const bearer = await getXBearerToken();
+    if (!bearer) {
+      attempts.push("x_api_missing_credentials");
+      return emptyEngagementMetrics(attempts, "No public engagement metrics provider returned data.");
+    }
+    attempts.push("x_api_public_metrics");
+    const apiBase = (process.env.X_OAUTH1_API_BASE_URL || "https://api.x.com").replace(/\/+$/, "");
+    const endpoint = `${apiBase}/2/tweets/${parsed.articleId}?tweet.fields=${encodeURIComponent("public_metrics")}`;
+    const { response, text } = await fetchText(endpoint, {
+      headers: { Authorization: `Bearer ${bearer}` }
+    });
+    if (!response.ok) {
+      attempts.push(`x_api_public_metrics_http_${response.status}:${text.slice(0, 120)}`);
+      return emptyEngagementMetrics(attempts, "No public engagement metrics provider returned data.");
+    }
+    const data = JSON.parse(text) as {
+      data?: {
+        public_metrics?: {
+          like_count?: number;
+          retweet_count?: number;
+          reply_count?: number;
+          quote_count?: number;
+          bookmark_count?: number;
+        };
+      };
+    };
+    const publicMetrics = data.data?.public_metrics || {};
+    const metrics = {
+      likes: readCount(publicMetrics.like_count),
+      reposts: readCount(publicMetrics.retweet_count),
+      replies: readCount(publicMetrics.reply_count),
+      quotes: readCount(publicMetrics.quote_count),
+      bookmarks: readCount(publicMetrics.bookmark_count),
+      views: 0
+    };
+    return {
+      source: "x_api",
+      attempts,
+      ...metrics,
+      rawScore: calculateEngagementRawScore(metrics)
+    };
+  } catch (error) {
+    attempts.push(`x_api_public_metrics_error:${error instanceof Error ? error.message.slice(0, 120) : "unknown"}`);
+  }
+
+  return emptyEngagementMetrics(attempts, "No public engagement metrics provider returned data.");
+}
+
+function readStableContentScore(submission: ArticleSubmission) {
+  const existingContentScore = submission.aiRubric?.audit?.contentScore;
+  if (typeof existingContentScore === "number" && Number.isFinite(existingContentScore)) {
+    return clampScore(existingContentScore);
+  }
+  return clampScore(submission.aiScore || 0);
+}
+
+export function applyArticleEngagementScoresFromMetrics(
+  submissions: ArticleSubmission[],
+  metricsBySubmissionId: Map<string, XEngagementMetrics>,
+  input: {
+    contentWeight?: number;
+    engagementWeight?: number;
+  } = {}
+) {
+  const contentWeight = input.contentWeight ?? ARTICLE_CONTENT_SCORE_WEIGHT;
+  const engagementWeight = input.engagementWeight ?? ARTICLE_ENGAGEMENT_SCORE_WEIGHT;
+  const rawScores = submissions.map((submission) => metricsBySubmissionId.get(submission.id)?.rawScore || 0);
+  const maxLogScore = Math.max(...rawScores.map((score) => Math.log1p(score)), 0);
+
+  return submissions.map((submission) => {
+    const metrics = metricsBySubmissionId.get(submission.id) || emptyEngagementMetrics(["not_fetched"], "Engagement metrics were not fetched.");
+    const contentScore = readStableContentScore(submission);
+    const engagementScore = maxLogScore > 0 ? roundScore((Math.log1p(metrics.rawScore) / maxLogScore) * 100) : 0;
+    const finalScore = roundScore(contentScore * contentWeight + engagementScore * engagementWeight);
+    const audit: ArticleReviewAudit = {
+      ...(submission.aiRubric?.audit || {}),
+      contentScore,
+      engagementWeight,
+      engagementScore,
+      finalScore,
+      finalScoreFormula: `finalScore = contentScore * ${contentWeight} + log-normalized engagementScore * ${engagementWeight}`,
+      engagementMetrics: {
+        source: metrics.source,
+        attempts: metrics.attempts,
+        likes: metrics.likes,
+        reposts: metrics.reposts,
+        replies: metrics.replies,
+        quotes: metrics.quotes,
+        bookmarks: metrics.bookmarks,
+        views: metrics.views,
+        rawScore: metrics.rawScore,
+        normalizedScore: engagementScore,
+        error: metrics.error
+      }
+    };
+    return {
+      ...submission,
+      aiScore: finalScore,
+      aiReview: [
+        submission.aiReview || "",
+        `Final score includes 85% AI content review and 15% public X engagement. Engagement metrics: ${metrics.likes} likes, ${metrics.reposts} reposts, ${metrics.replies} replies, ${metrics.quotes} quotes, ${metrics.views} views.`
+      ].filter(Boolean).join(" "),
+      aiRubric: submission.aiRubric
+        ? { ...submission.aiRubric, audit }
+        : { audit }
+    };
+  });
+}
+
+export async function applyArticleEngagementWeights(submissions: ArticleSubmission[]) {
+  const pairs = await Promise.all(
+    submissions.map(async (submission) => [
+      submission.id,
+      await fetchXEngagementMetrics(submission.articleUrl)
+    ] as const)
+  );
+  return applyArticleEngagementScoresFromMetrics(submissions, new Map(pairs));
 }
 
 async function fetchFxTwitterThread(input: {

@@ -361,6 +361,24 @@ export type ArticleReviewAudit = {
   aggregateStrategy?: "weighted_consensus";
   activeModelCount?: number;
   skippedModelCount?: number;
+  contentScore?: number;
+  engagementWeight?: number;
+  engagementScore?: number;
+  finalScore?: number;
+  finalScoreFormula?: string;
+  engagementMetrics?: {
+    source?: "fxtwitter_status" | "x_api" | "unavailable";
+    attempts?: string[];
+    likes?: number;
+    reposts?: number;
+    replies?: number;
+    quotes?: number;
+    bookmarks?: number;
+    views?: number;
+    rawScore?: number;
+    normalizedScore?: number;
+    error?: string;
+  };
   modelReviews?: Array<{
     providerId: string;
     providerLabel: string;
