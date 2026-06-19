@@ -21,6 +21,14 @@ import { getOperatorAccessForWallet, taskAccessError } from "../../../../lib/ope
 import { addNotification, sendEmailNotification } from "../../../../lib/notificationDelivery";
 import { checkTokenGateForWallet, tokenGateErrorMessage } from "../../../../lib/tokenGate.js";
 import { getRewardTaskUnavailableReason } from "../../../../lib/rewardTaskGuards.js";
+import {
+  buildRewardClaimIdempotencyKey,
+  countRewardClaims,
+  findConflictingXRewardClaim,
+  findExistingRewardClaim,
+  findMissingVerifiedSubtask,
+  isRewardPaymentForTask
+} from "../../../../lib/rewardClaimGuards.js";
 
 export const runtime = "nodejs";
 
@@ -84,11 +92,6 @@ function getSettlementAmount(input: {
   }
 
   return task.budget;
-}
-
-function isClaimedPaymentForTask(payment: PaymentEntry, task: Task): boolean {
-  if (!task.poolAddress) return true;
-  return payment.method === "prize_pool_claim" && Boolean(payment.txHash);
 }
 
 function isTestRewardTask(task: Task): boolean {
@@ -300,16 +303,10 @@ async function updateDbClaim(
   task: Task
 ) {
   const normalizedXHandle = normalizeXHandle(xHandle);
-  const paymentIdempotencyKey = `twitter_task:${taskId}:${wallet}`;
+  const paymentIdempotencyKey = buildRewardClaimIdempotencyKey(taskId, wallet);
 
   // Check existing payment
-  const existingPayment = db.payments.find(
-    (p) =>
-      p.taskId === taskId &&
-      p.source === "twitter_task" &&
-      isClaimedPaymentForTask(p, task) &&
-      ((p.receiverAddress || "").toLowerCase() === wallet || p.idempotencyKey === paymentIdempotencyKey)
-  );
+  const existingPayment = findExistingRewardClaim(db.payments, task, taskId, wallet) as PaymentEntry | null;
   if (existingPayment) {
     return {
       error: null,
@@ -325,20 +322,13 @@ async function updateDbClaim(
     };
   }
 
-  const existingXParticipant = db.luckyDrawParticipants.find(
-    (participant) =>
-      participant.taskId === taskId &&
-      normalizeXHandle(participant.xHandle) === normalizedXHandle &&
-      (participant.walletAddress || "").toLowerCase() !== wallet
-  );
+  const existingXParticipant = findConflictingXRewardClaim(db.luckyDrawParticipants, taskId, normalizedXHandle, wallet);
   if (existingXParticipant) {
     return { error: "This X account has already claimed this task with another wallet." };
   }
 
   // Count existing claims
-  const claimedCount = db.payments.filter(
-    (p) => p.taskId === taskId && p.source === "twitter_task" && isClaimedPaymentForTask(p, task)
-  ).length;
+  const claimedCount = countRewardClaims(db.payments, task, taskId);
 
   const claimLimit = maxWinners;
 
@@ -346,19 +336,14 @@ async function updateDbClaim(
     return { error: "All reward slots have been claimed." };
   }
 
-  const progress = db.questProgress.filter(
-    (qp) => qp.taskId === taskId && qp.walletAddress === wallet
-  );
-  for (const key of REQUIRED_SUBTASK_KEYS) {
-    const entry = progress.find((qp) => qp.subtaskKey === key);
-    if (!entry || entry.status !== "verified") {
-      return { error: `Subtask ${key} is not verified. Complete all tasks before claiming.` };
-    }
+  const missingSubtask = findMissingVerifiedSubtask(db.questProgress, taskId, wallet, REQUIRED_SUBTASK_KEYS);
+  if (missingSubtask) {
+    return { error: `Subtask ${missingSubtask} is not verified. Complete all tasks before claiming.` };
   }
 
   // Determine settlement amount
   const alreadyPaid = db.payments
-    .filter((p) => p.taskId === taskId && p.source === "twitter_task" && isClaimedPaymentForTask(p, task))
+    .filter((p) => p.taskId === taskId && p.source === "twitter_task" && isRewardPaymentForTask(p, task))
     .reduce((sum, payment) => sum + parseAmount(payment.amount), 0);
   const remainingSlots = claimLimit - claimedCount;
   const remainingPool = dist?.totalPool
@@ -502,7 +487,7 @@ async function updateDbClaim(
     if (t) {
       t.updatedAt = new Date().toISOString();
       const totalClaimed = db.payments.filter(
-        (p) => p.taskId === taskId && p.source === "twitter_task" && isClaimedPaymentForTask(p, t)
+        (p) => p.taskId === taskId && p.source === "twitter_task" && isRewardPaymentForTask(p, t)
       ).length;
       if (totalClaimed >= maxWinners) {
         t.status = "paid";
