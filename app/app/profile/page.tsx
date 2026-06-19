@@ -276,6 +276,7 @@ export default function ProfilePage() {
   const [linkingX, setLinkingX] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [copiedWallet, setCopiedWallet] = useState(false);
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -459,6 +460,31 @@ export default function ProfilePage() {
     } catch (linkError) {
       setLinkingX(false);
       setError(linkError instanceof Error ? linkError.message : "Unable to open X login.");
+    }
+  }
+
+  async function copyRewardWallet(address?: string) {
+    if (!address) return;
+    setError("");
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(address);
+      } else {
+        const textarea = document.createElement("textarea");
+        textarea.value = address;
+        textarea.setAttribute("readonly", "true");
+        textarea.style.position = "fixed";
+        textarea.style.left = "-9999px";
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+      }
+      setCopiedWallet(true);
+      setMessage("Reward wallet address copied.");
+      window.setTimeout(() => setCopiedWallet(false), 1800);
+    } catch {
+      setError("Unable to copy wallet address. Long press or select the address manually.");
     }
   }
 
@@ -691,7 +717,17 @@ export default function ProfilePage() {
 
           <div className={styles.walletBox}>
             <span>Reward wallet</span>
-            <strong>{shortAddress(walletAddress)}</strong>
+            <button
+              className={styles.walletCopyButton}
+              type="button"
+              onClick={() => copyRewardWallet(walletAddress)}
+              disabled={!walletAddress}
+              title={walletAddress || "No wallet connected"}
+              aria-label={walletAddress ? "Copy full reward wallet address" : "No reward wallet connected"}
+            >
+              <strong>{shortAddress(walletAddress)}</strong>
+              <small>{copiedWallet ? "Copied full address" : "Click to copy full address"}</small>
+            </button>
           </div>
 
           <div className={styles.walletBox}>

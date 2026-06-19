@@ -469,6 +469,33 @@
   word-break: break-all;
 }
 
+.walletCopyButton {
+  width: 100%;
+  display: block;
+  margin-top: 8px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.walletCopyButton:hover strong {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.walletCopyButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.walletCopyButton strong {
+  margin-top: 0;
+}
+
 .walletBox small {
   display: block;
   margin-top: 4px;
