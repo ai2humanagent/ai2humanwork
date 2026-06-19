@@ -327,6 +327,32 @@ function getTokenGateNotice(task: Task) {
   };
 }
 
+function readRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : null;
+}
+
+function buildQuestProgressError(data: unknown, fallback: string) {
+  const payload = readRecord(data);
+  const gate = readRecord(payload?.tokenGate);
+  if (gate) {
+    const symbol = String(gate.symbol || "TOKEN").replace(/^\$/, "");
+    const network = String(gate.network || "Base").replace(/^base$/i, "Base");
+    const minimumBalance = String(gate.minimumBalance || "").trim();
+    const balance = String(gate.balance || "").trim();
+    const reason = String(gate.reason || "").trim();
+    if (reason === "insufficient_balance") {
+      const requirement = minimumBalance ? `${minimumBalance} $${symbol}` : `$${symbol}`;
+      const current = balance ? ` Current balance: ${balance} $${symbol}.` : "";
+      return `This campaign requires at least ${requirement} on ${network} before you can complete tasks.${current}`;
+    }
+    if (reason === "price_unavailable" || reason === "rpc_unavailable") {
+      return `We could not check $${symbol} holder access on ${network} right now. Please try again in a minute.`;
+    }
+  }
+  const error = typeof payload?.error === "string" ? payload.error.trim() : "";
+  return error || fallback;
+}
+
 function isClaimedByCurrentUser(task: Task, auth: AuthPayload | null) {
   if (!auth?.human?.name) return false;
   return task.assignee?.type === "human" && task.assignee.name === auth.human.name;
@@ -407,7 +433,7 @@ export default function TaskDetailClient({
   const [proofPhrase, setProofPhrase] = useState(initialTask.campaign?.proofPhrase || "");
   const [summary, setSummary] = useState("");
   // Per-task interaction state for QuestN-style task list
-  type TaskItemState = { actionClicked: boolean; verifying: boolean; verified: boolean };
+  type TaskItemState = { actionClicked: boolean; acting?: boolean; verifying: boolean; verified: boolean; error?: string };
   const [taskStates, setTaskStates] = useState<Record<string, TaskItemState>>({});
   const [expandedTasks, setExpandedTasks] = useState<Record<string, boolean>>({ "0": true });
   const [claimingReward, setClaimingReward] = useState(false);
@@ -524,8 +550,10 @@ export default function TaskDetailClient({
           const status = subtasks[key] || "pending";
           newStates[key] = {
             actionClicked: status === "action_done" || status === "verified",
+            acting: false,
             verifying: false,
-            verified: status === "verified"
+            verified: status === "verified",
+            error: ""
           };
         }
         setTaskStates(newStates);
@@ -575,6 +603,11 @@ export default function TaskDetailClient({
       setError("This task is missing its requester-provided action link. Ask the requester to update the campaign links.");
       return;
     }
+    setError("");
+    setTaskStates((prev) => ({
+      ...prev,
+      [taskKey]: { ...(prev[taskKey] || { actionClicked: false, acting: false, verifying: false, verified: false }), acting: true, error: "" }
+    }));
     const popup = intentUrl && typeof window !== "undefined"
       ? window.open("about:blank", "_blank", "width=600,height=400,toolbar=no,menubar=no")
       : null;
@@ -594,19 +627,59 @@ export default function TaskDetailClient({
         credentials: "same-origin",
         body: JSON.stringify({ wallet: walletAddress.toLowerCase(), subtaskKey: taskKey, action: "action" })
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const errorMessage = buildQuestProgressError(data, "We could not save this action. Please check your eligibility and try again.");
+        setTaskStates((prev) => ({
+          ...prev,
+          [taskKey]: {
+            ...(prev[taskKey] || { actionClicked: false, acting: false, verifying: false, verified: false }),
+            actionClicked: false,
+            acting: false,
+            verifying: false,
+            error: errorMessage
+          }
+        }));
+        setError(errorMessage);
+        return;
+      }
       if (data.status === "action_done" || data.status === "verified") {
         setTaskStates((prev) => ({
           ...prev,
-          [taskKey]: { ...(prev[taskKey] || { actionClicked: false, verifying: false, verified: false }), actionClicked: true }
+          [taskKey]: {
+            ...(prev[taskKey] || { actionClicked: false, acting: false, verifying: false, verified: false }),
+            actionClicked: true,
+            acting: false,
+            error: ""
+          }
         }));
+      } else {
+        const errorMessage = buildQuestProgressError(data, "We could not confirm this action. Please try again.");
+        setTaskStates((prev) => ({
+          ...prev,
+          [taskKey]: {
+            ...(prev[taskKey] || { actionClicked: false, acting: false, verifying: false, verified: false }),
+            actionClicked: false,
+            acting: false,
+            verifying: false,
+            error: errorMessage
+          }
+        }));
+        setError(errorMessage);
       }
     } catch {
-      // Best-effort — still enable button so user can retry
+      const errorMessage = "We could not save this action. Please try again.";
       setTaskStates((prev) => ({
         ...prev,
-        [taskKey]: { ...(prev[taskKey] || { actionClicked: false, verifying: false, verified: false }), actionClicked: true }
+        [taskKey]: {
+          ...(prev[taskKey] || { actionClicked: false, acting: false, verifying: false, verified: false }),
+          actionClicked: false,
+          acting: false,
+          verifying: false,
+          error: errorMessage
+        }
       }));
+      setError(errorMessage);
     }
   }
 
@@ -624,11 +697,21 @@ export default function TaskDetailClient({
     }
     const state = taskStates[taskKey];
     if (!state?.actionClicked || state.verifying || state.verified) {
+      if (!state?.actionClicked && !state?.verified) {
+        const errorMessage = "Open the task link first. Once AI2Human records that step, Verify will turn on.";
+        setTaskStates((prev) => ({
+          ...prev,
+          [taskKey]: {
+            ...(prev[taskKey] || { actionClicked: false, acting: false, verifying: false, verified: false }),
+            error: errorMessage
+          }
+        }));
+      }
       return;
     }
     setTaskStates((prev) => ({
       ...prev,
-      [taskKey]: { ...prev[taskKey], verifying: true }
+      [taskKey]: { ...prev[taskKey], verifying: true, error: "" }
     }));
     try {
       const body: Record<string, string> = {
@@ -642,25 +725,36 @@ export default function TaskDetailClient({
         credentials: "same-origin",
         body: JSON.stringify(body)
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const errorMessage = buildQuestProgressError(data, "Verification failed. Please try again.");
+        setTaskStates((prev) => ({
+          ...prev,
+          [taskKey]: { ...prev[taskKey], verifying: false, error: errorMessage }
+        }));
+        setError(errorMessage);
+        return;
+      }
       if (data.status === "verified") {
         setTaskStates((prev) => ({
           ...prev,
-          [taskKey]: { ...prev[taskKey], verifying: false, verified: true }
+          [taskKey]: { ...prev[taskKey], verifying: false, verified: true, error: "" }
         }));
       } else {
+        const errorMessage = buildQuestProgressError(data, "Verification failed. Please try again.");
         setTaskStates((prev) => ({
           ...prev,
-          [taskKey]: { ...prev[taskKey], verifying: false }
+          [taskKey]: { ...prev[taskKey], verifying: false, error: errorMessage }
         }));
-        setError(data.error || "Verification failed. Please try again.");
+        setError(errorMessage);
       }
     } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Verification failed.";
       setTaskStates((prev) => ({
         ...prev,
-        [taskKey]: { ...prev[taskKey], verifying: false }
+        [taskKey]: { ...prev[taskKey], verifying: false, error: errorMessage }
       }));
-      setError(err instanceof Error ? err.message : "Verification failed.");
+      setError(errorMessage);
     }
   }
 
@@ -1781,7 +1875,16 @@ export default function TaskDetailClient({
                     { key: "2", icon: retweetSvg, label: "Repost announcement tweet", actionLabel: "Repost", intentUrl: buildTweetIntentFromUrl("retweet", repostUrl) },
                     { key: "3", icon: likeSvg, label: "Like announcement tweet", actionLabel: "Like", intentUrl: buildTweetIntentFromUrl("like", likeUrl) },
                   ].map((item) => {
-                    const state = taskStates[item.key] || { actionClicked: false, verifying: false, verified: false };
+                    const state = taskStates[item.key] || { actionClicked: false, acting: false, verifying: false, verified: false };
+                    const taskHint = state.error
+                      ? state.error
+                      : state.acting
+                      ? "Opening the task and saving your step..."
+                      : !state.actionClicked && !state.verified
+                      ? `Click ${item.actionLabel} first. Verify turns on after AI2Human records the step.`
+                      : state.verifying
+                      ? "Checking this step..."
+                      : "";
                     const isExpanded = expandedTasks[item.key] || false;
                     return (
                       <div key={item.key} className={styles.qnTaskItem}>
@@ -1832,23 +1935,24 @@ export default function TaskDetailClient({
                                       <button
                                         type="button"
                                         className={styles.btn3dFace}
+                                        disabled={Boolean(state.acting)}
                                         onClick={() => {
                                           handleTaskAction(item.key, item.intentUrl);
                                         }}
                                       >
-                                        {item.icon}
-                                        {item.actionLabel}
+                                        {state.acting ? <span className={styles.qnMiniSpinner} aria-hidden="true" /> : item.icon}
+                                        {state.acting ? "Opening..." : item.actionLabel}
                                       </button>
                                       <span className={styles.btn3dShadow} />
                                     </div>
                                   </div>
                                   {/* Verify button - 3D Green (disabled until action clicked) */}
-                                  <div className={`${styles.btn3d} ${styles.btn3dGreen} ${!state.actionClicked ? styles.btn3dDisabled : ""}`}>
+                                  <div className={`${styles.btn3d} ${styles.btn3dGreen} ${!state.actionClicked || state.acting ? styles.btn3dDisabled : ""}`}>
                                     <div className={styles.btn3dInner}>
                                       <button
                                         type="button"
                                         className={styles.btn3dFace}
-                                        disabled={!state.actionClicked || state.verifying}
+                                        disabled={!state.actionClicked || state.acting || state.verifying}
                                         onClick={() => handleTaskVerify(item.key)}
                                       >
                                         {state.verifying ? "Verifying..." : "Verify"}
@@ -1858,6 +1962,11 @@ export default function TaskDetailClient({
                                   </div>
                                 </div>
                               )}
+                              {taskHint && !state.verified ? (
+                                <p className={state.error ? `${styles.qnTaskHint} ${styles.qnTaskHintError}` : styles.qnTaskHint}>
+                                  {taskHint}
+                                </p>
+                              ) : null}
                             </div>
                           )}
                         </div>
