@@ -62,7 +62,18 @@ function IconProtocol() {
   );
 }
 
+function IconForAgents() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 12V4l5-2 5 2v8l-5 2-5-2z" />
+      <path d="M8 2v12M3 4l5 3 5-3" />
+      <path d="M5.5 10.5h5" />
+    </svg>
+  );
+}
+
 const secondaryNav = [
+  { href: "/for-agents", label: "For Agents", icon: IconForAgents, enabled: true },
   { href: "/agents", label: "Agent Directory", icon: IconAgents },
   { href: "/agent-dashboard", label: "Agent Dashboard", icon: IconDashboard },
   { href: "/leaderboard", label: "Rankings", icon: IconRankings },
@@ -125,19 +136,35 @@ export default function TaskmarketChrome({
                 <span className={styles.navIcon}><IconBrowse /></span>
                 <span>Browse Tasks</span>
               </Link>
-              <span className={`${styles.navLink} ${styles.navLinkDisabled}`}>
+              <Link
+                href="/tasks/new"
+                className={`${styles.navLink} ${isActive(pathname, "/tasks/new") ? styles.navLinkActive : ""}`}
+                onClick={() => setSidebarOpen(false)}
+              >
                 <span className={styles.navIcon}><IconCreate /></span>
                 <span>Create Task</span>
-              </span>
+              </Link>
             </nav>
 
             <nav className={styles.navGroup}>
-              {secondaryNav.map((item) => (
-                <span key={item.href} className={`${styles.navLink} ${styles.navLinkDisabled}`}>
-                  <span className={styles.navIcon}><item.icon /></span>
-                  <span>{item.label}</span>
-                </span>
-              ))}
+              {secondaryNav.map((item) =>
+                item.enabled ? (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`${styles.navLink} ${isActive(pathname, item.href) ? styles.navLinkActive : ""}`}
+                    onClick={() => setSidebarOpen(false)}
+                  >
+                    <span className={styles.navIcon}><item.icon /></span>
+                    <span>{item.label}</span>
+                  </Link>
+                ) : (
+                  <span key={item.href} className={`${styles.navLink} ${styles.navLinkDisabled}`}>
+                    <span className={styles.navIcon}><item.icon /></span>
+                    <span>{item.label}</span>
+                  </span>
+                )
+              )}
             </nav>
           </div>
 

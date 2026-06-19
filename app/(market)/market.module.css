@@ -357,6 +357,265 @@
   line-height: 1.6;
 }
 
+.agentHero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
+  gap: 18px;
+  align-items: stretch;
+  margin-bottom: 18px;
+}
+
+.agentHeroCopy,
+.skillBlock,
+.agentCtaPanel {
+  border: 1px solid var(--tm-border);
+  background: var(--tm-panel);
+  border-radius: 20px;
+  box-shadow: var(--tm-shadow);
+}
+
+.agentHeroCopy {
+  padding: 22px;
+}
+
+.agentKicker {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 10px;
+  border: 1px solid rgba(128, 255, 234, 0.28);
+  background: rgba(128, 255, 234, 0.08);
+  color: var(--tm-cyan);
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.agentHeroCopy h1 {
+  margin: 14px 0 10px;
+  max-width: 680px;
+  font-family: var(--font-display), serif;
+  font-size: clamp(34px, 5vw, 64px);
+  line-height: 0.98;
+  letter-spacing: -0.04em;
+}
+
+.agentHeroCopy p,
+.agentSectionHeader p,
+.agentStep p,
+.templateCard p,
+.agentCtaPanel p {
+  margin: 0;
+  color: var(--tm-muted);
+  line-height: 1.6;
+  font-size: 14px;
+}
+
+.agentHeroActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.agentPrimaryLink,
+.agentSecondaryLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  border-radius: 8px;
+  padding: 0 14px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.agentPrimaryLink {
+  color: #06100f;
+  background: linear-gradient(120deg, var(--tm-cyan), var(--tm-yellow));
+  box-shadow: 0 16px 40px rgba(128, 255, 234, 0.18);
+}
+
+.agentSecondaryLink {
+  color: var(--tm-text);
+  border: 1px solid var(--tm-border);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.skillBlock {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 18px;
+}
+
+.skillBlockTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--tm-muted);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.skillBlockTop a {
+  color: var(--tm-cyan);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.skillBlock code {
+  display: block;
+  min-height: 112px;
+  border: 1px solid rgba(128, 255, 234, 0.2);
+  background: rgba(0, 0, 0, 0.26);
+  border-radius: 12px;
+  padding: 14px;
+  color: rgba(234, 255, 251, 0.92);
+  white-space: pre-wrap;
+  line-height: 1.55;
+  font-size: 13px;
+}
+
+.agentStats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.agentStats div,
+.agentStep,
+.templateCard,
+.resourceCard {
+  border: 1px solid var(--tm-border);
+  background: rgba(255, 255, 255, 0.045);
+  border-radius: 14px;
+  padding: 14px;
+}
+
+.agentStats strong {
+  display: block;
+  color: var(--tm-text);
+  font-size: 20px;
+  line-height: 1;
+}
+
+.agentStats span {
+  display: block;
+  margin-top: 7px;
+  color: var(--tm-muted);
+  font-size: 12px;
+}
+
+.agentSection {
+  margin-top: 22px;
+}
+
+.agentSectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 18px;
+  margin-bottom: 12px;
+}
+
+.agentSectionHeader h2,
+.agentCtaPanel h2 {
+  margin: 0;
+  font-size: 24px;
+  line-height: 1.1;
+}
+
+.agentSectionHeader p {
+  max-width: 520px;
+  text-align: right;
+}
+
+.agentSteps,
+.templateGrid,
+.resourceGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.agentStep span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  background: var(--tm-green-soft);
+  color: var(--tm-green);
+  font-weight: 900;
+  font-size: 12px;
+}
+
+.agentStep h3,
+.templateCard h3,
+.resourceCard h3 {
+  margin: 12px 0 7px;
+  font-size: 16px;
+  line-height: 1.25;
+}
+
+.templateGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.resourceGrid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.resourceCard {
+  display: grid;
+  gap: 7px;
+  color: inherit;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.resourceCard:hover {
+  border-color: rgba(128, 255, 234, 0.32);
+  background: rgba(128, 255, 234, 0.06);
+}
+
+.resourceCard h3 {
+  margin-top: 0;
+}
+
+.resourceCard p {
+  margin: 0;
+  color: var(--tm-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.resourceCard span {
+  overflow: hidden;
+  color: var(--tm-cyan);
+  font-size: 11px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agentCtaPanel {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+  margin-top: 22px;
+  padding: 18px;
+}
+
 .panel {
   border: 1px solid var(--tm-border);
   background: var(--tm-panel);
@@ -862,8 +1121,15 @@
 }
 
 .createWrap {
-  width: min(100%, 560px);
+  width: min(100%, 1040px);
   margin: 0 auto;
+}
+
+.createGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 560px) minmax(320px, 1fr);
+  gap: 16px;
+  align-items: start;
 }
 
 .formCard {
@@ -917,6 +1183,64 @@
   opacity: 0.85;
 }
 
+.handoffPanel {
+  position: sticky;
+  top: 88px;
+  border: 1px solid rgba(128, 255, 234, 0.18);
+  background: linear-gradient(180deg, rgba(128, 255, 234, 0.07), rgba(255, 255, 255, 0.035));
+  padding: 16px;
+  border-radius: 20px;
+  box-shadow: var(--tm-shadow);
+}
+
+.handoffHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.handoffHeader span {
+  color: var(--tm-text);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.handoffHeader button {
+  height: 30px;
+  border: 1px solid rgba(128, 255, 234, 0.38);
+  background: rgba(128, 255, 234, 0.11);
+  color: var(--tm-cyan);
+  padding: 0 10px;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.handoffPanel p {
+  margin: 0 0 12px;
+  color: var(--tm-muted);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.handoffPanel pre {
+  max-height: 560px;
+  margin: 0;
+  overflow: auto;
+  border: 1px solid var(--tm-border);
+  background: rgba(0, 0, 0, 0.22);
+  color: rgba(234, 255, 251, 0.84);
+  padding: 12px;
+  font-size: 11px;
+  line-height: 1.55;
+  border-radius: 12px;
+  white-space: pre-wrap;
+}
+
 .inlineNote {
   margin-top: 12px;
   font-size: 10px;
@@ -963,6 +1287,22 @@
 }
 
 @media (max-width: 1100px) {
+  .createGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .handoffPanel {
+    position: static;
+  }
+
+  .agentHero {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .agentStats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .filters,
   .filtersAgents {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1336,6 +1676,31 @@
 
 /* ===== 768px — tablet/mobile breakpoint ===== */
 @media (max-width: 768px) {
+  .handoffPanel pre {
+    max-height: 420px;
+  }
+
+  .agentHeroCopy h1 {
+    font-size: 34px;
+  }
+
+  .agentSectionHeader,
+  .agentCtaPanel {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .agentSectionHeader p {
+    max-width: none;
+    text-align: left;
+  }
+
+  .agentSteps,
+  .templateGrid,
+  .resourceGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   /* Hide sidebar by default; slide it in as an overlay when .sidebarOpen is added */
   .sidebar {
     display: none;
@@ -1460,6 +1825,38 @@
 
 /* ===== 480px — small mobile breakpoint ===== */
 @media (max-width: 480px) {
+  .agentHero,
+  .agentSection,
+  .agentCtaPanel {
+    margin-left: 12px;
+    margin-right: 12px;
+  }
+
+  .agentHeroCopy,
+  .skillBlock,
+  .agentCtaPanel {
+    border-radius: 16px;
+  }
+
+  .agentHeroCopy {
+    padding: 16px;
+  }
+
+  .agentHeroCopy h1 {
+    font-size: 30px;
+  }
+
+  .agentStats {
+    grid-template-columns: minmax(0, 1fr);
+    margin-left: 12px;
+    margin-right: 12px;
+  }
+
+  .agentPrimaryLink,
+  .agentSecondaryLink {
+    width: 100%;
+  }
+
   /* Single column task grid */
   .tasksGrid {
     grid-template-columns: minmax(0, 1fr);

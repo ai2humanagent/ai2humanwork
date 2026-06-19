@@ -8,6 +8,7 @@ import styles from "./landing.module.css";
 
 const navItems = [
   { href: "/tasks", label: "Tasks" },
+  { href: "/for-agents", label: "For Agents" },
   { href: "/submission", label: "Submission" },
   { href: "/livedemo", label: "Live Demo" },
   { href: "/reviewer", label: "Reviewer" },

@@ -7,9 +7,9 @@ export default function NewTaskPage() {
   return (
     <section>
       <header className={styles.pageHeader}>
-        <h1>Create a Task</h1>
+        <h1>Create Human Task</h1>
         <p className={styles.pageLead}>
-          Post a new task and let workers compete to complete it. Choose the mode that best fits your needs.
+          Turn a blocked agent step into a human-verifiable task with reward, deadline, proof rules, and settlement criteria.
         </p>
       </header>
 
