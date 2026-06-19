@@ -149,14 +149,15 @@ Example:
       "contractAddress": "0x...",
       "symbol": "A2H",
       "decimals": 18,
-      "minimumBalance": "1",
+      "minimumUsdValue": "1",
+      "priceSource": "dexscreener",
       "requiredAt": ["quest_action", "reward_claim"]
     }
   }
 }
 ```
 
-Ask the requester project for the exact token contract, decimals, minimum balance, and when the gate should apply. If `requiredAt` is omitted, AI2Human applies the token gate to all participation actions.
+Ask the requester project for the exact token contract, decimals, minimum balance or USD value threshold, price source, and when the gate should apply. Use `minimumUsdValue` for value-based gates such as around `1 USDC` worth of a token. Use `minimumBalance` only when the requester wants a fixed token-count threshold. If `requiredAt` is omitted, AI2Human applies the token gate to all participation actions.
 
 AI2Human checks the connected wallet balance onchain before allowing participation. The gate is task-level configuration, so future campaigns can use `$A2H` or any requester-provided ERC20 without code changes.
 

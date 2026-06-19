@@ -221,7 +221,7 @@ export async function POST(
           network: tokenGate.gate?.network
         }
       },
-      { status: tokenGate.reason === "rpc_unavailable" ? 503 : tokenGate.reason === "misconfigured" ? 500 : 403 }
+      { status: tokenGate.reason === "rpc_unavailable" || tokenGate.reason === "price_unavailable" ? 503 : tokenGate.reason === "misconfigured" ? 500 : 403 }
     );
   }
   if (isSubmissionDeadlinePassed(task.deadline)) {

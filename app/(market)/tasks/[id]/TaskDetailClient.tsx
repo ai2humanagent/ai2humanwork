@@ -124,6 +124,12 @@ type TokenGateConfig = {
   tokenSymbol?: string;
   decimals?: number;
   minimumBalance?: string;
+  minimumUsdValue?: string;
+  minUsdValue?: string;
+  minimumUsd?: string;
+  priceUsd?: string;
+  tokenPriceUsd?: string;
+  priceSource?: string;
   minBalance?: string;
   minimum?: string;
   holderLabel?: string;
@@ -307,14 +313,17 @@ function getTokenGateNotice(task: Task) {
   const gate = task.campaign?.eligibility?.tokenGate || task.campaign?.tokenGate;
   if (!gate || gate.enabled === false) return null;
   const symbol = String(gate.symbol || gate.tokenSymbol || "TOKEN").replace(/^\$/, "");
+  const minimumUsd = String(gate.minimumUsdValue || gate.minUsdValue || gate.minimumUsd || "").trim();
   const minimum = String(gate.minimumBalance || gate.minBalance || gate.minimum || "1");
   const network = String(gate.network || (gate.chainId === 8453 ? "Base" : "EVM")).replace(/^base$/i, "Base");
+  const requirement = minimumUsd ? `around ${minimumUsd} USDC worth of $${symbol}` : `${minimum} $${symbol}`;
   return {
     symbol,
     minimum,
+    minimumUsd,
     network,
     label: gate.holderLabel || `$${symbol} holder`,
-    text: `Hold at least ${minimum} $${symbol} on ${network} to participate.`
+    text: `Hold at least ${requirement} on ${network} to participate.`
   };
 }
 

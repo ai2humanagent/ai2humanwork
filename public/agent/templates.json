@@ -8,14 +8,16 @@
       "example": {
         "network": "base",
         "chainId": 8453,
-        "contractAddress": "0xc46C41005A1A88B0C1491F2B542A4831D6d1EbA3",
-        "symbol": "A2H",
+        "contractAddress": "REQUESTER_PROVIDED_TOKEN_ADDRESS",
+        "symbol": "REQUESTER_TOKEN_SYMBOL",
         "decimals": 18,
-        "minimumBalance": "1",
+        "minimumUsdValue": "1",
+        "priceSource": "dexscreener",
         "requiredAt": ["quest_action", "reward_claim"]
       },
       "notes": [
-        "Do not invent the token contract address, decimals, or minimum balance. Ask the requester project.",
+        "Do not invent the token contract address, decimals, minimum balance, USD value threshold, or price source. Ask the requester project.",
+        "Use minimumUsdValue for value-based gates such as around 1 USDC worth of a token. Use minimumBalance for fixed token-count gates.",
         "If requiredAt is omitted, the gate applies to all participation actions.",
         "AI2Human checks the connected wallet balance onchain before participation."
       ]

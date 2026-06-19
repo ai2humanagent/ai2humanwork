@@ -55,7 +55,7 @@ export async function POST(
   if (!tokenGate.ok) {
     return NextResponse.json(
       { error: tokenGateErrorMessage(tokenGate, "task_claim") },
-      { status: tokenGate.reason === "rpc_unavailable" ? 503 : tokenGate.reason === "misconfigured" ? 500 : 403 }
+      { status: tokenGate.reason === "rpc_unavailable" || tokenGate.reason === "price_unavailable" ? 503 : tokenGate.reason === "misconfigured" ? 500 : 403 }
     );
   }
 

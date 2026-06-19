@@ -62,8 +62,42 @@ test("token gate can be scoped to specific participation actions", async () => {
   assert.equal(shouldCheckTokenGate(task, "reward_claim"), true);
 });
 
+test("token gate can require a dynamic USD value without hardcoding token amount", async () => {
+  const task = gatedTask({
+    minimumBalance: undefined,
+    minimumUsdValue: "1",
+    priceSource: "configured"
+  });
+
+  const fail = await checkTokenGateForWallet(task, HOLDER, "quest_action", {
+    readPriceUsd: async () => 0.25,
+    readBalance: async () => parseUnits("3.99", 18)
+  });
+  assert.equal(fail.ok, false);
+  assert.equal(fail.minimumTokenBalance, "4");
+  assert.match(tokenGateErrorMessage(fail, "quest_action"), /around 1 USDC worth of \$A2H/);
+
+  const pass = await checkTokenGateForWallet(task, HOLDER, "reward_claim", {
+    readPriceUsd: async () => 0.25,
+    readBalance: async () => parseUnits("4", 18)
+  });
+  assert.equal(pass.ok, true);
+  assert.equal(pass.minimumTokenBalance, "4");
+});
+
 test("token gate description is safe for task UI", () => {
   const description = describeTokenGate(gatedTask({ minimumBalance: "1", holderLabel: "$A2H holder" }));
   assert.equal(description.text, "Hold at least 1 $A2H on Base to participate.");
   assert.equal(description.contractAddress, TOKEN);
+});
+
+test("token gate description supports dynamic USD-value wording", () => {
+  const description = describeTokenGate(gatedTask({
+    minimumBalance: undefined,
+    minimumUsdValue: "1",
+    priceSource: "dexscreener"
+  }));
+  assert.equal(description.text, "Hold at least around 1 USDC worth of $A2H on Base to participate.");
+  assert.equal(description.minimumUsdValue, "1");
+  assert.equal(description.priceSource, "dexscreener");
 });
