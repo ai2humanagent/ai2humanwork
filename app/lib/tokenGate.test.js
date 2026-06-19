@@ -62,6 +62,33 @@ test("token gate can be scoped to specific participation actions", async () => {
   assert.equal(shouldCheckTokenGate(task, "reward_claim"), true);
 });
 
+test("A2H holder campaigns block both task progress and reward claim below the fixed threshold", async () => {
+  const task = gatedTask({
+    minimumBalance: "1000000",
+    requiredAt: ["quest_action", "reward_claim"]
+  });
+
+  assert.equal(shouldCheckTokenGate(task, "quest_action"), true);
+  assert.equal(shouldCheckTokenGate(task, "reward_claim"), true);
+
+  const actionFail = await checkTokenGateForWallet(task, HOLDER, "quest_action", {
+    readBalance: async () => parseUnits("999999.999999", 18)
+  });
+  assert.equal(actionFail.ok, false);
+  assert.equal(actionFail.reason, "insufficient_balance");
+
+  const claimFail = await checkTokenGateForWallet(task, HOLDER, "reward_claim", {
+    readBalance: async () => parseUnits("0", 18)
+  });
+  assert.equal(claimFail.ok, false);
+  assert.equal(claimFail.reason, "insufficient_balance");
+
+  const claimPass = await checkTokenGateForWallet(task, HOLDER, "reward_claim", {
+    readBalance: async () => parseUnits("1000000", 18)
+  });
+  assert.equal(claimPass.ok, true);
+});
+
 test("token gate can require a dynamic USD value without hardcoding token amount", async () => {
   const task = gatedTask({
     minimumBalance: undefined,
