@@ -1476,8 +1476,19 @@ export default function TaskDetailClient({
             { rank: 2, amount: "20 USDC", slots: 1, label: "2nd place" },
             { rank: 3, amount: "10 USDC", slots: 3, label: "3rd place" }
           ];
-      const articleDeadlineEnded = countdown.ended || task.taskState === "closed" || task.taskState === "refunded";
+      const articleContestCompleted = task.status === "paid" || task.taskState === "full";
+      const articleDeadlineEnded = countdown.ended || articleContestCompleted || task.taskState === "closed" || task.taskState === "refunded";
       const articleStatus = articleSubmission?.status || "not submitted";
+      const articleBadgeLabel = articleSubmission?.status === "paid"
+        ? "Paid"
+        : articleSubmission
+          ? "Submitted"
+          : articleContestCompleted
+            ? "Completed"
+            : articleDeadlineEnded
+              ? "Closed"
+              : "Open";
+      const articleBadgeComplete = articleBadgeLabel !== "Open";
       const canSubmitArticle = Boolean(
         articleWallet &&
           hasContactEmail &&
@@ -1485,7 +1496,7 @@ export default function TaskDetailClient({
           !articleDeadlineEnded &&
           !articleUpdateLocked
       );
-      const articleFormLocked = articleUpdateLocked || articleSubmission?.status === "paid";
+      const articleFormLocked = articleUpdateLocked || articleDeadlineEnded || articleSubmission?.status === "paid";
 
       return (
         <main className={styles.page}>
@@ -1507,8 +1518,8 @@ export default function TaskDetailClient({
                         {task.campaign?.requesterHandle || "@ai2humanwork"}
                       </span>
                     </div>
-                    <span className={`${styles.qnTag} ${articleSubmission ? styles.qnTagCompleted : styles.qnTagOngoing}`}>
-                      {articleSubmission ? "Submitted" : "Open"}
+                    <span className={`${styles.qnTag} ${articleBadgeComplete ? styles.qnTagCompleted : styles.qnTagOngoing}`}>
+                      {articleBadgeLabel}
                     </span>
                   </div>
 
