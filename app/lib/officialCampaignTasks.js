@@ -479,6 +479,12 @@ export function buildOfficialCampaignTask(input = {}) {
   const targetUrl = String(input.targetUrl || getDefaultTargetUrlForTemplate(template.id)).trim();
   const proofPhrase = String(input.proofPhrase || template.defaultProofPhrase || "").trim();
   const brief = String(input.brief || template.defaultBrief || "").trim();
+  const eligibility = input.eligibility && typeof input.eligibility === "object"
+    ? input.eligibility
+    : undefined;
+  const tokenGate = input.tokenGate && typeof input.tokenGate === "object"
+    ? input.tokenGate
+    : undefined;
   const campaignLinks = input.campaignLinks && typeof input.campaignLinks === "object"
     ? {
         followHandle: normalizeHandle(input.campaignLinks.followHandle || input.followHandle || ""),
@@ -526,6 +532,7 @@ export function buildOfficialCampaignTask(input = {}) {
       targetLabel: "Target post",
       proofPhrase: proofPhrase || undefined,
       brief: brief || undefined,
+      eligibility: eligibility || (tokenGate ? { tokenGate } : undefined),
       campaignLinks: hasCampaignLinks ? campaignLinks : undefined,
       proofRequirements,
       verificationChecks,

@@ -212,6 +212,8 @@ export function buildAgentTaskPreview(input = {}) {
         targetUrl: input.targetUrl || undefined,
         proofPhrase: input.proofPhrase || undefined,
         brief: input.brief || undefined,
+        eligibility: input.eligibility || undefined,
+        tokenGate: input.tokenGate || undefined,
         campaignLinks: input.campaignLinks
       })
     : null;

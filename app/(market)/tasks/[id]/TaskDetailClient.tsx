@@ -67,6 +67,10 @@ type Task = {
       missingInputs?: string[];
       nextQuestions?: Array<{ field: string; question: string }>;
     };
+    eligibility?: {
+      tokenGate?: TokenGateConfig;
+    };
+    tokenGate?: TokenGateConfig;
     requiresImage?: boolean;
     requiredMentions?: string[];
     requiredHashtags?: string[];
@@ -108,6 +112,23 @@ type Task = {
     }>;
   };
   taskState?: "open" | "full" | "closed" | "refunded";
+};
+
+type TokenGateConfig = {
+  enabled?: boolean;
+  network?: string;
+  chainId?: number;
+  contractAddress?: string;
+  tokenAddress?: string;
+  symbol?: string;
+  tokenSymbol?: string;
+  decimals?: number;
+  minimumBalance?: string;
+  minBalance?: string;
+  minimum?: string;
+  holderLabel?: string;
+  failureMessage?: string;
+  requiredAt?: string[];
 };
 
 type AuthPayload = {
@@ -282,6 +303,21 @@ function hasUsableEmail(email?: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
 
+function getTokenGateNotice(task: Task) {
+  const gate = task.campaign?.eligibility?.tokenGate || task.campaign?.tokenGate;
+  if (!gate || gate.enabled === false) return null;
+  const symbol = String(gate.symbol || gate.tokenSymbol || "TOKEN").replace(/^\$/, "");
+  const minimum = String(gate.minimumBalance || gate.minBalance || gate.minimum || "1");
+  const network = String(gate.network || (gate.chainId === 8453 ? "Base" : "EVM")).replace(/^base$/i, "Base");
+  return {
+    symbol,
+    minimum,
+    network,
+    label: gate.holderLabel || `$${symbol} holder`,
+    text: `Hold at least ${minimum} $${symbol} on ${network} to participate.`
+  };
+}
+
 function isClaimedByCurrentUser(task: Task, auth: AuthPayload | null) {
   if (!auth?.human?.name) return false;
   return task.assignee?.type === "human" && task.assignee.name === auth.human.name;
@@ -410,6 +446,7 @@ export default function TaskDetailClient({
   const hasContactEmail = hasUsableEmail(auth?.user.contactEmail) || hasUsableEmail(auth?.user.email);
   const isTestArticleContest = isArticleContest && task.id.startsWith("x-article-contest-test-");
   const articleWallet = connectedWallet;
+  const tokenGateNotice = getTokenGateNotice(task);
 
   function cacheXHandle(handle: string) {
     setXHandle(handle);
@@ -1460,6 +1497,13 @@ export default function TaskDetailClient({
                           button for this contest.
                         </p>
                       </div>
+                      {tokenGateNotice && (
+                        <div className={styles.articleRuleCard}>
+                          <span className={styles.articleRuleIndex}>04</span>
+                          <p className={styles.articleRuleTitle}>{tokenGateNotice.label} access</p>
+                          <p>{tokenGateNotice.text} We check the connected wallet onchain before accepting the submission.</p>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -1836,6 +1880,12 @@ export default function TaskDetailClient({
                 <div className={styles.qnProfileNotice}>
                   Add a contact email and bind your X account before doing tasks.
                   <a href="/app/profile">→ Complete Profile</a>
+                </div>
+              )}
+
+              {tokenGateNotice && !isDone && (
+                <div className={styles.qnProfileNotice}>
+                  {tokenGateNotice.text} Eligibility is checked onchain from your connected wallet.
                 </div>
               )}
 

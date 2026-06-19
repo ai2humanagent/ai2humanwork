@@ -93,6 +93,44 @@ export type Task = {
       missingInputs?: string[];
       nextQuestions?: Array<{ field: string; question: string }>;
     };
+    eligibility?: {
+      tokenGate?: {
+        enabled?: boolean;
+        network?: string;
+        chainId?: number;
+        contractAddress?: string;
+        tokenAddress?: string;
+        symbol?: string;
+        tokenSymbol?: string;
+        decimals?: number;
+        minimumBalance?: string;
+        minBalance?: string;
+        minimum?: string;
+        holderLabel?: string;
+        failureMessage?: string;
+        requiredAt?: Array<"article_submit" | "quest_action" | "reward_claim" | "task_claim" | string>;
+        rpcUrl?: string;
+        explorerUrl?: string;
+      };
+    };
+    tokenGate?: {
+      enabled?: boolean;
+      network?: string;
+      chainId?: number;
+      contractAddress?: string;
+      tokenAddress?: string;
+      symbol?: string;
+      tokenSymbol?: string;
+      decimals?: number;
+      minimumBalance?: string;
+      minBalance?: string;
+      minimum?: string;
+      holderLabel?: string;
+      failureMessage?: string;
+      requiredAt?: Array<"article_submit" | "quest_action" | "reward_claim" | "task_claim" | string>;
+      rpcUrl?: string;
+      explorerUrl?: string;
+    };
     requiresImage?: boolean;
     requiredMentions?: string[];
     requiredHashtags?: string[];

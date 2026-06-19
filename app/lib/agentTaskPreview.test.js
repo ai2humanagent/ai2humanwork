@@ -66,6 +66,26 @@ test("agent lucky draw preview requires funding mode and environment", () => {
   assert.ok(result.nextQuestions.some((item) => item.field === "fundingMode"));
 });
 
+test("agent preview preserves optional holder-only eligibility", () => {
+  const payload = readExample("create-lucky-draw-task.json");
+  payload.eligibility = {
+    tokenGate: {
+      network: "base",
+      chainId: 8453,
+      contractAddress: "0xc46C41005A1A88B0C1491F2B542A4831D6d1EbA3",
+      symbol: "A2H",
+      decimals: 18,
+      minimumBalance: "1",
+      requiredAt: ["quest_action", "reward_claim"]
+    }
+  };
+  const result = buildAgentTaskPreview(payload);
+
+  assert.equal(result.readyToCreate, true);
+  assert.equal(result.preview.campaign.eligibility.tokenGate.symbol, "A2H");
+  assert.deepEqual(result.preview.campaign.eligibility.tokenGate.requiredAt, ["quest_action", "reward_claim"]);
+});
+
 test("agent preview requires requester-provided target URLs for campaign templates", () => {
   const payload = readExample("create-human-task.json");
   payload.targetUrl = "https://x.com/yourproject/status/...";

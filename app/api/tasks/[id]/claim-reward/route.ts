@@ -19,6 +19,7 @@ import { getAuthContext } from "../../../../lib/auth";
 import { generateNextBoundedLuckyDrawAmount } from "../../../../lib/luckyDraw.js";
 import { getOperatorAccessForWallet, taskAccessError } from "../../../../lib/operatorAccess";
 import { addNotification, sendEmailNotification } from "../../../../lib/notificationDelivery";
+import { checkTokenGateForWallet, tokenGateErrorMessage } from "../../../../lib/tokenGate.js";
 
 export const runtime = "nodejs";
 
@@ -210,6 +211,23 @@ export async function POST(
   const task = db.tasks.find((t) => t.id === taskId);
   if (!task) {
     return NextResponse.json({ error: "Task not found" }, { status: 404 });
+  }
+  const tokenGate = await checkTokenGateForWallet(task, wallet, "reward_claim");
+  if (!tokenGate.ok) {
+    return NextResponse.json(
+      {
+        error: tokenGateErrorMessage(tokenGate, "reward_claim"),
+        tokenGate: {
+          required: tokenGate.required,
+          reason: tokenGate.reason,
+          balance: tokenGate.balanceFormatted,
+          symbol: tokenGate.gate?.symbol,
+          minimumBalance: tokenGate.gate?.minimumBalance,
+          network: tokenGate.gate?.network
+        }
+      },
+      { status: tokenGate.reason === "rpc_unavailable" ? 503 : tokenGate.reason === "misconfigured" ? 500 : 403 }
+    );
   }
   if (isTestRewardTask(task)) {
     return NextResponse.json(

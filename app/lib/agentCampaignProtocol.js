@@ -285,6 +285,8 @@ export function buildAgentCampaignTask(input = {}, preview) {
     targetUrl: input.targetUrl || undefined,
     proofPhrase: input.proofPhrase || undefined,
     brief: input.brief || undefined,
+    eligibility: input.eligibility || undefined,
+    tokenGate: input.tokenGate || undefined,
     campaignLinks: input.campaignLinks
   });
   const rewardDistribution = parseRewardDistribution(input.rewardDistribution, campaignTask.budget);

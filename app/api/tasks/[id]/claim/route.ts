@@ -4,6 +4,7 @@ import { readDb, updateDb } from "../../../../lib/store";
 import { canTransition, explainInvalidTransition } from "../../../../lib/taskStateMachine";
 import { appendEvidence, appendTransitionEvidence } from "../../../../lib/taskEvidence";
 import { getOperatorAccessForWallet, taskAccessError } from "../../../../lib/operatorAccess";
+import { checkTokenGateForWallet, tokenGateErrorMessage } from "../../../../lib/tokenGate.js";
 
 export const runtime = "nodejs";
 
@@ -44,6 +45,18 @@ export async function POST(
   const human = db.humans.find((item) => item.id === user.humanId);
   if (!human) {
     return NextResponse.json({ error: "Operator profile not found." }, { status: 404 });
+  }
+
+  const taskToClaim = db.tasks.find((item) => item.id === params.id);
+  if (!taskToClaim) {
+    return NextResponse.json({ error: "Task not found" }, { status: 404 });
+  }
+  const tokenGate = await checkTokenGateForWallet(taskToClaim, user.walletAddress, "task_claim");
+  if (!tokenGate.ok) {
+    return NextResponse.json(
+      { error: tokenGateErrorMessage(tokenGate, "task_claim") },
+      { status: tokenGate.reason === "rpc_unavailable" ? 503 : tokenGate.reason === "misconfigured" ? 500 : 403 }
+    );
   }
 
   let updated = null;

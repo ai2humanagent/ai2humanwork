@@ -1,6 +1,26 @@
 {
   "version": "0.1.0",
   "principle": "Every live campaign value must come from the requester agent/project. Examples are not defaults.",
+  "eligibility": {
+    "tokenGate": {
+      "description": "Optional holder-only access rule. Use it when a campaign should only accept participants holding a configured ERC20 token.",
+      "fieldPath": "eligibility.tokenGate",
+      "example": {
+        "network": "base",
+        "chainId": 8453,
+        "contractAddress": "0xc46C41005A1A88B0C1491F2B542A4831D6d1EbA3",
+        "symbol": "A2H",
+        "decimals": 18,
+        "minimumBalance": "1",
+        "requiredAt": ["quest_action", "reward_claim"]
+      },
+      "notes": [
+        "Do not invent the token contract address, decimals, or minimum balance. Ask the requester project.",
+        "If requiredAt is omitted, the gate applies to all participation actions.",
+        "AI2Human checks the connected wallet balance onchain before participation."
+      ]
+    }
+  },
   "fundingModes": {
     "ai2human_managed_pool": {
       "description": "Recommended production mode. AI2Human deploys the PrizePool, returns a USDC funding invoice, and publishes only after on-chain preflight confirms the pool is funded.",

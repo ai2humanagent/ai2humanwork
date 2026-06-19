@@ -27,6 +27,7 @@ import {
   xHandlesMatch
 } from "../../../../lib/articleContest";
 import { getOperatorAccessForWallet, hasUsableContactEmail, taskAccessError } from "../../../../lib/operatorAccess";
+import { checkTokenGateForWallet, tokenGateErrorMessage } from "../../../../lib/tokenGate.js";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -205,6 +206,23 @@ export async function POST(
   }
   if (!isArticleContestDistribution(task.rewardDistribution)) {
     return NextResponse.json({ error: "This task does not accept ranked contest submissions." }, { status: 400 });
+  }
+  const tokenGate = await checkTokenGateForWallet(task, wallet, "article_submit");
+  if (!tokenGate.ok) {
+    return NextResponse.json(
+      {
+        error: tokenGateErrorMessage(tokenGate, "article_submit"),
+        tokenGate: {
+          required: tokenGate.required,
+          reason: tokenGate.reason,
+          balance: tokenGate.balanceFormatted,
+          symbol: tokenGate.gate?.symbol,
+          minimumBalance: tokenGate.gate?.minimumBalance,
+          network: tokenGate.gate?.network
+        }
+      },
+      { status: tokenGate.reason === "rpc_unavailable" ? 503 : tokenGate.reason === "misconfigured" ? 500 : 403 }
+    );
   }
   if (isSubmissionDeadlinePassed(task.deadline)) {
     return NextResponse.json({ error: "Submission deadline has passed." }, { status: 400 });

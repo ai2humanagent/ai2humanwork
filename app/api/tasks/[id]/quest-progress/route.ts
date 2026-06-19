@@ -4,6 +4,7 @@ import { getAuthContext } from "../../../../lib/auth";
 import { readDb, updateDb, type QuestProgressStatus } from "../../../../lib/store";
 import { getBoundXAccountForWallet, normalizeXHandle } from "../../../../lib/xIdentity";
 import { getOperatorAccessForWallet, taskAccessError } from "../../../../lib/operatorAccess";
+import { checkTokenGateForWallet, describeTokenGate, tokenGateErrorMessage } from "../../../../lib/tokenGate.js";
 
 export const runtime = "nodejs";
 
@@ -74,7 +75,8 @@ export async function GET(
     xAccount,
     requirements: {
       ok: access.ok,
-      missing: access.missing
+      missing: access.missing,
+      tokenGate: describeTokenGate(task)
     },
     ...(claimedPayment ? { payment: claimedPayment } : {}),
     ...(xAccount?.username ? { xHandle: xAccount.username } : participant?.xHandle ? { xHandle: participant.xHandle } : {})
@@ -121,6 +123,23 @@ export async function POST(
   const task = db.tasks.find((t) => t.id === taskId);
   if (!task) {
     return NextResponse.json({ error: "Task not found" }, { status: 404 });
+  }
+  const tokenGate = await checkTokenGateForWallet(task, wallet, "quest_action");
+  if (!tokenGate.ok) {
+    return NextResponse.json(
+      {
+        error: tokenGateErrorMessage(tokenGate, "quest_action"),
+        tokenGate: {
+          required: tokenGate.required,
+          reason: tokenGate.reason,
+          balance: tokenGate.balanceFormatted,
+          symbol: tokenGate.gate?.symbol,
+          minimumBalance: tokenGate.gate?.minimumBalance,
+          network: tokenGate.gate?.network
+        }
+      },
+      { status: tokenGate.reason === "rpc_unavailable" ? 503 : tokenGate.reason === "misconfigured" ? 500 : 403 }
+    );
   }
   const access = await getOperatorAccessForWallet(db, wallet);
   if (!access.ok) {
