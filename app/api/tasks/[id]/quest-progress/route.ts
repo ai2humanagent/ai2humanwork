@@ -5,6 +5,7 @@ import { readDb, updateDb, type QuestProgressStatus } from "../../../../lib/stor
 import { getBoundXAccountForWallet, normalizeXHandle } from "../../../../lib/xIdentity";
 import { getOperatorAccessForWallet, taskAccessError } from "../../../../lib/operatorAccess";
 import { checkTokenGateForWallet, describeTokenGate, tokenGateErrorMessage } from "../../../../lib/tokenGate.js";
+import { getRewardTaskUnavailableReason } from "../../../../lib/rewardTaskGuards.js";
 
 export const runtime = "nodejs";
 
@@ -123,6 +124,10 @@ export async function POST(
   const task = db.tasks.find((t) => t.id === taskId);
   if (!task) {
     return NextResponse.json({ error: "Task not found" }, { status: 404 });
+  }
+  const unavailableReason = getRewardTaskUnavailableReason(task);
+  if (unavailableReason) {
+    return NextResponse.json({ error: unavailableReason }, { status: 403 });
   }
   const tokenGate = await checkTokenGateForWallet(task, wallet, "quest_action");
   if (!tokenGate.ok) {

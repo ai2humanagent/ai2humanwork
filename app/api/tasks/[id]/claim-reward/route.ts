@@ -20,6 +20,7 @@ import { generateNextBoundedLuckyDrawAmount } from "../../../../lib/luckyDraw.js
 import { getOperatorAccessForWallet, taskAccessError } from "../../../../lib/operatorAccess";
 import { addNotification, sendEmailNotification } from "../../../../lib/notificationDelivery";
 import { checkTokenGateForWallet, tokenGateErrorMessage } from "../../../../lib/tokenGate.js";
+import { getRewardTaskUnavailableReason } from "../../../../lib/rewardTaskGuards.js";
 
 export const runtime = "nodejs";
 
@@ -211,6 +212,10 @@ export async function POST(
   const task = db.tasks.find((t) => t.id === taskId);
   if (!task) {
     return NextResponse.json({ error: "Task not found" }, { status: 404 });
+  }
+  const unavailableReason = getRewardTaskUnavailableReason(task);
+  if (unavailableReason) {
+    return NextResponse.json({ error: unavailableReason }, { status: 403 });
   }
   const tokenGate = await checkTokenGateForWallet(task, wallet, "reward_claim");
   if (!tokenGate.ok) {
