@@ -51,6 +51,10 @@ function buildExplorerUrl(baseUrl: string, txHash: string): string {
   return `${baseUrl.replace(/\/+$/, "")}/tx/${txHash}`;
 }
 
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export function isUsablePrizePoolAddress(value: string | undefined | null): boolean {
   if (!value || !isAddress(value)) return false;
   return value.toLowerCase() !== zeroAddress.toLowerCase();
@@ -447,12 +451,7 @@ export async function createPrizePoolCampaign(input: {
       };
     }
 
-    const owner = await publicClient.readContract({
-      address: poolAddress as `0x${string}`,
-      abi: prizePoolAbi,
-      functionName: "owner",
-      args: []
-    }) as string;
+    const owner = await readDeployedPrizePoolOwner({ publicClient, poolAddress });
     if (owner.toLowerCase() !== account.address.toLowerCase()) {
       return {
         ok: false,
@@ -471,6 +470,32 @@ export async function createPrizePoolCampaign(input: {
     const msg = err instanceof Error ? err.message : "Unknown error";
     return { ok: false, error: `createPool failed: ${msg}` };
   }
+}
+
+async function readDeployedPrizePoolOwner(input: {
+  publicClient: ReturnType<typeof createPublicClient>;
+  poolAddress: string;
+}) {
+  let lastError = "";
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    try {
+      const code = await input.publicClient.getCode({ address: input.poolAddress as `0x${string}` });
+      if (!code || code === "0x") {
+        lastError = "contract code not available yet";
+      } else {
+        return await input.publicClient.readContract({
+          address: input.poolAddress as `0x${string}`,
+          abi: prizePoolAbi,
+          functionName: "owner",
+          args: []
+        }) as string;
+      }
+    } catch (error) {
+      lastError = error instanceof Error ? error.message : "unknown owner read error";
+    }
+    await sleep(750 * (attempt + 1));
+  }
+  throw new Error(lastError || "Unable to read PrizePool owner after deployment.");
 }
 
 // ============================================================
