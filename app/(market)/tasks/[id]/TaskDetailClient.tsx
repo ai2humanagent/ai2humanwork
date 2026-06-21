@@ -466,6 +466,10 @@ export default function TaskDetailClient({
   const connectedWallet = (ready && authenticated) ? rawWallet : undefined;
 
   const isTwitterTask = ["twitter_follow", "twitter_like", "twitter_retweet", "twitter_comment"].includes(task.taskType || "");
+  const isQuestCampaign =
+    isTwitterTask ||
+    task.rewardDistribution?.mode === "lucky_draw" ||
+    Boolean(task.campaign?.campaignLinks);
   const isArticleContest = task.rewardDistribution?.mode === "ranked_article_contest";
   const isBannerImageContest = isArticleContest && task.campaign?.action === "banner_image_contest";
   const requiresAttachedImage = isArticleContest && !isBannerImageContest && Boolean(task.campaign?.requiresImage);
@@ -851,6 +855,7 @@ export default function TaskDetailClient({
               : `${data.payment.amount} ${data.payment.tokenSymbol || "USDC"} sent to your wallet!`
         );
       }
+      await loadQuesters();
       setCaptchaToken("");
       setRecaptchaWidgetId(null);
       if (recaptchaContainerRef.current) {
@@ -932,6 +937,18 @@ export default function TaskDetailClient({
     }
   }
 
+  async function loadQuesters() {
+    try {
+      const res = await fetch(`/api/tasks/${initialTask.id}/questers`, { cache: "no-store" });
+      const data = (await res.json().catch(() => null)) as QuestersData | null;
+      if (res.ok && data) {
+        setQuestersData(data);
+      }
+    } catch {
+      // Community stats are non-blocking; keep the task usable if this refresh fails.
+    }
+  }
+
   async function loadAuth(): Promise<AuthPayload | null> {
     const payload = await loadAuthWithPrivySession<AuthPayload>({
       authenticated,
@@ -1003,16 +1020,11 @@ export default function TaskDetailClient({
     }
   }, [articleWallet, isArticleContest, articleSubmissionLoaded]);
 
-  // Load questers data for Twitter tasks
+  // Load questers data for X/lucky-draw campaigns
   useEffect(() => {
-    if (!isTwitterTask) return;
-    fetch(`/api/tasks/${initialTask.id}/questers`, { cache: "no-store" })
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data) setQuestersData(data);
-      })
-      .catch(() => {});
-  }, [isTwitterTask, initialTask.id]);
+    if (!isQuestCampaign) return;
+    loadQuesters();
+  }, [isQuestCampaign, initialTask.id]);
 
   // Load related tasks from API
   useEffect(() => {
@@ -2329,7 +2341,10 @@ export default function TaskDetailClient({
                 </div>
                 <div className={`${styles.qnShowMore} ${styles.btn3d} ${styles.btn3dGhost}`}>
                   <div className={styles.btn3dInner}>
-                    <button type="button" className={styles.btn3dFace} onClick={() => loadTask()}>
+                    <button type="button" className={styles.btn3dFace} onClick={() => {
+                      loadTask();
+                      loadQuesters();
+                    }}>
                       Show More
                     </button>
                     <span className={styles.btn3dShadow} />
