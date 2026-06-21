@@ -1,8 +1,9 @@
 export function getRewardTaskUnavailableReason(task) {
   const taskState = String(task?.taskState || "").trim();
   const lifecycleStatus = String(task?.campaign?.agentLifecycle?.status || "").trim();
+  const visibleLifecycleStatuses = new Set(["published", "completed", "closed", "refunded"]);
 
-  if (lifecycleStatus && lifecycleStatus !== "published") {
+  if (lifecycleStatus && !visibleLifecycleStatuses.has(lifecycleStatus)) {
     return "This activity is not published yet.";
   }
   if (taskState === "full") {
