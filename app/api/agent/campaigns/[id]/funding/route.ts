@@ -89,6 +89,14 @@ function buildFundingStatus(
       : readyToPublish
         ? "funded_ready_to_publish"
         : "awaiting_usdc_transfer";
+  const responsePreflight = alreadyPublished
+    ? {
+        ...contractPreflight,
+        ok: true,
+        status,
+        issues: []
+      }
+    : contractPreflight;
 
   return {
     taskId: task.id,
@@ -100,7 +108,7 @@ function buildFundingStatus(
     poolAddress: usablePool ? poolAddress : undefined,
     fundingInvoice,
     invalidFundingInvoice: usablePool ? undefined : existingInvoice,
-    contractPreflight,
+    contractPreflight: responsePreflight,
     nextAction: alreadyPublished
       ? Number.isFinite(slotsLeft) && slotsLeft <= 0
         ? "Campaign is published and all reward slots are claimed."
