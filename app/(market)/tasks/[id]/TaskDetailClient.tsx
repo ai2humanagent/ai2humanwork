@@ -1309,6 +1309,17 @@ export default function TaskDetailClient({
     // Tag label: show "Ended" only when task pool is exhausted (all winners claimed / refunded / closed)
     // Otherwise show "Completed" if current user claimed, "Ongoing" if not
     const isGloballyEnded = task.taskState === "full" || task.taskState === "closed" || task.taskState === "refunded";
+    const paidSlots = Math.min(
+      maxWinners,
+      isGloballyEnded && questersData.claimedCount === 0 ? maxWinners : questersData.claimedCount
+    );
+    const paidProgressPct = maxWinners > 0 ? Math.min(100, Math.round((paidSlots / maxWinners) * 100)) : 0;
+    const endedReason =
+      task.taskState === "full"
+        ? "All reward slots have been paid."
+        : task.taskState === "refunded"
+          ? "This reward pool has been refunded."
+          : "This activity is closed.";
 
     // Twitter SVG icon
     const twitterSvg = (
@@ -1878,6 +1889,16 @@ export default function TaskDetailClient({
                   </div>
                 </div>
 
+                {isGloballyEnded && (
+                  <div className={styles.qnEndedBanner}>
+                    <div>
+                      <span className={styles.qnEndedEyebrow}>Activity ended</span>
+                      <strong>{endedReason}</strong>
+                    </div>
+                    <span>{paidSlots}/{maxWinners} paid</span>
+                  </div>
+                )}
+
                 {/* Task List */}
                 <div className={styles.qnTaskList}>
                   {[
@@ -1918,7 +1939,12 @@ export default function TaskDetailClient({
                           {/* Task body with action + verify buttons */}
                           {isExpanded && (
                             <div className={styles.qnTaskBody}>
-                              {!connectedWallet ? (
+                              {isGloballyEnded ? (
+                                <div className={`${styles.qnTaskDoneInline} ${styles.qnTaskEndedInline}`}>
+                                  {checkSvg}
+                                  <span>{endedReason} New verification is disabled.</span>
+                                </div>
+                              ) : !connectedWallet ? (
                                 <div className={styles.qnTaskButtons}>
                                   <div className={`${styles.btn3d} ${styles.btn3dCyan}`}>
                                     <div className={styles.btn3dInner}>
@@ -2121,6 +2147,11 @@ export default function TaskDetailClient({
                     <span className={styles.qnStatValue}>{maxWinners}</span>
                     <span className={styles.qnStatLabel}>Winners</span>
                   </div>
+                  <div className={styles.qnStatDivider} />
+                  <div className={styles.qnStatItem}>
+                    <span className={styles.qnStatValue}>{paidSlots}/{maxWinners}</span>
+                    <span className={styles.qnStatLabel}>Paid</span>
+                  </div>
                   {dist?.totalPool && maxWinners > 1 && (
                     <>
                       <div className={styles.qnStatDivider} />
@@ -2130,6 +2161,13 @@ export default function TaskDetailClient({
                       </div>
                     </>
                   )}
+                </div>
+
+                <div className={styles.qnRewardProgress} aria-label={`${paidSlots} of ${maxWinners} reward slots paid`}>
+                  <div className={styles.qnRewardProgressTrack}>
+                    <span style={{ width: `${paidProgressPct}%` }} />
+                  </div>
+                  <p>{isGloballyEnded ? endedReason : `${paidSlots} of ${maxWinners} reward slots paid so far.`}</p>
                 </div>
 
                 {/* Deadline / Countdown */}

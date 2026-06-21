@@ -332,6 +332,49 @@
   animation: qnPulse 2s ease-in-out infinite;
 }
 
+.qnEndedBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 18px 24px 0;
+  padding: 16px 18px;
+  border-radius: 16px;
+  border: 1px solid rgba(128, 255, 234, 0.28);
+  background:
+    linear-gradient(135deg, rgba(128, 255, 234, 0.14), rgba(124, 92, 255, 0.08)),
+    rgba(255, 255, 255, 0.035);
+  color: var(--tm-text);
+}
+
+.qnEndedBanner div {
+  display: grid;
+  gap: 4px;
+}
+
+.qnEndedBanner strong {
+  font-size: 15px;
+  line-height: 1.35;
+}
+
+.qnEndedBanner span:last-child {
+  flex-shrink: 0;
+  padding: 7px 11px;
+  border-radius: 999px;
+  background: rgba(128, 255, 234, 0.12);
+  color: var(--tm-cyan);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.qnEndedEyebrow {
+  color: var(--tm-muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 @keyframes qnPulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.35; }
@@ -1225,6 +1268,37 @@
   line-height: 1.2;
 }
 
+.qnRewardProgress {
+  display: grid;
+  gap: 8px;
+  margin: -2px 0 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--tm-border);
+}
+
+.qnRewardProgressTrack {
+  height: 9px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.qnRewardProgressTrack span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--tm-cyan), var(--tm-green));
+  box-shadow: 0 0 18px rgba(128, 255, 234, 0.35);
+}
+
+.qnRewardProgress p {
+  margin: 0;
+  color: var(--tm-muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
 .qnTimerUnit {
   display: block;
   font-size: 10px;
@@ -1494,6 +1568,12 @@
   width: 12px;
   height: 12px;
   flex-shrink: 0;
+}
+
+.qnTaskEndedInline {
+  background: rgba(128, 255, 234, 0.06);
+  border-color: rgba(128, 255, 234, 0.18);
+  color: var(--tm-cyan);
 }
 
 .qnDoneState {
