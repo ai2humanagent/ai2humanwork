@@ -97,6 +97,9 @@ export function shouldCheckTokenGate(task, action) {
   const gate = normalizeTokenGate(task);
   if (!gate) return false;
   if (!gate.requiredAt.length) return true;
+  if (action === "task_claim" && (gate.requiredAt.includes("quest_action") || gate.requiredAt.includes("article_submit"))) {
+    return true;
+  }
   return gate.requiredAt.includes(action);
 }
 

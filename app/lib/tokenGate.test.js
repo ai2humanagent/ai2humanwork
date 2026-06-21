@@ -59,6 +59,7 @@ test("token gate checks configured ERC20 balance against minimum", async () => {
 test("token gate can be scoped to specific participation actions", async () => {
   const task = gatedTask({ requiredAt: ["reward_claim"] });
   assert.equal(shouldCheckTokenGate(task, "article_submit"), false);
+  assert.equal(shouldCheckTokenGate(task, "task_claim"), false);
   assert.equal(shouldCheckTokenGate(task, "reward_claim"), true);
 });
 
@@ -69,6 +70,7 @@ test("A2H holder campaigns block both task progress and reward claim below the f
   });
 
   assert.equal(shouldCheckTokenGate(task, "quest_action"), true);
+  assert.equal(shouldCheckTokenGate(task, "task_claim"), true);
   assert.equal(shouldCheckTokenGate(task, "reward_claim"), true);
 
   const actionFail = await checkTokenGateForWallet(task, HOLDER, "quest_action", {
