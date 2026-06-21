@@ -198,7 +198,7 @@ export async function POST(
       scored.push(submission);
       continue;
     }
-    if (submission.aiScore != null && submission.reviewedAt) {
+    if (!requestedForce && submission.aiScore != null && submission.reviewedAt) {
       reusedPreviews += 1;
       scored.push(submission);
       continue;

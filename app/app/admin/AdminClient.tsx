@@ -1434,14 +1434,12 @@ function TaskDetailPanel({ task }: { task: TaskDetail }) {
               title={
                 finalReviewLocked
                   ? "Final results are already locked for this contest."
-                  : unscoredSubmissions.length === 0
-                    ? "All submissions already have a current score."
-                    : "Only use this if a submission is missing its current score."
+                  : "Re-run AI review for current submissions without locking final winners."
               }
             >
               {actionBusy === "rerun_review"
-                ? "Refreshing missing scores..."
-                : "Fill Missing Scores"}
+                ? "Refreshing AI Scores..."
+                : "Refresh AI Scores"}
             </button>
             <button
               className={styles.backBtn}

@@ -671,6 +671,79 @@ export async function validateDexscreenerHeaderImage(rawUrl: string): Promise<Pu
   return inspected;
 }
 
+async function prepareImageForModel(rawUrl: string): Promise<{
+  url: string;
+  transport: "data_url" | "remote_url";
+  attempts: string[];
+  error?: string;
+}> {
+  const asset = await fetchPublicImageAsset(rawUrl);
+  const attempts = [...asset.attempts];
+  if (!asset.ok) {
+    return {
+      url: rawUrl,
+      transport: "remote_url",
+      attempts,
+      error: asset.error
+    };
+  }
+
+  const timeout = withTimeout(15000);
+  try {
+    attempts.push("model_image_get");
+    const response = await fetch(asset.url, {
+      method: "GET",
+      signal: timeout.signal,
+      cache: "no-store",
+      headers: {
+        "User-Agent": "Mozilla/5.0 ai2human-image-review/1.0"
+      }
+    });
+    const contentType = String(response.headers.get("content-type") || asset.contentType || "").toLowerCase();
+    if (!response.ok) {
+      return {
+        url: asset.url,
+        transport: "remote_url",
+        attempts: [...attempts, `model_image_http_${response.status}`],
+        error: `Image download failed with HTTP ${response.status}.`
+      };
+    }
+    if (!contentType.startsWith("image/")) {
+      return {
+        url: asset.url,
+        transport: "remote_url",
+        attempts: [...attempts, `model_image_content_type:${contentType || "unknown"}`],
+        error: "Image download did not return an image content type."
+      };
+    }
+    const buffer = Buffer.from(await response.arrayBuffer());
+    const maxDataUrlBytes = Math.floor(4.5 * 1024 * 1024);
+    if (buffer.byteLength > maxDataUrlBytes) {
+      return {
+        url: asset.url,
+        transport: "remote_url",
+        attempts: [...attempts, `model_image_too_large:${buffer.byteLength}`],
+        error: "Image is too large to inline for model review."
+      };
+    }
+    attempts.push(`model_image_data_url:${contentType}:${buffer.byteLength}`);
+    return {
+      url: `data:${contentType};base64,${buffer.toString("base64")}`,
+      transport: "data_url",
+      attempts
+    };
+  } catch (error) {
+    return {
+      url: asset.url,
+      transport: "remote_url",
+      attempts: [...attempts, `model_image_error:${error instanceof Error ? error.message.slice(0, 120) : "unknown"}`],
+      error: error instanceof Error ? error.message : "Image download failed."
+    };
+  } finally {
+    timeout.clear();
+  }
+}
+
 function withTimeout(ms: number) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), ms);
@@ -2187,11 +2260,12 @@ async function scoreImagePostSubmission(input: {
     reviewTarget,
     imageVisible: true
   });
+  const modelImage = await prepareImageForModel(input.imageUrl);
   const modelReviews = await Promise.all(
     providers.map((provider) =>
       provider.protocol === "anthropic"
-        ? requestAnthropicArticleReview({ provider, ...prompt, imageUrl: input.imageUrl })
-        : requestOpenAiCompatibleArticleReview({ provider, ...prompt, imageUrl: input.imageUrl })
+        ? requestAnthropicArticleReview({ provider, ...prompt, imageUrl: modelImage.url })
+        : requestOpenAiCompatibleArticleReview({ provider, ...prompt, imageUrl: modelImage.url })
     )
   );
   if (modelReviews.some((item) => item.status === "scored")) {
@@ -2216,7 +2290,8 @@ async function scoreImagePostSubmission(input: {
   const aggregated = aggregateArticleModelReviews({ modelReviews: fallbackReviews, startedAt });
   return {
     ...aggregated,
-    review: `Attached image was not inspected directly. ${aggregated.review}`
+    review: `Attached image was not inspected directly. ${modelImage.error ? `${modelImage.error} ` : ""}${aggregated.review}`,
+    fallbackReason: modelImage.error || "Vision-capable providers did not return a usable image score."
   };
 }
 
@@ -2238,11 +2313,12 @@ async function scoreBannerImageSubmission(input: {
     reviewTarget,
     imageVisible: true
   });
+  const modelImage = await prepareImageForModel(input.articleUrl);
   const visionReviews = await Promise.all(
     providers.map((provider) =>
       provider.protocol === "anthropic"
-        ? requestAnthropicArticleReview({ provider, ...visionPrompt, imageUrl: input.articleUrl })
-        : requestOpenAiCompatibleArticleReview({ provider, ...visionPrompt, imageUrl: input.articleUrl })
+        ? requestAnthropicArticleReview({ provider, ...visionPrompt, imageUrl: modelImage.url })
+        : requestOpenAiCompatibleArticleReview({ provider, ...visionPrompt, imageUrl: modelImage.url })
     )
   );
   if (visionReviews.some((item) => item.status === "scored")) {
@@ -2267,7 +2343,8 @@ async function scoreBannerImageSubmission(input: {
   const aggregated = aggregateArticleModelReviews({ modelReviews: fallbackReviews, startedAt });
   return {
     ...aggregated,
-    review: `Image not inspected directly. ${aggregated.review}`
+    review: `Image not inspected directly. ${modelImage.error ? `${modelImage.error} ` : ""}${aggregated.review}`,
+    fallbackReason: modelImage.error || "Vision-capable providers did not return a usable image score."
   };
 }
 
