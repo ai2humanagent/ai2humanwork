@@ -1078,8 +1078,8 @@ function TaskDetailPanel({ task }: { task: TaskDetail }) {
       setActionMessage(finalReviewLocked ? "Final review is already locked for this contest." : "Submission deadline has not passed yet.");
       return;
     }
-    if (action === "rerun_review" && (finalReviewLocked || unscoredSubmissions.length === 0)) {
-      setActionMessage(finalReviewLocked ? "Final results are already locked for this contest." : "All submissions already have a current score.");
+    if (action === "rerun_review" && finalReviewLocked) {
+      setActionMessage("Final results are already locked for this contest.");
       return;
     }
     if (action === "payout" && !canPayWinners) {
@@ -1117,7 +1117,7 @@ function TaskDetailPanel({ task }: { task: TaskDetail }) {
       if (isReviewAction) {
         if (action === "rerun_review") {
           setActionMessage(
-            `Missing scores refreshed: ${data.reprocessed || 0} rescored, ${data.reusedPreviews || 0} existing scores kept.`
+            `AI scores refreshed: ${data.reprocessed || 0} rescored, ${data.reusedPreviews || 0} existing scores kept.`
           );
         } else {
           setFinalReviewLocked(true);

@@ -128,6 +128,9 @@ export async function POST(
   const body = await request.json().catch(() => ({}));
   const requestedForce = Boolean(body.force);
   const closeNow = Boolean(body.closeNow);
+  const requestedSubmissionIds = Array.isArray(body.submissionIds)
+    ? new Set(body.submissionIds.map((item: unknown) => String(item || "").trim()).filter(Boolean))
+    : null;
   const refreshOnly = requestedForce && !closeNow;
   const requestId = crypto.randomUUID();
   const db = await readDb();
@@ -158,6 +161,7 @@ export async function POST(
     closeNow,
     deadline: task.deadline,
     submissionCount: submissions.length,
+    requestedSubmissionCount: requestedSubmissionIds?.size || 0,
     providers: getArticleReviewProviderConfigs().map((provider) => ({
       id: provider.id,
       label: provider.label,
@@ -194,6 +198,11 @@ export async function POST(
   let reusedPreviews = 0;
   const missingScores: string[] = [];
   for (const submission of submissions) {
+    if (requestedSubmissionIds && !requestedSubmissionIds.has(submission.id)) {
+      reusedPreviews += 1;
+      scored.push(submission);
+      continue;
+    }
     if (submission.status === "paid") {
       scored.push(submission);
       continue;
