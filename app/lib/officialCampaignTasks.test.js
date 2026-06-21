@@ -11,7 +11,7 @@ function makeTaskWithEvidence(templateId, extraEvidence = []) {
   const base = buildOfficialCampaignTask({
     templateId,
     requesterName: "AI2Human Official",
-    requesterHandle: "@ai2humanwork",
+    requesterHandle: "@ai2humannetwork",
     targetUrl: DEFAULT_TARGET_URL
   });
 
@@ -49,7 +49,7 @@ test("campaign verification fails when live URL evidence is missing", () => {
     ...buildOfficialCampaignTask({
       templateId: "x_quote_launch",
       requesterName: "AI2Human Official",
-      requesterHandle: "@ai2humanwork"
+      requesterHandle: "@ai2humannetwork"
     }),
     evidence: task
   });
@@ -63,7 +63,7 @@ test("campaign verification fails when the submitted URL does not match the exec
     ...buildOfficialCampaignTask({
       templateId: "x_quote_launch",
       requesterName: "AI2Human Official",
-      requesterHandle: "@ai2humanwork"
+      requesterHandle: "@ai2humannetwork"
     }),
     evidence: [
       {
@@ -115,7 +115,7 @@ test("campaign verification uses the latest structured evidence when proof is re
     ...buildOfficialCampaignTask({
       templateId: "x_reply_thread",
       requesterName: "AI2Human Official",
-      requesterHandle: "@ai2humanwork"
+      requesterHandle: "@ai2humannetwork"
     }),
     evidence: [
       {
@@ -192,7 +192,7 @@ test("campaign verification accepts the live X URL as proof for x tasks", () => 
     ...buildOfficialCampaignTask({
       templateId: "x_reply_thread",
       requesterName: "AI2Human Official",
-      requesterHandle: "@ai2humanwork"
+      requesterHandle: "@ai2humannetwork"
     }),
     evidence: [
       {

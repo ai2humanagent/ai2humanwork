@@ -38,7 +38,7 @@ Agentic Payment / 链上支付场景
 > 须为项目官方账号，不接受个人账号
 
 ```
-@ai2humanwork
+@ai2humannetwork
 ```
 
 ---
@@ -58,10 +58,10 @@ Agentic Payment / 链上支付场景
 ---
 
 ## Your Project X Post URL / 项目官方 X 推文链接 *
-> 需在提交前已发布，且须通过项目官方账号 @ai2humanwork 发出
+> 需在提交前已发布，且须通过项目官方账号 @ai2humannetwork 发出
 
 ```
-【待填：发布后补充链接，格式 https://x.com/ai2humanwork/status/...】
+【待填：发布后补充链接，格式 https://x.com/ai2humannetwork/status/...】
 ```
 
 ---
@@ -168,5 +168,5 @@ Core loop: task → OnchainOS precheck → human execution → proof → verify 
 |---|---|---|
 | Personal Telegram Handle | ❌ 待填 | 个人 Telegram 账号 |
 | Team members & X accounts | ❌ 待填 | 核心成员列表及 X 账号 |
-| Project X Post URL | ❌ 待发布后填写 | 须通过 @ai2humanwork 官号发布 |
+| Project X Post URL | ❌ 待发布后填写 | 须通过 @ai2humannetwork 官号发布 |
 | AI Model & Version | ❌ 待填 | 实际使用的 AI 模型版本 |

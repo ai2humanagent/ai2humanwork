@@ -1409,7 +1409,7 @@ export default function TaskDetailClient({
         return `https://x.com/intent/follow?screen_name=${handle}`;
       }
 
-      // Extract tweet ID from targetUrl (e.g. https://x.com/ai2humanwork/status/123456789)
+      // Extract tweet ID from targetUrl (e.g. https://x.com/ai2humannetwork/status/123456789)
       const targetUrl = campaign?.targetUrl || "";
       const tweetIdMatch = targetUrl.match(/status\/(\d+)/);
       const tweetId = tweetIdMatch ? tweetIdMatch[1] : "";
@@ -1447,7 +1447,7 @@ export default function TaskDetailClient({
     }
 
     function getTaskDisplayLabel(taskType: string, requesterHandle?: string): string {
-      const handle = requesterHandle?.replace("@", "") || "ai2humanwork";
+      const handle = requesterHandle?.replace("@", "") || "ai2humannetwork";
       if (taskType === "twitter_follow") return `Follow @${handle} on X`;
       if (taskType === "twitter_like") return `Like a post by @${handle} on X`;
       if (taskType === "twitter_retweet") return `Repost @${handle} on X`;
@@ -1515,7 +1515,7 @@ export default function TaskDetailClient({
                         <img src="/brand/ai2human-dual-arrow-256.png" alt="AI2Human" />
                       </div>
                       <span className={styles.qnName}>
-                        {task.campaign?.requesterHandle || "@ai2humanwork"}
+                        {task.campaign?.requesterHandle || "@ai2humannetwork"}
                       </span>
                     </div>
                     <span className={`${styles.qnTag} ${articleBadgeComplete ? styles.qnTagCompleted : styles.qnTagOngoing}`}>
@@ -1539,7 +1539,7 @@ export default function TaskDetailClient({
                       {!isBannerImageContest && (
                       <div className={styles.articleRequiredTags}>
                         <span>Required in your X post</span>
-                        <strong>@ai2humanwork</strong>
+                        <strong>@ai2humannetwork</strong>
                         <strong>#A2H</strong>
                       </div>
                       )}
@@ -1675,7 +1675,7 @@ export default function TaskDetailClient({
                         {isBannerImageContest
                           ? "Use a direct public image URL for your banner design. PNG, JPG, WEBP, GIF, or AVIF all work. This link can only be changed once after submission."
                           : requiresAttachedImage
-                            ? "Use the public X URL for the post or the first post of a thread. The X post must include at least one attached image, plus @ai2humanwork and #A2H. The image must fit DexScreener header specs: 3:1 ratio, at least 600px wide, PNG/JPG/WEBP/GIF, max 4.5MB. This link can only be changed once after submission."
+                            ? "Use the public X URL for the post or the first post of a thread. The X post must include at least one attached image, plus @ai2humannetwork and #A2H. The image must fit DexScreener header specs: 3:1 ratio, at least 600px wide, PNG/JPG/WEBP/GIF, max 4.5MB. This link can only be changed once after submission."
                             : "Use the public X URL for the article, post, or first post of a thread. This link can only be changed once after submission."}
                       </p>
                     </div>
@@ -1851,7 +1851,7 @@ export default function TaskDetailClient({
                       <img src="/brand/ai2human-dual-arrow-256.png" alt="AI2Human" />
                     </div>
                     <span className={styles.qnName}>
-                      {task.campaign?.requesterHandle || "@ai2humanwork"}
+                      {task.campaign?.requesterHandle || "@ai2humannetwork"}
                     </span>
                   </div>
                   {/* Share button - 3D style */}
@@ -2083,7 +2083,7 @@ export default function TaskDetailClient({
                   </a>
                 </div>
                 <div className={styles.qnFooterSocials}>
-                  <a href="https://x.com/ai2humanwork" target="_blank" rel="noreferrer" className={styles.qnFooterSocialIcon}>
+                  <a href="https://x.com/ai2humannetwork" target="_blank" rel="noreferrer" className={styles.qnFooterSocialIcon}>
                     {twitterSvg}
                   </a>
                 </div>

@@ -334,7 +334,7 @@ export const content = {
         title: "PROJECT SURFACES",
         items: [
           { label: "Open AI2Human GitHub", href: "https://github.com/ai2humanagent/ai2humanwork" },
-          { label: "Open AI2Human X", href: "https://x.com/ai2humanwork" },
+          { label: "Open AI2Human X", href: "https://x.com/ai2humannetwork" },
           { label: "Back to Home", href: "/" }
         ]
       },
@@ -694,7 +694,7 @@ export const content = {
         title: "项目入口",
         items: [
           { label: "访问AI2Human GitHub", href: "https://github.com/ai2humanagent/ai2humanwork" },
-          { label: "访问AI2Human X", href: "https://x.com/ai2humanwork" },
+          { label: "访问AI2Human X", href: "https://x.com/ai2humannetwork" },
           { label: "返回首页", href: "/" }
         ]
       },

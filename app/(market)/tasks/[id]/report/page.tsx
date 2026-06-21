@@ -111,8 +111,8 @@ export default async function CampaignReportPage({
             <Link href={`/tasks/${task.id}`} className={styles.primaryLink}>
               View Task
             </Link>
-            <a href="https://x.com/ai2humanwork" target="_blank" rel="noreferrer" className={styles.secondaryLink}>
-              @ai2humanwork
+            <a href="https://x.com/ai2humannetwork" target="_blank" rel="noreferrer" className={styles.secondaryLink}>
+              @ai2humannetwork
             </a>
           </div>
         </div>

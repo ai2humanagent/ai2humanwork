@@ -10,7 +10,7 @@ npm run dev
 curl -s http://localhost:3000/api/tasks | python3 -c "import json,sys; d=json.load(sys.stdin); print(f'任务数量: {len(d)}')"
 ```
 
-**预期输出:** `任务数量: 1`（只有 "Follow @ai2humanwork on X"）
+**预期输出:** `任务数量: 1`（只有 "Follow @ai2humannetwork on X"）
 
 ---
 
@@ -30,7 +30,7 @@ for t in d:
 
 **预期:**
 ```
-paid | Follow @ai2humanwork on X
+paid | Follow @ai2humannetwork on X
 ```
 只有 1 个任务，无假数据。
 
@@ -41,7 +41,7 @@ paid | Follow @ai2humanwork on X
 **操作:** 访问 `http://localhost:3000/tasks/tw-follow-0e4a2568`
 
 **预期:**
-- 标题 "Follow @ai2humanwork on X"
+- 标题 "Follow @ai2humannetwork on X"
 - 状态显示 "Settled"
 - 有 "ai2human Official" 标签
 - 奖池显示 "5 USDC · 10 winners"
@@ -115,7 +115,7 @@ curl -s http://localhost:3000/api/agents
 curl -X POST http://localhost:3000/api/tasks \
   -H "Content-Type: application/json" \
   -d '{
-    "title": "Follow @ai2humanwork on X",
+    "title": "Follow @ai2humannetwork on X",
     "budget": "5 USDC",
     "deadline": "2026-05-28T16:00:00Z",
     "agentId": "agent_official",

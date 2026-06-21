@@ -594,7 +594,7 @@ export function makeSeedTasks(count: number): Task[] {
         ? buildOfficialCampaignTask({
             templateId: template.id,
             requesterName: "AI2Human Official",
-            requesterHandle: "@ai2humanwork",
+            requesterHandle: "@ai2humannetwork",
             targetUrl: targetUrls[i % targetUrls.length],
             budget: DEFAULT_X_TASK_BUDGET,
             deadline: deadlines[i % deadlines.length],

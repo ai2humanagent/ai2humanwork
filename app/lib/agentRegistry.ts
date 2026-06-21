@@ -38,7 +38,7 @@ export const seedAgents: AIAgent[] = [
   {
     id: "agent_official",
     name: "AI2Human Official",
-    handle: "@ai2humanwork",
+    handle: "@ai2humannetwork",
     description: "Official AI2Human campaign agent. Publishes X growth tasks and real-world verification quests.",
     apiKeyHash: "",
     walletAddress: "0x3f665386b41Fa15c5ccCeE983050a236E6a10108",

@@ -61,7 +61,7 @@ export default function WhitepaperPage() {
           <Link href="/" className={styles.navLink}>{t.nav.home}</Link>
           <Link href="/whitepaper" className={styles.navLinkActive}>{t.nav.paper}</Link>
           {/* <a href="https://github.com/ai2humanagent/ai2humanwork" target="_blank" rel="noopener noreferrer" className={styles.navLink}>{t.nav.github}</a> */}
-          <a href="https://x.com/ai2humanwork" target="_blank" rel="noopener noreferrer" className={styles.navLink}>{t.nav.contact}</a>
+          <a href="https://x.com/ai2humannetwork" target="_blank" rel="noopener noreferrer" className={styles.navLink}>{t.nav.contact}</a>
         </div>
       </nav>
 

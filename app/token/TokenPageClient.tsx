@@ -117,7 +117,7 @@ const venueGroups = [
       {
         name: "X",
         desc: "Follow AI2Human updates and campaigns.",
-        href: "https://x.com/ai2humanwork"
+        href: "https://x.com/ai2humannetwork"
       }
     ]
   }
@@ -322,7 +322,7 @@ export default function TokenPage() {
         <div className={styles.footerBottom}>
           <p>© 2026 AI2Human. All rights reserved.</p>
           <div>
-            <a href="https://x.com/ai2humanwork" target="_blank" rel="noopener noreferrer" aria-label="X">
+            <a href="https://x.com/ai2humannetwork" target="_blank" rel="noopener noreferrer" aria-label="X">
               X
             </a>
             <a href="https://t.me/ai2humanwork" target="_blank" rel="noopener noreferrer" aria-label="Telegram">

@@ -64,7 +64,7 @@ Upload this file to YouTube as `Unlisted`, then paste that URL:
 
 ### Social link 1
 
-`https://x.com/ai2humanwork`
+`https://x.com/ai2humannetwork`
 
 ### Social link 2
 
