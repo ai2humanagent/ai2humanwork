@@ -76,24 +76,36 @@ function buildFundingStatus(
           amount: expectedPayoutTotal(input, task.rewardDistribution)
         })
     : undefined;
-  const readyToPublish = Boolean(contractPreflight.ok);
+  const lifecycleStatus = String(lifecycle.status || "").trim();
+  const alreadyPublished = lifecycleStatus === "published";
+  const readyToPublish = !alreadyPublished && Boolean(contractPreflight.ok);
+  const slotsLeft = Number(contractPreflight.slotsLeft);
   const status = !usablePool
     ? "pool_missing_or_invalid"
-    : readyToPublish
-      ? "funded_ready_to_publish"
-      : "awaiting_usdc_transfer";
+    : alreadyPublished
+      ? Number.isFinite(slotsLeft) && slotsLeft <= 0
+        ? "published_full"
+        : "published_active"
+      : readyToPublish
+        ? "funded_ready_to_publish"
+        : "awaiting_usdc_transfer";
 
   return {
     taskId: task.id,
     fundingMode: calculatedPlan.fundingMode,
     environment: calculatedPlan.environment,
     status,
+    alreadyPublished,
     readyToPublish,
     poolAddress: usablePool ? poolAddress : undefined,
     fundingInvoice,
     invalidFundingInvoice: usablePool ? undefined : existingInvoice,
     contractPreflight,
-    nextAction: readyToPublish
+    nextAction: alreadyPublished
+      ? Number.isFinite(slotsLeft) && slotsLeft <= 0
+        ? "Campaign is published and all reward slots are claimed."
+        : "Campaign is published. No funding action is required unless you intentionally want to top up the pool."
+      : readyToPublish
       ? `POST /api/agent/campaigns/${task.id}/publish`
       : usablePool
         ? `Transfer ${expectedPayoutTotal(input, task.rewardDistribution)} to fundingInvoice.recipientAddress on Base, then call POST /api/agent/campaigns/${task.id}/funding again.`
