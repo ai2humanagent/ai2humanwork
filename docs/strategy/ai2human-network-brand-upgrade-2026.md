@@ -36,32 +36,53 @@ This moves AI2Human from a task surface to infrastructure.
    - `skill.md`, API, SDK, manifests, webhooks, and task templates.
    - This makes AI2Human readable by agents instead of only humans.
 
-3. **AI2Human Router**
-   - Normalizes the request.
-   - Chooses task type, proof schema, operator eligibility, price, review mode, and settlement mode.
+3. **Agent Context & Skill Runtime**
+   - Agents should not route every task from zero context.
+   - This layer stores task memory, proof memory, operator/reviewer history, policy packs, and skill permissions.
+   - It also supports sandboxed skills so agents can create campaigns, request verification, fetch proof, and monitor settlement without custom integration work.
 
-4. **Human Execution Network**
+4. **AI2Human Router**
+   - Normalizes the request.
+   - Chooses task type, proof schema, operator eligibility, price, review mode, and settlement mode using both current request data and memory/context.
+
+5. **Human Execution Network**
    - Verified operators complete real-world or identity-bound actions.
    - Examples: local checks, X account actions, document review, venue inspection, signature capture, photo proof, KYC/KYB support.
 
-5. **Structured Proof Layer**
+6. **Structured Proof Layer**
    - Human output is not a vague claim.
    - It becomes a proof bundle: URLs, screenshots, receipts, timestamps, attachments, wallet evidence, location notes, reviewer metadata, hashes.
 
-6. **Verification Engine**
+7. **Verification Engine**
    - Rule checks, AI review, human review, duplicate detection, fraud checks, dispute windows, and arbitration.
    - Settlement only follows accepted evidence.
 
-7. **Settlement Layer**
+8. **Settlement Layer**
    - USDC escrow, prize pools, payout records, refunds, and claim flows.
    - Payout becomes part of the task lifecycle, not an external manual promise.
 
-8. **Reputation Graph**
+9. **Reputation Graph**
    - Operators, agents, reviewers, and projects earn reputation from proof quality, completion history, disputes, and payout outcomes.
 
-9. **Compliance & RWA Oracle**
+10. **Compliance & RWA Oracle**
    - Human-verified KYC, KYB, location, entity, document, and asset proof for B20, RWA, local stablecoins, tokenized equity, and regulated assets.
    - AI2Human can provide the human verification primitive agents and issuers need before policy-aware token actions.
+
+## Memory, Policy & Skill Runtime
+
+The strongest idea to absorb from adjacent AI infrastructure is simple: agents need memory, policy, and skills before they can act reliably.
+
+For AI2Human, that becomes:
+
+- **Task memory:** prior proof quality, review failures, payout outcomes, dispute reasons, fraud patterns.
+- **Operator memory:** which humans perform reliably by task type, region, proof format, response time, and dispute history.
+- **Reviewer memory:** which reviewers are accurate and consistent.
+- **Policy constitution:** network rules loaded before agent actions: eligibility, compliance, settlement, data handling, dispute boundaries.
+- **Skill runtime:** reusable agent tools for creating campaigns, requesting verification, submitting proof, checking settlement, and reading public reports.
+
+This does not change the AI2Human category. It strengthens it.
+
+AI2Human remains the execution and verification network, but now every task makes the network smarter instead of remaining a one-off record.
 
 ## Compliance & RWA Oracle
 
@@ -143,6 +164,8 @@ Describe it as:
 - an agent-human execution network
 - a human verification network for agents
 - a structured proof and settlement layer
+- a memory-aware execution network
+- a policy-governed skill layer for agents
 - a compliance and real-world verification oracle
 - infrastructure for agent workflows that need humans
 
@@ -177,4 +200,3 @@ Agents request. Humans verify. Proof settles.
 AI2Human is upgrading from TaskMarket to AI2Human Network.
 
 The task app is only one surface. The real architecture is bigger: agent requests, human execution, structured proof, verification, settlement, reputation, and now a Compliance & RWA Oracle for human-verified issuance and regulated asset workflows.
-

@@ -71,31 +71,33 @@ export const content = {
       },
       architecture: {
         label: "Architecture",
-        title: "NINE LAYER NETWORK",
+        title: "TEN LAYER NETWORK",
         content: [
-          "The platform integrates nine core layers, treating real-world work, verification, and compliance as structured network states instead of informal handoffs."
+          "The platform integrates ten core layers, treating real-world work, memory, policy, verification, and compliance as structured network states instead of informal handoffs."
         ],
         layers: [
           { name: "1. Task Intake", desc: "Direct submission, API integrations, marketplace pipelines with structured normalization." },
           { name: "2. AI Execution Engine", desc: "OpenClaw-powered browser automation, web workflows, and digital task completion." },
-          { name: "3. Human Execution Network", desc: "Dispatch network of verified operators for reality-bound execution and verification subtasks." },
-          { name: "4. Evidence Pipeline", desc: "Structured proof collection: logs, links, timestamps, files, screenshots, photos, videos." },
-          { name: "5. Verification Engine", desc: "Composable checks: deterministic rules, policy validation, reviewer approval." },
-          { name: "6. Settlement Coordination", desc: "USDC settlement, escrow, prize pools, refunds, and payout records triggered by verified state changes." },
-          { name: "7. Compliance & RWA Oracle", desc: "Human-verified KYC, KYB, location, entity, document, and asset proof for B20, RWA, local stablecoins, and regulated assets." },
-          { name: "8. Identity & Reputation", desc: "Verifiable execution history, reviewer reliability, operator trust, and portable reputation." },
-          { name: "9. Network Orchestration", desc: "Role-specific routing, SLA timers, retry logic, escalation paths, and agent-readable capabilities." }
+          { name: "3. Agent Context & Skill Runtime", desc: "Task memory, proof memory, operator/reviewer history, policy packs, and reusable agent skills." },
+          { name: "4. Human Execution Network", desc: "Dispatch network of verified operators for reality-bound execution and verification subtasks." },
+          { name: "5. Evidence Pipeline", desc: "Structured proof collection: logs, links, timestamps, files, screenshots, photos, videos." },
+          { name: "6. Verification Engine", desc: "Composable checks: deterministic rules, policy validation, reviewer approval." },
+          { name: "7. Settlement Coordination", desc: "USDC settlement, escrow, prize pools, refunds, and payout records triggered by verified state changes." },
+          { name: "8. Compliance & RWA Oracle", desc: "Human-verified KYC, KYB, location, entity, document, and asset proof for B20, RWA, local stablecoins, and regulated assets." },
+          { name: "9. Identity & Reputation", desc: "Verifiable execution history, reviewer reliability, operator trust, and portable reputation." },
+          { name: "10. Network Orchestration", desc: "Role-specific routing, SLA timers, retry logic, escalation paths, and agent-readable capabilities." }
         ]
       },
       agents: {
         label: "Multi-Agent System",
-        title: "SIX AGENT ROLES",
+        title: "SEVEN AGENT ROLES",
         content: [
-          "The system is powered by six specialized agents that coordinate through the execution loop, each owning a specific phase of the task lifecycle."
+          "The system is powered by seven specialized agents that coordinate through the execution loop, each owning a specific phase of the task lifecycle."
         ],
         roles: [
           { name: "Planner Agent", desc: "Owns route selection, turns requests into execution plans, and decides whether tasks stay autonomous or route to human execution." },
           { name: "Precheck Agent", desc: "Runs wallet, market, and trade checks before the planner decides on execution path." },
+          { name: "Context & Policy Agent", desc: "Recalls prior task outcomes, proof quality, operator reliability, reviewer accuracy, and policy constraints before routing." },
           { name: "Dispatcher Agent", desc: "Matches blocked work to payout-ready operators, writes execution briefs, proof rules, and payout targets." },
           { name: "Human Operator", desc: "Executes real-world steps and returns structured proof. Handles signatures, pickups, onsite checks." },
           { name: "Verifier Agent", desc: "Checks proof structure, field integrity, and duplicate submissions before payout moves forward." },

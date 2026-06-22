@@ -48,6 +48,14 @@ Agents access AI2Human through `skill.md`, API, SDK, manifests, webhooks, and ta
 
 The router normalizes each request into a task manifest with proof rules, eligibility, reward, deadline, verification mode, and settlement path.
 
+### Agent Context & Skill Runtime
+
+Agents need memory, policy, and tools before they can safely route human-needed work.
+
+AI2Human stores task memory, proof history, operator reliability, reviewer performance, dispute patterns, and settlement outcomes. Before routing a request, the network can recall which proof schemas worked, which operators performed well, which review rules failed, and which policy constraints apply.
+
+The same layer exposes reusable skills so agents can create campaigns, request verification, check proof, monitor payouts, and read public reports without rebuilding integration logic.
+
 ### Human Execution Network
 
 Verified operators complete human-needed work: local checks, account-bound actions, social actions, document collection, inspections, signatures, KYC/KYB support, and other proof-heavy steps.
@@ -74,6 +82,21 @@ AI2Human routes human verification for B20, RWA, local stablecoin, tokenized equ
 
 Human operators can verify KYC/KYB support data, entity records, location evidence, asset documents, and policy conditions. The output is a structured proof result that agents and token systems can consume before minting, onboarding, applying transfer rules, or triggering compliance workflows.
 
+## Memory-Aware Network Upgrade
+
+The network should not treat each task as isolated.
+
+Every proof, review, dispute, payout, and operator action becomes memory for future routing.
+
+The product implication:
+
+- agents get a reusable skill layer
+- routers get context before dispatching
+- verification gets prior failure patterns
+- operators get reputation that actually reflects work quality
+- compliance workflows get policy memory and proof renewal history
+- the whole network compounds with use
+
 ## Whitepaper Positioning
 
 AI2Human is not trying to replace humans with AI or AI with humans.
@@ -83,4 +106,3 @@ It builds the execution layer where agents and humans are composed into a verifi
 AI handles software-native automation.
 Humans handle real-world execution and verification.
 AI2Human provides routing, proof, verification, settlement, and reputation across both.
-

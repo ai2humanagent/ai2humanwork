@@ -64,6 +64,28 @@ This is for B20 issuance, RWAs, local stablecoins, tokenized equity, and other r
 
 6/
 
+Another important layer:
+
+Agent Context & Skill Runtime.
+
+Agents should not route work from a blank slate.
+
+AI2Human will remember task history, proof quality, operator reliability, reviewer accuracy, dispute patterns, and settlement outcomes.
+
+7/
+
+This makes the network compound.
+
+Every task teaches the system:
+
+- which proof schemas worked
+- which operators delivered
+- which reviews were accurate
+- which fraud patterns appeared
+- which settlement paths were clean
+
+8/
+
 Example flow:
 
 issuer or agent requests verification
@@ -73,7 +95,7 @@ issuer or agent requests verification
 -> reviewers verify it
 -> downstream token policy can consume the result
 
-7/
+9/
 
 This means AI2Human is not only about social tasks or reward campaigns.
 
@@ -81,7 +103,7 @@ Those are live proof of the network.
 
 The larger system is execution, verification, compliance proof, settlement, and reputation for agent-driven workflows.
 
-8/
+10/
 
 The direction:
 
@@ -93,7 +115,7 @@ Proof gets structured.
 Verification gates settlement.
 Reputation compounds.
 
-9/
+11/
 
 We will share the full architecture publicly this week.
 
@@ -102,4 +124,3 @@ AI2Human is not just TaskMarket.
 It is the agent-human execution and verification network.
 
 @ai2humannetwork
-

@@ -316,7 +316,7 @@
 
     .layers {
       display: grid;
-      grid-template-columns: repeat(12, minmax(128px, 1fr));
+      grid-template-columns: repeat(13, minmax(128px, 1fr));
       gap: 12px;
       overflow-x: auto;
       padding-bottom: 8px;
@@ -934,16 +934,23 @@
 
           <g transform="translate(398 118)">
             <rect x="0" y="0" width="170" height="132" rx="20" fill="rgba(103,245,220,0.12)" stroke="rgba(103,245,220,0.62)" filter="url(#softGlow)" />
-            <text x="85" y="30" fill="#67f5dc" font-size="13" font-weight="900" text-anchor="middle">3. AI2H ROUTER</text>
+            <text x="85" y="30" fill="#67f5dc" font-size="13" font-weight="900" text-anchor="middle">4. AI2H ROUTER</text>
             <text x="85" y="57" fill="#edf3ff" font-size="12" text-anchor="middle">task routing</text>
             <text x="85" y="76" fill="#edf3ff" font-size="12" text-anchor="middle">human execution</text>
             <text x="85" y="95" fill="#edf3ff" font-size="12" text-anchor="middle">proof builder</text>
             <text x="85" y="114" fill="#edf3ff" font-size="12" text-anchor="middle">pricing + settlement</text>
           </g>
 
+          <g transform="translate(386 270)">
+            <rect x="0" y="0" width="194" height="68" rx="18" fill="rgba(183,140,255,0.13)" stroke="rgba(183,140,255,0.58)" />
+            <text x="97" y="24" fill="#b78cff" font-size="12" font-weight="900" text-anchor="middle">3. CONTEXT / POLICY</text>
+            <text x="97" y="44" fill="#edf3ff" font-size="12" text-anchor="middle">memory · constitution</text>
+            <text x="97" y="60" fill="#edf3ff" font-size="12" text-anchor="middle">skill runtime</text>
+          </g>
+
           <g transform="translate(600 128)">
             <rect x="0" y="0" width="154" height="112" rx="18" fill="url(#boxAmber)" stroke="rgba(255,189,103,0.5)" />
-            <text x="77" y="28" fill="#ffbd67" font-size="13" font-weight="900" text-anchor="middle">4. TASK SURFACE</text>
+            <text x="77" y="28" fill="#ffbd67" font-size="13" font-weight="900" text-anchor="middle">5. TASK SURFACE</text>
             <text x="77" y="53" fill="#edf3ff" font-size="12" text-anchor="middle">campaigns</text>
             <text x="77" y="72" fill="#edf3ff" font-size="12" text-anchor="middle">contests</text>
             <text x="77" y="91" fill="#edf3ff" font-size="12" text-anchor="middle">agent tasks</text>
@@ -951,7 +958,7 @@
 
           <g transform="translate(786 128)">
             <rect x="0" y="0" width="154" height="112" rx="18" fill="url(#boxAqua)" stroke="rgba(103,245,220,0.48)" />
-            <text x="77" y="28" fill="#67f5dc" font-size="13" font-weight="900" text-anchor="middle">5. HUMANS</text>
+            <text x="77" y="28" fill="#67f5dc" font-size="13" font-weight="900" text-anchor="middle">6. HUMANS</text>
             <text x="77" y="53" fill="#edf3ff" font-size="12" text-anchor="middle">verified operators</text>
             <text x="77" y="72" fill="#edf3ff" font-size="12" text-anchor="middle">X-bound accounts</text>
             <text x="77" y="91" fill="#edf3ff" font-size="12" text-anchor="middle">local execution</text>
@@ -959,7 +966,7 @@
 
           <g transform="translate(972 128)">
             <rect x="0" y="0" width="138" height="112" rx="18" fill="url(#boxBlue)" stroke="rgba(122,167,255,0.48)" />
-            <text x="69" y="28" fill="#7aa7ff" font-size="13" font-weight="900" text-anchor="middle">6. PROOF</text>
+            <text x="69" y="28" fill="#7aa7ff" font-size="13" font-weight="900" text-anchor="middle">7. PROOF</text>
             <text x="69" y="53" fill="#edf3ff" font-size="12" text-anchor="middle">links · images</text>
             <text x="69" y="72" fill="#edf3ff" font-size="12" text-anchor="middle">receipts</text>
             <text x="69" y="91" fill="#edf3ff" font-size="12" text-anchor="middle">timestamps</text>
@@ -967,7 +974,7 @@
 
           <g transform="translate(1142 128)">
             <rect x="0" y="0" width="138" height="112" rx="18" fill="url(#boxAmber)" stroke="rgba(255,189,103,0.5)" />
-            <text x="69" y="28" fill="#ffbd67" font-size="13" font-weight="900" text-anchor="middle">7. VERIFY</text>
+            <text x="69" y="28" fill="#ffbd67" font-size="13" font-weight="900" text-anchor="middle">8. VERIFY</text>
             <text x="69" y="53" fill="#edf3ff" font-size="12" text-anchor="middle">rules · AI review</text>
             <text x="69" y="72" fill="#edf3ff" font-size="12" text-anchor="middle">human review</text>
             <text x="69" y="91" fill="#edf3ff" font-size="12" text-anchor="middle">fraud checks</text>
@@ -980,11 +987,13 @@
           <path d="M754 184 H780" stroke="#67f5dc" stroke-width="3" marker-end="url(#arrowHead)" />
           <path d="M940 184 H966" stroke="#67f5dc" stroke-width="3" marker-end="url(#arrowHead)" />
           <path d="M1110 184 H1136" stroke="#67f5dc" stroke-width="3" marker-end="url(#arrowHead)" />
+          <path d="M483 270 V256" stroke="#b78cff" stroke-width="3" stroke-dasharray="6 7" marker-end="url(#arrowHead)" />
+          <path d="M366 210 C392 246 410 258 430 270" fill="none" stroke="#b78cff" stroke-width="3" stroke-dasharray="6 7" marker-end="url(#arrowHead)" />
 
           <!-- Settlement and reputation loop -->
           <g transform="translate(1142 354)">
             <rect x="0" y="0" width="138" height="112" rx="18" fill="rgba(134,239,172,0.12)" stroke="rgba(134,239,172,0.52)" />
-            <text x="69" y="28" fill="#86efac" font-size="13" font-weight="900" text-anchor="middle">9. SETTLEMENT</text>
+            <text x="69" y="28" fill="#86efac" font-size="13" font-weight="900" text-anchor="middle">10. SETTLEMENT</text>
             <text x="69" y="53" fill="#edf3ff" font-size="12" text-anchor="middle">USDC escrow</text>
             <text x="69" y="72" fill="#edf3ff" font-size="12" text-anchor="middle">prize pool</text>
             <text x="69" y="91" fill="#edf3ff" font-size="12" text-anchor="middle">refund / payout</text>
@@ -992,7 +1001,7 @@
 
           <g transform="translate(786 354)">
             <rect x="0" y="0" width="154" height="112" rx="18" fill="rgba(183,140,255,0.12)" stroke="rgba(183,140,255,0.52)" />
-            <text x="77" y="28" fill="#b78cff" font-size="13" font-weight="900" text-anchor="middle">10. REPUTATION</text>
+            <text x="77" y="28" fill="#b78cff" font-size="13" font-weight="900" text-anchor="middle">11. REPUTATION</text>
             <text x="77" y="53" fill="#edf3ff" font-size="12" text-anchor="middle">operator score</text>
             <text x="77" y="72" fill="#edf3ff" font-size="12" text-anchor="middle">proof quality</text>
             <text x="77" y="91" fill="#edf3ff" font-size="12" text-anchor="middle">dispute history</text>
@@ -1000,7 +1009,7 @@
 
           <g transform="translate(582 354)">
             <rect x="0" y="0" width="170" height="112" rx="18" fill="rgba(255,122,154,0.12)" stroke="rgba(255,122,154,0.58)" filter="url(#softGlow)" />
-            <text x="85" y="27" fill="#ff7a9a" font-size="12" font-weight="900" text-anchor="middle">8. COMPLIANCE</text>
+            <text x="85" y="27" fill="#ff7a9a" font-size="12" font-weight="900" text-anchor="middle">9. COMPLIANCE</text>
             <text x="85" y="49" fill="#edf3ff" font-size="12" text-anchor="middle">RWA / B20 oracle</text>
             <text x="85" y="68" fill="#edf3ff" font-size="12" text-anchor="middle">KYC · KYB · entity</text>
             <text x="85" y="87" fill="#edf3ff" font-size="12" text-anchor="middle">policy proof</text>
@@ -1008,7 +1017,7 @@
 
           <g transform="translate(362 354)">
             <rect x="0" y="0" width="170" height="112" rx="18" fill="rgba(122,167,255,0.1)" stroke="rgba(122,167,255,0.48)" />
-            <text x="85" y="28" fill="#7aa7ff" font-size="13" font-weight="900" text-anchor="middle">11. DISCOVERY</text>
+            <text x="85" y="28" fill="#7aa7ff" font-size="13" font-weight="900" text-anchor="middle">12. DISCOVERY</text>
             <text x="85" y="53" fill="#edf3ff" font-size="12" text-anchor="middle">operator index</text>
             <text x="85" y="72" fill="#edf3ff" font-size="12" text-anchor="middle">task templates</text>
             <text x="85" y="91" fill="#edf3ff" font-size="12" text-anchor="middle">public reports</text>
@@ -1016,7 +1025,7 @@
 
           <g transform="translate(46 354)">
             <rect x="0" y="0" width="160" height="112" rx="18" fill="rgba(255,122,154,0.1)" stroke="rgba(255,122,154,0.52)" />
-            <text x="80" y="28" fill="#ff7a9a" font-size="13" font-weight="900" text-anchor="middle">12. A2H ACCESS</text>
+            <text x="80" y="28" fill="#ff7a9a" font-size="13" font-weight="900" text-anchor="middle">13. A2H ACCESS</text>
             <text x="80" y="53" fill="#edf3ff" font-size="12" text-anchor="middle">holder gates</text>
             <text x="80" y="72" fill="#edf3ff" font-size="12" text-anchor="middle">reviewer roles</text>
             <text x="80" y="91" fill="#edf3ff" font-size="12" text-anchor="middle">incentives</text>
@@ -1055,51 +1064,56 @@
         </article>
         <article class="layer">
           <div class="layer-number">03</div>
+          <h3>Agent Context & Skill Runtime</h3>
+          <p>Task memory, operator memory, policy constitution, skill registry, sandboxed tools, and conscious recall for agents.</p>
+        </article>
+        <article class="layer">
+          <div class="layer-number">04</div>
           <h3>AI2Human Router</h3>
           <p>Routes the request, builds proof requirements, prices work, and chooses escrow or prize-pool settlement.</p>
         </article>
         <article class="layer">
-          <div class="layer-number">04</div>
+          <div class="layer-number">05</div>
           <h3>Task Surface</h3>
           <p>Campaign tasks, social tasks, content contests, local tasks, identity tasks, and agent-routed tasks.</p>
         </article>
         <article class="layer">
-          <div class="layer-number">05</div>
+          <div class="layer-number">06</div>
           <h3>Human Network</h3>
           <p>Verified operators with X binding, token access, local ability, review roles, and task history.</p>
         </article>
         <article class="layer">
-          <div class="layer-number">06</div>
+          <div class="layer-number">07</div>
           <h3>Proof Layer</h3>
           <p>X links, images, screenshots, receipts, timestamps, wallet evidence, location and device proof.</p>
         </article>
         <article class="layer">
-          <div class="layer-number">07</div>
+          <div class="layer-number">08</div>
           <h3>Verification</h3>
           <p>Rule checks, AI review, human review, fraud detection, disputes, and arbitration.</p>
         </article>
         <article class="layer">
-          <div class="layer-number">08</div>
+          <div class="layer-number">09</div>
           <h3>Compliance & RWA Oracle</h3>
           <p>Human-verified KYC, KYB, location, entity, document, and asset proofs for B20, RWA, local stablecoins, and regulated assets.</p>
         </article>
         <article class="layer">
-          <div class="layer-number">09</div>
+          <div class="layer-number">10</div>
           <h3>Settlement</h3>
           <p>USDC escrow, prize pools, claimFor payout, deadline refunds, and onchain review anchors.</p>
         </article>
         <article class="layer">
-          <div class="layer-number">10</div>
+          <div class="layer-number">11</div>
           <h3>Reputation</h3>
           <p>Operator, project, and agent reputation from proof quality, disputes, payouts, and completion history.</p>
         </article>
         <article class="layer">
-          <div class="layer-number">11</div>
+          <div class="layer-number">12</div>
           <h3>Discovery</h3>
           <p>Operator service index, task templates, verifier registry, public reports, and agent-readable capabilities.</p>
         </article>
         <article class="layer">
-          <div class="layer-number">12</div>
+          <div class="layer-number">13</div>
           <h3>A2H Access</h3>
           <p>Holder-gated tasks, operator priority, reviewer roles, network incentives, and future governance.</p>
         </article>
@@ -1128,6 +1142,19 @@
             <li><span class="dot"></span><span><strong>REST API:</strong> create task, quote reward, submit proof, poll status, request review.</span></li>
             <li><span class="dot"></span><span><strong>SDK:</strong> typed client for task creation, escrow preparation, and webhook verification.</span></li>
             <li><span class="dot"></span><span><strong>Webhooks:</strong> task.created, proof.submitted, review.passed, payout.sent, dispute.opened.</span></li>
+          </ul>
+        </article>
+
+        <article class="compare-column">
+          <header>
+            <h3>Memory, Policy & Skills</h3>
+            <p>Agents should not route every task from a blank slate. Context, policy, and skill runtime make the network adaptive.</p>
+          </header>
+          <ul>
+            <li><span class="dot" style="background: var(--purple);"></span><span><strong>Task Memory:</strong> recalls past proof patterns, failure reasons, review outcomes, and payout behavior.</span></li>
+            <li><span class="dot" style="background: var(--purple);"></span><span><strong>Operator Memory:</strong> learns which humans are reliable for each task type, region, and evidence standard.</span></li>
+            <li><span class="dot" style="background: var(--purple);"></span><span><strong>Policy Constitution:</strong> loads safety, compliance, settlement, and dispute rules before agent decisions.</span></li>
+            <li><span class="dot" style="background: var(--purple);"></span><span><strong>Skill Runtime:</strong> sandboxed skills let agents create campaigns, request verification, and read proof without custom glue.</span></li>
           </ul>
         </article>
 
@@ -1174,6 +1201,12 @@
               <td>taskType, requester, budget, deadline, proofSchema, eligibility, settlementMode</td>
               <td>Gives agents and humans one exact contract for the requested work.</td>
               <td>API / SDK / Router</td>
+            </tr>
+            <tr>
+              <td><code>AgentContext</code></td>
+              <td>recentTasks, proofMemory, policyPack, skillPermissions, recallSignals</td>
+              <td>Prevents agents from making routing and verification decisions without history or policy.</td>
+              <td>Memory / Policy / Skill Runtime</td>
             </tr>
             <tr>
               <td><code>OperatorProfile</code></td>
