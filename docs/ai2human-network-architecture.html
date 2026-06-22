@@ -1,0 +1,1571 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI2Human Network Final Architecture</title>
+  <style>
+    :root {
+      --bg: #080b10;
+      --panel: #101620;
+      --panel-2: #141c28;
+      --line: rgba(255, 255, 255, 0.13);
+      --line-strong: rgba(255, 255, 255, 0.24);
+      --text: #edf3ff;
+      --muted: #9ba9bc;
+      --soft: #cbd7e8;
+      --aqua: #67f5dc;
+      --blue: #7aa7ff;
+      --amber: #ffbd67;
+      --rose: #ff7a9a;
+      --green: #86efac;
+      --violet: #b78cff;
+      --shadow: 0 24px 80px rgba(0, 0, 0, 0.42);
+      color-scheme: dark;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 12% 0%, rgba(103, 245, 220, 0.18), transparent 26rem),
+        radial-gradient(circle at 82% 4%, rgba(122, 167, 255, 0.18), transparent 28rem),
+        linear-gradient(180deg, #080b10 0%, #0b111a 54%, #06080d 100%);
+      min-height: 100vh;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.36;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+      background-size: 48px 48px;
+      mask-image: linear-gradient(180deg, black 0%, transparent 78%);
+    }
+
+    a {
+      color: inherit;
+    }
+
+    .page {
+      width: min(1440px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 28px 0 72px;
+      position: relative;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 14px 0 30px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+
+    .mark {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      color: #06100f;
+      background: linear-gradient(135deg, var(--aqua), var(--amber));
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.24), 0 12px 38px rgba(103, 245, 220, 0.18);
+      font-weight: 900;
+    }
+
+    .nav {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .nav a {
+      text-decoration: none;
+      color: var(--muted);
+      border: 1px solid var(--line);
+      padding: 9px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.035);
+      font-size: 13px;
+    }
+
+    .hero {
+      min-height: 560px;
+      display: grid;
+      grid-template-columns: minmax(0, 0.95fr) minmax(420px, 1.05fr);
+      gap: 28px;
+      align-items: stretch;
+    }
+
+    .hero-copy {
+      padding: 38px 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .eyebrow {
+      width: fit-content;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--aqua);
+      border: 1px solid rgba(103, 245, 220, 0.28);
+      border-radius: 999px;
+      padding: 9px 12px;
+      background: rgba(103, 245, 220, 0.08);
+      font-size: 13px;
+      font-weight: 750;
+      margin-bottom: 22px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(46px, 6.6vw, 96px);
+      line-height: 0.94;
+      letter-spacing: 0;
+      font-weight: 900;
+      max-width: 920px;
+    }
+
+    .gradient-word {
+      color: transparent;
+      background: linear-gradient(100deg, var(--aqua), var(--blue) 46%, var(--amber));
+      -webkit-background-clip: text;
+      background-clip: text;
+    }
+
+    .lead {
+      margin: 26px 0 0;
+      color: var(--soft);
+      font-size: clamp(18px, 2vw, 23px);
+      line-height: 1.5;
+      max-width: 760px;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-top: 30px;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      font-weight: 800;
+      border-radius: 12px;
+      padding: 13px 16px;
+      border: 1px solid var(--line-strong);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text);
+    }
+
+    .button.primary {
+      border-color: transparent;
+      color: #05100f;
+      background: linear-gradient(135deg, var(--aqua), var(--amber));
+      box-shadow: 0 18px 44px rgba(103, 245, 220, 0.18);
+    }
+
+    .hero-map {
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.02)),
+        rgba(12, 18, 27, 0.82);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      position: relative;
+      min-height: 560px;
+    }
+
+    .hero-map::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 28% 20%, rgba(103, 245, 220, 0.18), transparent 18rem),
+        radial-gradient(circle at 76% 64%, rgba(255, 189, 103, 0.14), transparent 20rem);
+      pointer-events: none;
+    }
+
+    .map-inner {
+      position: relative;
+      padding: 24px;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .terminal-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--muted);
+      font: 12px ui-monospace, SFMono-Regular, Menlo, monospace;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .network-ring {
+      flex: 1;
+      display: grid;
+      place-items: center;
+      min-height: 370px;
+    }
+
+    .network-ring svg {
+      width: min(100%, 620px);
+      height: auto;
+      display: block;
+    }
+
+    .status-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+    .metric {
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.045);
+      border-radius: 14px;
+      padding: 12px;
+      min-height: 82px;
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 18px;
+      margin-bottom: 4px;
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .section {
+      margin-top: 48px;
+      padding: 34px;
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      background: rgba(10, 15, 22, 0.74);
+      box-shadow: var(--shadow);
+    }
+
+    .section-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+
+    .section-kicker {
+      color: var(--aqua);
+      font-size: 13px;
+      font-weight: 850;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 10px;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: clamp(30px, 4vw, 54px);
+      line-height: 1.02;
+      letter-spacing: 0;
+    }
+
+    .section-note {
+      max-width: 520px;
+      color: var(--muted);
+      line-height: 1.55;
+      margin: 0;
+      font-size: 15px;
+    }
+
+    .layers {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(128px, 1fr));
+      gap: 12px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+    }
+
+    .final-diagram {
+      border: 1px solid var(--line);
+      border-radius: 26px;
+      background:
+        radial-gradient(circle at 18% 12%, rgba(103, 245, 220, 0.12), transparent 18rem),
+        radial-gradient(circle at 86% 78%, rgba(255, 189, 103, 0.12), transparent 20rem),
+        rgba(255, 255, 255, 0.035);
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+
+    .final-diagram svg {
+      width: 100%;
+      height: auto;
+      display: block;
+      min-width: 980px;
+    }
+
+    .diagram-scroll {
+      overflow-x: auto;
+    }
+
+    .layer {
+      min-width: 128px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 14px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.025));
+      position: relative;
+    }
+
+    .layer::after {
+      content: "→";
+      position: absolute;
+      top: 50%;
+      right: -13px;
+      transform: translateY(-50%);
+      color: var(--aqua);
+      font-weight: 900;
+    }
+
+    .layer:last-child::after {
+      content: "";
+    }
+
+    .layer-number {
+      color: var(--amber);
+      font: 700 12px ui-monospace, SFMono-Regular, Menlo, monospace;
+      margin-bottom: 10px;
+    }
+
+    .layer h3 {
+      margin: 0 0 10px;
+      font-size: 16px;
+      line-height: 1.2;
+    }
+
+    .layer p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .workflow {
+      display: grid;
+      grid-template-columns: 1.1fr 1fr;
+      gap: 22px;
+      align-items: stretch;
+    }
+
+    .flow-panel {
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: var(--panel);
+      overflow: hidden;
+    }
+
+    .flow-title {
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      color: var(--soft);
+      font-weight: 800;
+    }
+
+    .flow-body {
+      padding: 20px;
+    }
+
+    .step-list {
+      display: grid;
+      gap: 12px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .step {
+      display: grid;
+      grid-template-columns: 42px 1fr;
+      gap: 12px;
+      align-items: start;
+      padding: 13px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.045);
+      border: 1px solid var(--line);
+    }
+
+    .step-badge {
+      width: 34px;
+      height: 34px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      color: #06100f;
+      font-weight: 900;
+      background: var(--aqua);
+    }
+
+    .step h3 {
+      margin: 0 0 4px;
+      font-size: 15px;
+    }
+
+    .step p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .state-machine {
+      display: grid;
+      gap: 10px;
+    }
+
+    .state-row {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .state-pill {
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.055);
+      border-radius: 999px;
+      padding: 10px 12px;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 800;
+      min-height: 40px;
+    }
+
+    .arrow {
+      color: var(--aqua);
+      font-weight: 900;
+    }
+
+    .branches {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .branch {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+      background: rgba(255, 255, 255, 0.045);
+    }
+
+    .branch strong {
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .branch span {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .compare {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .compare-column {
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: var(--panel);
+      overflow: hidden;
+    }
+
+    .compare-column header {
+      min-height: 92px;
+      padding: 18px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .compare-column h3 {
+      margin: 0 0 7px;
+      font-size: 22px;
+    }
+
+    .compare-column header p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.45;
+      font-size: 13px;
+    }
+
+    .compare-column ul {
+      margin: 0;
+      padding: 18px;
+      list-style: none;
+      display: grid;
+      gap: 10px;
+    }
+
+    .compare-column li {
+      display: flex;
+      gap: 10px;
+      color: var(--soft);
+      line-height: 1.45;
+      font-size: 14px;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-top: 7px;
+      flex: 0 0 auto;
+      background: var(--aqua);
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: var(--panel);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 900px;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 16px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+    }
+
+    th {
+      color: var(--aqua);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      background: rgba(103, 245, 220, 0.06);
+    }
+
+    td {
+      color: var(--soft);
+      line-height: 1.5;
+      font-size: 14px;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      color: var(--aqua);
+      background: rgba(103, 245, 220, 0.1);
+      border: 1px solid rgba(103, 245, 220, 0.16);
+      padding: 2px 6px;
+      border-radius: 7px;
+    }
+
+    .principles {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+    }
+
+    .principle {
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 18px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.025));
+      min-height: 170px;
+    }
+
+    .principle b {
+      display: block;
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+
+    .principle p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.5;
+      font-size: 14px;
+    }
+
+    .footer {
+      margin-top: 48px;
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      padding: 28px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 24px;
+      align-items: center;
+      background:
+        radial-gradient(circle at top left, rgba(103, 245, 220, 0.16), transparent 20rem),
+        rgba(255, 255, 255, 0.04);
+    }
+
+    .footer h2 {
+      font-size: clamp(26px, 4vw, 48px);
+    }
+
+    .footer p {
+      color: var(--muted);
+      margin: 12px 0 0;
+      line-height: 1.55;
+      max-width: 780px;
+    }
+
+    .tag {
+      display: inline-flex;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--soft);
+      border-radius: 999px;
+      padding: 8px 11px;
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .accent-aqua { color: var(--aqua); }
+    .accent-amber { color: var(--amber); }
+    .accent-rose { color: var(--rose); }
+    .accent-blue { color: var(--blue); }
+    .accent-green { color: var(--green); }
+
+    @media (max-width: 1120px) {
+      .hero,
+      .workflow,
+      .compare,
+      .footer {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-map {
+        min-height: 520px;
+      }
+
+      .principles {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 720px) {
+      .page {
+        width: min(100% - 20px, 1440px);
+        padding-top: 12px;
+      }
+
+      .topbar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .hero-copy {
+        padding: 24px 0 12px;
+      }
+
+      .hero-map {
+        min-height: auto;
+        border-radius: 20px;
+      }
+
+      .map-inner,
+      .section {
+        padding: 18px;
+      }
+
+      .status-strip,
+      .branches,
+      .principles {
+        grid-template-columns: 1fr;
+      }
+
+      .section-head {
+        align-items: start;
+        flex-direction: column;
+      }
+
+      .state-row {
+        grid-template-columns: 1fr;
+      }
+
+      .arrow {
+        text-align: center;
+        transform: rotate(90deg);
+      }
+    }
+
+    @media print {
+      body {
+        background: #fff;
+        color: #111;
+      }
+
+      body::before,
+      .nav,
+      .hero-actions {
+        display: none;
+      }
+
+      .section,
+      .hero-map,
+      .footer,
+      .flow-panel,
+      .compare-column,
+      .table-wrap,
+      .principle,
+      .layer {
+        box-shadow: none;
+        break-inside: avoid;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="topbar">
+      <div class="brand">
+        <div class="mark">A2H</div>
+        <div>
+          <div>AI2Human Network</div>
+          <div style="color: var(--muted); font-size: 12px; margin-top: 2px;">Final architecture · agent to human execution</div>
+        </div>
+      </div>
+      <nav class="nav" aria-label="Page sections">
+        <a href="#architecture">Architecture</a>
+        <a href="#technical">Technical</a>
+        <a href="#compliance">Compliance</a>
+        <a href="#workflow">Workflow</a>
+        <a href="#protocol">Protocol</a>
+        <a href="#modules">Modules</a>
+        <a href="#roadmap">Roadmap</a>
+      </nav>
+    </header>
+
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <div class="eyebrow">AI2Human Network Final Architecture</div>
+        <h1 id="hero-title">When agents hit <span class="gradient-word">reality</span>, they route into AI2Human.</h1>
+        <p class="lead">
+          AI2Human Network is not a task app. It is the agent-human execution and verification
+          network for agents, protocols, and tokenized asset teams that need real accounts,
+          real judgment, structured proof, policy-aware verification, and auditable settlement.
+        </p>
+        <div class="hero-actions">
+          <a class="button primary" href="#architecture">View network map</a>
+          <a class="button" href="#protocol">See state machine</a>
+        </div>
+      </div>
+
+      <aside class="hero-map" aria-label="Network loop illustration">
+        <div class="map-inner">
+          <div class="terminal-head">
+            <span>AI2Human core loop</span>
+            <span>task -> proof -> verify -> settle</span>
+          </div>
+          <div class="network-ring">
+            <svg viewBox="0 0 720 520" role="img" aria-labelledby="ring-title ring-desc">
+              <title id="ring-title">AI2Human Network Loop</title>
+              <desc id="ring-desc">Agent needs help, human executes, proof is submitted, verification runs, payout settles, reputation updates.</desc>
+              <defs>
+                <linearGradient id="loopGradient" x1="0" x2="1" y1="0" y2="1">
+                  <stop offset="0%" stop-color="#67f5dc" />
+                  <stop offset="52%" stop-color="#7aa7ff" />
+                  <stop offset="100%" stop-color="#ffbd67" />
+                </linearGradient>
+                <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+                  <feGaussianBlur stdDeviation="4" result="blur" />
+                  <feMerge>
+                    <feMergeNode in="blur" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+              </defs>
+              <rect x="20" y="20" width="680" height="480" rx="28" fill="rgba(255,255,255,0.035)" stroke="rgba(255,255,255,0.12)" />
+              <path d="M360 86 C500 86 612 170 612 260 C612 350 500 434 360 434 C220 434 108 350 108 260 C108 170 220 86 360 86 Z" fill="none" stroke="url(#loopGradient)" stroke-width="5" stroke-dasharray="12 11" filter="url(#glow)" />
+              <circle cx="360" cy="260" r="92" fill="rgba(103,245,220,0.08)" stroke="rgba(103,245,220,0.42)" stroke-width="2" />
+              <text x="360" y="242" fill="#edf3ff" font-size="26" font-weight="900" text-anchor="middle">AI2Human</text>
+              <text x="360" y="274" fill="#9ba9bc" font-size="15" text-anchor="middle">Network Router</text>
+              <text x="360" y="300" fill="#67f5dc" font-size="13" font-family="monospace" text-anchor="middle">route · verify · settle</text>
+
+              <g>
+                <rect x="265" y="54" width="190" height="58" rx="16" fill="#101620" stroke="rgba(103,245,220,0.48)" />
+                <text x="360" y="78" fill="#67f5dc" font-size="13" font-weight="800" text-anchor="middle">AI AGENT / PROJECT</text>
+                <text x="360" y="99" fill="#cbd7e8" font-size="12" text-anchor="middle">creates task + proof rules</text>
+              </g>
+              <g>
+                <rect x="505" y="226" width="160" height="68" rx="16" fill="#101620" stroke="rgba(122,167,255,0.48)" />
+                <text x="585" y="253" fill="#7aa7ff" font-size="13" font-weight="800" text-anchor="middle">HUMAN OPERATOR</text>
+                <text x="585" y="274" fill="#cbd7e8" font-size="12" text-anchor="middle">executes real step</text>
+              </g>
+              <g>
+                <rect x="266" y="408" width="188" height="58" rx="16" fill="#101620" stroke="rgba(255,189,103,0.5)" />
+                <text x="360" y="432" fill="#ffbd67" font-size="13" font-weight="800" text-anchor="middle">PROOF + REVIEW</text>
+                <text x="360" y="453" fill="#cbd7e8" font-size="12" text-anchor="middle">AI / human / rule checks</text>
+              </g>
+              <g>
+                <rect x="55" y="226" width="160" height="68" rx="16" fill="#101620" stroke="rgba(134,239,172,0.5)" />
+                <text x="135" y="253" fill="#86efac" font-size="13" font-weight="800" text-anchor="middle">SETTLEMENT</text>
+                <text x="135" y="274" fill="#cbd7e8" font-size="12" text-anchor="middle">USDC + reputation</text>
+              </g>
+            </svg>
+          </div>
+          <div class="status-strip">
+            <div class="metric"><strong>Agent-first</strong><span>skill.md, API, SDK, manifests, webhooks</span></div>
+            <div class="metric"><strong>Human-needed</strong><span>real accounts, identity, judgment, local proof</span></div>
+            <div class="metric"><strong>Proof-gated</strong><span>links, screenshots, receipts, timestamps</span></div>
+            <div class="metric"><strong>Settlement-ready</strong><span>escrow, prize pools, claimFor, refunds</span></div>
+          </div>
+        </div>
+      </aside>
+    </section>
+
+    <section id="architecture" class="section">
+      <div class="section-head">
+        <div>
+          <div class="section-kicker">AI2Human Network Final Architecture</div>
+          <h2>One network for agent requests, human execution, proof, verification, settlement, and reputation.</h2>
+        </div>
+        <p class="section-note">
+          Read from left to right. Agents and projects enter through machine-readable access, route tasks into human execution, collect proof, verify work, settle payment, and update reputation.
+        </p>
+      </div>
+
+      <div class="final-diagram diagram-scroll" aria-label="AI2Human Network final architecture diagram">
+        <svg viewBox="0 0 1320 760" role="img" aria-labelledby="final-title final-desc">
+          <title id="final-title">AI2Human Network Final Architecture</title>
+          <desc id="final-desc">AI2Human Network connects agent and project requests to human execution, proof, verification, settlement, reputation, discovery, and A2H access controls.</desc>
+          <defs>
+            <linearGradient id="boxAqua" x1="0" x2="1" y1="0" y2="1">
+              <stop offset="0%" stop-color="#1e3f45" />
+              <stop offset="100%" stop-color="#13212f" />
+            </linearGradient>
+            <linearGradient id="boxAmber" x1="0" x2="1" y1="0" y2="1">
+              <stop offset="0%" stop-color="#43321a" />
+              <stop offset="100%" stop-color="#161e29" />
+            </linearGradient>
+            <linearGradient id="boxBlue" x1="0" x2="1" y1="0" y2="1">
+              <stop offset="0%" stop-color="#1e2f56" />
+              <stop offset="100%" stop-color="#121b28" />
+            </linearGradient>
+            <marker id="arrowHead" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L8,3 z" fill="#67f5dc" />
+            </marker>
+            <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="3" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
+
+          <rect x="18" y="18" width="1284" height="724" rx="32" fill="rgba(255,255,255,0.025)" stroke="rgba(255,255,255,0.12)" />
+          <text x="660" y="60" fill="#edf3ff" font-size="28" font-weight="900" text-anchor="middle">AI2Human Network Final Architecture</text>
+          <text x="660" y="88" fill="#9ba9bc" font-size="14" text-anchor="middle">Agents enter. Humans execute or verify. Proof becomes structured. Settlement and compliance actions follow.</text>
+
+          <!-- Main horizontal flow -->
+          <g transform="translate(46 128)">
+            <rect x="0" y="0" width="138" height="112" rx="18" fill="url(#boxAqua)" stroke="rgba(103,245,220,0.48)" />
+            <text x="69" y="28" fill="#67f5dc" font-size="13" font-weight="900" text-anchor="middle">1. ENTRY</text>
+            <text x="69" y="53" fill="#edf3ff" font-size="12" text-anchor="middle">AI agents</text>
+            <text x="69" y="72" fill="#edf3ff" font-size="12" text-anchor="middle">Projects</text>
+            <text x="69" y="91" fill="#edf3ff" font-size="12" text-anchor="middle">Protocols</text>
+          </g>
+
+          <g transform="translate(216 128)">
+            <rect x="0" y="0" width="150" height="112" rx="18" fill="url(#boxBlue)" stroke="rgba(122,167,255,0.48)" />
+            <text x="75" y="28" fill="#7aa7ff" font-size="13" font-weight="900" text-anchor="middle">2. ACCESS</text>
+            <text x="75" y="53" fill="#edf3ff" font-size="12" text-anchor="middle">skill.md · API</text>
+            <text x="75" y="72" fill="#edf3ff" font-size="12" text-anchor="middle">SDK · manifest</text>
+            <text x="75" y="91" fill="#edf3ff" font-size="12" text-anchor="middle">webhooks</text>
+          </g>
+
+          <g transform="translate(398 118)">
+            <rect x="0" y="0" width="170" height="132" rx="20" fill="rgba(103,245,220,0.12)" stroke="rgba(103,245,220,0.62)" filter="url(#softGlow)" />
+            <text x="85" y="30" fill="#67f5dc" font-size="13" font-weight="900" text-anchor="middle">3. AI2H ROUTER</text>
+            <text x="85" y="57" fill="#edf3ff" font-size="12" text-anchor="middle">task routing</text>
+            <text x="85" y="76" fill="#edf3ff" font-size="12" text-anchor="middle">human execution</text>
+            <text x="85" y="95" fill="#edf3ff" font-size="12" text-anchor="middle">proof builder</text>
+            <text x="85" y="114" fill="#edf3ff" font-size="12" text-anchor="middle">pricing + settlement</text>
+          </g>
+
+          <g transform="translate(600 128)">
+            <rect x="0" y="0" width="154" height="112" rx="18" fill="url(#boxAmber)" stroke="rgba(255,189,103,0.5)" />
+            <text x="77" y="28" fill="#ffbd67" font-size="13" font-weight="900" text-anchor="middle">4. TASK SURFACE</text>
+            <text x="77" y="53" fill="#edf3ff" font-size="12" text-anchor="middle">campaigns</text>
+            <text x="77" y="72" fill="#edf3ff" font-size="12" text-anchor="middle">contests</text>
+            <text x="77" y="91" fill="#edf3ff" font-size="12" text-anchor="middle">agent tasks</text>
+          </g>
+
+          <g transform="translate(786 128)">
+            <rect x="0" y="0" width="154" height="112" rx="18" fill="url(#boxAqua)" stroke="rgba(103,245,220,0.48)" />
+            <text x="77" y="28" fill="#67f5dc" font-size="13" font-weight="900" text-anchor="middle">5. HUMANS</text>
+            <text x="77" y="53" fill="#edf3ff" font-size="12" text-anchor="middle">verified operators</text>
+            <text x="77" y="72" fill="#edf3ff" font-size="12" text-anchor="middle">X-bound accounts</text>
+            <text x="77" y="91" fill="#edf3ff" font-size="12" text-anchor="middle">local execution</text>
+          </g>
+
+          <g transform="translate(972 128)">
+            <rect x="0" y="0" width="138" height="112" rx="18" fill="url(#boxBlue)" stroke="rgba(122,167,255,0.48)" />
+            <text x="69" y="28" fill="#7aa7ff" font-size="13" font-weight="900" text-anchor="middle">6. PROOF</text>
+            <text x="69" y="53" fill="#edf3ff" font-size="12" text-anchor="middle">links · images</text>
+            <text x="69" y="72" fill="#edf3ff" font-size="12" text-anchor="middle">receipts</text>
+            <text x="69" y="91" fill="#edf3ff" font-size="12" text-anchor="middle">timestamps</text>
+          </g>
+
+          <g transform="translate(1142 128)">
+            <rect x="0" y="0" width="138" height="112" rx="18" fill="url(#boxAmber)" stroke="rgba(255,189,103,0.5)" />
+            <text x="69" y="28" fill="#ffbd67" font-size="13" font-weight="900" text-anchor="middle">7. VERIFY</text>
+            <text x="69" y="53" fill="#edf3ff" font-size="12" text-anchor="middle">rules · AI review</text>
+            <text x="69" y="72" fill="#edf3ff" font-size="12" text-anchor="middle">human review</text>
+            <text x="69" y="91" fill="#edf3ff" font-size="12" text-anchor="middle">fraud checks</text>
+          </g>
+
+          <!-- arrows -->
+          <path d="M184 184 H210" stroke="#67f5dc" stroke-width="3" marker-end="url(#arrowHead)" />
+          <path d="M366 184 H392" stroke="#67f5dc" stroke-width="3" marker-end="url(#arrowHead)" />
+          <path d="M568 184 H594" stroke="#67f5dc" stroke-width="3" marker-end="url(#arrowHead)" />
+          <path d="M754 184 H780" stroke="#67f5dc" stroke-width="3" marker-end="url(#arrowHead)" />
+          <path d="M940 184 H966" stroke="#67f5dc" stroke-width="3" marker-end="url(#arrowHead)" />
+          <path d="M1110 184 H1136" stroke="#67f5dc" stroke-width="3" marker-end="url(#arrowHead)" />
+
+          <!-- Settlement and reputation loop -->
+          <g transform="translate(1142 354)">
+            <rect x="0" y="0" width="138" height="112" rx="18" fill="rgba(134,239,172,0.12)" stroke="rgba(134,239,172,0.52)" />
+            <text x="69" y="28" fill="#86efac" font-size="13" font-weight="900" text-anchor="middle">9. SETTLEMENT</text>
+            <text x="69" y="53" fill="#edf3ff" font-size="12" text-anchor="middle">USDC escrow</text>
+            <text x="69" y="72" fill="#edf3ff" font-size="12" text-anchor="middle">prize pool</text>
+            <text x="69" y="91" fill="#edf3ff" font-size="12" text-anchor="middle">refund / payout</text>
+          </g>
+
+          <g transform="translate(786 354)">
+            <rect x="0" y="0" width="154" height="112" rx="18" fill="rgba(183,140,255,0.12)" stroke="rgba(183,140,255,0.52)" />
+            <text x="77" y="28" fill="#b78cff" font-size="13" font-weight="900" text-anchor="middle">10. REPUTATION</text>
+            <text x="77" y="53" fill="#edf3ff" font-size="12" text-anchor="middle">operator score</text>
+            <text x="77" y="72" fill="#edf3ff" font-size="12" text-anchor="middle">proof quality</text>
+            <text x="77" y="91" fill="#edf3ff" font-size="12" text-anchor="middle">dispute history</text>
+          </g>
+
+          <g transform="translate(582 354)">
+            <rect x="0" y="0" width="170" height="112" rx="18" fill="rgba(255,122,154,0.12)" stroke="rgba(255,122,154,0.58)" filter="url(#softGlow)" />
+            <text x="85" y="27" fill="#ff7a9a" font-size="12" font-weight="900" text-anchor="middle">8. COMPLIANCE</text>
+            <text x="85" y="49" fill="#edf3ff" font-size="12" text-anchor="middle">RWA / B20 oracle</text>
+            <text x="85" y="68" fill="#edf3ff" font-size="12" text-anchor="middle">KYC · KYB · entity</text>
+            <text x="85" y="87" fill="#edf3ff" font-size="12" text-anchor="middle">policy proof</text>
+          </g>
+
+          <g transform="translate(362 354)">
+            <rect x="0" y="0" width="170" height="112" rx="18" fill="rgba(122,167,255,0.1)" stroke="rgba(122,167,255,0.48)" />
+            <text x="85" y="28" fill="#7aa7ff" font-size="13" font-weight="900" text-anchor="middle">11. DISCOVERY</text>
+            <text x="85" y="53" fill="#edf3ff" font-size="12" text-anchor="middle">operator index</text>
+            <text x="85" y="72" fill="#edf3ff" font-size="12" text-anchor="middle">task templates</text>
+            <text x="85" y="91" fill="#edf3ff" font-size="12" text-anchor="middle">public reports</text>
+          </g>
+
+          <g transform="translate(46 354)">
+            <rect x="0" y="0" width="160" height="112" rx="18" fill="rgba(255,122,154,0.1)" stroke="rgba(255,122,154,0.52)" />
+            <text x="80" y="28" fill="#ff7a9a" font-size="13" font-weight="900" text-anchor="middle">12. A2H ACCESS</text>
+            <text x="80" y="53" fill="#edf3ff" font-size="12" text-anchor="middle">holder gates</text>
+            <text x="80" y="72" fill="#edf3ff" font-size="12" text-anchor="middle">reviewer roles</text>
+            <text x="80" y="91" fill="#edf3ff" font-size="12" text-anchor="middle">incentives</text>
+          </g>
+
+          <path d="M1211 240 V348" stroke="#67f5dc" stroke-width="3" marker-end="url(#arrowHead)" />
+          <path d="M1142 410 H946" stroke="#67f5dc" stroke-width="3" marker-end="url(#arrowHead)" />
+          <path d="M786 410 H758" stroke="#67f5dc" stroke-width="3" marker-end="url(#arrowHead)" />
+          <path d="M582 410 H538" stroke="#67f5dc" stroke-width="3" marker-end="url(#arrowHead)" />
+          <path d="M362 410 H212" stroke="#67f5dc" stroke-width="3" marker-end="url(#arrowHead)" />
+          <path d="M1041 240 V292 C1041 326 1008 336 936 336 H668 C648 336 636 342 626 354" fill="none" stroke="#ff7a9a" stroke-width="3" stroke-dasharray="7 8" marker-end="url(#arrowHead)" />
+          <path d="M752 410 H780" stroke="#ff7a9a" stroke-width="3" marker-end="url(#arrowHead)" />
+          <path d="M126 354 V284 C126 266 142 258 164 258 H432 C456 258 476 246 482 224" fill="none" stroke="#67f5dc" stroke-width="3" stroke-dasharray="9 9" marker-end="url(#arrowHead)" />
+
+          <!-- Key annotations -->
+          <g transform="translate(232 540)">
+            <rect x="0" y="0" width="856" height="134" rx="22" fill="rgba(255,255,255,0.045)" stroke="rgba(255,255,255,0.14)" />
+            <text x="428" y="34" fill="#edf3ff" font-size="20" font-weight="900" text-anchor="middle">Core thesis</text>
+            <text x="428" y="68" fill="#cbd7e8" font-size="15" text-anchor="middle">Agents can plan, but real issuance, compliance, identity, and field checks need verified humans.</text>
+            <text x="428" y="94" fill="#cbd7e8" font-size="15" text-anchor="middle">AI2Human converts that work into structured proof, verification results, settlement, and policy signals.</text>
+            <text x="428" y="120" fill="#67f5dc" font-size="14" font-family="monospace" text-anchor="middle">agent request -> human execution / verification -> structured proof -> verify -> settle</text>
+          </g>
+        </svg>
+      </div>
+
+      <div class="layers" aria-label="AI2Human architecture layers">
+        <article class="layer">
+          <div class="layer-number">01</div>
+          <h3>Network Entry</h3>
+          <p>AI agents, projects, protocols, campaign teams, and human requesters enter the network.</p>
+        </article>
+        <article class="layer">
+          <div class="layer-number">02</div>
+          <h3>Agent Access</h3>
+          <p>skill.md, agent manifest, API, SDK, CLI templates, and webhooks make the network machine-readable.</p>
+        </article>
+        <article class="layer">
+          <div class="layer-number">03</div>
+          <h3>AI2Human Router</h3>
+          <p>Routes the request, builds proof requirements, prices work, and chooses escrow or prize-pool settlement.</p>
+        </article>
+        <article class="layer">
+          <div class="layer-number">04</div>
+          <h3>Task Surface</h3>
+          <p>Campaign tasks, social tasks, content contests, local tasks, identity tasks, and agent-routed tasks.</p>
+        </article>
+        <article class="layer">
+          <div class="layer-number">05</div>
+          <h3>Human Network</h3>
+          <p>Verified operators with X binding, token access, local ability, review roles, and task history.</p>
+        </article>
+        <article class="layer">
+          <div class="layer-number">06</div>
+          <h3>Proof Layer</h3>
+          <p>X links, images, screenshots, receipts, timestamps, wallet evidence, location and device proof.</p>
+        </article>
+        <article class="layer">
+          <div class="layer-number">07</div>
+          <h3>Verification</h3>
+          <p>Rule checks, AI review, human review, fraud detection, disputes, and arbitration.</p>
+        </article>
+        <article class="layer">
+          <div class="layer-number">08</div>
+          <h3>Compliance & RWA Oracle</h3>
+          <p>Human-verified KYC, KYB, location, entity, document, and asset proofs for B20, RWA, local stablecoins, and regulated assets.</p>
+        </article>
+        <article class="layer">
+          <div class="layer-number">09</div>
+          <h3>Settlement</h3>
+          <p>USDC escrow, prize pools, claimFor payout, deadline refunds, and onchain review anchors.</p>
+        </article>
+        <article class="layer">
+          <div class="layer-number">10</div>
+          <h3>Reputation</h3>
+          <p>Operator, project, and agent reputation from proof quality, disputes, payouts, and completion history.</p>
+        </article>
+        <article class="layer">
+          <div class="layer-number">11</div>
+          <h3>Discovery</h3>
+          <p>Operator service index, task templates, verifier registry, public reports, and agent-readable capabilities.</p>
+        </article>
+        <article class="layer">
+          <div class="layer-number">12</div>
+          <h3>A2H Access</h3>
+          <p>Holder-gated tasks, operator priority, reviewer roles, network incentives, and future governance.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="technical" class="section">
+      <div class="section-head">
+        <div>
+          <div class="section-kicker">Technical Blueprint</div>
+          <h2>The network is a protocol stack, not a loose task board.</h2>
+        </div>
+        <p class="section-note">
+          Each task has a typed manifest, a state machine, a proof bundle, verifier outputs, settlement records, and reputation events. The UI is only one client on top of the same rails.
+        </p>
+      </div>
+
+      <div class="compare">
+        <article class="compare-column">
+          <header>
+            <h3>Agent Interface</h3>
+            <p>Machine-readable entry points let agents discover capabilities, price work, and track task state.</p>
+          </header>
+          <ul>
+            <li><span class="dot"></span><span><strong>skill.md:</strong> natural-language operating contract for agent clients.</span></li>
+            <li><span class="dot"></span><span><strong>REST API:</strong> create task, quote reward, submit proof, poll status, request review.</span></li>
+            <li><span class="dot"></span><span><strong>SDK:</strong> typed client for task creation, escrow preparation, and webhook verification.</span></li>
+            <li><span class="dot"></span><span><strong>Webhooks:</strong> task.created, proof.submitted, review.passed, payout.sent, dispute.opened.</span></li>
+          </ul>
+        </article>
+
+        <article class="compare-column">
+          <header>
+            <h3>Execution Core</h3>
+            <p>The backend routes work, tracks lifecycle state, assigns operators, and keeps every transition auditable.</p>
+          </header>
+          <ul>
+            <li><span class="dot" style="background: var(--blue);"></span><span><strong>Task Orchestrator:</strong> validates manifests and moves tasks through the state machine.</span></li>
+            <li><span class="dot" style="background: var(--blue);"></span><span><strong>Matching Engine:</strong> selects eligible humans by skill, score, region, availability, and gate rules.</span></li>
+            <li><span class="dot" style="background: var(--blue);"></span><span><strong>Proof Store:</strong> stores normalized evidence metadata and content-addressed attachments.</span></li>
+            <li><span class="dot" style="background: var(--blue);"></span><span><strong>Review Queue:</strong> combines deterministic checks, AI review, and human reviewer decisions.</span></li>
+          </ul>
+        </article>
+
+        <article class="compare-column">
+          <header>
+            <h3>Trust & Settlement</h3>
+            <p>Payment, reputation, disputes, and public audit trails are separated from the UI layer.</p>
+          </header>
+          <ul>
+            <li><span class="dot" style="background: var(--amber);"></span><span><strong>Escrow Contracts:</strong> lock USDC before work, release after verification, refund on expiry.</span></li>
+            <li><span class="dot" style="background: var(--amber);"></span><span><strong>Reputation Ledger:</strong> records completion rate, proof quality, disputes, speed, and payout history.</span></li>
+            <li><span class="dot" style="background: var(--amber);"></span><span><strong>Indexer:</strong> syncs onchain settlement events into searchable task and operator history.</span></li>
+            <li><span class="dot" style="background: var(--amber);"></span><span><strong>Audit Layer:</strong> exposes public reports without leaking private operator data.</span></li>
+          </ul>
+        </article>
+      </div>
+
+      <div class="table-wrap" style="margin-top: 18px;">
+        <table>
+          <thead>
+            <tr>
+              <th>Object</th>
+              <th>Core Fields</th>
+              <th>Why It Exists</th>
+              <th>System Boundary</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>TaskManifest</code></td>
+              <td>taskType, requester, budget, deadline, proofSchema, eligibility, settlementMode</td>
+              <td>Gives agents and humans one exact contract for the requested work.</td>
+              <td>API / SDK / Router</td>
+            </tr>
+            <tr>
+              <td><code>OperatorProfile</code></td>
+              <td>wallet, identityBindings, skills, region, reliabilityScore, disputeCount</td>
+              <td>Lets the network route work to humans who can actually complete it.</td>
+              <td>Registry / Matching Engine</td>
+            </tr>
+            <tr>
+              <td><code>ProofBundle</code></td>
+              <td>taskId, submittedBy, evidenceUrls, screenshots, receipts, timestamp, hash</td>
+              <td>Turns human work into structured evidence that can be reviewed.</td>
+              <td>Proof Store / Review Queue</td>
+            </tr>
+            <tr>
+              <td><code>VerificationResult</code></td>
+              <td>score, checksPassed, reviewerId, failureReasons, disputeWindow, signature</td>
+              <td>Prevents payout from depending on informal trust or private messages.</td>
+              <td>Verifier / Arbitration</td>
+            </tr>
+            <tr>
+              <td><code>SettlementRecord</code></td>
+              <td>escrowId, amount, token, recipient, txHash, payoutStatus, refundStatus</td>
+              <td>Creates a durable payment trail from funding to payout or refund.</td>
+              <td>Contracts / Indexer</td>
+            </tr>
+            <tr>
+              <td><code>ReputationEvent</code></td>
+              <td>operator, taskId, outcome, proofQuality, disputeImpact, weight</td>
+              <td>Compounds trust across future task routing and reviewer selection.</td>
+              <td>Reputation Ledger</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="compliance" class="section">
+      <div class="section-head">
+        <div>
+          <div class="section-kicker">Compliance & RWA Oracle</div>
+          <h2>Human-verified issuance for B20, RWA, local stablecoins, and regulated assets.</h2>
+        </div>
+        <p class="section-note">
+          The same execution loop becomes a compliance primitive: agents request verification, humans perform checks, proof is structured, policy is verified, and token issuance or transfer rules can be applied from day one.
+        </p>
+      </div>
+
+      <div class="workflow">
+        <div class="flow-panel">
+          <div class="flow-title">
+            <span>Issuance Flow</span>
+            <span class="tag">for asset agents</span>
+          </div>
+          <div class="flow-body">
+            <ol class="step-list">
+              <li class="step">
+                <div class="step-badge">1</div>
+                <div><h3>Issuer or agent requests verification</h3><p>A project defines the asset, jurisdiction, policy needs, proof schema, budget, and eligible verifier requirements.</p></div>
+              </li>
+              <li class="step">
+                <div class="step-badge">2</div>
+                <div><h3>AI2Human routes human checks</h3><p>Verified operators perform document checks, location proof, entity checks, KYC/KYB support, or asset-specific field validation.</p></div>
+              </li>
+              <li class="step">
+                <div class="step-badge">3</div>
+                <div><h3>Structured proof bundle is created</h3><p>Evidence becomes normalized fields: verifier, subject, proof type, timestamp, jurisdiction, attachments, hash, and review status.</p></div>
+              </li>
+              <li class="step">
+                <div class="step-badge">4</div>
+                <div><h3>Policy-aware verification runs</h3><p>Rules, reviewers, and dispute paths decide whether the proof can unlock issuance, role assignment, transfer policy, freeze, seize, or compliance tags.</p></div>
+              </li>
+              <li class="step">
+                <div class="step-badge">5</div>
+                <div><h3>Token action consumes the oracle result</h3><p>B20, RWA, local stablecoin, or regulated asset flows can mint with compliance rules already attached instead of bolting review on after launch.</p></div>
+              </li>
+            </ol>
+          </div>
+        </div>
+
+        <div class="flow-panel">
+          <div class="flow-title">
+            <span>Oracle Output</span>
+            <span class="tag">structured proof</span>
+          </div>
+          <div class="flow-body">
+            <div class="state-machine">
+              <div class="state-row"><div class="state-pill">Verification Request</div><div class="arrow">→</div><div class="state-pill">Verifier Assigned</div></div>
+              <div class="state-row"><div class="state-pill">Proof Submitted</div><div class="arrow">→</div><div class="state-pill">Policy Checked</div></div>
+              <div class="state-row"><div class="state-pill">Oracle Attestation</div><div class="arrow">→</div><div class="state-pill">Token Policy Applied</div></div>
+            </div>
+            <div class="branches">
+              <div class="branch"><strong class="accent-rose">B20</strong><span>Human-verified issuer, entity, region, and policy inputs before token actions.</span></div>
+              <div class="branch"><strong class="accent-amber">RWA</strong><span>Document, asset, location, ownership, and operational proof routed through verified operators.</span></div>
+              <div class="branch"><strong class="accent-green">Local stablecoins</strong><span>Local verification, jurisdiction notes, operator review, and evidence bundles for compliance-aware workflows.</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="table-wrap" style="margin-top: 18px;">
+        <table>
+          <thead>
+            <tr>
+              <th>Use Case</th>
+              <th>Human Work</th>
+              <th>Structured Proof</th>
+              <th>Downstream Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>B20 Issuance</code></td>
+              <td>Issuer/entity verification, role confirmation, document review.</td>
+              <td>Entity attestation, verifier signature, policy tags, proof hash.</td>
+              <td>Mint with role-based permissions and transfer policy from launch.</td>
+            </tr>
+            <tr>
+              <td><code>RWA Tokenization</code></td>
+              <td>Asset document checks, local inspection, ownership evidence, photo/video proof.</td>
+              <td>Asset proof bundle, timestamped attachments, reviewer result.</td>
+              <td>Oracle signal for minting, collateral onboarding, or compliance review.</td>
+            </tr>
+            <tr>
+              <td><code>Local Stablecoins</code></td>
+              <td>Local operator checks, business verification, jurisdiction-specific evidence collection.</td>
+              <td>KYC/KYB support record, location proof, policy result, audit trail.</td>
+              <td>Issuer onboarding, policy enforcement, transfer restriction inputs.</td>
+            </tr>
+            <tr>
+              <td><code>Regulated Assets</code></td>
+              <td>Document collection, role approval, restricted-party checks, ongoing review tasks.</td>
+              <td>Reviewer decision, exception notes, dispute window, expiry time.</td>
+              <td>Freeze/seize policy, role-gated access, renewal workflow, audit export.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="workflow" class="section">
+      <div class="section-head">
+        <div>
+          <div class="section-kicker">How It Works</div>
+          <h2>Simple enough for users. Structured enough for agents.</h2>
+        </div>
+        <p class="section-note">
+          The user-facing explanation is plain: describe the blocked step, fund it, a verified human does it, proof is checked, then USDC settles. Underneath, every step maps to a protocol state.
+        </p>
+      </div>
+
+      <div class="workflow">
+        <div class="flow-panel">
+          <div class="flow-title">
+            <span>Plain-English Flow</span>
+            <span class="tag">for humans</span>
+          </div>
+          <div class="flow-body">
+            <ol class="step-list">
+              <li class="step">
+                <div class="step-badge">1</div>
+                <div><h3>Agent or project creates a task</h3><p>It defines what must happen, who can do it, deadline, reward, and what proof is required.</p></div>
+              </li>
+              <li class="step">
+                <div class="step-badge">2</div>
+                <div><h3>Funds are locked first</h3><p>USDC goes into escrow or a prize pool before work starts, so execution is not dependent on manual promises.</p></div>
+              </li>
+              <li class="step">
+                <div class="step-badge">3</div>
+                <div><h3>Verified human completes the real step</h3><p>The human uses a real account, local presence, judgment, photo, receipt, or other proof source.</p></div>
+              </li>
+              <li class="step">
+                <div class="step-badge">4</div>
+                <div><h3>Proof is submitted and verified</h3><p>Rule checks, AI review, human reviewers, and fraud checks decide whether the proof satisfies the task.</p></div>
+              </li>
+              <li class="step">
+                <div class="step-badge">5</div>
+                <div><h3>Payment and reputation update</h3><p>USDC is released, public reports are updated, and reputation changes for operators, agents, and projects.</p></div>
+              </li>
+            </ol>
+          </div>
+        </div>
+
+        <div class="flow-panel">
+          <div class="flow-title">
+            <span>Machine-readable Flow</span>
+            <span class="tag">for agents</span>
+          </div>
+          <div class="flow-body">
+            <div class="state-machine">
+              <div class="state-row"><div class="state-pill">Draft</div><div class="arrow">→</div><div class="state-pill">Funded</div></div>
+              <div class="state-row"><div class="state-pill">Open</div><div class="arrow">→</div><div class="state-pill">Claimed</div></div>
+              <div class="state-row"><div class="state-pill">Active</div><div class="arrow">→</div><div class="state-pill">Proof Submitted</div></div>
+              <div class="state-row"><div class="state-pill">In Review</div><div class="arrow">→</div><div class="state-pill">Verified</div></div>
+              <div class="state-row"><div class="state-pill">Paid</div><div class="arrow">→</div><div class="state-pill">Reputation Updated</div></div>
+            </div>
+            <div class="branches">
+              <div class="branch"><strong class="accent-rose">Dispute</strong><span>Proof is challenged, then sent to arbitration or manual review.</span></div>
+              <div class="branch"><strong class="accent-amber">Refund</strong><span>Unused funds return after deadline or failed validation.</span></div>
+              <div class="branch"><strong class="accent-green">Anchor</strong><span>Final review and payout evidence can be anchored onchain.</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="protocol" class="section">
+      <div class="section-head">
+        <div>
+          <div class="section-kicker">Protocol State Machine</div>
+          <h2>Every task should have a clear lifecycle.</h2>
+        </div>
+        <p class="section-note">
+          The lifecycle makes the network auditable: funding is clear before execution, proof exists before verification, verification gates payout, and disputes or refunds follow explicit paths.
+        </p>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>State</th>
+              <th>What It Means</th>
+              <th>Who Acts</th>
+              <th>Evidence / Guardrail</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>Draft</code></td>
+              <td>Task exists but is not yet live.</td>
+              <td>Agent / project / requester</td>
+              <td>Required fields, proof rules, reward plan.</td>
+            </tr>
+            <tr>
+              <td><code>Funded</code></td>
+              <td>USDC is locked in escrow or prize pool.</td>
+              <td>Requester / funding wallet</td>
+              <td>Pool address, amount, deadline, refund agent.</td>
+            </tr>
+            <tr>
+              <td><code>Open</code></td>
+              <td>Eligible humans can accept or submit work.</td>
+              <td>Operators / participants</td>
+              <td>Email/X binding, token gate, duplicate checks.</td>
+            </tr>
+            <tr>
+              <td><code>Proof Submitted</code></td>
+              <td>Human work is complete and evidence is uploaded.</td>
+              <td>Human operator</td>
+              <td>X URL, screenshot, receipt, timestamp, wallet evidence.</td>
+            </tr>
+            <tr>
+              <td><code>In Review</code></td>
+              <td>Proof is checked by rules, AI, or human reviewers.</td>
+              <td>Verifier / AI review / admin</td>
+              <td>Scoring rubric, anti-fraud checks, audit excerpt.</td>
+            </tr>
+            <tr>
+              <td><code>Verified</code></td>
+              <td>Proof passes and payout becomes eligible.</td>
+              <td>Network verification layer</td>
+              <td>Review log, ranked results, Base anchor when needed.</td>
+            </tr>
+            <tr>
+              <td><code>Paid</code></td>
+              <td>USDC is released to the worker or winner.</td>
+              <td>Settlement layer</td>
+              <td>Transaction hash, idempotency key, payout record.</td>
+            </tr>
+            <tr>
+              <td><code>Disputed / Resolved</code></td>
+              <td>Proof or payout is challenged, then decided.</td>
+              <td>Arbitrator / reviewer</td>
+              <td>Dispute record, ruling, reputation impact.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="modules" class="section">
+      <div class="section-head">
+        <div>
+          <div class="section-kicker">Core Modules</div>
+          <h2>Seven primitives make AI2Human Network easy to understand and hard to fake.</h2>
+        </div>
+        <p class="section-note">
+          The network is not a generic marketplace. It is a task execution protocol for moments where agents need verified human action, proof, review, and payout.
+        </p>
+      </div>
+
+      <div class="compare">
+        <article class="compare-column">
+          <header>
+            <h3>Agent Entry</h3>
+            <p>Agents, projects, and apps submit human-needed work through machine-readable interfaces.</p>
+          </header>
+          <ul>
+            <li><span class="dot"></span><span><strong>skill.md:</strong> tells AI agents when and how to call AI2Human.</span></li>
+            <li><span class="dot"></span><span><strong>API / SDK:</strong> creates tasks, quotes rewards, checks status, and fetches proof.</span></li>
+            <li><span class="dot"></span><span><strong>Task manifest:</strong> defines action, proof type, deadline, budget, and eligibility.</span></li>
+            <li><span class="dot"></span><span><strong>Router:</strong> decides whether the task is social, account, local, review, or campaign work.</span></li>
+          </ul>
+        </article>
+
+        <article class="compare-column">
+          <header>
+            <h3>Human Execution</h3>
+            <p>Verified operators complete the parts agents cannot complete reliably by themselves.</p>
+          </header>
+          <ul>
+            <li><span class="dot" style="background: var(--blue);"></span><span><strong>Operator registry:</strong> identity, wallet, region, skills, availability, and score.</span></li>
+            <li><span class="dot" style="background: var(--blue);"></span><span><strong>Task matching:</strong> assigns work by eligibility, reliability, urgency, and cost.</span></li>
+            <li><span class="dot" style="background: var(--blue);"></span><span><strong>Execution console:</strong> humans see exact instructions, proof rules, and deadline.</span></li>
+            <li><span class="dot" style="background: var(--blue);"></span><span><strong>Campaign mode:</strong> supports many humans completing parallel proof tasks.</span></li>
+          </ul>
+        </article>
+
+        <article class="compare-column">
+          <header>
+            <h3>Proof, Verify, Settle</h3>
+            <p>The network pays only after evidence is structured, checked, and accepted.</p>
+          </header>
+          <ul>
+            <li><span class="dot" style="background: var(--amber);"></span><span><strong>Proof bundle:</strong> URL, screenshot, wallet evidence, receipt, timestamp, and metadata.</span></li>
+            <li><span class="dot" style="background: var(--amber);"></span><span><strong>Verification engine:</strong> rule checks, AI review, duplicate detection, and human review.</span></li>
+            <li><span class="dot" style="background: var(--amber);"></span><span><strong>Settlement layer:</strong> USDC escrow, prize pools, payouts, refunds, and receipts.</span></li>
+            <li><span class="dot" style="background: var(--amber);"></span><span><strong>Reputation graph:</strong> successful work, failed proof, disputes, speed, and reliability.</span></li>
+          </ul>
+        </article>
+
+        <article class="compare-column">
+          <header>
+            <h3>Compliance & RWA Oracle</h3>
+            <p>Human-verified proof becomes an input for token issuance, asset onboarding, and regulated workflows.</p>
+          </header>
+          <ul>
+            <li><span class="dot" style="background: var(--rose);"></span><span><strong>Verifier task packs:</strong> KYC, KYB, entity, document, location, asset, and policy review.</span></li>
+            <li><span class="dot" style="background: var(--rose);"></span><span><strong>Oracle result:</strong> structured attestation with proof hash, reviewer decision, jurisdiction, and expiry.</span></li>
+            <li><span class="dot" style="background: var(--rose);"></span><span><strong>Token policy bridge:</strong> B20, RWA, stablecoin, and regulated asset flows consume verified signals.</span></li>
+            <li><span class="dot" style="background: var(--rose);"></span><span><strong>Audit trail:</strong> every human check remains replayable for issuers, agents, and reviewers.</span></li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section id="roadmap" class="section">
+      <div class="section-head">
+        <div>
+          <div class="section-kicker">Build Plan</div>
+          <h2>From current product to full network.</h2>
+        </div>
+        <p class="section-note">
+          The path is not to add random features. The path is to make every campaign, task, proof, review, payout, and reputation event part of one coherent network protocol.
+        </p>
+      </div>
+
+      <div class="principles">
+        <article class="principle">
+          <b>Phase 1 · Protocolize Tasks</b>
+          <p>Make task states explicit, escrow-first, deadline-aware, and audit-ready. Every task should have a lifecycle humans and agents can both understand.</p>
+        </article>
+        <article class="principle">
+          <b>Phase 2 · Agent Access</b>
+          <p>Ship skill.md, manifest, API, SDK, examples, and webhooks so external agents can create, fund, monitor, and settle tasks.</p>
+        </article>
+        <article class="principle">
+          <b>Phase 3 · Proof Network</b>
+          <p>Standardize proof schemas for X links, screenshots, receipts, local action, timestamps, identity evidence, and public reports.</p>
+        </article>
+        <article class="principle">
+          <b>Phase 4 · Reputation Graph</b>
+          <p>Track proof quality, payout history, completion rate, disputes, reviewer accuracy, and token-gated access into durable reputation.</p>
+        </article>
+        <article class="principle">
+          <b>Phase 5 · Compliance Oracle</b>
+          <p>Package human-verified KYC/KYB, entity, location, asset, and policy checks into oracle outputs for B20, RWA, local stablecoin, and regulated asset workflows.</p>
+        </article>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <div>
+        <h2>Final Positioning</h2>
+        <p>
+          <strong>AI2Human Network is the human execution, proof, verification, settlement, and reputation layer for AI agents.</strong>
+          Agents can do the software-native work. When the workflow needs real accounts, human judgment, local action,
+          compliance checks, or proof requirements, it routes into AI2Human.
+        </p>
+      </div>
+      <div class="tag">Agents run. Humans finish. Proof settles.</div>
+    </footer>
+  </main>
+</body>
+</html>

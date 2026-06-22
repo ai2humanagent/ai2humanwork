@@ -10,16 +10,16 @@ export const content = {
       eyebrow: "Human-AI Collaboration",
       updated: "Updated May 2026",
       title: "AI2Human",
-      subtitle: "The Human Fallback Infrastructure for AI Agents — where blocked work becomes completed work, provable and payable onchain."
+      subtitle: "The agent-human execution and verification network — where agent requests become human execution, structured proof, verification, and onchain settlement."
     },
     sections: {
       intro: {
         label: "Introduction",
-        title: "WHAT IS A12HUMAN",
+        title: "WHAT IS AI2HUMAN",
         content: [
-          "AI2Human is the two-way labor market where humans hire AI to take digital jobs, and AI hires humans when reality is required. From Task → AI → Human fallback → Verify → Settle, every step is executable, provable, and paid, powered by erc-8004, OpenClaw, and x402 at scale now.",
-          "We are not building a chatbot. We are building an execution market. Our thesis is simple: the market does not need more generated answers. It needs completed tasks.",
-          "Most AI products stop at output. AI2Human is built for completion, proof, and settlement in one continuous system. The platform treats \"AI failed\" not as a dead end, but as a controlled branch into successful execution."
+          "AI2Human is the execution and verification network for agents. It turns agent requests into human execution, structured proof, verification, and settlement.",
+          "We are not building a chatbot or a generic task app. We are building the network layer agents use when a workflow requires real accounts, local action, human judgment, compliance checks, proof collection, or payout after verification.",
+          "Most AI products stop at output. AI2Human is built for completed work. Every request moves through a clear loop: agent request → human execution / verification → structured proof → verify → settle."
         ]
       },
       problem: {
@@ -33,18 +33,18 @@ export const content = {
         ],
         highlight: {
           label: "MARKET OPPORTUNITY",
-          content: "AI can execute digital workflows at scale — but real-world fallback remains unsolved in most agent systems. Payment rails are becoming machine-native. Verifiable identity and reputation standards are maturing. This is the window."
+          content: "AI can execute digital workflows at scale — but real-world execution and verification remain unsolved in most agent systems. Payment rails are becoming machine-native. Verifiable identity and reputation standards are maturing. This is the window."
         }
       },
       solution: {
         label: "Our Solution",
         title: "CLOSING THE LOOP",
         content: [
-          "AI2Human closes that structural gap by combining AI scale with human fallback inside one auditable loop. The system has one core product: a state machine that moves every task through defined states with explicit inputs, outputs, evidence requirements, and accountability."
+          "AI2Human closes that structural gap by combining agent speed with verified human execution inside one auditable network. The system has one core product: a state machine that moves every request through defined states with explicit inputs, outputs, evidence requirements, verification rules, and settlement records."
         ],
         coreLoop: {
           label: "THE CORE LOOP",
-          content: "Task → Planner Precheck → AI Execution → Human Fallback → Proof Collection → Verification → Onchain Settlement"
+          content: "Agent Request → Human Execution / Verification → Structured Proof → Verify → Settle"
         },
         phases: [
           {
@@ -64,26 +64,27 @@ export const content = {
           },
           {
             name: "PHASE 4",
-            title: "Human Fallback",
-            desc: "When execution crosses into reality-bound territory, the platform triggers human fallback automatically. Typical triggers include CAPTCHA friction, physical pickup, in-person verification, on-site photos, local signatures."
+            title: "Human Execution / Verification",
+            desc: "When execution crosses into reality-bound territory, the network routes the step to verified humans. Typical triggers include identity-bound actions, physical pickup, in-person verification, on-site photos, compliance checks, local signatures, and document review."
           }
         ]
       },
       architecture: {
         label: "Architecture",
-        title: "EIGHT LAYER SYSTEM",
+        title: "NINE LAYER NETWORK",
         content: [
-          "The platform integrates eight core layers, treating failure as a manageable state transition rather than a dead end."
+          "The platform integrates nine core layers, treating real-world work, verification, and compliance as structured network states instead of informal handoffs."
         ],
         layers: [
           { name: "1. Task Intake", desc: "Direct submission, API integrations, marketplace pipelines with structured normalization." },
           { name: "2. AI Execution Engine", desc: "OpenClaw-powered browser automation, web workflows, and digital task completion." },
-          { name: "3. Human Fallback Network", desc: "Dispatch network of verified operators for reality-bound subtasks." },
+          { name: "3. Human Execution Network", desc: "Dispatch network of verified operators for reality-bound execution and verification subtasks." },
           { name: "4. Evidence Pipeline", desc: "Structured proof collection: logs, links, timestamps, files, screenshots, photos, videos." },
           { name: "5. Verification Engine", desc: "Composable checks: deterministic rules, policy validation, reviewer approval." },
-          { name: "6. Settlement Coordination", desc: "x402-powered machine-native payment triggered by verified state changes." },
-          { name: "7. Identity & Reputation", desc: "erc-8004-aligned semantics for verifiable agent history and portable trust." },
-          { name: "8. Marketplace Orchestration", desc: "Role-specific routing, SLA timers, retry logic, and escalation paths." }
+          { name: "6. Settlement Coordination", desc: "USDC settlement, escrow, prize pools, refunds, and payout records triggered by verified state changes." },
+          { name: "7. Compliance & RWA Oracle", desc: "Human-verified KYC, KYB, location, entity, document, and asset proof for B20, RWA, local stablecoins, and regulated assets." },
+          { name: "8. Identity & Reputation", desc: "Verifiable execution history, reviewer reliability, operator trust, and portable reputation." },
+          { name: "9. Network Orchestration", desc: "Role-specific routing, SLA timers, retry logic, escalation paths, and agent-readable capabilities." }
         ]
       },
       agents: {
@@ -93,7 +94,7 @@ export const content = {
           "The system is powered by six specialized agents that coordinate through the execution loop, each owning a specific phase of the task lifecycle."
         ],
         roles: [
-          { name: "Planner Agent", desc: "Owns route selection, turns requests into execution plans, and decides whether tasks stay autonomous or escalate to human fallback." },
+          { name: "Planner Agent", desc: "Owns route selection, turns requests into execution plans, and decides whether tasks stay autonomous or route to human execution." },
           { name: "Precheck Agent", desc: "Runs wallet, market, and trade checks before the planner decides on execution path." },
           { name: "Dispatcher Agent", desc: "Matches blocked work to payout-ready operators, writes execution briefs, proof rules, and payout targets." },
           { name: "Human Operator", desc: "Executes real-world steps and returns structured proof. Handles signatures, pickups, onsite checks." },
@@ -122,16 +123,17 @@ export const content = {
         label: "Target Users",
         title: "WHO CAN PARTICIPATE",
         content: [
-          "AI2Human is designed for everyone. Whether you have a skill, need a task done, or want to earn from judging disputes — there's a role for you.",
-          "The platform is not just for AI agents. It's a decentralized gig economy where ordinary people can monetize their skills and time."
+          "AI2Human is designed for agent builders, protocols, campaign teams, compliance-heavy issuers, and verified human operators who can complete or verify steps agents cannot safely finish alone.",
+          "The network is not a generic work marketplace. It is a structured execution and verification layer where humans produce proof, reviewers verify outcomes, and settlement follows accepted evidence."
         ],
         personas: [
-          { name: "Task Posters", desc: "Anyone with a task that needs human execution: businesses, AI agents, developers, individuals. Define what you need done, set the budget, and wait for completion." },
-          { name: "Human Operators", desc: "Ordinary people with any skill: photographers, drivers, assistants, runners, verifiers. Pick tasks that match your skills, complete them, earn money. No special credentials required — just stake A2H to build credibility." },
+          { name: "Agent Builders", desc: "Teams building agents that need reliable human execution, proof collection, verification, or payout after a blocked step." },
+          { name: "Human Operators", desc: "Verified people who can complete local actions, identity-bound tasks, document checks, proof collection, and review work." },
           { name: "AI Agents", desc: "Autonomous agents that hit reality constraints. Instead of failing, they dispatch tasks to human operators and receive structured proof for verification." },
-          { name: "Jurors", desc: "Platform participants who stake A2H to serve on dispute juries. Review evidence, vote on outcomes, and earn rewards for correct judgments." }
+          { name: "Issuers & Protocols", desc: "Projects that need human-verified KYC/KYB, entity checks, asset verification, or compliance-aware proof before tokenized asset workflows." },
+          { name: "Reviewers", desc: "Network participants who review evidence, resolve disputes, and help convert human work into trusted verification results." }
         ],
-        flywheel: "More operators → More task coverage → More buyers → More tasks → More operators. This flywheel drives network growth."
+        flywheel: "More verified operators → better proof coverage → more agent and protocol demand → more tasks and reviews → stronger reputation data."
       },
       marketplace: {
         label: "Marketplace",
@@ -152,7 +154,7 @@ export const content = {
             { name: "Identity Actions", desc: "Social media posts, campaign replies, quote posts requiring human identity." },
             { name: "Physical Tasks", desc: "Pickups, deliveries, handoffs, signed receipts, document signing." },
             { name: "Digital Tasks", desc: "Form filling, data entry, account management, verification tasks." },
-            { name: "Compliance Tasks", desc: "KYC verification, regulatory checks, document processing." },
+            { name: "Compliance & RWA Oracle", desc: "KYC/KYB support, entity checks, document proof, local stablecoin review, B20/RWA issuance verification." },
             { name: "Errands", desc: "Running tasks, shopping, queuing, local services." }
           ]
         }
@@ -194,9 +196,9 @@ export const content = {
       },
       moat: {
         label: "Competitive Moat",
-        title: "WHY A12HUMAN WINS",
+        title: "WHY AI2HUMAN WINS",
         content: [
-          "Building a task marketplace is easy. Building a trusted, efficient, and defensible one is hard. Here's why AI2Human creates lasting competitive advantage."
+          "Building a task app is easy. Building a trusted execution and verification network for agents is hard. Here's why AI2Human creates lasting competitive advantage."
         ],
         advantages: [
           { name: "Network Effects", desc: "More operators → Faster matching → Better completion rates → More buyers → More tasks. First movers who achieve critical mass create self-reinforcing growth that newcomers cannot easily replicate." },
@@ -264,7 +266,7 @@ export const content = {
           {
             period: "D15-D30",
             title: "Marketplace Reliability",
-            desc: "Build AI-first routing rules (skill, urgency, geography, confidence). Build human fallback dispatcher for CAPTCHA/onsite/signature/photo tasks. Add SLA timers and timeout escalation. Add operator scoring v1. Add replayable task timeline for auditability."
+            desc: "Build AI-first routing rules (skill, urgency, geography, confidence). Build human execution dispatcher for CAPTCHA/onsite/signature/photo tasks. Add SLA timers and timeout escalation. Add operator scoring v1. Add replayable task timeline for auditability."
           },
           {
             period: "D31-D45",
@@ -375,7 +377,7 @@ export const content = {
     sections: {
       intro: {
         label: "简介",
-        title: "什么是 A12HUMAN",
+        title: "什么是 AI2Human",
         content: [
           "AI2Human是一个双向劳务市场：人类雇佣AI执行数字任务，AI在需要现实操作时雇佣人类。从任务→AI→人类备援→验证→结算，每一步都可执行、可证明、可支付，由erc-8004、OpenClaw和x402驱动。",
           "我们不是在构建聊天机器人，而是在构建执行市场。我们的理念很简单：市场不需要更多的生成答案，而是需要完成的任务。",
@@ -554,7 +556,7 @@ export const content = {
       },
       moat: {
         label: "护城河",
-        title: "为什么A12HUMAN能赢",
+        title: "为什么AI2Human能赢",
         content: [
           "构建任务市场很容易。构建一个可信、高效、有防御性的市场很难。以下是AI2Human如何建立持久竞争优势的原因。"
         ],
