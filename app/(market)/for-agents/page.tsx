@@ -75,9 +75,9 @@ const resources = [
     text: "A reward campaign payload using lucky draw distribution."
   },
   {
-    title: "B20 Skill Demo",
+    title: "B20 Issuance Flow",
     href: "/agent/b20",
-    text: "Human-readable demo for turning an agent B20 request into roles, policies, proof, and deploy checklist."
+    text: "Human-readable flow for turning an agent token request into B20 rules, proof gates, policy checks, and a Base receipt."
   },
   {
     title: "B20 Agent Skill",
@@ -191,15 +191,15 @@ export default function ForAgentsPage() {
 
       <section className={styles.agentCtaPanel}>
         <div>
-          <h2>B20 proof-to-policy skill</h2>
+          <h2>B20 issuance flow</h2>
           <p>
             The B20 skill turns an agent request into token config, roles, policy scopes,
-            AI2Human proof requirements, and a deployment checklist. A test token is already live
-            on Base Sepolia as a working proof.
+            AI2Human proof requirements, and a deployment checklist. The product flow now shows
+            how the proof gate leads into a real Base Sepolia receipt.
           </p>
         </div>
         <Link className={styles.agentPrimaryLink} href="/agent/b20">
-          Try B20 Skill
+          Open B20 Flow
         </Link>
       </section>
 
