@@ -1,0 +1,47 @@
+{
+  "intent": "Create a B20 token for a verified RWA community. Max supply 1,000,000. Only verified members can mint. Admin can freeze risky addresses. Require AI2Human proof before role assignment.",
+  "requesterName": "Example RWA Community",
+  "requesterHandle": "@example",
+  "token": {
+    "variant": "ASSET",
+    "name": "Verified RWA Community",
+    "symbol": "VRWA",
+    "decimals": 18,
+    "maxSupply": "1000000",
+    "initialAdmin": "0x1111111111111111111111111111111111111111",
+    "contractURI": "ipfs://REQUESTER_METADATA_URI",
+    "useCase": "rwa-community"
+  },
+  "roles": {
+    "minter": "0x2222222222222222222222222222222222222222",
+    "pauser": "0x3333333333333333333333333333333333333333",
+    "metadata": "0x4444444444444444444444444444444444444444",
+    "compliance": "0x5555555555555555555555555555555555555555",
+    "operator": "0x6666666666666666666666666666666666666666"
+  },
+  "policies": {
+    "MINT_RECEIVER_POLICY": {
+      "type": "ALLOWLIST",
+      "accounts": []
+    },
+    "TRANSFER_RECEIVER_POLICY": {
+      "type": "ALLOWLIST",
+      "accounts": []
+    },
+    "TRANSFER_SENDER_POLICY": {
+      "type": "BLOCKLIST",
+      "accounts": []
+    }
+  },
+  "proof": {
+    "required": true,
+    "proofType": "structured_verification_bundle",
+    "requiredFor": ["mint eligibility", "role assignment", "allowlist membership"],
+    "tasks": [
+      "Verify member eligibility.",
+      "Collect document, entity, location, or community membership proof.",
+      "Review proof before adding the account to a B20 allowlist or assigning a role.",
+      "Return a memo-ready proof hash for downstream B20 operations."
+    ]
+  }
+}

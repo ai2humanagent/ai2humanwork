@@ -44,6 +44,12 @@ Read the campaign template catalog:
 https://ai2human.work/agent/templates.json
 ```
 
+Read the B20 Agent Skill:
+
+```text
+https://ai2human.work/agent/b20-skill.md
+```
+
 ## Task Creation Pattern
 
 Describe the task as a human-verifiable job:
@@ -228,6 +234,25 @@ curl https://ai2human.work/api/agent/campaigns \
 For production campaigns, projects should still review the generated task in the app before public promotion.
 
 For production reward campaigns, do not ask the requester for a `poolAddress` by default. Use `ai2human_managed_pool`. AI2Human will create the PrizePool and return a `fundingInvoice`; the requester project transfers USDC to that invoice recipient, then the agent calls publish after preflight passes.
+
+## B20 Agent Skill
+
+Use the dedicated B20 skill when the requester wants a B20 token configuration with roles, policies, supply caps, freeze controls, mint eligibility, and AI2Human proof inputs:
+
+```text
+https://ai2human.work/agent/b20-skill.md
+```
+
+Preview a B20 proof-to-policy bundle:
+
+```bash
+curl -s https://ai2human.work/agent/b20/examples/rwa-community-token.json | \
+curl https://ai2human.work/api/agent/b20/preview \
+  -H "Content-Type: application/json" \
+  -d @-
+```
+
+The B20 skill only generates a dry-run configuration bundle. It does not broadcast transactions or custody keys.
 
 ## Expected API Result
 
