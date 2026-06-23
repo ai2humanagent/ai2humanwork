@@ -106,6 +106,24 @@ Explorer:
 https://sepolia.basescan.org/address/<TOKEN_ADDRESS>
 ```
 
+Current Base Sepolia test deployment:
+
+```text
+0xb200000000000000000000eaE911AAD5435c86F3
+```
+
+Create tx:
+
+```text
+0xf0227290cc7f3ff16ebf7181e1c1ccc3719780929529336e61b9f7cab44c81b0
+```
+
+Mint tx:
+
+```text
+0xf202ad26cdaac02c55c396f48af9d16bff68742dce5221f11a9eaa2fe61aac6a
+```
+
 ## Notes
 
 - The deployed token is a Base Sepolia testnet artifact.
