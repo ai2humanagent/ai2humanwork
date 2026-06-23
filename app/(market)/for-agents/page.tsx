@@ -73,6 +73,16 @@ const resources = [
     title: "Lucky Draw Example",
     href: "/agent/examples/create-lucky-draw-task.json",
     text: "A reward campaign payload using lucky draw distribution."
+  },
+  {
+    title: "B20 Skill Demo",
+    href: "/agent/b20",
+    text: "Human-readable demo for turning an agent B20 request into roles, policies, proof, and deploy checklist."
+  },
+  {
+    title: "B20 Agent Skill",
+    href: "/agent/b20-skill.md",
+    text: "Machine-readable skill for B20 proof-to-policy configuration."
   }
 ];
 
@@ -90,6 +100,9 @@ export default function ForAgentsPage() {
           <div className={styles.agentHeroActions}>
             <Link className={styles.agentPrimaryLink} href="/tasks/new">
               Create Human Task
+            </Link>
+            <Link className={styles.agentSecondaryLink} href="/agent/b20">
+              Open B20 Skill Demo
             </Link>
             <Link className={styles.agentSecondaryLink} href="/agent/skill.md">
               Open Agent Skill
@@ -122,6 +135,10 @@ export default function ForAgentsPage() {
         <div>
           <strong>Base USDC</strong>
           <span>settlement rail</span>
+        </div>
+        <div>
+          <strong>B20 Sepolia</strong>
+          <span>proof deployment live</span>
         </div>
       </div>
 
@@ -170,6 +187,20 @@ export default function ForAgentsPage() {
             </Link>
           ))}
         </div>
+      </section>
+
+      <section className={styles.agentCtaPanel}>
+        <div>
+          <h2>B20 proof-to-policy skill</h2>
+          <p>
+            The B20 skill turns an agent request into token config, roles, policy scopes,
+            AI2Human proof requirements, and a deployment checklist. A test token is already live
+            on Base Sepolia as a working proof.
+          </p>
+        </div>
+        <Link className={styles.agentPrimaryLink} href="/agent/b20">
+          Try B20 Skill
+        </Link>
       </section>
 
       <section className={styles.agentCtaPanel}>

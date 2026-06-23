@@ -30,6 +30,18 @@ Machine-readable manifest:
 https://ai2human.work/agent/b20/manifest.json
 ```
 
+Human-readable demo:
+
+```text
+https://ai2human.work/agent/b20
+```
+
+OpenClaw test prompt:
+
+```text
+https://ai2human.work/agent/b20/openclaw-test.md
+```
+
 Example request:
 
 ```text

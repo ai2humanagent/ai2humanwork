@@ -6,6 +6,9 @@
 - Live skill path after deploy: `https://ai2human.work/agent/b20-skill.md`
 - Live manifest path after deploy: `https://ai2human.work/agent/b20/manifest.json`
 - Preview API after deploy: `POST https://ai2human.work/api/agent/b20/preview`
+- Demo page: `https://ai2human.work/agent/b20`
+- OpenClaw test prompt: `https://ai2human.work/agent/b20/openclaw-test.md`
+- Base Sepolia proof token: `0xb200000000000000000000eaE911AAD5435c86F3`
 - Onchain deployment: not included in v1
 
 ## Product Position

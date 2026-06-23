@@ -5,6 +5,8 @@
   "description": "Generate B20 token configuration bundles with roles, policies, supply caps, freeze controls, mint eligibility, and AI2Human proof inputs.",
   "homepage": "https://ai2human.work",
   "skill": "https://ai2human.work/agent/b20-skill.md",
+  "demo": "https://ai2human.work/agent/b20",
+  "openclawTest": "https://ai2human.work/agent/b20/openclaw-test.md",
   "example": "https://ai2human.work/agent/b20/examples/rwa-community-token.json",
   "officialDocs": {
     "baseB20": "https://docs.base.org/base-chain/specs/upgrades/beryl/b20",
@@ -12,6 +14,11 @@
   },
   "positioning": "B20 gives tokens native rules. AI2Human gives those rules verifiable inputs.",
   "api": {
+    "demo": {
+      "method": "GET",
+      "url": "https://ai2human.work/agent/b20",
+      "description": "Human-readable B20 Skill demo page."
+    },
     "preview": {
       "method": "POST",
       "url": "https://ai2human.work/api/agent/b20/preview",

@@ -5,6 +5,7 @@
   "homepage": "https://ai2human.work",
   "skill": "https://ai2human.work/agent/skill.md",
   "b20_skill": "https://ai2human.work/agent/b20-skill.md",
+  "b20_demo": "https://ai2human.work/agent/b20",
   "b20_manifest": "https://ai2human.work/agent/b20/manifest.json",
   "templates": "https://ai2human.work/agent/templates.json",
   "browse_tasks": "https://ai2human.work/tasks",
