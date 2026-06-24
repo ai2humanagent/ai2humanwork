@@ -1,28 +1,93 @@
 <svg width="1920" height="1080" viewBox="0 0 1920 1080" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="loopAB" x1="120" y1="140" x2="360" y2="372" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#80FFEA"/><stop offset="1" stop-color="#7C5CFF"/>
+    <linearGradient id="bg" x1="0" y1="0" x2="1920" y2="1080" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F9FAFB"/>
+      <stop offset="0.52" stop-color="#F4F7FF"/>
+      <stop offset="1" stop-color="#EEF0FF"/>
     </linearGradient>
-    <linearGradient id="loopBB" x1="392" y1="140" x2="152" y2="372" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#FFC46B"/><stop offset="1" stop-color="#7C5CFF"/>
+    <linearGradient id="panel" x1="112" y1="110" x2="704" y2="774" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#F6F8FF"/>
     </linearGradient>
-    <radialGradient id="coreB" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(256 256) scale(46)">
-      <stop stop-color="#FFFFFF" stop-opacity="0.9"/><stop offset="1" stop-color="#80FFEA" stop-opacity="0.2"/>
-    </radialGradient><linearGradient id="bg" x1="0" y1="0" x2="1920" y2="1080" gradientUnits="userSpaceOnUse"><stop stop-color="#05070B"/><stop offset="0.48" stop-color="#08111B"/><stop offset="1" stop-color="#11142F"/></linearGradient><radialGradient id="pulseA" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(330 290) rotate(90) scale(720)"><stop stop-color="#80FFEA" stop-opacity="0.25"/><stop offset="1" stop-color="#05070B" stop-opacity="0"/></radialGradient><radialGradient id="pulseB" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1500 250) rotate(90) scale(780)"><stop stop-color="#7C5CFF" stop-opacity="0.28"/><stop offset="1" stop-color="#05070B" stop-opacity="0"/></radialGradient><linearGradient id="flow" x1="724" y1="715" x2="1548" y2="715" gradientUnits="userSpaceOnUse"><stop stop-color="#80FFEA"/><stop offset="0.52" stop-color="#7C5CFF"/><stop offset="1" stop-color="#FFC46B"/></linearGradient></defs>
-  <rect width="1920" height="1080" fill="url(#bg)"/><rect width="1920" height="1080" fill="url(#pulseA)"/><rect width="1920" height="1080" fill="url(#pulseB)"/>
-  <g opacity="0.16"><path d="M0 160H1920M0 320H1920M0 480H1920M0 640H1920M0 800H1920M0 960H1920" stroke="#F4F6FF"/><path d="M160 0V1080M320 0V1080M480 0V1080M640 0V1080M800 0V1080M960 0V1080M1120 0V1080M1280 0V1080M1440 0V1080M1600 0V1080M1760 0V1080" stroke="#F4F6FF"/></g>
-  <g transform="translate(150 210) scale(1.0546875)">
-    <circle cx="200" cy="256" r="118" stroke="url(#loopAB)" stroke-width="26"/>
-    <circle cx="312" cy="256" r="118" stroke="url(#loopBB)" stroke-width="26"/>
-    <circle cx="256" cy="256" r="42" fill="url(#coreB)"/>
-    <path d="M208 256c18-14 40-14 60 0" stroke="#0B0F1A" stroke-width="14" stroke-linecap="round"/>
+    <linearGradient id="human" x1="208" y1="360" x2="420" y2="600" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFD9B0"/>
+      <stop offset="1" stop-color="#FFB57C"/>
+    </linearGradient>
+    <linearGradient id="robot" x1="520" y1="346" x2="742" y2="626" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#80FFEA"/>
+      <stop offset="1" stop-color="#7C5CFF"/>
+    </linearGradient>
+    <linearGradient id="arrow" x1="398" y1="498" x2="590" y2="545" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#80FFEA"/>
+      <stop offset="1" stop-color="#7C5CFF"/>
+    </linearGradient>
+    <linearGradient id="rail" x1="846" y1="714" x2="1628" y2="714" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#80FFEA"/>
+      <stop offset="0.52" stop-color="#7C5CFF"/>
+      <stop offset="1" stop-color="#FFC46B"/>
+    </linearGradient>
+    <radialGradient id="auraA" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(320 418) rotate(90) scale(470)">
+      <stop stop-color="#80FFEA" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#80FFEA" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="auraB" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1500 224) rotate(90) scale(620)">
+      <stop stop-color="#7C5CFF" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#7C5CFF" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="30" stdDeviation="50" flood-color="#26304D" flood-opacity="0.16"/>
+    </filter>
+  </defs>
+
+  <rect width="1920" height="1080" fill="url(#bg)"/>
+  <rect width="1920" height="1080" fill="url(#auraA)"/>
+  <rect width="1920" height="1080" fill="url(#auraB)"/>
+
+  <g opacity="0.55">
+    <path d="M0 160H1920M0 320H1920M0 480H1920M0 640H1920M0 800H1920M0 960H1920" stroke="#D9DEF0"/>
+    <path d="M160 0V1080M320 0V1080M480 0V1080M640 0V1080M800 0V1080M960 0V1080M1120 0V1080M1280 0V1080M1440 0V1080M1600 0V1080M1760 0V1080" stroke="#D9DEF0"/>
   </g>
-  <text x="720" y="310" fill="#F8FAFF" font-family="Arial, Helvetica, sans-serif" font-size="124" font-weight="900">AI2Human</text>
-  <text x="724" y="392" fill="#80FFEA" font-family="Arial, Helvetica, sans-serif" font-size="38" font-weight="900" letter-spacing="7">AGENT-HUMAN EXECUTION NETWORK</text>
-  <text x="724" y="470" fill="#F4F6FF" fill-opacity="0.84" font-family="Arial, Helvetica, sans-serif" font-size="38" font-weight="650">Tasks, proof, verification, and settlement for AI agents.</text>
-  <path d="M724 715H1548" stroke="url(#flow)" stroke-width="5" stroke-linecap="round"/>
-  <g font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="24" fill="#F4F6FF" fill-opacity="0.82" text-anchor="middle"><circle cx="724" cy="715" r="12" fill="#80FFEA"/><text x="724" y="770">TASK</text><circle cx="990" cy="715" r="12" fill="#9475FF"/><text x="990" y="770">PROOF</text><circle cx="1266" cy="715" r="12" fill="#B78BDA"/><text x="1266" y="770">VERIFY</text><circle cx="1548" cy="715" r="12" fill="#FFC46B"/><text x="1548" y="770">SETTLE</text></g>
-  <rect x="1346" y="210" width="318" height="74" rx="37" fill="#F8FAFF" fill-opacity="0.08" stroke="#FFFFFF" stroke-opacity="0.15"/><text x="1505" y="257" text-anchor="middle" fill="#FFC46B" font-family="Arial, Helvetica, sans-serif" font-size="34" font-weight="900">$A2H</text>
-  <rect x="1346" y="845" width="318" height="64" rx="32" fill="#80FFEA" fill-opacity="0.1" stroke="#80FFEA" stroke-opacity="0.28"/><text x="1505" y="886" text-anchor="middle" fill="#E9FFFB" font-family="Arial, Helvetica, sans-serif" font-size="25" font-weight="850">@ai2humannetwork</text>
-  <g font-family="Arial, Helvetica, sans-serif" font-weight="750"><text x="148" y="850" fill="#F4F6FF" fill-opacity="0.72" font-size="25" letter-spacing="4">ON-CHAIN</text><text x="148" y="890" fill="#F4F6FF" fill-opacity="0.48" font-size="22">Base settlement rails</text><text x="386" y="850" fill="#F4F6FF" fill-opacity="0.72" font-size="25" letter-spacing="4">VERIFIABLE</text><text x="386" y="890" fill="#F4F6FF" fill-opacity="0.48" font-size="22">structured proof loops</text></g>
+
+  <g filter="url(#shadow)">
+    <rect x="118" y="196" width="610" height="610" rx="92" fill="url(#panel)" stroke="#E6EAF5" stroke-width="2"/>
+    <g transform="translate(118 154) scale(1.28)">
+      <circle cx="136" cy="206" r="56" fill="url(#human)"/>
+      <rect x="92" y="258" width="88" height="62" rx="28" fill="url(#human)"/>
+      <rect x="320" y="150" width="96" height="112" rx="18" fill="url(#robot)"/>
+      <rect x="340" y="176" width="56" height="28" rx="10" fill="#0B0F1A" fill-opacity="0.5"/>
+      <circle cx="350" cy="190" r="6" fill="#80FFEA"/>
+      <circle cx="372" cy="190" r="6" fill="#80FFEA"/>
+      <circle cx="394" cy="190" r="6" fill="#80FFEA"/>
+      <rect x="332" y="268" width="72" height="52" rx="16" fill="url(#robot)"/>
+      <path d="M196 256h120" stroke="url(#arrow)" stroke-width="14" stroke-linecap="round"/>
+      <path d="M300 236l20 20-20 20" stroke="url(#arrow)" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M212 236l-20 20 20 20" stroke="url(#arrow)" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+  </g>
+
+  <g>
+    <text x="846" y="352" fill="#0B1020" font-family="Inter, Sora, Space Grotesk, Arial, sans-serif" font-size="116" font-weight="900">AI2Human</text>
+    <text x="852" y="418" fill="#6D5CFF" font-family="Inter, Sora, Space Grotesk, Arial, sans-serif" font-size="32" font-weight="900" letter-spacing="4">NETWORK</text>
+    <text x="846" y="512" fill="#171C2E" font-family="Inter, Sora, Space Grotesk, Arial, sans-serif" font-size="44" font-weight="750">Agent-human execution and verification layer.</text>
+    <text x="846" y="574" fill="#5C6478" font-family="Inter, Sora, Space Grotesk, Arial, sans-serif" font-size="29" font-weight="600">Tasks, proof, verification, and settlement for agent workflows.</text>
+  </g>
+
+  <g>
+    <path d="M846 714H1628" stroke="url(#rail)" stroke-width="5" stroke-linecap="round"/>
+    <circle cx="846" cy="714" r="10" fill="#80FFEA"/>
+    <circle cx="1107" cy="714" r="10" fill="#7C5CFF"/>
+    <circle cx="1368" cy="714" r="10" fill="#B884DA"/>
+    <circle cx="1628" cy="714" r="10" fill="#FFC46B"/>
+    <text x="846" y="770" text-anchor="middle" fill="#283044" font-family="Inter, Sora, Space Grotesk, Arial, sans-serif" font-size="25" font-weight="900">TASK</text>
+    <text x="1107" y="770" text-anchor="middle" fill="#283044" font-family="Inter, Sora, Space Grotesk, Arial, sans-serif" font-size="25" font-weight="900">PROOF</text>
+    <text x="1368" y="770" text-anchor="middle" fill="#283044" font-family="Inter, Sora, Space Grotesk, Arial, sans-serif" font-size="25" font-weight="900">VERIFY</text>
+    <text x="1628" y="770" text-anchor="middle" fill="#283044" font-family="Inter, Sora, Space Grotesk, Arial, sans-serif" font-size="25" font-weight="900">SETTLE</text>
+  </g>
+
+  <g>
+    <rect x="846" y="848" width="164" height="58" rx="29" fill="#FFFFFF" stroke="#DFE4F3"/>
+    <text x="928" y="887" text-anchor="middle" fill="#F1A44B" font-family="Inter, Sora, Space Grotesk, Arial, sans-serif" font-size="27" font-weight="900">$A2H</text>
+    <rect x="1034" y="848" width="328" height="58" rx="29" fill="#FFFFFF" stroke="#DFE4F3"/>
+    <text x="1198" y="887" text-anchor="middle" fill="#20283B" font-family="Inter, Sora, Space Grotesk, Arial, sans-serif" font-size="25" font-weight="850">@ai2humannetwork</text>
+  </g>
 </svg>
