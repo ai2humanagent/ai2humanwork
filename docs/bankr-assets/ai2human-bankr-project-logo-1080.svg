@@ -1,0 +1,23 @@
+<svg width="1080" height="1080" viewBox="0 0 1080 1080" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="loopA" x1="120" y1="140" x2="360" y2="372" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#80FFEA"/><stop offset="1" stop-color="#7C5CFF"/>
+    </linearGradient>
+    <linearGradient id="loopB" x1="392" y1="140" x2="152" y2="372" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFC46B"/><stop offset="1" stop-color="#7C5CFF"/>
+    </linearGradient>
+    <radialGradient id="core" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(256 256) scale(46)">
+      <stop stop-color="#FFFFFF" stop-opacity="0.9"/><stop offset="1" stop-color="#80FFEA" stop-opacity="0.2"/>
+    </radialGradient><radialGradient id="bgA" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(258 220) rotate(55) scale(780)"><stop stop-color="#153B38"/><stop offset="0.42" stop-color="#080D15"/><stop offset="1" stop-color="#05070B"/></radialGradient><radialGradient id="bgB" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(850 230) rotate(110) scale(690)"><stop stop-color="#33286F" stop-opacity="0.9"/><stop offset="1" stop-color="#05070B" stop-opacity="0"/></radialGradient><linearGradient id="ring" x1="120" y1="86" x2="964" y2="998" gradientUnits="userSpaceOnUse"><stop stop-color="#80FFEA"/><stop offset="0.55" stop-color="#7C5CFF"/><stop offset="1" stop-color="#FFC46B"/></linearGradient></defs>
+  <rect width="1080" height="1080" rx="220" fill="url(#bgA)"/><rect width="1080" height="1080" rx="220" fill="url(#bgB)"/>
+  <g opacity="0.18"><path d="M0 180H1080M0 360H1080M0 540H1080M0 720H1080M0 900H1080" stroke="#F4F6FF"/><path d="M180 0V1080M360 0V1080M540 0V1080M720 0V1080M900 0V1080" stroke="#F4F6FF"/></g>
+  <circle cx="540" cy="514" r="344" stroke="url(#ring)" stroke-width="2" opacity="0.38"/><circle cx="540" cy="514" r="284" stroke="#F4F6FF" stroke-opacity="0.08"/>
+  <g transform="translate(190 162) scale(1.3671875)">
+    <circle cx="200" cy="256" r="118" stroke="url(#loopA)" stroke-width="26"/>
+    <circle cx="312" cy="256" r="118" stroke="url(#loopB)" stroke-width="26"/>
+    <circle cx="256" cy="256" r="42" fill="url(#core)"/>
+    <path d="M208 256c18-14 40-14 60 0" stroke="#0B0F1A" stroke-width="14" stroke-linecap="round"/>
+  </g>
+  <text x="540" y="892" text-anchor="middle" fill="#F8FAFF" font-family="Arial, Helvetica, sans-serif" font-size="76" font-weight="850">AI2Human</text>
+  <text x="540" y="944" text-anchor="middle" fill="#80FFEA" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="850" letter-spacing="4">NETWORK</text>
+</svg>

@@ -1,0 +1,28 @@
+<svg width="1920" height="1080" viewBox="0 0 1920 1080" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="loopAB" x1="120" y1="140" x2="360" y2="372" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#80FFEA"/><stop offset="1" stop-color="#7C5CFF"/>
+    </linearGradient>
+    <linearGradient id="loopBB" x1="392" y1="140" x2="152" y2="372" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFC46B"/><stop offset="1" stop-color="#7C5CFF"/>
+    </linearGradient>
+    <radialGradient id="coreB" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(256 256) scale(46)">
+      <stop stop-color="#FFFFFF" stop-opacity="0.9"/><stop offset="1" stop-color="#80FFEA" stop-opacity="0.2"/>
+    </radialGradient><linearGradient id="bg" x1="0" y1="0" x2="1920" y2="1080" gradientUnits="userSpaceOnUse"><stop stop-color="#05070B"/><stop offset="0.48" stop-color="#08111B"/><stop offset="1" stop-color="#11142F"/></linearGradient><radialGradient id="pulseA" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(330 290) rotate(90) scale(720)"><stop stop-color="#80FFEA" stop-opacity="0.25"/><stop offset="1" stop-color="#05070B" stop-opacity="0"/></radialGradient><radialGradient id="pulseB" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1500 250) rotate(90) scale(780)"><stop stop-color="#7C5CFF" stop-opacity="0.28"/><stop offset="1" stop-color="#05070B" stop-opacity="0"/></radialGradient><linearGradient id="flow" x1="724" y1="715" x2="1548" y2="715" gradientUnits="userSpaceOnUse"><stop stop-color="#80FFEA"/><stop offset="0.52" stop-color="#7C5CFF"/><stop offset="1" stop-color="#FFC46B"/></linearGradient></defs>
+  <rect width="1920" height="1080" fill="url(#bg)"/><rect width="1920" height="1080" fill="url(#pulseA)"/><rect width="1920" height="1080" fill="url(#pulseB)"/>
+  <g opacity="0.16"><path d="M0 160H1920M0 320H1920M0 480H1920M0 640H1920M0 800H1920M0 960H1920" stroke="#F4F6FF"/><path d="M160 0V1080M320 0V1080M480 0V1080M640 0V1080M800 0V1080M960 0V1080M1120 0V1080M1280 0V1080M1440 0V1080M1600 0V1080M1760 0V1080" stroke="#F4F6FF"/></g>
+  <g transform="translate(150 210) scale(1.0546875)">
+    <circle cx="200" cy="256" r="118" stroke="url(#loopAB)" stroke-width="26"/>
+    <circle cx="312" cy="256" r="118" stroke="url(#loopBB)" stroke-width="26"/>
+    <circle cx="256" cy="256" r="42" fill="url(#coreB)"/>
+    <path d="M208 256c18-14 40-14 60 0" stroke="#0B0F1A" stroke-width="14" stroke-linecap="round"/>
+  </g>
+  <text x="720" y="310" fill="#F8FAFF" font-family="Arial, Helvetica, sans-serif" font-size="124" font-weight="900">AI2Human</text>
+  <text x="724" y="392" fill="#80FFEA" font-family="Arial, Helvetica, sans-serif" font-size="38" font-weight="900" letter-spacing="7">AGENT-HUMAN EXECUTION NETWORK</text>
+  <text x="724" y="470" fill="#F4F6FF" fill-opacity="0.84" font-family="Arial, Helvetica, sans-serif" font-size="38" font-weight="650">Tasks, proof, verification, and settlement for AI agents.</text>
+  <path d="M724 715H1548" stroke="url(#flow)" stroke-width="5" stroke-linecap="round"/>
+  <g font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="24" fill="#F4F6FF" fill-opacity="0.82" text-anchor="middle"><circle cx="724" cy="715" r="12" fill="#80FFEA"/><text x="724" y="770">TASK</text><circle cx="990" cy="715" r="12" fill="#9475FF"/><text x="990" y="770">PROOF</text><circle cx="1266" cy="715" r="12" fill="#B78BDA"/><text x="1266" y="770">VERIFY</text><circle cx="1548" cy="715" r="12" fill="#FFC46B"/><text x="1548" y="770">SETTLE</text></g>
+  <rect x="1346" y="210" width="318" height="74" rx="37" fill="#F8FAFF" fill-opacity="0.08" stroke="#FFFFFF" stroke-opacity="0.15"/><text x="1505" y="257" text-anchor="middle" fill="#FFC46B" font-family="Arial, Helvetica, sans-serif" font-size="34" font-weight="900">$A2H</text>
+  <rect x="1346" y="845" width="318" height="64" rx="32" fill="#80FFEA" fill-opacity="0.1" stroke="#80FFEA" stroke-opacity="0.28"/><text x="1505" y="886" text-anchor="middle" fill="#E9FFFB" font-family="Arial, Helvetica, sans-serif" font-size="25" font-weight="850">@ai2humannetwork</text>
+  <g font-family="Arial, Helvetica, sans-serif" font-weight="750"><text x="148" y="850" fill="#F4F6FF" fill-opacity="0.72" font-size="25" letter-spacing="4">ON-CHAIN</text><text x="148" y="890" fill="#F4F6FF" fill-opacity="0.48" font-size="22">Base settlement rails</text><text x="386" y="850" fill="#F4F6FF" fill-opacity="0.72" font-size="25" letter-spacing="4">VERIFIABLE</text><text x="386" y="890" fill="#F4F6FF" fill-opacity="0.48" font-size="22">structured proof loops</text></g>
+</svg>
