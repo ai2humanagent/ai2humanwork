@@ -1,627 +1,648 @@
 .page {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
+  min-height: 100vh;
   padding-bottom: 48px;
+  color: #f5f2e8;
 }
 
-.hero {
-  position: relative;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 340px;
+.commandBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 18px;
-  align-items: stretch;
-  min-height: 420px;
-  overflow: hidden;
-  padding: 28px;
-  border: 1px solid rgba(128, 255, 234, 0.22);
-  border-radius: 24px;
-  background:
-    linear-gradient(120deg, rgba(128, 255, 234, 0.1), transparent 42%),
-    radial-gradient(circle at 86% 12%, rgba(255, 207, 99, 0.18), transparent 28%),
-    radial-gradient(circle at 16% 82%, rgba(50, 231, 152, 0.16), transparent 34%),
-    #080b13;
-  box-shadow: 0 32px 90px rgba(0, 0, 0, 0.38);
+  margin-bottom: 18px;
+  padding: 14px 16px;
+  border: 1px solid rgba(245, 242, 232, 0.1);
+  border-radius: 18px;
+  background: rgba(6, 8, 14, 0.72);
 }
 
-.hero::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0.22;
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
-  background-size: 44px 44px;
-  mask-image: linear-gradient(90deg, black, transparent 78%);
-}
-
-.heroCopy,
-.receiptCard,
-.stageRail,
-.issuanceShell,
-.openClaw {
-  position: relative;
-  z-index: 1;
-}
-
-.kicker,
-.receiptCard span,
-.panelHeader span,
-.stageHeader span,
-.tokenPlate span,
-.tokenStats span,
-.policyGrid span,
-.proofTask span,
-.deployedToken span,
-.inspectorTop span,
-.machineSummary span,
-.openClaw span {
-  display: block;
-  color: var(--tm-cyan);
-  font-size: 11px;
-  font-weight: 900;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.hero h1 {
-  max-width: 860px;
-  margin: 16px 0 16px;
-  font-family: var(--font-display), Georgia, serif;
-  font-size: clamp(44px, 6.8vw, 88px);
-  line-height: 0.91;
+.commandBar h1 {
+  margin: 3px 0 0;
+  font-size: 20px;
   letter-spacing: 0;
 }
 
-.hero p {
-  max-width: 780px;
-  margin: 0;
-  color: rgba(255, 255, 255, 0.72);
-  font-size: 18px;
-  line-height: 1.62;
+.kicker,
+.tokenMachine span,
+.receipt span,
+.stageHeader span,
+.tokenPassport span,
+.proofTicket span,
+.chainReceipt span,
+.sideBlock span,
+.openClawBox span {
+  color: #8af7df;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
 }
 
-.heroActions {
+.topLinks {
   display: flex;
+  gap: 8px;
   flex-wrap: wrap;
+}
+
+.topLinks a,
+.receipt a,
+.chainReceipt a,
+.openClawBox a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid rgba(245, 242, 232, 0.12);
+  border-radius: 999px;
+  color: #f5f2e8;
+  background: rgba(255, 255, 255, 0.05);
+  font-size: 12px;
+  font-weight: 850;
+  text-decoration: none;
+}
+
+.heroWorkbench {
+  display: grid;
+  grid-template-columns: minmax(300px, 0.92fr) minmax(420px, 1.25fr) minmax(260px, 0.72fr);
+  gap: 12px;
+  min-height: 386px;
+  margin-bottom: 12px;
+}
+
+.agentConsole,
+.tokenMachine,
+.receipt,
+.stagePanel,
+.sideRail {
+  border: 1px solid rgba(245, 242, 232, 0.1);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.025)),
+    rgba(8, 10, 16, 0.86);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.3);
+}
+
+.agentConsole {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 22px;
+  border-radius: 24px;
+}
+
+.agentConsole p {
+  margin: 24px 0;
+  color: rgba(245, 242, 232, 0.9);
+  font-size: clamp(23px, 2.8vw, 38px);
+  line-height: 1.08;
+  letter-spacing: 0;
+}
+
+.commandActions {
+  display: flex;
   gap: 10px;
-  margin-top: 26px;
+  flex-wrap: wrap;
 }
 
 .primaryButton,
 .secondaryButton,
-.ghostButton,
-.tinyButton {
+.miniButton {
   min-height: 42px;
-  border-radius: 12px;
   border: 1px solid transparent;
+  border-radius: 999px;
   padding: 0 16px;
   font: inherit;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 900;
   cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  text-decoration: none;
-  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
-}
-
-.primaryButton:hover,
-.secondaryButton:hover,
-.ghostButton:hover,
-.tinyButton:hover {
-  transform: translateY(-1px);
 }
 
 .primaryButton {
   color: #071018;
-  background: linear-gradient(135deg, #80ffea, #ffcf63);
+  background: linear-gradient(135deg, #8af7df, #f5c96b);
 }
 
-.secondaryButton {
-  color: #071018;
-  background: #f6f0df;
-}
-
-.ghostButton,
-.tinyButton {
-  color: var(--tm-text);
-  border-color: rgba(255, 255, 255, 0.14);
+.secondaryButton,
+.miniButton {
+  color: #f5f2e8;
+  border-color: rgba(245, 242, 232, 0.14);
   background: rgba(255, 255, 255, 0.06);
 }
 
-.receiptCard {
+.error {
+  margin: 12px 0 0;
+  color: #ff9b9b;
+  font-size: 13px;
+}
+
+.tokenMachine {
+  position: relative;
+  overflow: hidden;
+  padding: 18px;
+  border-radius: 28px;
+  background:
+    linear-gradient(135deg, rgba(138, 247, 223, 0.16), transparent 38%),
+    linear-gradient(315deg, rgba(245, 201, 107, 0.12), transparent 42%),
+    #080b13;
+}
+
+.tokenMachine::before {
+  content: "";
+  position: absolute;
+  inset: 18px;
+  border: 1px solid rgba(245, 242, 232, 0.08);
+  border-radius: 22px;
+  pointer-events: none;
+}
+
+.machineHeader {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.machineHeader strong {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 10px;
+  border-radius: 999px;
+  color: #071018;
+  background: #8af7df;
+  font-size: 12px;
+}
+
+.machineCore {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 18px;
+  align-items: center;
+  min-height: 250px;
+  margin-top: 22px;
+}
+
+.tokenSeal {
+  display: grid;
+  place-items: center;
+  width: 210px;
+  height: 210px;
+  border: 1px solid rgba(138, 247, 223, 0.42);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 38%, rgba(138, 247, 223, 0.26), transparent 44%),
+    radial-gradient(circle at 50% 50%, rgba(245, 201, 107, 0.2), transparent 58%),
+    rgba(0, 0, 0, 0.34);
+  box-shadow: inset 0 0 44px rgba(138, 247, 223, 0.12), 0 0 70px rgba(138, 247, 223, 0.14);
+}
+
+.tokenSeal span {
+  color: #f5f2e8;
+  font-size: 54px;
+  letter-spacing: 0;
+}
+
+.tokenSeal strong {
+  margin-top: -76px;
+  color: rgba(245, 242, 232, 0.55);
+  font-size: 13px;
+}
+
+.machineLines {
+  display: grid;
+  gap: 10px;
+}
+
+.machineLines p {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  margin: 0;
+  padding: 14px;
+  border: 1px solid rgba(245, 242, 232, 0.09);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.machineLines strong {
+  color: #f5c96b;
+  font-size: 30px;
+}
+
+.machineCopy {
+  position: relative;
+  z-index: 1;
+  max-width: 650px;
+  margin: 14px 0 0;
+  color: rgba(245, 242, 232, 0.7);
+  line-height: 1.55;
+}
+
+.receipt {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  min-height: 300px;
   padding: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 20px;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.03)),
-    rgba(0, 0, 0, 0.36);
+  border-radius: 24px;
 }
 
-.receiptCard strong {
+.receipt strong {
   display: block;
-  margin: 6px 0 2px;
-  font-size: 52px;
-  line-height: 0.95;
+  margin-top: 18px;
+  color: #f5c96b;
+  font-size: 68px;
+  line-height: 0.86;
 }
 
-.receiptCard p {
-  margin: 0;
-  color: rgba(255, 255, 255, 0.68);
+.receipt p {
+  margin: 8px 0 18px;
+  color: rgba(245, 242, 232, 0.66);
 }
 
-.receiptCard code,
-.deployedToken code,
-.openClaw pre {
-  white-space: pre-wrap;
+.receipt code,
+.chainReceipt code,
+.openClawBox code {
+  color: rgba(245, 242, 232, 0.78);
   overflow-wrap: anywhere;
-  color: rgba(255, 255, 255, 0.85);
+  font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
-.receiptCard a,
-.deployedToken a,
-.machineSummary a {
-  color: var(--tm-cyan);
-  font-weight: 900;
-}
-
-.stageRail {
+.stageDock {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 8px;
+  margin-bottom: 12px;
 }
 
 .stageButton,
 .stageActive {
-  min-height: 78px;
-  text-align: left;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+  min-height: 52px;
+  border: 1px solid rgba(245, 242, 232, 0.1);
   border-radius: 16px;
-  padding: 12px;
-  color: var(--tm-text);
-  background: rgba(255, 255, 255, 0.045);
+  color: #f5f2e8;
+  background: rgba(255, 255, 255, 0.04);
   cursor: pointer;
+  text-align: left;
 }
 
 .stageActive {
-  border-color: rgba(128, 255, 234, 0.52);
-  background:
-    linear-gradient(135deg, rgba(128, 255, 234, 0.16), rgba(255, 207, 99, 0.08)),
-    rgba(255, 255, 255, 0.055);
+  border-color: rgba(138, 247, 223, 0.5);
+  background: rgba(138, 247, 223, 0.12);
 }
 
 .stageButton span,
 .stageActive span {
-  display: block;
-  color: rgba(128, 255, 234, 0.82);
+  color: #8af7df;
   font-size: 11px;
   font-weight: 900;
+  text-align: center;
 }
 
 .stageButton strong,
 .stageActive strong {
-  display: block;
-  margin-top: 6px;
-  font-size: 13px;
-  line-height: 1.25;
-}
-
-.issuanceShell {
-  display: grid;
-  grid-template-columns: minmax(280px, 0.76fr) minmax(0, 1.5fr) minmax(280px, 0.74fr);
-  gap: 14px;
-  align-items: flex-start;
-}
-
-.leftDesk,
-.centerStage,
-.rightInspector,
-.openClaw {
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 22px;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.03)),
-    rgba(9, 12, 20, 0.78);
-  box-shadow: 0 22px 70px rgba(0, 0, 0, 0.24);
-}
-
-.leftDesk,
-.centerStage,
-.rightInspector {
-  min-height: 720px;
-  padding: 16px;
-}
-
-.panelHeader {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  align-items: flex-start;
-}
-
-.panelHeader h2,
-.stageHeader h2,
-.openClaw h2 {
-  margin: 5px 0 0;
-  font-size: 23px;
-  line-height: 1.1;
-}
-
-.promptCard {
-  margin-top: 14px;
-  padding: 14px;
-  border: 1px solid rgba(128, 255, 234, 0.2);
-  border-radius: 16px;
-  background: rgba(128, 255, 234, 0.07);
-}
-
-.promptCard p {
-  margin: 0;
-  color: rgba(255, 255, 255, 0.88);
-  line-height: 1.52;
-}
-
-.promptMeta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 12px;
-}
-
-.promptMeta span {
-  border-radius: 999px;
-  padding: 6px 9px;
-  color: rgba(255, 255, 255, 0.7);
-  background: rgba(255, 255, 255, 0.08);
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.textarea {
-  width: 100%;
-  min-height: 438px;
-  margin-top: 12px;
-  resize: vertical;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 16px;
-  background: rgba(0, 0, 0, 0.35);
-  color: rgba(255, 255, 255, 0.86);
-  padding: 14px;
-  font: 12px/1.56 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  outline: none;
-}
-
-.error {
-  color: #ff8f8f;
   font-size: 13px;
 }
 
-.stageHeader {
-  padding: 4px 4px 16px;
-}
-
-.stageHeader h2 {
-  font-family: var(--font-display), Georgia, serif;
-  font-size: clamp(34px, 4vw, 52px);
-}
-
-.stageHeader p {
-  max-width: 760px;
-  margin: 10px 0 0;
-  color: rgba(255, 255, 255, 0.68);
-  line-height: 1.56;
-}
-
-.showcaseGrid {
+.workspace {
   display: grid;
-  grid-template-columns: 1.4fr 0.8fr;
+  grid-template-columns: minmax(0, 1.5fr) minmax(300px, 0.62fr);
   gap: 12px;
 }
 
-.bigTile,
-.signalTile,
-.tokenPlate,
-.roleMatrix,
-.policyGrid article,
-.proofTask,
-.proofChecklist,
-.verificationBoard,
-.deployBoard,
-.inspectorTop,
-.outcomeList,
-.machineSummary {
-  border: 1px solid rgba(255, 255, 255, 0.1);
+.stagePanel,
+.sideRail {
+  min-height: 680px;
+  border-radius: 24px;
+  padding: 18px;
+}
+
+.stageHeader {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.stageHeader h2 {
+  margin: 0;
+  font-size: clamp(34px, 4vw, 58px);
+  line-height: 0.96;
+  letter-spacing: 0;
+}
+
+.stageHeader p {
+  max-width: 780px;
+  margin: 0;
+  color: rgba(245, 242, 232, 0.66);
+  line-height: 1.55;
+}
+
+.requestView,
+.blueprintView,
+.proofView,
+.verifyView,
+.deployView {
+  min-height: 500px;
+}
+
+.requestView {
+  display: grid;
+  gap: 10px;
+}
+
+.transcript,
+.payloadDetails,
+.tokenPassport,
+.roleTable,
+.policyStrip article,
+.proofTicket,
+.checklist,
+.approved,
+.pending,
+.proofOutputs p,
+.chainReceipt,
+.callStack p,
+.sideBlock,
+.sideList,
+.openClawBox {
+  border: 1px solid rgba(245, 242, 232, 0.1);
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.045);
 }
 
-.bigTile {
-  grid-row: span 2;
-  padding: 22px;
-  min-height: 360px;
-  background:
-    radial-gradient(circle at 24% 16%, rgba(128, 255, 234, 0.14), transparent 38%),
-    rgba(255, 255, 255, 0.045);
+.transcript {
+  padding: 16px;
 }
 
-.bigTile span {
-  color: var(--tm-cyan);
-  font-weight: 900;
+.transcript span {
+  color: #8af7df;
   font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
+  font-weight: 900;
 }
 
-.bigTile h3 {
-  max-width: 520px;
-  margin: 16px 0;
-  font-family: var(--font-display), Georgia, serif;
-  font-size: 52px;
-  line-height: 0.96;
+.transcript p {
+  margin: 8px 0 0;
+  color: rgba(245, 242, 232, 0.84);
+  line-height: 1.55;
 }
 
-.bigTile p,
-.signalTile span,
-.policyGrid p,
-.proofTask p,
-.proofChecklist span,
-.bridgeLine,
-.inspectorTop p,
-.outcomeList span,
-.machineSummary p {
-  color: rgba(255, 255, 255, 0.68);
-  line-height: 1.5;
+.payloadDetails {
+  padding: 14px;
 }
 
-.signalTile {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  min-height: 174px;
-  padding: 18px;
+.payloadDetails summary {
+  cursor: pointer;
+  color: #f5c96b;
+  font-weight: 900;
 }
 
-.signalTile strong {
-  color: #ffcf63;
-  font-size: 62px;
-  line-height: 0.9;
+.payloadDetails textarea {
+  width: 100%;
+  min-height: 300px;
+  margin: 12px 0;
+  resize: vertical;
+  border: 1px solid rgba(245, 242, 232, 0.1);
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.32);
+  color: rgba(245, 242, 232, 0.82);
+  padding: 12px;
+  font: 12px/1.55 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
-.blueprint {
+.blueprintView {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(260px, 0.72fr);
   gap: 12px;
 }
 
-.tokenPlate {
-  padding: 20px;
+.tokenPassport {
+  grid-row: span 2;
+  padding: 22px;
   background:
-    linear-gradient(135deg, rgba(128, 255, 234, 0.13), rgba(255, 207, 99, 0.08)),
+    linear-gradient(135deg, rgba(138, 247, 223, 0.13), rgba(245, 201, 107, 0.08)),
     rgba(255, 255, 255, 0.045);
 }
 
-.tokenPlate h3 {
-  margin: 10px 0 18px;
-  font-family: var(--font-display), Georgia, serif;
-  font-size: 48px;
-  line-height: 0.98;
+.tokenPassport h3 {
+  max-width: 640px;
+  margin: 16px 0 28px;
+  font-size: clamp(42px, 5vw, 78px);
+  line-height: 0.92;
+  letter-spacing: 0;
 }
 
-.tokenStats {
+.tokenPassport div {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
 }
 
-.tokenStats div {
-  min-height: 96px;
-  padding: 12px;
-  border-radius: 14px;
-  background: rgba(0, 0, 0, 0.24);
+.tokenPassport p {
+  margin: 0;
+  min-height: 104px;
+  padding: 14px;
+  border-radius: 16px;
+  background: rgba(0, 0, 0, 0.25);
 }
 
-.tokenStats strong {
+.tokenPassport p span,
+.policyStrip article span {
   display: block;
-  margin-top: 10px;
-  font-size: 20px;
-  overflow-wrap: anywhere;
+  color: rgba(245, 242, 232, 0.58);
+  font-size: 12px;
 }
 
-.roleMatrix {
+.tokenPassport p strong {
+  display: block;
+  margin-top: 12px;
+  color: #f5f2e8;
+  font-size: 25px;
+}
+
+.roleTable {
   display: grid;
-  gap: 8px;
+  gap: 7px;
   padding: 12px;
 }
 
-.roleMatrix div {
+.roleTable p {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 8px;
-  padding: 10px;
+  margin: 0;
+  padding: 9px 10px;
   border-radius: 12px;
   background: rgba(0, 0, 0, 0.22);
 }
 
-.roleMatrix strong {
+.roleTable strong,
+.roleTable span {
   font-size: 12px;
 }
 
-.roleMatrix span {
-  color: rgba(255, 255, 255, 0.62);
-  font-size: 12px;
+.roleTable span {
+  color: rgba(245, 242, 232, 0.58);
 }
 
-.policyGrid {
+.policyStrip {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
-  margin-top: 12px;
 }
 
-.policyGrid article {
+.policyStrip article {
   padding: 14px;
 }
 
-.policyGrid h3 {
-  margin: 8px 0;
-  font-size: 15px;
+.policyStrip strong {
+  color: #8af7df;
+  font-size: 12px;
 }
 
-.policyGrid p {
-  margin: 0;
+.policyStrip p {
+  margin: 10px 0 0;
+  color: rgba(245, 242, 232, 0.62);
   font-size: 13px;
+  line-height: 1.45;
 }
 
-.proofWorkspace {
+.proofView,
+.deployView {
   display: grid;
-  grid-template-columns: 0.8fr 1.2fr;
+  grid-template-columns: minmax(300px, 0.82fr) minmax(0, 1.18fr);
   gap: 12px;
 }
 
-.proofTask {
-  padding: 20px;
-  min-height: 420px;
+.proofTicket,
+.chainReceipt {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
   justify-content: space-between;
+  padding: 22px;
 }
 
-.proofTask h3 {
-  margin: 12px 0;
-  font-family: var(--font-display), Georgia, serif;
-  font-size: 42px;
-  line-height: 0.98;
+.proofTicket h3,
+.chainReceipt h3 {
+  margin: 14px 0;
+  font-size: clamp(38px, 4.5vw, 64px);
+  line-height: 0.94;
 }
 
-.proofChecklist {
-  padding: 14px;
+.proofTicket p {
+  color: rgba(245, 242, 232, 0.68);
+  line-height: 1.5;
 }
 
-.proofChecklist div {
+.checklist {
+  display: grid;
+  align-content: start;
+  padding: 12px;
+}
+
+.checklist p {
   display: grid;
   grid-template-columns: 24px minmax(0, 1fr);
-  gap: 10px;
-  padding: 14px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  gap: 12px;
+  align-items: start;
+  margin: 0;
+  padding: 16px 0;
+  border-bottom: 1px solid rgba(245, 242, 232, 0.08);
 }
 
-.proofChecklist div:last-child {
+.checklist p:last-child {
   border-bottom: 0;
 }
 
-.proofChecklist i {
-  width: 20px;
-  height: 20px;
+.checklist i {
+  width: 18px;
+  height: 18px;
   margin-top: 2px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--tm-green), var(--tm-cyan));
-  box-shadow: 0 0 24px rgba(128, 255, 234, 0.3);
+  background: #8af7df;
 }
 
-.verificationBoard {
-  padding: 18px;
+.checklist span {
+  color: rgba(245, 242, 232, 0.72);
 }
 
-.approvedStamp,
-.pendingStamp {
+.verifyView {
+  display: grid;
+  gap: 12px;
+}
+
+.approved,
+.pending {
   display: grid;
   place-items: center;
-  min-height: 210px;
-  border-radius: 18px;
+  min-height: 230px;
   text-align: center;
   background:
-    radial-gradient(circle, rgba(50, 231, 152, 0.2), transparent 64%),
-    rgba(0, 0, 0, 0.26);
+    radial-gradient(circle, rgba(138, 247, 223, 0.18), transparent 64%),
+    rgba(255, 255, 255, 0.045);
 }
 
-.pendingStamp {
+.pending {
   background:
-    radial-gradient(circle, rgba(255, 207, 99, 0.17), transparent 64%),
-    rgba(0, 0, 0, 0.26);
+    radial-gradient(circle, rgba(245, 201, 107, 0.18), transparent 64%),
+    rgba(255, 255, 255, 0.045);
 }
 
-.approvedStamp span,
-.pendingStamp span {
-  color: var(--tm-cyan);
+.approved span,
+.pending span {
+  color: #8af7df;
   font-size: 12px;
   font-weight: 900;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.13em;
   text-transform: uppercase;
 }
 
-.approvedStamp strong,
-.pendingStamp strong {
+.approved strong,
+.pending strong {
   display: block;
-  margin-top: 8px;
-  font-family: var(--font-display), Georgia, serif;
-  font-size: 60px;
-  line-height: 0.9;
+  margin-top: 10px;
+  font-size: clamp(52px, 7vw, 96px);
+  line-height: 0.86;
 }
 
-.proofOutput {
+.proofOutputs {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 8px;
-  margin-top: 12px;
 }
 
-.proofOutput p {
-  min-height: 90px;
+.proofOutputs p {
+  min-height: 110px;
   margin: 0;
   padding: 12px;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.045);
 }
 
-.proofOutput strong,
-.proofOutput span {
+.proofOutputs strong,
+.proofOutputs span {
   display: block;
   overflow-wrap: anywhere;
 }
 
-.proofOutput span {
-  margin-top: 6px;
-  color: rgba(255, 255, 255, 0.62);
+.proofOutputs strong {
   font-size: 12px;
 }
 
-.bridgeLine {
-  margin: 14px 0 0;
+.proofOutputs span {
+  margin-top: 8px;
+  color: rgba(245, 242, 232, 0.58);
+  font-size: 12px;
+  line-height: 1.35;
 }
 
-.deployBoard {
-  display: grid;
-  grid-template-columns: 0.8fr 1.2fr;
-  gap: 12px;
-  padding: 14px;
-}
-
-.deployedToken {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  min-height: 430px;
-  padding: 18px;
-  border-radius: 18px;
-  background:
-    radial-gradient(circle at 50% 24%, rgba(128, 255, 234, 0.22), transparent 42%),
-    rgba(0, 0, 0, 0.26);
-}
-
-.deployedToken h3 {
-  margin: 14px 0;
-  font-family: var(--font-display), Georgia, serif;
-  font-size: 46px;
-  line-height: 0.96;
+.chainReceipt code {
+  display: block;
+  margin: 18px 0;
 }
 
 .callStack {
@@ -631,17 +652,15 @@
 
 .callStack p {
   display: grid;
-  grid-template-columns: 32px minmax(0, 0.6fr) minmax(0, 1fr);
-  gap: 8px;
+  grid-template-columns: 34px minmax(0, 0.62fr) minmax(0, 1fr);
   align-items: center;
+  gap: 8px;
   margin: 0;
   padding: 10px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.045);
 }
 
 .callStack span {
-  color: var(--tm-cyan);
+  color: #8af7df;
   font-size: 11px;
   font-weight: 900;
 }
@@ -651,148 +670,131 @@
 }
 
 .callStack em {
-  color: rgba(255, 255, 255, 0.58);
+  color: rgba(245, 242, 232, 0.58);
   font-size: 12px;
   font-style: normal;
   line-height: 1.35;
 }
 
-.rightInspector {
+.sideRail {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-}
-
-.inspectorTop,
-.outcomeList,
-.machineSummary {
-  padding: 16px;
-}
-
-.inspectorTop h2 {
-  margin: 8px 0 10px;
-  font-family: var(--font-display), Georgia, serif;
-  font-size: 34px;
-  line-height: 1;
-}
-
-.outcomeList {
-  display: grid;
   gap: 10px;
 }
 
-.outcomeList div {
+.sideBlock,
+.sideList,
+.openClawBox {
+  padding: 16px;
+}
+
+.sideBlock h2 {
+  margin: 10px 0;
+  font-size: 30px;
+  line-height: 0.98;
+}
+
+.sideBlock p {
+  color: rgba(245, 242, 232, 0.66);
+  line-height: 1.5;
+}
+
+.sideList {
+  display: grid;
+  gap: 8px;
+}
+
+.sideList p {
+  margin: 0;
   padding: 12px;
   border-radius: 14px;
   background: rgba(0, 0, 0, 0.22);
 }
 
-.outcomeList strong,
-.outcomeList span,
-.machineSummary a {
+.sideList strong,
+.sideList span,
+.openClawBox a {
   display: block;
 }
 
-.outcomeList span {
-  margin-top: 5px;
+.sideList span {
+  margin-top: 4px;
+  color: rgba(245, 242, 232, 0.62);
   font-size: 13px;
 }
 
-.machineSummary p {
-  margin: 8px 0 12px;
-}
-
-.openClaw {
+.openClawBox {
   display: grid;
-  grid-template-columns: 0.72fr 1.28fr;
-  gap: 18px;
-  padding: 20px;
-}
-
-.openClaw pre {
-  margin: 0;
-  padding: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  background: rgba(0, 0, 0, 0.34);
-  font: 13px/1.55 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  gap: 12px;
 }
 
 @media (max-width: 1180px) {
-  .hero,
-  .issuanceShell,
-  .openClaw {
+  .heroWorkbench,
+  .workspace {
     grid-template-columns: 1fr;
   }
 
-  .leftDesk,
-  .centerStage,
-  .rightInspector {
+  .tokenMachine,
+  .stagePanel,
+  .sideRail {
     min-height: unset;
   }
 }
 
-@media (max-width: 840px) {
-  .page {
-    gap: 14px;
+@media (max-width: 860px) {
+  .commandBar,
+  .heroWorkbench,
+  .workspace {
+    gap: 10px;
   }
 
-  .hero {
+  .commandBar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .heroWorkbench {
     min-height: unset;
-    padding: 20px;
   }
 
-  .hero h1 {
-    font-size: clamp(42px, 13vw, 64px);
-  }
-
-  .receiptCard {
-    min-height: 220px;
-  }
-
-  .stageRail,
-  .showcaseGrid,
-  .blueprint,
-  .policyGrid,
-  .proofWorkspace,
-  .proofOutput,
-  .deployBoard,
-  .tokenStats {
+  .machineCore,
+  .blueprintView,
+  .proofView,
+  .deployView,
+  .tokenPassport div,
+  .policyStrip,
+  .proofOutputs {
     grid-template-columns: 1fr;
   }
 
-  .stageRail {
+  .stageDock {
     display: flex;
     overflow-x: auto;
-    padding-bottom: 2px;
   }
 
   .stageButton,
   .stageActive {
-    min-width: 190px;
+    min-width: 136px;
   }
 
-  .bigTile {
-    min-height: 280px;
+  .agentConsole p {
+    font-size: 28px;
   }
 
-  .bigTile h3,
-  .stageHeader h2,
-  .tokenPlate h3,
-  .proofTask h3,
-  .deployedToken h3 {
-    font-size: 36px;
+  .tokenSeal {
+    width: 190px;
+    height: 190px;
+  }
+
+  .policyStrip {
+    grid-column: auto;
   }
 
   .callStack p {
-    grid-template-columns: 28px minmax(0, 1fr);
+    grid-template-columns: 30px minmax(0, 1fr);
   }
 
   .callStack em {
     grid-column: 2;
-  }
-
-  .textarea {
-    min-height: 320px;
   }
 }

@@ -48,7 +48,6 @@ const sampleRequest = {
 
 type Preview = {
   ok: boolean;
-  generatedAt: string;
   tokenConfig: {
     variant: string;
     name: string;
@@ -87,47 +86,41 @@ type Preview = {
     initCallsPlan: Array<{ call: string; purpose?: string; role?: string; scope?: string }>;
   };
   missingInputs: string[];
-  warnings: string[];
   publicSummary: string;
 };
 
 type Stage = "request" | "blueprint" | "proof" | "verify" | "deploy";
 
-const stages: Array<{
-  id: Stage;
-  eyebrow: string;
-  title: string;
-  copy: string;
-}> = [
+const stages: Array<{ id: Stage; label: string; title: string; copy: string }> = [
   {
     id: "request",
-    eyebrow: "01 / Agent intent",
-    title: "Agent asks for a token system",
-    copy: "A normal agent prompt becomes a structured issuance request instead of a loose instruction."
+    label: "Intent",
+    title: "Agent request captured",
+    copy: "A single prompt is converted into a structured token issuance request."
   },
   {
     id: "blueprint",
-    eyebrow: "02 / B20 blueprint",
-    title: "AI2Human generates the rules",
-    copy: "Token params, roles, supply cap, policies, and init-call plan are produced for review."
+    label: "Blueprint",
+    title: "B20 rules generated",
+    copy: "Token parameters, role assignments, policy scopes, and init calls are ready for review."
   },
   {
     id: "proof",
-    eyebrow: "03 / Proof task",
-    title: "Verification becomes part of issuance",
-    copy: "The request creates explicit proof requirements before mint eligibility or role assignment."
+    label: "Proof",
+    title: "AI2Human verification task",
+    copy: "The system defines what must be verified before access is granted."
   },
   {
     id: "verify",
-    eyebrow: "04 / Policy gate",
-    title: "Approved proof unlocks token permissions",
-    copy: "Verified accounts can be added to allowlists, roles, or mint flows with a proof hash."
+    label: "Gate",
+    title: "Proof unlocks permissions",
+    copy: "Approved proof becomes the input for allowlists, roles, or memo-linked token actions."
   },
   {
     id: "deploy",
-    eyebrow: "05 / Onchain receipt",
-    title: "The token address is the receipt, not the demo",
-    copy: "A Base Sepolia B20 proof token shows the pipeline reaches real chain state."
+    label: "Receipt",
+    title: "Base Sepolia receipt",
+    copy: "The deployed B20 proof token is the receipt of the pipeline."
   }
 ];
 
@@ -151,12 +144,13 @@ export default function B20SkillDemoClient() {
   const [preview, setPreview] = useState<Preview | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [activeStage, setActiveStage] = useState<Stage>("request");
+  const [activeStage, setActiveStage] = useState<Stage>("blueprint");
   const [proofState, setProofState] = useState<"pending" | "approved">("pending");
 
   const roleSummary = useMemo(() => preview?.rolesConfig.slice(0, 8) ?? [], [preview]);
   const policySummary = useMemo(() => preview?.policyConfig.slice(0, 4) ?? [], [preview]);
-  const initCalls = useMemo(() => preview?.deploymentPlan.initCallsPlan.slice(0, 8) ?? [], [preview]);
+  const initCalls = useMemo(() => preview?.deploymentPlan.initCallsPlan.slice(0, 7) ?? [], [preview]);
+  const activeStageMeta = stages.find((stage) => stage.id === activeStage) || stages[0];
 
   async function runPreview(nextStage: Stage = "blueprint") {
     setLoading(true);
@@ -184,7 +178,7 @@ export default function B20SkillDemoClient() {
     setRequestText(stringifyRequest(sampleRequest));
     setError("");
     setProofState("pending");
-    setActiveStage("request");
+    void runPreview("blueprint");
   }
 
   function approveProof() {
@@ -193,53 +187,71 @@ export default function B20SkillDemoClient() {
   }
 
   useEffect(() => {
-    void runPreview("request");
-    // The default demo should be pre-warmed; manual edits use the button.
+    void runPreview("blueprint");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
     <section className={styles.page}>
-      <header className={styles.hero}>
-        <div className={styles.heroCopy}>
-          <span className={styles.kicker}>AI2Human Network / B20 issuance flow</span>
-          <h1>Let an agent create a token with rules, roles, and proof gates.</h1>
-          <p>
-            The important part is not that we deployed a test token. The important part is the machine
-            before it: an agent asks, AI2Human builds the B20 blueprint, verification decides who gets
-            access, and the chain receives the final rule set.
-          </p>
-          <div className={styles.heroActions}>
-            <button type="button" onClick={() => runPreview("blueprint")} className={styles.primaryButton}>
-              {loading ? "Building flow..." : "Generate issuance flow"}
-            </button>
-            <button type="button" onClick={() => setActiveStage("proof")} className={styles.secondaryButton}>
-              Show proof gate
-            </button>
-            <Link href="/agent/b20-skill.md" className={styles.ghostButton}>
-              Read skill
-            </Link>
-          </div>
+      <header className={styles.commandBar}>
+        <div>
+          <span className={styles.kicker}>AI2Human Network</span>
+          <h1>B20 Issuance Flow</h1>
         </div>
-
-        <aside className={styles.receiptCard}>
-          <div>
-            <span>Live chain receipt</span>
-            <strong>A2HP</strong>
-            <p>Base Sepolia B20 proof token</p>
-          </div>
-          <code>{proofTokenAddress}</code>
-          <Link
-            href={`https://sepolia.basescan.org/address/${proofTokenAddress}`}
-            target="_blank"
-            rel="noreferrer"
-          >
-            View BaseScan receipt
+        <nav className={styles.topLinks} aria-label="B20 resources">
+          <Link href="/agent/b20-skill.md">Skill</Link>
+          <Link href="/agent/b20/openclaw-test.md">OpenClaw</Link>
+          <Link href={`https://sepolia.basescan.org/address/${proofTokenAddress}`} target="_blank" rel="noreferrer">
+            BaseScan
           </Link>
-        </aside>
+        </nav>
       </header>
 
-      <section className={styles.stageRail} aria-label="B20 issuance stages">
+      <section className={styles.heroWorkbench}>
+        <div className={styles.agentConsole}>
+          <span className={styles.kicker}>Agent command</span>
+          <p>{sampleRequest.intent}</p>
+          <div className={styles.commandActions}>
+            <button type="button" onClick={() => runPreview("blueprint")} className={styles.primaryButton}>
+              {loading ? "Generating..." : "Generate B20 machine"}
+            </button>
+            <button type="button" onClick={() => setActiveStage("proof")} className={styles.secondaryButton}>
+              Inspect proof gate
+            </button>
+          </div>
+          {error && <p className={styles.error}>{error}</p>}
+        </div>
+
+        <div className={styles.tokenMachine} aria-label="B20 issuance machine">
+          <div className={styles.machineHeader}>
+            <span>B20 machine output</span>
+            <strong>{preview?.ok ? "Ready" : "Needs inputs"}</strong>
+          </div>
+          <div className={styles.machineCore}>
+            <div className={styles.tokenSeal}>
+              <span>{preview?.tokenConfig.symbol || "VRWA"}</span>
+              <strong>{preview?.tokenConfig.variant || "ASSET"}</strong>
+            </div>
+            <div className={styles.machineLines}>
+              <p><span>Roles</span><strong>{roleSummary.length || 8}</strong></p>
+              <p><span>Policies</span><strong>{policySummary.length || 4}</strong></p>
+              <p><span>Proof gates</span><strong>{preview?.proofRequirements.requiredFor.length || 3}</strong></p>
+            </div>
+          </div>
+          <p className={styles.machineCopy}>
+            AI2Human turns the request into roles, policy scopes, proof requirements, and deploy steps.
+          </p>
+        </div>
+
+        <aside className={styles.receipt}>
+          <span className={styles.kicker}>Live receipt</span>
+          <strong>A2HP</strong>
+          <p>Base Sepolia proof token</p>
+          <code>{proofTokenAddress}</code>
+        </aside>
+      </section>
+
+      <section className={styles.stageDock} aria-label="Issuance stages">
         {stages.map((stage, index) => (
           <button
             key={stage.id}
@@ -248,117 +260,79 @@ export default function B20SkillDemoClient() {
             className={activeStage === stage.id ? styles.stageActive : styles.stageButton}
           >
             <span>{String(index + 1).padStart(2, "0")}</span>
-            <strong>{stage.title}</strong>
+            <strong>{stage.label}</strong>
           </button>
         ))}
       </section>
 
-      <main className={styles.issuanceShell}>
-        <section className={styles.leftDesk}>
-          <div className={styles.panelHeader}>
-            <div>
-              <span>Agent request</span>
-              <h2>Natural language in, issuance blueprint out.</h2>
-            </div>
-            <button type="button" onClick={resetSample} className={styles.tinyButton}>
-              Reset
-            </button>
-          </div>
-
-          <div className={styles.promptCard}>
-            <p>{sampleRequest.intent}</p>
-            <div className={styles.promptMeta}>
-              <span>Requester: {sampleRequest.requesterName}</span>
-              <span>Use case: RWA community</span>
-            </div>
-          </div>
-
-          <textarea
-            value={requestText}
-            onChange={(event) => setRequestText(event.target.value)}
-            spellCheck={false}
-            className={styles.textarea}
-            aria-label="B20 agent request JSON"
-          />
-          {error && <p className={styles.error}>{error}</p>}
-        </section>
-
-        <section className={styles.centerStage}>
+      <main className={styles.workspace}>
+        <section className={styles.stagePanel}>
           <div className={styles.stageHeader}>
-            <span>{stages.find((stage) => stage.id === activeStage)?.eyebrow}</span>
-            <h2>{stages.find((stage) => stage.id === activeStage)?.title}</h2>
-            <p>{stages.find((stage) => stage.id === activeStage)?.copy}</p>
+            <span>{activeStageMeta.label}</span>
+            <h2>{activeStageMeta.title}</h2>
+            <p>{activeStageMeta.copy}</p>
           </div>
 
           {activeStage === "request" && (
-            <div className={styles.showcaseGrid}>
-              <article className={styles.bigTile}>
-                <span>Plain request</span>
-                <h3>Create a token for verified members.</h3>
-                <p>
-                  The agent does not need to know every B20 role, policy scope, or precompile detail. It asks
-                  for the outcome; the skill expands that into a reviewable system.
-                </p>
-              </article>
-              <article className={styles.signalTile}>
-                <strong>4</strong>
-                <span>policy scopes generated</span>
-              </article>
-              <article className={styles.signalTile}>
-                <strong>8</strong>
-                <span>B20 roles mapped</span>
-              </article>
+            <div className={styles.requestView}>
+              <div className={styles.transcript}>
+                <span>Agent</span>
+                <p>{sampleRequest.intent}</p>
+              </div>
+              <div className={styles.transcript}>
+                <span>AI2Human</span>
+                <p>Convert this into token config, role map, policy scopes, proof task, and deployment checklist.</p>
+              </div>
+              <details className={styles.payloadDetails}>
+                <summary>Raw agent payload</summary>
+                <textarea
+                  value={requestText}
+                  onChange={(event) => setRequestText(event.target.value)}
+                  spellCheck={false}
+                  aria-label="B20 agent request JSON"
+                />
+                <button type="button" onClick={resetSample} className={styles.miniButton}>
+                  Reset sample
+                </button>
+              </details>
             </div>
           )}
 
           {activeStage === "blueprint" && preview && (
-            <>
-              <div className={styles.blueprint}>
-                <div className={styles.tokenPlate}>
-                  <span>B20 token blueprint</span>
-                  <h3>{preview.tokenConfig.name}</h3>
-                  <div className={styles.tokenStats}>
-                    <div>
-                      <span>Symbol</span>
-                      <strong>{preview.tokenConfig.symbol}</strong>
-                    </div>
-                    <div>
-                      <span>Variant</span>
-                      <strong>{preview.tokenConfig.variant}</strong>
-                    </div>
-                    <div>
-                      <span>Max supply</span>
-                      <strong>{formatNumber(preview.tokenConfig.supplyCap)}</strong>
-                    </div>
-                  </div>
+            <div className={styles.blueprintView}>
+              <article className={styles.tokenPassport}>
+                <span>B20 token passport</span>
+                <h3>{preview.tokenConfig.name}</h3>
+                <div>
+                  <p><span>Symbol</span><strong>{preview.tokenConfig.symbol}</strong></p>
+                  <p><span>Supply cap</span><strong>{formatNumber(preview.tokenConfig.supplyCap)}</strong></p>
+                  <p><span>Decimals</span><strong>{preview.tokenConfig.decimals}</strong></p>
                 </div>
-
-                <div className={styles.roleMatrix}>
-                  {roleSummary.map((role) => (
-                    <div key={role.role}>
-                      <strong>{role.role}</strong>
-                      <span>{shortAddress(role.assignee)}</span>
-                    </div>
-                  ))}
-                </div>
+              </article>
+              <div className={styles.roleTable}>
+                {roleSummary.map((role) => (
+                  <p key={role.role}>
+                    <strong>{role.role}</strong>
+                    <span>{shortAddress(role.assignee)}</span>
+                  </p>
+                ))}
               </div>
-
-              <div className={styles.policyGrid}>
+              <div className={styles.policyStrip}>
                 {policySummary.map((policy) => (
                   <article key={policy.scope}>
-                    <span>{policy.type}</span>
-                    <h3>{policy.scope.replaceAll("_", " ")}</h3>
+                    <strong>{policy.type}</strong>
+                    <span>{policy.scope.replaceAll("_", " ")}</span>
                     <p>{policy.defaultBehavior}</p>
                   </article>
                 ))}
               </div>
-            </>
+            </div>
           )}
 
           {activeStage === "proof" && preview && (
-            <div className={styles.proofWorkspace}>
-              <article className={styles.proofTask}>
-                <span>AI2Human proof task</span>
+            <div className={styles.proofView}>
+              <article className={styles.proofTicket}>
+                <span>Verification job</span>
                 <h3>{preview.proofRequirements.optionalTaskTemplate?.title || "Verify B20 eligibility"}</h3>
                 <p>
                   {preview.proofRequirements.optionalTaskTemplate?.blockedHumanStep ||
@@ -368,24 +342,24 @@ export default function B20SkillDemoClient() {
                   Approve sample proof
                 </button>
               </article>
-              <div className={styles.proofChecklist}>
+              <div className={styles.checklist}>
                 {preview.proofRequirements.tasks.map((task) => (
-                  <div key={task}>
+                  <p key={task}>
                     <i />
                     <span>{task}</span>
-                  </div>
+                  </p>
                 ))}
               </div>
             </div>
           )}
 
           {activeStage === "verify" && preview && (
-            <div className={styles.verificationBoard}>
-              <div className={proofState === "approved" ? styles.approvedStamp : styles.pendingStamp}>
+            <div className={styles.verifyView}>
+              <div className={proofState === "approved" ? styles.approved : styles.pending}>
                 <span>Proof status</span>
                 <strong>{proofState === "approved" ? "Approved" : "Needs review"}</strong>
               </div>
-              <div className={styles.proofOutput}>
+              <div className={styles.proofOutputs}>
                 {Object.entries(preview.proofRequirements.output).map(([key, value]) => (
                   <p key={key}>
                     <strong>{key}</strong>
@@ -393,27 +367,19 @@ export default function B20SkillDemoClient() {
                   </p>
                 ))}
               </div>
-              <p className={styles.bridgeLine}>
-                Approved proof becomes the input for allowlist membership, role assignment, or memo-linked token
-                operations.
-              </p>
             </div>
           )}
 
           {activeStage === "deploy" && preview && (
-            <div className={styles.deployBoard}>
-              <div className={styles.deployedToken}>
-                <span>Base Sepolia proof token</span>
-                <h3>A2HP is already deployed</h3>
+            <div className={styles.deployView}>
+              <article className={styles.chainReceipt}>
+                <span>Base Sepolia</span>
+                <h3>A2HP deployed</h3>
                 <code>{proofTokenAddress}</code>
-                <Link
-                  href={`https://sepolia.basescan.org/address/${proofTokenAddress}`}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Open on BaseScan
+                <Link href={`https://sepolia.basescan.org/address/${proofTokenAddress}`} target="_blank" rel="noreferrer">
+                  View token receipt
                 </Link>
-              </div>
+              </article>
               <div className={styles.callStack}>
                 {initCalls.map((call, index) => (
                   <p key={`${call.call}-${index}`}>
@@ -427,52 +393,27 @@ export default function B20SkillDemoClient() {
           )}
         </section>
 
-        <aside className={styles.rightInspector}>
-          <div className={styles.inspectorTop}>
-            <span>What is the product?</span>
-            <h2>Not a token address. A proof-to-policy engine.</h2>
+        <aside className={styles.sideRail}>
+          <div className={styles.sideBlock}>
+            <span>What users should understand</span>
+            <h2>AI agents can request token systems with verification built in.</h2>
             <p>
-              B20 gives tokens native rules. AI2Human gives those rules verified inputs before accounts receive
-              roles, mint access, or allowlist status.
+              The token is not the magic trick. The magic trick is the path from request to rules to proof to
+              policy-controlled token access.
             </p>
           </div>
-
-          <div className={styles.outcomeList}>
-            <div>
-              <strong>For agents</strong>
-              <span>Ask for a token system in plain English.</span>
-            </div>
-            <div>
-              <strong>For issuers</strong>
-              <span>Review roles, supply caps, policies, and proof gates before deploy.</span>
-            </div>
-            <div>
-              <strong>For users</strong>
-              <span>Token access follows visible verification rules, not hidden admin promises.</span>
-            </div>
+          <div className={styles.sideList}>
+            <p><strong>Agent</strong><span>Describes the token system.</span></p>
+            <p><strong>AI2Human</strong><span>Builds proof and policy gates.</span></p>
+            <p><strong>B20</strong><span>Receives native roles, caps, policies, and receipt.</span></p>
           </div>
-
-          {preview && (
-            <div className={styles.machineSummary}>
-              <span>Machine-readable output</span>
-              <p>{preview.publicSummary}</p>
-              <Link href="/agent/b20/openclaw-test.md">OpenClaw test prompt</Link>
-            </div>
-          )}
+          <div className={styles.openClawBox}>
+            <span>OpenClaw test</span>
+            <code>POST /api/agent/b20/preview</code>
+            <Link href="/agent/b20/openclaw-test.md">Open test prompt</Link>
+          </div>
         </aside>
       </main>
-
-      <section className={styles.openClaw}>
-        <div>
-          <span>OpenClaw path</span>
-          <h2>Any agent can read the skill and produce the same issuance bundle.</h2>
-        </div>
-        <pre>{`Read https://ai2human.work/agent/b20-skill.md
-Then call:
-POST https://ai2human.work/api/agent/b20/preview
-with:
-https://ai2human.work/agent/b20/examples/rwa-community-token.json`}</pre>
-      </section>
     </section>
   );
 }
