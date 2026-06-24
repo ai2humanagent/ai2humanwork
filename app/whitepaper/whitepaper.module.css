@@ -398,6 +398,94 @@
   color: var(--wp-muted);
 }
 
+/* Architecture Flow */
+.architectureFlow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin: 34px 0;
+  position: relative;
+}
+
+.architectureStep {
+  position: relative;
+  min-height: 188px;
+  padding: 20px;
+  border-radius: 18px;
+  border: 1px solid rgba(128, 255, 234, 0.16);
+  background:
+    linear-gradient(135deg, rgba(128, 255, 234, 0.09), rgba(124, 92, 255, 0.08)),
+    rgba(10, 12, 20, 0.78);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.18);
+  overflow: hidden;
+}
+
+.architectureStep::after {
+  content: "";
+  position: absolute;
+  inset: auto 18px 0 18px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--wp-a), var(--wp-b), var(--wp-c));
+  opacity: 0.8;
+}
+
+.architectureStepIndex {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  margin-bottom: 16px;
+  color: #071018;
+  background: linear-gradient(135deg, var(--wp-a), var(--wp-c));
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.architectureStepTitle {
+  color: var(--wp-text);
+  font-size: 17px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.architectureStepDesc {
+  color: var(--wp-muted);
+  font-size: 13px;
+  line-height: 1.65;
+  margin: 0;
+}
+
+.moduleGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+  margin-bottom: 32px;
+}
+
+.moduleCard {
+  border: 1px solid rgba(255, 179, 71, 0.18);
+  border-radius: 18px;
+  padding: 24px;
+  background:
+    radial-gradient(circle at 18% 10%, rgba(255, 179, 71, 0.14), transparent 38%),
+    var(--wp-card);
+}
+
+.moduleLabel {
+  color: var(--wp-c);
+  font-size: 15px;
+  font-weight: 800;
+  margin-bottom: 10px;
+}
+
+.moduleDesc {
+  color: var(--wp-muted);
+  font-size: 13px;
+  line-height: 1.65;
+}
+
 /* Roadmap */
 .roadmapGrid {
   display: flex;
@@ -524,5 +612,5 @@
 @media (max-width: 900px) {
   .container { flex-direction: column; gap: 0; }
   .sidebar { display: none; }
-  .howItWorksGrid, .tokenGrid { grid-template-columns: 1fr; }
+  .howItWorksGrid, .tokenGrid, .architectureFlow, .moduleGrid { grid-template-columns: 1fr; }
 }

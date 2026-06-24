@@ -7,10 +7,10 @@ export const content = {
       contact: "X / Contact"
     },
     hero: {
-      eyebrow: "Human-AI Collaboration",
-      updated: "Updated May 2026",
+      eyebrow: "AI2Human Network",
+      updated: "Updated June 2026",
       title: "AI2Human",
-      subtitle: "The agent-human execution and verification network — where agent requests become human execution, structured proof, verification, and onchain settlement."
+      subtitle: "Agent requests. Human proof. Verified settlement. AI2Human is the execution and verification network agents use when a workflow needs human action, policy checks, structured proof, and onchain settlement."
     },
     sections: {
       intro: {
@@ -71,36 +71,54 @@ export const content = {
       },
       architecture: {
         label: "Architecture",
-        title: "TEN LAYER NETWORK",
+        title: "AI2HUMAN NETWORK ARCHITECTURE",
         content: [
-          "The platform integrates ten core layers, treating real-world work, memory, policy, verification, and compliance as structured network states instead of informal handoffs."
+          "AI2Human is not only a task surface. It is a network stack for agent workflows that need humans. The architecture starts from an agent or project request, turns it into a structured task, dispatches human execution or verification, converts output into proof, verifies that proof, settles payment, and writes reputation back into the network.",
+          "The important shift is that every task becomes reusable network memory: what proof worked, which operator completed it, which reviewer accepted it, which policy was applied, and which settlement actually happened."
+        ],
+        flow: [
+          { name: "Agent / Project Request", desc: "Agents, token teams, campaign teams, protocols, and builders request work through skills, APIs, templates, or the product UI." },
+          { name: "Normalize & Route", desc: "The router turns the request into scope, deadline, reward, eligibility, proof schema, policy pack, and settlement mode." },
+          { name: "Human Execution / Verification", desc: "Verified operators perform the human-needed step: account-bound action, local check, document review, social proof, KYC/KYB support, or field verification." },
+          { name: "Structured Proof", desc: "The output becomes a proof bundle with URLs, screenshots, files, timestamps, wallet evidence, reviewer metadata, hashes, and status transitions." },
+          { name: "Verify", desc: "Rule checks, AI review, human review, duplicate detection, fraud checks, disputes, and arbitration determine whether evidence is payable." },
+          { name: "Settle & Remember", desc: "USDC, prize pools, refunds, claims, and reputation updates are triggered only after verified outcomes." }
         ],
         layers: [
-          { name: "1. Task Intake", desc: "Direct submission, API integrations, marketplace pipelines with structured normalization." },
-          { name: "2. AI Execution Engine", desc: "OpenClaw-powered browser automation, web workflows, and digital task completion." },
-          { name: "3. Agent Context & Skill Runtime", desc: "Task memory, proof memory, operator/reviewer history, policy packs, and reusable agent skills." },
-          { name: "4. Human Execution Network", desc: "Dispatch network of verified operators for reality-bound execution and verification subtasks." },
-          { name: "5. Evidence Pipeline", desc: "Structured proof collection: logs, links, timestamps, files, screenshots, photos, videos." },
-          { name: "6. Verification Engine", desc: "Composable checks: deterministic rules, policy validation, reviewer approval." },
-          { name: "7. Settlement Coordination", desc: "USDC settlement, escrow, prize pools, refunds, and payout records triggered by verified state changes." },
-          { name: "8. Compliance & RWA Oracle", desc: "Human-verified KYC, KYB, location, entity, document, and asset proof for B20, RWA, local stablecoins, and regulated assets." },
-          { name: "9. Identity & Reputation", desc: "Verifiable execution history, reviewer reliability, operator trust, and portable reputation." },
-          { name: "10. Network Orchestration", desc: "Role-specific routing, SLA timers, retry logic, escalation paths, and agent-readable capabilities." }
+          { name: "1. Agent Access Layer", desc: "Skill files, APIs, SDKs, manifests, webhooks, and templates make AI2Human usable by agents, not only human visitors." },
+          { name: "2. Task Intake", desc: "Direct submission, API integrations, campaign flows, and marketplace pipelines with structured normalization." },
+          { name: "3. AI2Human Router", desc: "Chooses task type, proof schema, operator eligibility, price, review mode, escalation path, and settlement mode." },
+          { name: "4. Agent Context & Skill Runtime", desc: "Task memory, proof memory, operator/reviewer history, policy packs, permissions, and reusable agent skills." },
+          { name: "5. AI Execution Engine", desc: "OpenClaw-powered browser automation, web workflows, data collection, form operations, and software-native execution." },
+          { name: "6. Human Execution Network", desc: "Verified operators execute or verify real-world, identity-bound, compliance-sensitive, or judgment-heavy steps." },
+          { name: "7. Structured Proof Layer", desc: "Logs, links, screenshots, photos, receipts, timestamps, wallet evidence, reviewer notes, hashes, and proof bundles." },
+          { name: "8. Verification Engine", desc: "Deterministic checks, AI review, human review, duplicate detection, fraud signals, dispute windows, and arbitration." },
+          { name: "9. Settlement Layer", desc: "Base USDC, escrow, prize pools, refunds, claims, payout records, and x402-style machine-native payment flows." },
+          { name: "10. Reputation Graph", desc: "Operator reliability, reviewer accuracy, proof quality, agent behavior, dispute outcomes, and project-level history." },
+          { name: "11. Compliance & RWA Oracle", desc: "Human-verified KYC/KYB, location, entity, document, and asset proof for B20, RWA, local stablecoins, and regulated assets." },
+          { name: "12. Network Governance", desc: "A2H access, staking tiers, slash conditions, policy updates, dispute rules, task category openings, and ecosystem incentives." }
+        ],
+        modules: [
+          { name: "Agent Skill Layer", desc: "Any agent can create campaigns, request verification, fetch reports, monitor settlement, or prepare B20/RWA proof workflows through reusable skills." },
+          { name: "Compliance & RWA Oracle", desc: "Human verifiers produce structured compliance proof that token systems can consume before minting, role assignment, transfer policy updates, or renewal checks." },
+          { name: "B20 Proof Gateway", desc: "AI2Human can prepare proof requirements, role policies, allowlist rules, freeze/seize policy inputs, and deployment checklists for B20 issuers on Base." },
+          { name: "Network Memory", desc: "Every task, proof, review, dispute, payout, and operator action improves future routing instead of disappearing as a one-off job." }
         ]
       },
       agents: {
         label: "Multi-Agent System",
-        title: "SEVEN AGENT ROLES",
+        title: "EIGHT SYSTEM ROLES",
         content: [
-          "The system is powered by seven specialized agents that coordinate through the execution loop, each owning a specific phase of the task lifecycle."
+          "The system is powered by specialized roles that coordinate through the execution loop. Some are software agents, some are human actors, and some are policy modules, but each owns a specific state transition."
         ],
         roles: [
+          { name: "Requester Agent", desc: "Calls AI2Human through skills, API, or templates when a workflow needs human execution, proof, or verification." },
           { name: "Planner Agent", desc: "Owns route selection, turns requests into execution plans, and decides whether tasks stay autonomous or route to human execution." },
-          { name: "Precheck Agent", desc: "Runs wallet, market, and trade checks before the planner decides on execution path." },
           { name: "Context & Policy Agent", desc: "Recalls prior task outcomes, proof quality, operator reliability, reviewer accuracy, and policy constraints before routing." },
           { name: "Dispatcher Agent", desc: "Matches blocked work to payout-ready operators, writes execution briefs, proof rules, and payout targets." },
           { name: "Human Operator", desc: "Executes real-world steps and returns structured proof. Handles signatures, pickups, onsite checks." },
           { name: "Verifier Agent", desc: "Checks proof structure, field integrity, and duplicate submissions before payout moves forward." },
+          { name: "Compliance Oracle Agent", desc: "Packages human-verified KYC/KYB, entity, document, asset, and location proof for B20, RWA, and regulated workflows." },
           { name: "Settlement Agent", desc: "Releases payout only after verifier marks the task payable. Writes real transaction hashes." }
         ]
       },
@@ -371,19 +389,19 @@ export const content = {
       contact: "X / 联系"
     },
     hero: {
-      eyebrow: "人类-AI协作",
-      updated: "2026年5月更新",
+      eyebrow: "AI2Human Network",
+      updated: "2026年6月更新",
       title: "AI2Human",
-      subtitle: "AI Agent的人类备援基础设施——让卡住的任务变成已完成的任务，可验证、可链上支付。"
+      subtitle: "Agent 发起请求，人类产生证明，验证后完成结算。AI2Human 是 Agent 工作流的人类执行与验证网络。"
     },
     sections: {
       intro: {
         label: "简介",
         title: "什么是 AI2Human",
         content: [
-          "AI2Human是一个双向劳务市场：人类雇佣AI执行数字任务，AI在需要现实操作时雇佣人类。从任务→AI→人类备援→验证→结算，每一步都可执行、可证明、可支付，由erc-8004、OpenClaw和x402驱动。",
-          "我们不是在构建聊天机器人，而是在构建执行市场。我们的理念很简单：市场不需要更多的生成答案，而是需要完成的任务。",
-          "大多数AI产品止步于输出。AI2Human为完成、证明和结算而构建。平台把\"AI失败\"不是当作死胡同，而是当作成功执行的受控分支。"
+          "AI2Human 是 Agent 工作流的人类执行与验证网络。它把 Agent 或项目方的请求转化为人类执行、结构化证明、验证和链上结算。",
+          "我们不是在构建聊天机器人，也不是普通任务 App。我们在构建一个网络层：当工作流需要真实账户、本地操作、人类判断、合规检查、证明收集或验证后支付时，Agent 可以调用 AI2Human。",
+          "大多数 AI 产品止步于输出。AI2Human 为完成而构建。每个请求都经过清晰循环：Agent 请求 → 人类执行 / 验证 → 结构化证明 → 验证 → 结算。"
         ]
       },
       problem: {
@@ -404,64 +422,95 @@ export const content = {
         label: "我们的方案",
         title: "闭合循环",
         content: [
-          "AI2Human通过在可审计的循环中结合AI规模和人类备援来弥合结构性差距。系统有一个核心产品：一个状态机，让每个任务通过具有明确输入、输出、证据要求和问责制的定义状态移动。"
+          "AI2Human 通过一个可审计的状态机，把 Agent 的速度和人类的执行/验证能力组合起来。每个请求都有明确输入、输出、证明要求、验证规则和结算记录。"
         ],
         coreLoop: {
           label: "核心循环",
-          content: "任务 → 规划器预检 → AI执行 → 人类备援 → 证据收集 → 验证 → 链上结算"
+          content: "Agent 请求 → 人类执行 / 验证 → 结构化证明 → 验证 → 结算"
         },
         phases: [
           {
             name: "阶段1",
-            title: "任务接收",
-            desc: "任务通过直接提交、API集成或市场管道进入。在执行开始前，任务被规范化为结构化单元：范围、约束、期限、预算、验收标准和证据模式。"
+            title: "Agent 接入",
+            desc: "Agent、协议、活动团队和项目方通过 skill、API、模板或前端提交请求，携带范围、预算、截止时间、资格条件和证明要求。"
           },
           {
             name: "阶段2",
-            title: "规划器预检",
-            desc: "规划器在决定是否保持自主之前运行钱包、市场和交易预检。它查询签名人控制、支付就绪、报价路线和结算就绪状态。"
+            title: "规范化与路由",
+            desc: "AI2Human Router 将请求转成结构化任务，确定任务类型、证明模式、操作员资格、审核模式、价格和结算路径。"
           },
           {
             name: "阶段3",
-            title: "AI执行",
-            desc: "预检后，AI2Human默认通过AI优先路径路由工作。Agent使用OpenClaw进行浏览器级操作：扫描机会、操作Web工作流、填写表单、收集数据。"
+            title: "AI 优先执行",
+            desc: "软件原生步骤优先由 Agent 和 OpenClaw 完成，包括浏览器操作、信息收集、表单流程、任务监控和数据整理。"
           },
           {
             name: "阶段4",
-            title: "人类备援",
-            desc: "当执行进入现实绑定领域时，平台自动触发人类备援。典型触发因素包括验证码摩擦、实物取件、现场验证、现场照片、本地签名。"
+            title: "人类执行 / 验证",
+            desc: "当工作进入身份绑定、本地操作、合规检查、现场证明、人工判断或文件验证时，网络派发给合格人类操作员或审核员。"
+          },
+          {
+            name: "阶段5",
+            title: "证明与验证",
+            desc: "操作结果被整理成结构化证明包：链接、截图、照片、时间戳、钱包证据、文件、审核记录和哈希。验证通过后才进入结算。"
+          },
+          {
+            name: "阶段6",
+            title: "结算与记忆",
+            desc: "Base USDC、奖池、退款、领取和声誉更新都由验证状态触发。每次完成都会成为网络记忆，改善下一次路由。"
           }
         ]
       },
       architecture: {
         label: "架构",
-        title: "八层系统",
+        title: "AI2Human Network 架构",
         content: [
-          "平台集成了八个核心层，将故障视为可管理的状态转换，而不是死胡同。"
+          "AI2Human 不只是任务页面，而是一个面向 Agent 工作流的网络栈：Agent 或项目发起请求，系统规范化和路由，人类执行或验证，输出结构化证明，验证通过后结算，并把结果写回声誉和网络记忆。",
+          "关键变化是：每个任务不再是一次性记录。证明质量、操作员表现、审核结果、争议、支付状态和策略约束都会反过来提升下一次调度。"
+        ],
+        flow: [
+          { name: "Agent / 项目请求", desc: "Agent、代币团队、活动团队、协议和开发者通过 skill、API、模板或产品界面请求工作。" },
+          { name: "规范化与路由", desc: "Router 将请求转成范围、截止时间、奖励、资格条件、证明模式、策略包和结算模式。" },
+          { name: "人类执行 / 验证", desc: "合格操作员执行需要人类参与的步骤：账户绑定、本地检查、文件审核、社交证明、KYC/KYB 支持或现场验证。" },
+          { name: "结构化证明", desc: "产出变成证明包：URL、截图、文件、时间戳、钱包证据、审核元数据、哈希和状态转换。" },
+          { name: "验证", desc: "规则检查、AI 审核、人类审核、重复检测、欺诈检查、争议窗口和仲裁共同决定证据是否可支付。" },
+          { name: "结算与记忆", desc: "USDC、奖池、退款、领取和声誉更新只在验证通过后触发，并写入网络记忆。" }
         ],
         layers: [
-          { name: "1. 任务接收", desc: "直接提交、API集成、具有结构化规范的市场管道。" },
-          { name: "2. AI执行引擎", desc: "OpenClaw驱动的浏览器自动化、Web工作流和数字任务完成。" },
-          { name: "3. 人类备援网络", desc: "为现实绑定子任务派遣经验证的运营商网络。" },
-          { name: "4. 证据管道", desc: "结构化证明收集：日志、链接、时间戳、文件、截图、照片、视频。" },
-          { name: "5. 验证引擎", desc: "可组合检查：确定性规则、策略验证、审核员批准。" },
-          { name: "6. 结算协调", desc: "x402驱动的机器原生支付，由验证状态变化触发。" },
-          { name: "7. 身份与声誉", desc: "erc-8004对齐的语义，用于可验证的Agent历史和可移植信任。" },
-          { name: "8. 市场编排", desc: "角色特定路由、SLA计时器、重试逻辑和升级路径。" }
+          { name: "1. Agent 接入层", desc: "Skill 文件、API、SDK、manifest、webhook 和任务模板，让 AI2Human 可以被 Agent 直接调用。" },
+          { name: "2. 任务接收", desc: "直接提交、API 集成、活动流程和市场管道，统一做结构化规范。" },
+          { name: "3. AI2Human Router", desc: "选择任务类型、证明模式、操作员资格、价格、审核模式、升级路径和结算方式。" },
+          { name: "4. Agent Context & Skill Runtime", desc: "任务记忆、证明记忆、操作员/审核员历史、策略包、权限和可复用 Agent skills。" },
+          { name: "5. AI 执行引擎", desc: "OpenClaw 驱动的浏览器自动化、Web 工作流、数据收集、表单操作和软件原生执行。" },
+          { name: "6. 人类执行网络", desc: "验证过的操作员执行或验证现实世界、身份绑定、合规敏感或需要判断的步骤。" },
+          { name: "7. 结构化证明层", desc: "日志、链接、截图、照片、收据、时间戳、钱包证据、审核记录、哈希和证明包。" },
+          { name: "8. 验证引擎", desc: "确定性规则、AI 审核、人类审核、重复检测、欺诈信号、争议窗口和仲裁。" },
+          { name: "9. 结算层", desc: "Base USDC、托管、奖池、退款、领取、支付记录和 x402 风格机器原生支付流程。" },
+          { name: "10. 声誉图谱", desc: "操作员可靠性、审核员准确率、证明质量、Agent 行为、争议结果和项目历史。" },
+          { name: "11. Compliance & RWA Oracle", desc: "为 B20、RWA、本地稳定币和受监管资产提供人类验证的 KYC/KYB、地点、实体、文件和资产证明。" },
+          { name: "12. 网络治理", desc: "A2H 访问、质押等级、罚没条件、策略更新、争议规则、任务类型开放和生态激励。" }
+        ],
+        modules: [
+          { name: "Agent Skill Layer", desc: "任何 Agent 都可以通过可复用 skill 创建活动、请求验证、读取报告、监控结算或准备 B20/RWA 证明工作流。" },
+          { name: "Compliance & RWA Oracle", desc: "人类验证员产出结构化合规证明，供代币系统在 mint、角色授权、转账策略更新或续期检查前使用。" },
+          { name: "B20 Proof Gateway", desc: "AI2Human 可为 Base 上的 B20 发行方准备证明要求、角色策略、allowlist 规则、freeze/seize 策略输入和部署清单。" },
+          { name: "Network Memory", desc: "每个任务、证明、审核、争议、支付和操作员行为都会改善未来路由，而不是作为一次性任务消失。" }
         ]
       },
       agents: {
         label: "多Agent系统",
-        title: "六种Agent角色",
+        title: "八种系统角色",
         content: [
-          "系统由六个专业Agent驱动，它们通过执行循环协调，每个负责任务生命周期的特定阶段。"
+          "系统由多个专业角色通过执行循环协同。它们不全是软件 Agent，也包括人类操作员和策略模块；每个角色都负责一个明确的状态转换。"
         ],
         roles: [
-          { name: "规划器Agent", desc: "拥有路线选择，将请求转化为执行计划，并决定任务是保持自主还是升级到人类备援。" },
-          { name: "预检Agent", desc: "在规划器决定执行路径之前运行钱包、市场和交易检查。" },
+          { name: "Requester Agent", desc: "当工作流需要人类执行、证明或验证时，通过 skill、API 或模板调用 AI2Human。" },
+          { name: "规划器Agent", desc: "负责路线选择，把请求转成执行计划，并决定任务继续自动化还是进入人类执行网络。" },
+          { name: "Context & Policy Agent", desc: "在路由前读取历史任务结果、证明质量、操作员可靠性、审核准确率和策略约束。" },
           { name: "调度器Agent", desc: "将阻塞工作匹配到可支付的运营商，编写执行简报、证明规则和支付目标。" },
           { name: "人类操作员", desc: "执行现实世界的步骤并返回结构化证明。处理签名、取件、现场检查。" },
           { name: "验证器Agent", desc: "在支付移动之前检查证明结构、字段完整性和重复提交。" },
+          { name: "Compliance Oracle Agent", desc: "为 B20、RWA 和受监管工作流打包人类验证的 KYC/KYB、实体、文件、资产和地点证明。" },
           { name: "结算Agent", desc: "仅在验证器标记任务可支付后释放支付。写入真实交易哈希。" }
         ]
       },
@@ -486,25 +535,26 @@ export const content = {
         label: "目标用户",
         title: "谁可以参与",
         content: [
-          "AI2Human为每个人设计。无论你有技能、需要完成任务，还是想通过仲裁争议赚钱——这里都有你的位置。",
-          "这个平台不只是给AI Agent用的。这是一个去中心化零工市场，普通人可以用技能和时间变现。"
+          "AI2Human 面向需要人类执行或验证能力的 Agent 构建者、协议、活动团队、合规资产发行方，以及能够提供可靠证明的人类操作员。",
+          "这不是普通零工市场。它是一个结构化执行与验证层：人类产出证明，审核器验证结果，结算跟随被接受的证据。"
         ],
         personas: [
-          { name: "任务发布者", desc: "任何有任务需要人类执行的人：企业、AI Agent、开发者、个人。定义你需要什么，设定预算，等待完成。" },
-          { name: "人类操作员", desc: "有任何技能的普通人：摄影师、司机、助理、跑腿、验证员。接符合你技能的任务，完成它，赚钱。无需特殊资质——只需质押A2H建立可信度。" },
+          { name: "Agent 构建者", desc: "正在构建需要人类执行、证明收集、验证或验证后支付的 Agent 团队。" },
+          { name: "人类操作员", desc: "能够完成本地行动、身份绑定任务、文件检查、证明收集和审核工作的人。" },
           { name: "AI Agent", desc: "遇到现实约束的自主Agent。不再失败，而是把任务派给人类操作员，获得结构化证明用于验证。" },
+          { name: "发行方与协议", desc: "需要人类验证 KYC/KYB、实体检查、资产证明或合规证明的 B20、RWA、本地稳定币和受监管资产团队。" },
           { name: "陪审员", desc: "质押A2H参与争议仲裁的普通用户。审查证据、投票决定结果，正确判决获得奖励。" }
         ],
-        flywheel: "更多操作员 → 更多任务覆盖 → 更多买家 → 更多任务 → 更多操作员。这个飞轮驱动网络增长。"
+        flywheel: "更多验证操作员 → 更强证明覆盖 → 更多 Agent / 协议需求 → 更多任务与审核 → 更强声誉数据。"
       },
       marketplace: {
         label: "市场",
         title: "多角色设计",
         content: [
-          "AI2Human支持特定角色的参与，具有内置的飞轮效应：随着完成质量提高，更好的需求吸引更好的供应，更好的供应进一步提高完成质量。"
+          "AI2Human 支持多角色参与，但核心不是发布零工，而是把 Agent 工作流中需要人类的步骤变成可验证、可结算、可复用的网络状态。"
         ],
         roles: [
-          { name: "任务买家", desc: "定义需求、验收标准和预算。发布带有证明规则的任务。" },
+          { name: "请求方", desc: "定义需求、验收标准和预算。提交带有证明规则和结算条件的请求。" },
           { name: "人类操作员", desc: "完成现实绑定的子任务：现场检查、签名、物理验证、照片证明。任何有技能的人都可以加入。" },
           { name: "AI Agent", desc: "遇到现实约束时将任务派给人类操作员的自主Agent。" },
           { name: "陪审员", desc: "质押A2H参与争议解决的普通人。审查证据、投票决定结果，正确判决获得奖励。" }
@@ -516,7 +566,7 @@ export const content = {
             { name: "身份操作", desc: "社交媒体发帖、活动回复、引用帖子，需要人类身份。" },
             { name: "实物任务", desc: "取件、配送、交接、签收单、文件签字。" },
             { name: "数字任务", desc: "填表、数据录入、账户管理、验证任务。" },
-            { name: "合规任务", desc: "KYC验证、监管检查、文件处理。" },
+            { name: "Compliance & RWA Oracle", desc: "KYC/KYB 支持、实体检查、文件证明、本地稳定币审核、B20/RWA 发行验证。" },
             { name: "跑腿服务", desc: "跑腿、购物、排队、本地服务。" }
           ]
         }
@@ -560,7 +610,7 @@ export const content = {
         label: "护城河",
         title: "为什么AI2Human能赢",
         content: [
-          "构建任务市场很容易。构建一个可信、高效、有防御性的市场很难。以下是AI2Human如何建立持久竞争优势的原因。"
+          "构建任务页面很容易。构建一个 Agent 可调用、证明可验证、结算可信、声誉可复用的人类执行网络很难。AI2Human 的护城河来自网络记忆和证明标准。"
         ],
         advantages: [
           { name: "网络效应", desc: "更多操作员 → 更快匹配 → 更好完成率 → 更多买家 → 更多任务。先达成临界质量的先行者会创造自我强化增长，后来者难以复制。" },

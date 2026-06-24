@@ -154,6 +154,33 @@ export default function WhitepaperPage() {
               ))}
             </div>
 
+            <div className={styles.architectureFlow} aria-label="AI2Human network execution flow">
+              {s.architecture.flow.map((step, i) => (
+                <div key={i} className={styles.architectureStep}>
+                  <div className={styles.architectureStepIndex}>{String(i + 1).padStart(2, "0")}</div>
+                  <div>
+                    <div className={styles.architectureStepTitle}>{step.name}</div>
+                    <p className={styles.architectureStepDesc}>{step.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <h3 className={styles.subSectionTitle}>
+              {lang === "zh" ? "关键网络模块" : "Key Network Modules"}
+            </h3>
+            <div className={styles.moduleGrid}>
+              {s.architecture.modules.map((mod, i) => (
+                <div key={i} className={styles.moduleCard}>
+                  <div className={styles.moduleLabel}>{mod.name}</div>
+                  <div className={styles.moduleDesc}>{mod.desc}</div>
+                </div>
+              ))}
+            </div>
+
+            <h3 className={styles.subSectionTitle}>
+              {lang === "zh" ? "十二层网络栈" : "Twelve-Layer Network Stack"}
+            </h3>
             <div className={styles.tokenGrid}>
               {s.architecture.layers.map((layer, i) => (
                 <div key={i} className={styles.tokenCard}>
