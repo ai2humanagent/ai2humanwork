@@ -308,7 +308,7 @@ export const content = {
           { name: "Compliance Unlocks", desc: "Sensitive tasks (KYC, financial compliance, on-site signing) require specific stake tiers to participate. It's not about having money, it's about having credibility." },
           { name: "Governance", desc: "Holders vote on: staking threshold adjustments, slash ratios, dispute arbitration rules, new task type openings. Protocol evolves with the market." }
         ],
-        totalSupply: "1,000,000,000",
+        totalSupply: "100,000,000,000",
         supplyLabel: "Total Supply"
       },
       milestones: {
@@ -668,7 +668,7 @@ export const content = {
           { name: "合规任务解锁", desc: "敏感任务（KYC验证、金融合规、现场签约）需要达到特定质押等级才能参与。不是有钱就能接，是有信誉才能接。" },
           { name: "治理投票", desc: "持有者投票决定：质押门槛调整、罚没比例、争议仲裁规则、新的任务类型开放。这让协议随市场成长而进化。" }
         ],
-        totalSupply: "1,000,000,000",
+        totalSupply: "100,000,000,000",
         supplyLabel: "总供应量"
       },
       milestones: {
