@@ -70,7 +70,7 @@ export const b20FactoryAbi = [
   {
     type: "function",
     name: "createB20",
-    stateMutability: "nonpayable",
+    stateMutability: "payable",
     inputs: [
       { name: "variant", type: "uint8" },
       { name: "salt", type: "bytes32" },
@@ -129,13 +129,10 @@ function normalizeSupplyCapTokens(value: number | string) {
 }
 
 export function encodeAssetCreateParams(name: string, symbol: string, initialAdmin: Address, decimals: number) {
-  return encodeAbiParameters(parseAbiParameters("uint8 version, string name, string symbol, address initialAdmin, uint8 decimals"), [
-    1,
-    name,
-    symbol,
-    initialAdmin,
-    decimals
-  ]);
+  return encodeAbiParameters(
+    parseAbiParameters("(uint8 version, string name, string symbol, address initialAdmin, uint8 decimals)"),
+    [{ version: 1, name, symbol, initialAdmin, decimals }]
+  );
 }
 
 export function encodeStablecoinCreateParams(
@@ -145,8 +142,8 @@ export function encodeStablecoinCreateParams(
   currency: string
 ) {
   return encodeAbiParameters(
-    parseAbiParameters("uint8 version, string name, string symbol, address initialAdmin, string currency"),
-    [1, name, symbol, initialAdmin, currency.toUpperCase()]
+    parseAbiParameters("(uint8 version, string name, string symbol, address initialAdmin, string currency)"),
+    [{ version: 1, name, symbol, initialAdmin, currency: currency.toUpperCase() }]
   );
 }
 
