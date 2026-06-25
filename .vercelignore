@@ -9,3 +9,23 @@ tsconfig.tsbuildinfo
 aeon/
 contracts/
 scripts/claim-100.sh
+
+# Local research / generated artifacts that should never be uploaded to Vercel.
+agent-mine-arena/
+synthesis-app/
+acp-test/
+exports/
+downloads/
+gitproof-next/
+evidence_pdf_build/
+evidence_git_supplement/
+hearing_prep_pdf_build/
+hearing_prep_v2_build/
+aeon-handoff-animation/
+aeon-handoff-demo/
+docs/personal-wallpapers/
+docs/research-notes/
+docs/stephunters-brand-kit-20260622/
+docs/stephunters-brand-kit-20260622.zip
+*.pdf
+*.mp4
