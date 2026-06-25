@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { usePrivy, useWallets } from "@privy-io/react-auth";
+import { useWallets } from "@privy-io/react-auth";
 import {
   createPublicClient,
   formatEther,
@@ -25,12 +25,7 @@ import {
 
 const previewEndpoint = "/api/agent/b20/preview";
 const proofTokenAddress = "0xb200000000000000000000eaE911AAD5435c86F3";
-const privyEnabled = Boolean(process.env.NEXT_PUBLIC_PRIVY_APP_ID);
 const baseSepoliaFaucetUrl = "https://www.alchemy.com/faucets/base-sepolia";
-
-type EthereumProvider = {
-  request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
-};
 
 const flowSteps = [
   { id: 1, title: "设规则", hint: "名称、类型、供应量、证明门槛" },
@@ -230,7 +225,6 @@ async function ensureBaseSepolia(provider: { request: (args: { method: string; p
 }
 
 export default function B20SkillDemoClient() {
-  const { ready, authenticated, login } = usePrivy();
   const { wallets } = useWallets();
 
   const [selectedExample, setSelectedExample] = useState(0);
@@ -253,9 +247,6 @@ export default function B20SkillDemoClient() {
   const [deployStatus, setDeployStatus] = useState("");
   const [deployTxHash, setDeployTxHash] = useState("");
   const [tokenAddress, setTokenAddress] = useState("");
-  const [injectedAddress, setInjectedAddress] = useState<Address | undefined>();
-  const [walletMessage, setWalletMessage] = useState("");
-  const [walletConnecting, setWalletConnecting] = useState(false);
 
   const [mintLoading, setMintLoading] = useState(false);
   const [mintError, setMintError] = useState("");
@@ -267,7 +258,7 @@ export default function B20SkillDemoClient() {
     wallets.find((item) => item.walletClientType !== "privy" && item.address) ||
     wallets.find((item) => item.address);
   const walletAddress = wallet?.address as Address | undefined;
-  const activeWalletAddress = walletAddress || injectedAddress;
+  const activeWalletAddress = walletAddress;
 
   const tokenOverrides = useMemo(
     () => ({
@@ -289,50 +280,9 @@ export default function B20SkillDemoClient() {
 
   const currentStep = tokenAddress ? (mintTxHash ? 4 : 3) : preview ? 2 : 1;
 
-  function getInjectedProvider() {
-    const maybeWindow = globalThis as typeof globalThis & {
-      ethereum?: EthereumProvider;
-    };
-    return maybeWindow.ethereum;
-  }
-
   async function getActiveProvider() {
     if (wallet) return wallet.getEthereumProvider();
-    const provider = getInjectedProvider();
-    if (provider) return provider;
     return undefined;
-  }
-
-  async function connectWallet() {
-    setWalletConnecting(true);
-    setWalletMessage("");
-    setDeployError("");
-    try {
-      const provider = getInjectedProvider();
-      if (provider) {
-        const accounts = (await provider.request({ method: "eth_requestAccounts" })) as string[];
-        const nextAddress = accounts?.[0] as Address | undefined;
-        if (!nextAddress) {
-          setWalletMessage("Wallet connected but no account was returned.");
-          return;
-        }
-        setInjectedAddress(nextAddress);
-        setWalletMessage(`Wallet connected: ${shortAddress(nextAddress)}`);
-        return;
-      }
-
-      if (privyEnabled && ready && !authenticated) {
-        await login();
-        setWalletMessage("Wallet connection opened. Finish the wallet flow, then return here.");
-        return;
-      }
-
-      setWalletMessage("No browser wallet detected. Install MetaMask, Rabby, Coinbase Wallet, or use the app wallet.");
-    } catch (err) {
-      setWalletMessage(err instanceof Error ? err.message : "Wallet connection failed.");
-    } finally {
-      setWalletConnecting(false);
-    }
   }
 
   async function runPreview() {
@@ -379,7 +329,7 @@ export default function B20SkillDemoClient() {
   async function deployToken() {
     const provider = await getActiveProvider();
     if (!provider || !activeWalletAddress) {
-      await connectWallet();
+      setDeployError("请先使用页面右上角 Header 的 Connect Wallet 连接钱包。B20 页面不再提供第二套连接入口。");
       return;
     }
 
@@ -561,7 +511,7 @@ export default function B20SkillDemoClient() {
           <h1>带证明门槛的 B20 发币</h1>
           <p className={styles.tagline}>B20 负责链上规则，AI2Human 负责谁有资格上链。</p>
           <p>
-            连接钱包，在 Base Sepolia 一键发行 B20 token，并按你的规则挂上 AI2Human 人工证明门槛。
+            先用右上角 Header 连接钱包，再在 Base Sepolia 一键发行 B20 token，并按你的规则挂上 AI2Human 人工证明门槛。
             已有实测案例{" "}
             <Link href={buildExplorerAddressUrl(proofTokenAddress)} target="_blank" rel="noreferrer" className={styles.mono}>
               A2HP
@@ -706,34 +656,31 @@ export default function B20SkillDemoClient() {
         <section className={styles.panel}>
           <div className={styles.panelHead}>
             <h2>3. 钱包发币</h2>
-            <p>连接 Base Sepolia 钱包，签名 createB20。需要测试网 ETH。</p>
+            <p>使用页面右上角 Header 的 Connect Wallet 连接钱包，然后在这里签名 createB20。需要 Base Sepolia ETH。</p>
           </div>
           <div className={styles.panelBody}>
             <div className={styles.walletBar}>
               <div>
                 <strong>{activeWalletAddress ? shortAddress(activeWalletAddress) : "未连接钱包"}</strong>
-                <span>Network: Base Sepolia · Chain ID {BASE_SEPOLIA_CHAIN_ID}</span>
+                <span>Header wallet only · Base Sepolia · Chain ID {BASE_SEPOLIA_CHAIN_ID}</span>
               </div>
               <div className={styles.walletActions}>
                 {activeWalletAddress ? (
                   <span className={styles.notice}>钱包已连接</span>
                 ) : (
-                  <button type="button" className={styles.primaryButton} onClick={() => connectWallet()} disabled={walletConnecting}>
-                    {walletConnecting ? "连接中..." : "连接钱包"}
-                  </button>
+                  <span className={styles.notice}>请先点右上角 Connect Wallet</span>
                 )}
                 <button
                   type="button"
                   className={styles.primaryButton}
                   onClick={() => deployToken()}
-                  disabled={deployLoading}
+                  disabled={deployLoading || !activeWalletAddress}
                 >
-                  {deployLoading ? "发币中..." : activeWalletAddress ? "一键发 B20 Token" : "连接后发币"}
+                  {deployLoading ? "发币中..." : activeWalletAddress ? "一键发 B20 Token" : "Header 钱包未连接"}
                 </button>
               </div>
             </div>
 
-            {walletMessage && <p className={styles.notice}>{walletMessage}</p>}
             {deployStatus && <p className={styles.notice}>{deployStatus}</p>}
             {deployError && <p className={styles.error}>{deployError}</p>}
             {deployError && /Base Sepolia ETH|gas/i.test(deployError) && (
