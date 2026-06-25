@@ -28,17 +28,17 @@ const proofTokenAddress = "0xb200000000000000000000eaE911AAD5435c86F3";
 const baseSepoliaFaucetUrl = "https://www.alchemy.com/faucets/base-sepolia";
 
 const flowSteps = [
-  { id: 1, title: "设规则", hint: "名称、类型、供应量、证明门槛" },
-  { id: 2, title: "看方案", hint: "生成 B20 配置包" },
-  { id: 3, title: "钱包发币", hint: "Base Sepolia createB20" },
-  { id: 4, title: "Mint + 证明", hint: "测试 mint，接 AI2Human 审核" }
+  { id: 1, title: "Set rules", hint: "Name, type, supply, proof gate" },
+  { id: 2, title: "Preview plan", hint: "Generate the B20 config package" },
+  { id: 3, title: "Issue token", hint: "Base Sepolia createB20" },
+  { id: 4, title: "Mint + proof", hint: "Test mint, then route access through AI2Human" }
 ];
 
 const examples = [
   {
     id: "rwa",
-    label: "RWA 社区",
-    summary: "成员验证后才能 mint",
+    label: "RWA community",
+    summary: "Members mint only after verification",
     variant: "ASSET" as const,
     name: "Verified RWA Community",
     symbol: "VRWA",
@@ -59,8 +59,8 @@ const examples = [
   },
   {
     id: "stablecoin",
-    label: "本地稳定币",
-    summary: "USD 背书，6 位小数",
+    label: "Local stablecoin",
+    summary: "USD-backed, 6 decimals",
     variant: "STABLECOIN" as const,
     name: "Verified Local Dollar",
     symbol: "VLUSD",
@@ -82,8 +82,8 @@ const examples = [
   },
   {
     id: "agent",
-    label: "Agent 网络",
-    summary: "工作证明后才能接收",
+    label: "Agent network",
+    summary: "Receive only after proof of work",
     variant: "ASSET" as const,
     name: "Agent Work Proof Token",
     symbol: "AWP",
@@ -298,10 +298,16 @@ export default function B20SkillDemoClient() {
         signal: controller.signal
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "生成失败");
+      if (!res.ok) throw new Error(json.error || "Preview generation failed.");
       setPreview(json);
     } catch (err) {
-      setPreviewError(err instanceof Error && err.name === "AbortError" ? "配置包生成超时，请重试。" : err instanceof Error ? err.message : "无法生成配置包");
+      setPreviewError(
+        err instanceof Error && err.name === "AbortError"
+          ? "Preview generation timed out. Please retry."
+          : err instanceof Error
+            ? err.message
+            : "Unable to generate the config package."
+      );
     } finally {
       window.clearTimeout(timeout);
       setPreviewLoading(false);
@@ -329,7 +335,7 @@ export default function B20SkillDemoClient() {
   async function deployToken() {
     const provider = await getActiveProvider();
     if (!provider || !activeWalletAddress) {
-      setDeployError("请先使用页面右上角 Header 的 Connect Wallet 连接钱包。B20 页面不再提供第二套连接入口。");
+      setDeployError("Connect your wallet from the top-right header first. This page uses the main app wallet session only.");
       return;
     }
 
@@ -414,7 +420,7 @@ export default function B20SkillDemoClient() {
       setDeployStatus("Transaction submitted. Waiting for Base Sepolia receipt...");
       const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
       if (receipt.status !== "success") {
-        throw new Error("发币交易失败，请在 BaseScan 查看 revert 原因。");
+        throw new Error("Deployment transaction failed. Check BaseScan for the revert reason.");
       }
 
       setTokenAddress(predicted);
@@ -430,7 +436,7 @@ export default function B20SkillDemoClient() {
   async function mintTestBalance() {
     const provider = await getActiveProvider();
     if (!provider || !activeWalletAddress || !tokenAddress) {
-      setMintError("请先完成发币。");
+      setMintError("Issue the B20 token first.");
       return;
     }
 
@@ -485,7 +491,7 @@ export default function B20SkillDemoClient() {
       setMintStatus("Mint transaction submitted. Waiting for receipt...");
       const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
       if (receipt.status !== "success") {
-        throw new Error("Mint 交易失败。");
+        throw new Error("Mint transaction failed.");
       }
       setMintStatus("Mint confirmed.");
     } catch (err) {
@@ -508,15 +514,15 @@ export default function B20SkillDemoClient() {
       <div className={styles.shell}>
         <header className={styles.hero}>
           <span className={styles.kicker}>B20 Proof Gateway</span>
-          <h1>带证明门槛的 B20 发币</h1>
-          <p className={styles.tagline}>B20 负责链上规则，AI2Human 负责谁有资格上链。</p>
+          <h1>Issue B20 tokens with a human proof gate.</h1>
+          <p className={styles.tagline}>B20 enforces native token rules. AI2Human verifies who is allowed to use them.</p>
           <p>
-            先用右上角 Header 连接钱包，再在 Base Sepolia 一键发行 B20 token，并按你的规则挂上 AI2Human 人工证明门槛。
-            已有实测案例{" "}
+            Connect from the top-right header, issue a B20 token on Base Sepolia, then attach AI2Human proof requirements
+            for mint access, allowlists, and role assignment. Live proof-of-concept:{" "}
             <Link href={buildExplorerAddressUrl(proofTokenAddress)} target="_blank" rel="noreferrer" className={styles.mono}>
               A2HP
             </Link>
-            。
+            .
           </p>
 
           <div className={styles.flowRow}>
@@ -533,8 +539,8 @@ export default function B20SkillDemoClient() {
 
         <section className={styles.panel}>
           <div className={styles.panelHead}>
-            <h2>1. 设规则</h2>
-            <p>选场景模板，填代币参数。勾选证明门槛后，mint / allowlist 需先走 AI2Human 审核。</p>
+            <h2>1. Set the rules</h2>
+            <p>Choose a use-case template, define token parameters, and decide whether mint or allowlist access requires AI2Human review.</p>
           </div>
           <div className={styles.panelBody}>
             <div className={styles.presets}>
@@ -553,53 +559,56 @@ export default function B20SkillDemoClient() {
 
             <div className={styles.grid2}>
               <label className={styles.field}>
-                <span>代币名称</span>
+                <span>Token name</span>
                 <input value={tokenName} onChange={(e) => setTokenName(e.target.value)} />
               </label>
               <label className={styles.field}>
-                <span>代号</span>
+                <span>Symbol</span>
                 <input value={tokenSymbol} onChange={(e) => setTokenSymbol(e.target.value.toUpperCase())} />
               </label>
               <label className={styles.field}>
-                <span>类型</span>
+                <span>Type</span>
                 <select value={variant} onChange={(e) => setVariant(e.target.value as typeof variant)}>
-                  <option value="ASSET">Asset（6–18 位小数）</option>
-                  <option value="STABLECOIN">Stablecoin（固定 6 位 + 法币代码）</option>
+                  <option value="ASSET">Asset (6-18 decimals)</option>
+                  <option value="STABLECOIN">Stablecoin (fixed 6 decimals + currency code)</option>
                 </select>
               </label>
               <label className={styles.field}>
-                <span>最大供应量</span>
+                <span>Supply cap</span>
                 <input value={supplyCap} onChange={(e) => setSupplyCap(e.target.value)} />
               </label>
               {variant === "ASSET" ? (
                 <label className={styles.field}>
-                  <span>小数位</span>
+                  <span>Decimals</span>
                   <input value={decimals} onChange={(e) => setDecimals(e.target.value)} />
                 </label>
               ) : (
                 <label className={styles.field}>
-                  <span>法币代码</span>
+                  <span>Currency code</span>
                   <input value={currency} onChange={(e) => setCurrency(e.target.value.toUpperCase())} />
                 </label>
               )}
             </div>
 
             <label className={styles.field} style={{ marginTop: 14 }}>
-              <span>规则描述（给 Agent / API 用）</span>
+              <span>Rule prompt for agents / APIs</span>
               <textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} />
             </label>
 
             <label className={styles.proofToggle}>
               <input type="checkbox" checked={proofGate} onChange={(e) => setProofGate(e.target.checked)} />
               <div>
-                <strong>启用 AI2Human 证明门槛</strong>
-                <span>发币后，新地址想 mint 或进 allowlist，需先完成人工证明任务。这是 AI2Human 相对纯发币工具的核心差异。</span>
+                <strong>Enable AI2Human proof gate</strong>
+                <span>
+                  After issuance, new wallets must complete a human verification task before mint access, allowlist access,
+                  or role assignment. This is the layer pure token tools do not provide.
+                </span>
               </div>
             </label>
 
             <div className={styles.walletActions} style={{ marginTop: 16 }}>
               <button type="button" className={styles.secondaryButton} onClick={() => runPreview()} disabled={previewLoading}>
-                {previewLoading ? "生成中..." : "刷新配置包"}
+                {previewLoading ? "Generating..." : "Refresh config package"}
               </button>
             </div>
             {previewError && <p className={styles.error}>{previewError}</p>}
@@ -608,8 +617,8 @@ export default function B20SkillDemoClient() {
 
         <section className={styles.panel}>
           <div className={styles.panelHead}>
-            <h2>2. 看方案</h2>
-            <p>这是即将上链的 B20 配置摘要。</p>
+            <h2>2. Preview the plan</h2>
+            <p>This is the B20 configuration package that will be sent on-chain.</p>
           </div>
           <div className={styles.panelBody}>
             {preview ? (
@@ -634,10 +643,10 @@ export default function B20SkillDemoClient() {
 
                 {proofGate && (
                   <div className={styles.proofBox}>
-                    <h3>{preview.proofRequirements.optionalTaskTemplate?.title || "AI2Human 证明门槛"}</h3>
+                    <h3>{preview.proofRequirements.optionalTaskTemplate?.title || "AI2Human proof gate"}</h3>
                     <p>
                       {preview.proofRequirements.optionalTaskTemplate?.blockedHumanStep ||
-                        "在 allowlist / mint 之前，必须完成人工审核并返回 proof hash。"}
+                        "Before allowlist or mint access, a human review must return a proof hash."}
                     </p>
                     <ul>
                       {preview.proofRequirements.tasks.slice(0, 4).map((task) => (
@@ -648,27 +657,27 @@ export default function B20SkillDemoClient() {
                 )}
               </>
             ) : (
-              <p className={styles.notice}>填写规则后会自动生成配置包。</p>
+              <p className={styles.notice}>A config package will be generated after rules are filled.</p>
             )}
           </div>
         </section>
 
         <section className={styles.panel}>
           <div className={styles.panelHead}>
-            <h2>3. 钱包发币</h2>
-            <p>使用页面右上角 Header 的 Connect Wallet 连接钱包，然后在这里签名 createB20。需要 Base Sepolia ETH。</p>
+            <h2>3. Issue with wallet</h2>
+            <p>Use the top-right header wallet, then sign createB20 here. Base Sepolia ETH is required for gas.</p>
           </div>
           <div className={styles.panelBody}>
             <div className={styles.walletBar}>
               <div>
-                <strong>{activeWalletAddress ? shortAddress(activeWalletAddress) : "未连接钱包"}</strong>
+                <strong>{activeWalletAddress ? shortAddress(activeWalletAddress) : "No wallet connected"}</strong>
                 <span>Header wallet only · Base Sepolia · Chain ID {BASE_SEPOLIA_CHAIN_ID}</span>
               </div>
               <div className={styles.walletActions}>
                 {activeWalletAddress ? (
-                  <span className={styles.notice}>钱包已连接</span>
+                  <span className={styles.notice}>Wallet connected</span>
                 ) : (
-                  <span className={styles.notice}>请先点右上角 Connect Wallet</span>
+                  <span className={styles.notice}>Use Connect Wallet in the header first</span>
                 )}
                 <button
                   type="button"
@@ -676,7 +685,7 @@ export default function B20SkillDemoClient() {
                   onClick={() => deployToken()}
                   disabled={deployLoading || !activeWalletAddress}
                 >
-                  {deployLoading ? "发币中..." : activeWalletAddress ? "一键发 B20 Token" : "Header 钱包未连接"}
+                  {deployLoading ? "Issuing..." : activeWalletAddress ? "Issue B20 Token" : "Header wallet required"}
                 </button>
               </div>
             </div>
@@ -691,16 +700,16 @@ export default function B20SkillDemoClient() {
 
             {tokenAddress && (
               <div className={styles.receipt}>
-                <strong>发币成功</strong>
-                <p>Token 地址</p>
+                <strong>Deployment confirmed</strong>
+                <p>Token address</p>
                 <div className={styles.mono}>{tokenAddress}</div>
                 <div className={styles.receiptActions}>
                   <Link href={buildExplorerAddressUrl(tokenAddress)} target="_blank" rel="noreferrer" className={styles.linkButton}>
-                    查看 Token
+                    View token
                   </Link>
                   {deployTxHash && (
                     <Link href={buildExplorerTxUrl(deployTxHash)} target="_blank" rel="noreferrer" className={styles.linkButton}>
-                      查看 Deploy Tx
+                      View deploy tx
                     </Link>
                   )}
                 </div>
@@ -711,13 +720,13 @@ export default function B20SkillDemoClient() {
 
         <section className={styles.panel}>
           <div className={styles.panelHead}>
-            <h2>4. Mint + 证明</h2>
-            <p>发币成功后 mint 测试余额。若启用证明门槛，后续新地址需先走 AI2Human 任务。</p>
+            <h2>4. Mint + proof</h2>
+            <p>After deployment, mint a test balance. If the proof gate is enabled, future wallets must pass an AI2Human task first.</p>
           </div>
           <div className={styles.panelBody}>
             <div className={styles.grid2}>
               <label className={styles.field}>
-                <span>测试 Mint 数量</span>
+                <span>Test mint amount</span>
                 <input value={mintAmount} onChange={(e) => setMintAmount(e.target.value)} />
               </label>
               <div className={styles.walletActions} style={{ alignItems: "end" }}>
@@ -727,7 +736,7 @@ export default function B20SkillDemoClient() {
                   onClick={() => mintTestBalance()}
                   disabled={mintLoading || !tokenAddress}
                 >
-                  {mintLoading ? "Mint 中..." : "Mint 到当前钱包"}
+                  {mintLoading ? "Minting..." : "Mint to current wallet"}
                 </button>
               </div>
             </div>
@@ -736,26 +745,27 @@ export default function B20SkillDemoClient() {
             {mintStatus && <p className={styles.notice}>{mintStatus}</p>}
             {mintTxHash && (
               <div className={styles.receipt} style={{ marginTop: 14 }}>
-                <strong>Mint 成功</strong>
-                <p>已 mint {mintAmount} {tokenSymbol} 到 {shortAddress(activeWalletAddress)}</p>
+                <strong>Mint confirmed</strong>
+                <p>Minted {mintAmount} {tokenSymbol} to {shortAddress(activeWalletAddress)}</p>
                 <Link href={buildExplorerTxUrl(mintTxHash)} target="_blank" rel="noreferrer" className={styles.linkButton}>
-                  查看 Mint Tx
+                  View mint tx
                 </Link>
               </div>
             )}
 
             {proofGate && tokenAddress && (
               <div className={styles.proofBox} style={{ marginTop: 14 }}>
-                <h3>下一步：把证明接进规则</h3>
+                <h3>Next: connect proof to token rules</h3>
                 <p>
-                  发币只是第一步。要 enforce「先证明再 mint」，请在 AI2Human 创建验证任务，审核通过后再更新 B20 allowlist 或执行 mint。
+                  Issuance is only the first step. To enforce proof-before-mint, create an AI2Human verification task,
+                  approve the submitted proof, then update the B20 allowlist or execute mint.
                 </p>
                 <div className={styles.receiptActions}>
                   <Link href="/tasks/new" className={styles.linkButton}>
-                    创建 AI2Human 验证任务
+                    Create verification task
                   </Link>
                   <Link href="/agent/b20-skill.md" className={styles.linkButton}>
-                    Agent Skill 文档
+                    Agent Skill docs
                   </Link>
                 </div>
               </div>
@@ -768,7 +778,7 @@ export default function B20SkillDemoClient() {
           <Link href="/agent/b20/manifest.json">Manifest</Link>
           <Link href="/for-agents">For Agents</Link>
           <a href="https://docs.base.org/get-started/launch-b20-token" target="_blank" rel="noreferrer">
-            Base B20 文档
+            Base B20 docs
           </a>
         </nav>
       </div>
