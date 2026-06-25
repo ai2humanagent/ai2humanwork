@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePrivy, useWallets } from "@privy-io/react-auth";
 import {
   createPublicClient,
+  formatEther,
   http,
   type Address,
   type Hex
@@ -25,6 +26,7 @@ import {
 const previewEndpoint = "/api/agent/b20/preview";
 const proofTokenAddress = "0xb200000000000000000000eaE911AAD5435c86F3";
 const privyEnabled = Boolean(process.env.NEXT_PUBLIC_PRIVY_APP_ID);
+const baseSepoliaFaucetUrl = "https://www.alchemy.com/faucets/base-sepolia";
 
 type EthereumProvider = {
   request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
@@ -180,6 +182,31 @@ function getFlowClass(current: number, step: number) {
   return styles.flowStep;
 }
 
+function normalizeRpcError(err: unknown) {
+  const message = err instanceof Error ? err.message : String(err || "Transaction failed.");
+  if (/gas limit too high/i.test(message)) {
+    return "RPC refused the transaction during gas estimation. Usually this means the wallet has no Base Sepolia ETH for gas, or the B20 preflight reverted before signing.";
+  }
+  if (/insufficient funds/i.test(message)) {
+    return "This wallet does not have enough Base Sepolia ETH to pay gas.";
+  }
+  if (/user rejected|rejected the request/i.test(message)) {
+    return "Wallet signature was rejected.";
+  }
+  if (/execution reverted/i.test(message)) {
+    return "B20 preflight reverted before signing. Check token parameters and make sure the B20 precompile is active on Base Sepolia.";
+  }
+  return message;
+}
+
+function formatEthAmount(value: bigint) {
+  const formatted = Number(formatEther(value));
+  if (!Number.isFinite(formatted)) return "0";
+  if (formatted === 0) return "0";
+  if (formatted < 0.000001) return "<0.000001";
+  return formatted.toFixed(6).replace(/0+$/, "").replace(/\.$/, "");
+}
+
 async function ensureBaseSepolia(provider: { request: (args: { method: string; params?: unknown[] }) => Promise<unknown> }) {
   try {
     await provider.request({
@@ -223,6 +250,7 @@ export default function B20SkillDemoClient() {
 
   const [deployLoading, setDeployLoading] = useState(false);
   const [deployError, setDeployError] = useState("");
+  const [deployStatus, setDeployStatus] = useState("");
   const [deployTxHash, setDeployTxHash] = useState("");
   const [tokenAddress, setTokenAddress] = useState("");
   const [injectedAddress, setInjectedAddress] = useState<Address | undefined>();
@@ -231,6 +259,7 @@ export default function B20SkillDemoClient() {
 
   const [mintLoading, setMintLoading] = useState(false);
   const [mintError, setMintError] = useState("");
+  const [mintStatus, setMintStatus] = useState("");
   const [mintTxHash, setMintTxHash] = useState("");
 
   const example = examples[selectedExample];
@@ -279,27 +308,26 @@ export default function B20SkillDemoClient() {
     setWalletMessage("");
     setDeployError("");
     try {
+      const provider = getInjectedProvider();
+      if (provider) {
+        const accounts = (await provider.request({ method: "eth_requestAccounts" })) as string[];
+        const nextAddress = accounts?.[0] as Address | undefined;
+        if (!nextAddress) {
+          setWalletMessage("Wallet connected but no account was returned.");
+          return;
+        }
+        setInjectedAddress(nextAddress);
+        setWalletMessage(`Wallet connected: ${shortAddress(nextAddress)}`);
+        return;
+      }
+
       if (privyEnabled && ready && !authenticated) {
         await login();
         setWalletMessage("Wallet connection opened. Finish the wallet flow, then return here.");
         return;
       }
 
-      const provider = getInjectedProvider();
-      if (!provider) {
-        setWalletMessage("No browser wallet detected. Install MetaMask, Rabby, Coinbase Wallet, or use the app wallet.");
-        return;
-      }
-
-      const accounts = (await provider.request({ method: "eth_requestAccounts" })) as string[];
-      const nextAddress = accounts?.[0] as Address | undefined;
-      if (!nextAddress) {
-        setWalletMessage("Wallet connected but no account was returned.");
-        return;
-      }
-      setInjectedAddress(nextAddress);
-      setWalletMessage(`Wallet connected: ${shortAddress(nextAddress)}`);
-      await runPreview();
+      setWalletMessage("No browser wallet detected. Install MetaMask, Rabby, Coinbase Wallet, or use the app wallet.");
     } catch (err) {
       setWalletMessage(err instanceof Error ? err.message : "Wallet connection failed.");
     } finally {
@@ -357,6 +385,7 @@ export default function B20SkillDemoClient() {
 
     setDeployLoading(true);
     setDeployError("");
+    setDeployStatus("Checking Base Sepolia network and wallet gas...");
     setDeployTxHash("");
     setTokenAddress("");
     setMintTxHash("");
@@ -380,6 +409,14 @@ export default function B20SkillDemoClient() {
         transport: http("https://sepolia.base.org")
       });
 
+      const balance = await publicClient.getBalance({ address: activeWalletAddress });
+      if (balance === BigInt(0)) {
+        setDeployStatus("");
+        throw new Error(
+          "This wallet has 0 Base Sepolia ETH. B20 deployment needs ETH for gas. Sending LINK, USDC, or other test tokens is not enough."
+        );
+      }
+
       const predicted = (await publicClient.readContract({
         address: B20_FACTORY_ADDRESS,
         abi: b20FactoryAbi,
@@ -388,6 +425,29 @@ export default function B20SkillDemoClient() {
       })) as Address;
 
       const data = encodeCreateB20Call(plan);
+      setDeployStatus("Running B20 preflight and gas estimate before wallet signature...");
+
+      const gasEstimate = await publicClient.estimateGas({
+        account: activeWalletAddress,
+        to: B20_FACTORY_ADDRESS,
+        data,
+        value: BigInt(0)
+      });
+      const gasPrice = await publicClient.getGasPrice();
+      const estimatedGasCost = gasEstimate * gasPrice;
+
+      if (balance < estimatedGasCost) {
+        setDeployStatus("");
+        throw new Error(
+          `This wallet has ${formatEthAmount(balance)} Base Sepolia ETH, but the estimated gas cost is about ${formatEthAmount(
+            estimatedGasCost
+          )} ETH. Add Base Sepolia ETH and retry.`
+        );
+      }
+
+      setDeployStatus(
+        `Preflight passed. Predicted token: ${shortAddress(predicted)} · estimated gas ${gasEstimate.toString()} · signing in wallet...`
+      );
       const txHash = (await provider.request({
         method: "eth_sendTransaction",
         params: [
@@ -401,15 +461,17 @@ export default function B20SkillDemoClient() {
       })) as Hex;
 
       setDeployTxHash(txHash);
+      setDeployStatus("Transaction submitted. Waiting for Base Sepolia receipt...");
       const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
       if (receipt.status !== "success") {
         throw new Error("发币交易失败，请在 BaseScan 查看 revert 原因。");
       }
 
       setTokenAddress(predicted);
+      setDeployStatus(`Deployment confirmed. Token address: ${shortAddress(predicted)}.`);
       await runPreview();
     } catch (err) {
-      setDeployError(err instanceof Error ? err.message : "发币失败");
+      setDeployError(normalizeRpcError(err));
     } finally {
       setDeployLoading(false);
     }
@@ -424,11 +486,38 @@ export default function B20SkillDemoClient() {
 
     setMintLoading(true);
     setMintError("");
+    setMintStatus("Checking Base Sepolia gas before mint...");
     try {
       await ensureBaseSepolia(provider);
+      const publicClient = createPublicClient({
+        chain: baseSepolia,
+        transport: http("https://sepolia.base.org")
+      });
+      const balance = await publicClient.getBalance({ address: activeWalletAddress });
+      if (balance === BigInt(0)) {
+        setMintStatus("");
+        throw new Error("This wallet has 0 Base Sepolia ETH. Mint needs ETH for gas.");
+      }
       const unit = BigInt(10) ** BigInt(variant === "STABLECOIN" ? 6 : Number(decimals) || 18);
       const amount = BigInt(mintAmount || "1000") * unit;
       const data = encodeMint(activeWalletAddress, amount);
+
+      const gasEstimate = await publicClient.estimateGas({
+        account: activeWalletAddress,
+        to: tokenAddress as Address,
+        data,
+        value: BigInt(0)
+      });
+      const gasPrice = await publicClient.getGasPrice();
+      const estimatedGasCost = gasEstimate * gasPrice;
+      if (balance < estimatedGasCost) {
+        setMintStatus("");
+        throw new Error(
+          `This wallet has ${formatEthAmount(balance)} Base Sepolia ETH, but mint gas is about ${formatEthAmount(estimatedGasCost)} ETH.`
+        );
+      }
+
+      setMintStatus(`Mint preflight passed. Estimated gas ${gasEstimate.toString()} · signing in wallet...`);
 
       const txHash = (await provider.request({
         method: "eth_sendTransaction",
@@ -443,16 +532,14 @@ export default function B20SkillDemoClient() {
       })) as Hex;
 
       setMintTxHash(txHash);
-      const publicClient = createPublicClient({
-        chain: baseSepolia,
-        transport: http("https://sepolia.base.org")
-      });
+      setMintStatus("Mint transaction submitted. Waiting for receipt...");
       const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
       if (receipt.status !== "success") {
         throw new Error("Mint 交易失败。");
       }
+      setMintStatus("Mint confirmed.");
     } catch (err) {
-      setMintError(err instanceof Error ? err.message : "Mint 失败");
+      setMintError(normalizeRpcError(err));
     } finally {
       setMintLoading(false);
     }
@@ -624,7 +711,7 @@ export default function B20SkillDemoClient() {
           <div className={styles.panelBody}>
             <div className={styles.walletBar}>
               <div>
-                <strong>{walletAddress ? shortAddress(walletAddress) : "未连接钱包"}</strong>
+                <strong>{activeWalletAddress ? shortAddress(activeWalletAddress) : "未连接钱包"}</strong>
                 <span>Network: Base Sepolia · Chain ID {BASE_SEPOLIA_CHAIN_ID}</span>
               </div>
               <div className={styles.walletActions}>
@@ -647,7 +734,13 @@ export default function B20SkillDemoClient() {
             </div>
 
             {walletMessage && <p className={styles.notice}>{walletMessage}</p>}
+            {deployStatus && <p className={styles.notice}>{deployStatus}</p>}
             {deployError && <p className={styles.error}>{deployError}</p>}
+            {deployError && /Base Sepolia ETH|gas/i.test(deployError) && (
+              <Link href={baseSepoliaFaucetUrl} target="_blank" rel="noreferrer" className={styles.linkButton}>
+                Get Base Sepolia ETH
+              </Link>
+            )}
 
             {tokenAddress && (
               <div className={styles.receipt}>
@@ -693,6 +786,7 @@ export default function B20SkillDemoClient() {
             </div>
 
             {mintError && <p className={styles.error}>{mintError}</p>}
+            {mintStatus && <p className={styles.notice}>{mintStatus}</p>}
             {mintTxHash && (
               <div className={styles.receipt} style={{ marginTop: 14 }}>
                 <strong>Mint 成功</strong>
