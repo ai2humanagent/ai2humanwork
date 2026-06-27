@@ -334,3 +334,17 @@ That is the GitHub version of the architecture:
 ```text
 agents request -> humans execute / verify -> proof is structured -> review accepts or rejects -> settlement happens -> reputation compounds
 ```
+
+## Product Todo Reference
+
+The highest-priority product direction after the initial GitHub organization split is the AI2Human X Bot:
+
+```text
+Tweet a task. Route a human. Verify proof. Settle onchain.
+```
+
+See:
+
+```text
+docs/strategy/ai2human-network-todolist.md
+```
