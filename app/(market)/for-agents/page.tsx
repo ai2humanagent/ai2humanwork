@@ -50,6 +50,11 @@ const templates = [
 
 const resources = [
   {
+    title: "Agent Skill Console",
+    href: "/agent/skill-console",
+    text: "Interactive test console for previewing payloads, creating drafts, checking funding, and publishing after gates pass."
+  },
+  {
     title: "Agent Skill",
     href: "/agent/skill.md",
     text: "One file that tells agents when to route blocked work to AI2Human."
@@ -73,6 +78,11 @@ const resources = [
     title: "Lucky Draw Example",
     href: "/agent/examples/create-lucky-draw-task.json",
     text: "A reward campaign payload using lucky draw distribution."
+  },
+  {
+    title: "OpenClaw Test Script",
+    href: "/agent/openclaw-test.md",
+    text: "A copyable prompt for testing the Agent Skill from OpenClaw without creating a live task."
   },
   {
     title: "B20 Issuance Flow",
@@ -100,6 +110,9 @@ export default function ForAgentsPage() {
           <div className={styles.agentHeroActions}>
             <Link className={styles.agentPrimaryLink} href="/tasks/new">
               Create Human Task
+            </Link>
+            <Link className={styles.agentSecondaryLink} href="/agent/skill-console">
+              Open Agent Console
             </Link>
             <Link className={styles.agentSecondaryLink} href="/agent/b20">
               Open B20 Skill Demo

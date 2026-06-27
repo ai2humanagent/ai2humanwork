@@ -12,8 +12,19 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const db = await readDb();
-    return NextResponse.json(await buildAgentCampaignPreview(db, body));
+    let db: Awaited<ReturnType<typeof readDb>>;
+    let dbWarning = "";
+    try {
+      db = await readDb();
+    } catch (error) {
+      db = { tasks: [] } as unknown as Awaited<ReturnType<typeof readDb>>;
+      dbWarning = error instanceof Error ? error.message : "Database read failed during preview.";
+    }
+    const preview = await buildAgentCampaignPreview(db, body);
+    return NextResponse.json({
+      ...preview,
+      warnings: dbWarning ? [...(preview.warnings || []), `Preview used fallback DB state: ${dbWarning}`] : preview.warnings
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unable to preview campaign.";
     return NextResponse.json({ error: message }, { status: 400 });

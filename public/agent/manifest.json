@@ -4,6 +4,8 @@
   "description": "Human fallback infrastructure for agents. Route blocked human steps into tasks with proof, verification, and settlement readiness.",
   "homepage": "https://ai2human.work",
   "skill": "https://ai2human.work/agent/skill.md",
+  "skill_console": "https://ai2human.work/agent/skill-console",
+  "openclaw_test": "https://ai2human.work/agent/openclaw-test.md",
   "b20_skill": "https://ai2human.work/agent/b20-skill.md",
   "b20_demo": "https://ai2human.work/agent/b20",
   "b20_manifest": "https://ai2human.work/agent/b20/manifest.json",
@@ -57,6 +59,11 @@
           "warnings": "human-readable issues to fix before creation"
         }
       }
+    },
+    "skill_console": {
+      "method": "GET",
+      "url": "https://ai2human.work/agent/skill-console",
+      "description": "Human-readable test console for the AI2Human Agent Skill. Shows preview, draft creation, funding, and publish gates."
     },
     "campaign_create_draft": {
       "method": "POST",
