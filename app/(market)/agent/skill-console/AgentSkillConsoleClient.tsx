@@ -176,6 +176,7 @@ export default function AgentSkillConsoleClient() {
   const [busy, setBusy] = useState<"" | "preview" | "create" | "funding" | "publish">("");
   const [error, setError] = useState("");
   const [copied, setCopied] = useState("");
+  const [apiKey, setApiKey] = useState("");
 
   const payload = useMemo(() => {
     try {
@@ -206,12 +207,21 @@ export default function AgentSkillConsoleClient() {
   }
 
   async function callApi(kind: typeof busy, endpoint: string, body?: unknown) {
+    const trimmedApiKey = apiKey.trim();
+    if (!trimmedApiKey) {
+      setError("Enter your AI2Human Agent API key first.");
+      return;
+    }
     setBusy(kind);
     setError("");
     try {
+      const headers: Record<string, string> = {
+        "x-agent-api-key": trimmedApiKey
+      };
+      if (body) headers["Content-Type"] = "application/json";
       const res = await fetch(endpoint, {
         method: kind === "funding" && !body ? "GET" : "POST",
-        headers: body ? { "Content-Type": "application/json" } : undefined,
+        headers,
         body: body ? JSON.stringify(body) : undefined
       });
       const json = (await res.json()) as ConsoleResponse;
@@ -280,6 +290,27 @@ export default function AgentSkillConsoleClient() {
             <span>{"agent request -> human execution -> structured proof -> verify -> settle"}</span>
           </div>
         </header>
+
+        <section className={styles.keyPanel}>
+          <div>
+            <span className={styles.kicker}>Developer credential</span>
+            <h2>Enter your AI2Human Agent API key</h2>
+            <p>
+              Preview, draft creation, funding checks, and publish actions are protected. Store keys as agent
+              secrets in production; this console keeps the value only in local page state.
+            </p>
+          </div>
+          <div className={styles.keyInputWrap}>
+            <input
+              value={apiKey}
+              onChange={(event) => setApiKey(event.target.value)}
+              placeholder="a2h_live_... or test project key"
+              type="password"
+              autoComplete="off"
+            />
+            <Link href="/developers/api-keys">How to get a key</Link>
+          </div>
+        </section>
 
         <section className={styles.workspace}>
           <aside className={styles.sidebar}>

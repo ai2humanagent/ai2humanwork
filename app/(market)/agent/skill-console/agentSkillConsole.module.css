@@ -105,6 +105,61 @@
   line-height: 1.65;
 }
 
+.keyPanel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 420px);
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 18px;
+  border: 1px solid rgba(77, 255, 180, 0.2);
+  border-radius: 18px;
+  background:
+    linear-gradient(135deg, rgba(77, 255, 180, 0.08), rgba(255, 255, 255, 0.035)),
+    var(--agent-panel);
+  padding: 16px;
+}
+
+.keyPanel h2 {
+  margin: 10px 0 6px;
+  font-size: 20px;
+  line-height: 1.2;
+}
+
+.keyPanel p {
+  margin: 0;
+  color: var(--agent-muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.keyInputWrap {
+  display: grid;
+  gap: 8px;
+}
+
+.keyInputWrap input {
+  width: 100%;
+  height: 42px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.26);
+  color: var(--agent-text);
+  padding: 0 12px;
+  outline: none;
+  font-family: var(--agent-mono);
+  font-size: 12px;
+}
+
+.keyInputWrap input:focus {
+  border-color: rgba(77, 255, 180, 0.42);
+}
+
+.keyInputWrap a {
+  color: var(--agent-green);
+  font-size: 12px;
+  font-weight: 800;
+}
+
 .workspace {
   display: grid;
   grid-template-columns: 280px minmax(0, 1fr) 340px;
@@ -366,6 +421,7 @@
 
 @media (max-width: 1180px) {
   .hero,
+  .keyPanel,
   .workspace {
     grid-template-columns: 1fr;
   }
