@@ -64,6 +64,7 @@ Preview validates the payload, asks for missing fields, and returns funding / pr
 ```bash
 curl https://ai2human.io/api/agent/campaigns/preview \
   -H "Content-Type: application/json" \
+  -H "x-agent-api-key: $AI2HUMAN_AGENT_KEY" \
   -d @payload.json
 ```
 
@@ -188,7 +189,7 @@ https://ai2human.io/agent/openclaw-test.md
 
 | Purpose | Method | URL | Auth |
 | --- | --- | --- | --- |
-| Preview campaign | POST | `/api/agent/campaigns/preview` | Not required |
+| Preview campaign | POST | `/api/agent/campaigns/preview` | `x-agent-api-key` |
 | Create draft | POST | `/api/agent/campaigns` | `x-agent-api-key` |
 | Check / repair funding | GET or POST | `/api/agent/campaigns/{id}/funding` | `x-agent-api-key` |
 | Contract preflight | POST | `/api/agent/campaigns/{id}/preflight` | `x-agent-api-key` |

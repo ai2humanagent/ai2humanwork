@@ -80,6 +80,16 @@ const secondaryNav = [
   { href: "/protocol", label: "Protocol", icon: IconProtocol }
 ];
 
+const developerNav = [
+  { href: "/developers/api-keys", label: "API Keys", desc: "Issue credentials for agent calls" },
+  { href: "/developers#llm-gateway", label: "LLM Gateway", desc: "Route agent requests through AI2Human" },
+  { href: "/developers#x402-cloud", label: "x402 Cloud", desc: "Paid access for proof bundles" },
+  { href: "/developers#webhooks", label: "Webhooks", desc: "Receive task and settlement events" },
+  { href: "/developers#partnership", label: "Partnership", desc: "Integrate campaigns or proof flows" },
+  { href: "/agent/skill-console", label: "Agent Skills", desc: "Test campaign and B20 skills" },
+  { href: "/developers", label: "Docs", desc: "Developer overview and API map" }
+];
+
 function isActive(pathname: string, href: string) {
   if (href === "/tasks") return pathname === "/tasks";
   if (href === "/tasks/new") return pathname === "/tasks/new";
@@ -207,13 +217,32 @@ export default function TaskmarketChrome({
               </div>
             </div>
 
-            {privyEnabled ? (
-              <WalletButton />
-            ) : (
-              <button type="button" className={styles.walletButton} disabled>
-                Connect Wallet
-              </button>
-            )}
+            <div className={styles.topbarRight}>
+              <details className={styles.developerMenu}>
+                <summary className={styles.developerMenuButton}>
+                  <span>Developers</span>
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                    <path d="M3.5 5.25 7 8.75l3.5-3.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </summary>
+                <div className={styles.developerDropdown}>
+                  {developerNav.map((item) => (
+                    <Link key={item.href} href={item.href} className={styles.developerDropdownItem}>
+                      <strong>{item.label}</strong>
+                      <span>{item.desc}</span>
+                    </Link>
+                  ))}
+                </div>
+              </details>
+
+              {privyEnabled ? (
+                <WalletButton />
+              ) : (
+                <button type="button" className={styles.walletButton} disabled>
+                  Connect Wallet
+                </button>
+              )}
+            </div>
           </header>
 
           <main className={styles.content}>{children}</main>

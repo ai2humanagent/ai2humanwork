@@ -35,7 +35,7 @@
       "method": "POST",
       "url": "https://ai2human.io/api/agent/campaigns/preview",
       "content_type": "application/json",
-      "auth": "not_required",
+      "auth": "x-agent-api-key",
       "description": "Dry-run a campaign payload. Validates fields, asks missing questions, describes funding mode, winner distribution, and contract preflight without creating a task.",
       "required_fields": ["templateId", "requesterName", "requesterHandle", "targetUrl", "budget", "deadline", "brief"],
       "conditional_required_fields": {
