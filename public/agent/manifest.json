@@ -35,6 +35,7 @@
       "method": "POST",
       "url": "https://ai2human.io/api/agent/campaigns/preview",
       "content_type": "application/json",
+      "auth": "not_required",
       "description": "Dry-run a campaign payload. Validates fields, asks missing questions, describes funding mode, winner distribution, and contract preflight without creating a task.",
       "required_fields": ["templateId", "requesterName", "requesterHandle", "targetUrl", "budget", "deadline", "brief"],
       "conditional_required_fields": {
@@ -69,6 +70,7 @@
       "method": "POST",
       "url": "https://ai2human.io/api/agent/campaigns",
       "content_type": "application/json",
+      "auth": "x-agent-api-key",
       "required_fields": ["templateId", "requesterName", "requesterHandle", "targetUrl", "budget", "deadline", "brief"],
       "conditional_required_fields": {
         "rewardDistribution.mode=lucky_draw": [
@@ -96,6 +98,7 @@
       "method": "GET or POST",
       "url": "https://ai2human.io/api/agent/campaigns/{id}/funding",
       "content_type": "application/json",
+      "auth": "x-agent-api-key",
       "description": "Returns the machine-readable funding invoice and current funding/preflight status. POST also creates or repairs the managed PrizePool for ai2human_managed_pool drafts when no usable pool exists.",
       "response": {
         "success_status": 200,
@@ -112,24 +115,28 @@
       "method": "POST",
       "url": "https://ai2human.io/api/agent/campaigns/{id}/preflight",
       "content_type": "application/json",
+      "auth": "x-agent-api-key",
       "description": "Runs contract preflight for PrizePool-backed campaigns after the project has funded the pool."
     },
     "campaign_fund_escrow": {
       "method": "POST",
       "url": "https://ai2human.io/api/agent/campaigns/{id}/fund-escrow",
       "content_type": "application/json",
+      "auth": "x-agent-api-key",
       "description": "Pulls USDC into escrow for escrow_deposit campaigns after the agent wallet has approved the escrow wallet."
     },
     "campaign_publish": {
       "method": "POST",
       "url": "https://ai2human.io/api/agent/campaigns/{id}/publish",
       "content_type": "application/json",
+      "auth": "x-agent-api-key",
       "description": "Publishes a draft campaign after funding/preflight gates pass and notifies eligible users. For ai2human_managed_pool, call only after USDC has been transferred to the invoice recipient."
     },
     "b20_preview": {
       "method": "POST",
       "url": "https://ai2human.io/api/agent/b20/preview",
       "content_type": "application/json",
+      "auth": "not_required",
       "description": "Dry-run a B20 Agent Skill request. Returns token config, roles config, PolicyRegistry scope plan, AI2Human proof requirements, and a deployment checklist without broadcasting a transaction.",
       "example": "https://ai2human.io/agent/b20/examples/rwa-community-token.json"
     }

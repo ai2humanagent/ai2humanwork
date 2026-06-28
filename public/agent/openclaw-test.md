@@ -30,6 +30,7 @@ Use this campaign:
 First call:
 POST https://ai2human.io/api/agent/campaigns/preview
 
+No API key is required for preview.
 Do not create or publish unless I explicitly say so.
 
 Return:

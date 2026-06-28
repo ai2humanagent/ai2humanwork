@@ -64,7 +64,6 @@ Preview validates the payload, asks for missing fields, and returns funding / pr
 ```bash
 curl https://ai2human.io/api/agent/campaigns/preview \
   -H "Content-Type: application/json" \
-  -H "x-agent-api-key: $AI2HUMAN_AGENT_KEY" \
   -d @payload.json
 ```
 
@@ -187,14 +186,14 @@ https://ai2human.io/agent/openclaw-test.md
 
 ## API Summary
 
-| Purpose | Method | URL |
-| --- | --- | --- |
-| Preview campaign | POST | `/api/agent/campaigns/preview` |
-| Create draft | POST | `/api/agent/campaigns` |
-| Check / repair funding | GET or POST | `/api/agent/campaigns/{id}/funding` |
-| Contract preflight | POST | `/api/agent/campaigns/{id}/preflight` |
-| Publish draft | POST | `/api/agent/campaigns/{id}/publish` |
-| B20 proof-to-policy preview | POST | `/api/agent/b20/preview` |
+| Purpose | Method | URL | Auth |
+| --- | --- | --- | --- |
+| Preview campaign | POST | `/api/agent/campaigns/preview` | Not required |
+| Create draft | POST | `/api/agent/campaigns` | `x-agent-api-key` |
+| Check / repair funding | GET or POST | `/api/agent/campaigns/{id}/funding` | `x-agent-api-key` |
+| Contract preflight | POST | `/api/agent/campaigns/{id}/preflight` | `x-agent-api-key` |
+| Publish draft | POST | `/api/agent/campaigns/{id}/publish` | `x-agent-api-key` |
+| B20 proof-to-policy preview | POST | `/api/agent/b20/preview` | Not required |
 
 ## What The Agent Should Say Back
 
