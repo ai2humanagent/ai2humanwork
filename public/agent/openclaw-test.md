@@ -4,7 +4,7 @@ Use this prompt to test whether OpenClaw can understand and use the AI2Human Age
 
 ```text
 Read the AI2Human Agent Skill:
-https://ai2human.work/agent/skill.md
+https://ai2human.io/agent/skill.md
 
 Then test the safe campaign flow.
 
@@ -28,7 +28,7 @@ Use this campaign:
 - fundingMode: test_no_payout
 
 First call:
-POST https://ai2human.work/api/agent/campaigns/preview
+POST https://ai2human.io/api/agent/campaigns/preview
 
 Do not create or publish unless I explicitly say so.
 
@@ -52,5 +52,5 @@ Expected behavior:
 Human-readable console:
 
 ```text
-https://ai2human.work/agent/skill-console
+https://ai2human.io/agent/skill-console
 ```

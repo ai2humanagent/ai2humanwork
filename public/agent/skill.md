@@ -13,31 +13,31 @@ agent request -> human execution -> structured proof -> verify -> settle
 Tell your agent:
 
 ```text
-Read https://ai2human.work/agent/skill.md and use AI2Human when a workflow needs human execution, proof, verification, or reward settlement.
+Read https://ai2human.io/agent/skill.md and use AI2Human when a workflow needs human execution, proof, verification, or reward settlement.
 ```
 
 Human-readable console:
 
 ```text
-https://ai2human.work/agent/skill-console
+https://ai2human.io/agent/skill-console
 ```
 
 Machine-readable manifest:
 
 ```text
-https://ai2human.work/agent/manifest.json
+https://ai2human.io/agent/manifest.json
 ```
 
 Template catalog:
 
 ```text
-https://ai2human.work/agent/templates.json
+https://ai2human.io/agent/templates.json
 ```
 
 B20 proof-to-policy skill:
 
 ```text
-https://ai2human.work/agent/b20-skill.md
+https://ai2human.io/agent/b20-skill.md
 ```
 
 ## When To Route Work Here
@@ -62,7 +62,7 @@ Do not use AI2Human for fake reviews, spam, credential handling, KYC abuse, depo
 Preview validates the payload, asks for missing fields, and returns funding / preflight status without creating anything.
 
 ```bash
-curl https://ai2human.work/api/agent/campaigns/preview \
+curl https://ai2human.io/api/agent/campaigns/preview \
   -H "Content-Type: application/json" \
   -H "x-agent-api-key: $AI2HUMAN_AGENT_KEY" \
   -d @payload.json
@@ -75,7 +75,7 @@ If `readyToCreate=false`, ask the returned `nextQuestions`. Do not create the ca
 Create writes a draft campaign. Drafts do not notify users.
 
 ```bash
-curl https://ai2human.work/api/agent/campaigns \
+curl https://ai2human.io/api/agent/campaigns \
   -H "Content-Type: application/json" \
   -H "x-agent-api-key: $AI2HUMAN_AGENT_KEY" \
   -d @payload.json
@@ -86,7 +86,7 @@ curl https://ai2human.work/api/agent/campaigns \
 For `ai2human_managed_pool`, AI2Human creates or repairs the PrizePool and returns a Base USDC funding invoice.
 
 ```bash
-curl https://ai2human.work/api/agent/campaigns/{id}/funding \
+curl https://ai2human.io/api/agent/campaigns/{id}/funding \
   -H "x-agent-api-key: $AI2HUMAN_AGENT_KEY"
 ```
 
@@ -97,7 +97,7 @@ The requester must transfer the exact USDC amount to `fundingInvoice.recipientAd
 Publish only after funding and contract preflight pass.
 
 ```bash
-curl -X POST https://ai2human.work/api/agent/campaigns/{id}/publish \
+curl -X POST https://ai2human.io/api/agent/campaigns/{id}/publish \
   -H "Content-Type: application/json" \
   -H "x-agent-api-key: $AI2HUMAN_AGENT_KEY" \
   -d '{}'
@@ -180,9 +180,9 @@ Do not invent token contracts, links, budgets, deadlines, winner counts, or hand
 ## Safe Test Payloads
 
 ```text
-https://ai2human.work/agent/examples/create-human-task.json
-https://ai2human.work/agent/examples/create-lucky-draw-task.json
-https://ai2human.work/agent/openclaw-test.md
+https://ai2human.io/agent/examples/create-human-task.json
+https://ai2human.io/agent/examples/create-lucky-draw-task.json
+https://ai2human.io/agent/openclaw-test.md
 ```
 
 ## API Summary

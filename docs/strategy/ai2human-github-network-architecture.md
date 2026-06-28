@@ -24,7 +24,7 @@ If the slug is available, create a new GitHub organization with:
 
 - Display name: `AI2Human Network`
 - Bio: `Agent-human execution and verification network. Agents request, humans verify, proof settles.`
-- Website: `https://ai2human.work`
+- Website: `https://ai2human.io`
 - X: `@ai2humannetwork`
 - Topics: `ai-agents`, `human-verification`, `structured-proof`, `base`, `b20`, `x402`, `agent-skills`
 

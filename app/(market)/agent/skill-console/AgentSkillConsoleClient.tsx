@@ -160,7 +160,7 @@ function readText(value: unknown) {
 }
 
 function buildCurl(endpoint: string, payload: string) {
-  return `curl https://ai2human.work${endpoint} \\
+  return `curl https://ai2human.io${endpoint} \\
   -H "Content-Type: application/json" \\
   -H "x-agent-api-key: $AI2HUMAN_AGENT_KEY" \\
   -d '${payload.replaceAll("'", "'\\''")}'`;

@@ -3,13 +3,13 @@
 Use this prompt to test the AI2Human B20 Skill from OpenClaw.
 
 ```text
-Read https://ai2human.work/agent/b20-skill.md
+Read https://ai2human.io/agent/b20-skill.md
 
 Then test the B20 Agent Skill with this example:
-https://ai2human.work/agent/b20/examples/rwa-community-token.json
+https://ai2human.io/agent/b20/examples/rwa-community-token.json
 
 Call:
-POST https://ai2human.work/api/agent/b20/preview
+POST https://ai2human.io/api/agent/b20/preview
 
 Show me:
 1. tokenConfig
@@ -33,8 +33,8 @@ Expected behavior:
 
 Live endpoints:
 
-- Skill: `https://ai2human.work/agent/b20-skill.md`
-- Demo page: `https://ai2human.work/agent/b20`
-- Preview API: `https://ai2human.work/api/agent/b20/preview`
-- Example payload: `https://ai2human.work/agent/b20/examples/rwa-community-token.json`
+- Skill: `https://ai2human.io/agent/b20-skill.md`
+- Demo page: `https://ai2human.io/agent/b20`
+- Preview API: `https://ai2human.io/api/agent/b20/preview`
+- Example payload: `https://ai2human.io/agent/b20/examples/rwa-community-token.json`
 - Testnet token: `https://sepolia.basescan.org/address/0xb200000000000000000000eaE911AAD5435c86F3`
