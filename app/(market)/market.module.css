@@ -905,6 +905,408 @@
   text-align: right;
 }
 
+.devPortal {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 22px;
+  max-width: 1360px;
+  margin: 0 auto;
+}
+
+.devRail {
+  position: sticky;
+  top: 72px;
+  align-self: start;
+  display: grid;
+  gap: 4px;
+  min-height: 320px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 16px;
+  background: rgba(6, 8, 14, 0.64);
+  padding: 12px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.24);
+}
+
+.devRail span {
+  margin: 3px 0 10px;
+  padding: 0 8px;
+  color: rgba(255, 255, 255, 0.46);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.devRail a {
+  display: flex;
+  align-items: center;
+  min-height: 34px;
+  border-radius: 9px;
+  padding: 0 10px;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.devRail a:hover {
+  color: var(--tm-text);
+  background: rgba(255, 255, 255, 0.055);
+}
+
+.devMain {
+  min-width: 0;
+  display: grid;
+  gap: 18px;
+}
+
+.devHero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 0.78fr);
+  gap: 18px;
+  align-items: stretch;
+}
+
+.devHeroCopy,
+.devCodePanel,
+.devCredentialCard,
+.devSection,
+.devPlatformCard {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
+  background: rgba(10, 13, 22, 0.76);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
+}
+
+.devHeroCopy {
+  padding: clamp(22px, 4vw, 42px);
+  background:
+    linear-gradient(135deg, rgba(128, 255, 234, 0.12), transparent 34%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.025));
+}
+
+.devEyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 26px;
+  border: 1px solid rgba(128, 255, 234, 0.22);
+  border-radius: 999px;
+  background: rgba(128, 255, 234, 0.07);
+  padding: 0 10px;
+  color: var(--tm-cyan);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.devLiveDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--tm-green);
+  box-shadow: 0 0 0 4px rgba(50, 231, 152, 0.12);
+}
+
+.devHeroCopy h1 {
+  margin: 18px 0 12px;
+  max-width: 760px;
+  font-family: var(--market-font), var(--font-sans), system-ui, sans-serif;
+  font-size: clamp(34px, 5vw, 58px);
+  font-weight: 850;
+  line-height: 0.98;
+  letter-spacing: -0.045em;
+}
+
+.devHeroCopy p {
+  margin: 0;
+  max-width: 680px;
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 15px;
+  line-height: 1.75;
+}
+
+.devHeroActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.devPrimaryAction,
+.devSecondaryAction {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  border-radius: 10px;
+  padding: 0 14px;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.devPrimaryAction {
+  color: #04100e;
+  background: linear-gradient(120deg, var(--tm-cyan), var(--tm-green));
+  box-shadow: 0 18px 40px rgba(128, 255, 234, 0.16);
+}
+
+.devSecondaryAction {
+  color: var(--tm-text);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.055);
+}
+
+.devCodePanel {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(3, 8, 14, 0.92), rgba(5, 8, 14, 0.96)),
+    radial-gradient(circle at 18% 12%, rgba(128, 255, 234, 0.14), transparent 38%);
+}
+
+.devCodeHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 42px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 0 14px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.devCodeHeader span {
+  color: var(--tm-text);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.devCodeHeader strong {
+  color: rgba(128, 255, 234, 0.88);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.devCodePanel pre {
+  margin: 0;
+  min-height: 320px;
+  overflow: auto;
+  padding: 18px;
+  color: rgba(236, 255, 251, 0.92);
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 12px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+.devSection {
+  padding: 18px;
+}
+
+.devSectionHeader {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 14px;
+}
+
+.devSectionHeader span {
+  display: block;
+  margin-bottom: 6px;
+  color: rgba(128, 255, 234, 0.86);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.devSectionHeader h2 {
+  margin: 0;
+  font-size: 23px;
+  line-height: 1.12;
+}
+
+.devTimeline {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.devTimelineCard {
+  min-width: 0;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 14px;
+}
+
+.devTimelineCard span {
+  color: var(--tm-cyan);
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.devTimelineCard h3,
+.devPlatformCard h2 {
+  margin: 12px 0 7px;
+  font-size: 16px;
+  line-height: 1.2;
+}
+
+.devTimelineCard p,
+.devPlatformCard p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.devEndpointTable {
+  display: grid;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 14px;
+}
+
+.devEndpointRow {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr) minmax(220px, 0.52fr);
+  gap: 12px;
+  align-items: center;
+  min-height: 48px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.028);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.devEndpointRow:last-child {
+  border-bottom: 0;
+}
+
+.devEndpointRow strong {
+  color: var(--tm-green);
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 12px;
+}
+
+.devEndpointRow code {
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.88);
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.devEndpointRow span {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 12px;
+}
+
+.devPlatformGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.devPlatformCard {
+  padding: 16px;
+}
+
+.devPlatformCard > span {
+  color: rgba(128, 255, 234, 0.8);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.devCredentialCard {
+  display: grid;
+  gap: 14px;
+  align-content: end;
+  padding: 22px;
+  background:
+    linear-gradient(180deg, rgba(10, 13, 22, 0.2), rgba(10, 13, 22, 0.82)),
+    radial-gradient(circle at 20% 18%, rgba(128, 255, 234, 0.12), transparent 38%),
+    rgba(10, 13, 22, 0.76);
+}
+
+.devCredentialTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.devCredentialTop span {
+  color: rgba(255, 255, 255, 0.52);
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.devCredentialTop strong {
+  border: 1px solid rgba(255, 207, 99, 0.26);
+  border-radius: 999px;
+  background: rgba(255, 207, 99, 0.08);
+  color: var(--tm-yellow);
+  padding: 5px 9px;
+  font-size: 11px;
+}
+
+.devKeyPreview {
+  display: flex;
+  align-items: center;
+  min-height: 52px;
+  border: 1px solid rgba(128, 255, 234, 0.16);
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.28);
+  padding: 0 14px;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 14px;
+}
+
+.devKeyPreview span {
+  color: var(--tm-cyan);
+}
+
+.devKeyPreview i {
+  color: rgba(255, 255, 255, 0.56);
+  font-style: normal;
+}
+
+.devCredentialCard p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.64);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.devRequestGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.devRequestField {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 0 12px;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 13px;
+  font-weight: 800;
+}
+
 .panel {
   border: 1px solid var(--tm-border);
   background: var(--tm-panel);
@@ -2003,6 +2405,50 @@
     min-height: 220px;
   }
 
+  .devPortal {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .devRail {
+    position: static;
+    display: flex;
+    min-height: 0;
+    overflow-x: auto;
+    gap: 6px;
+    padding: 8px;
+  }
+
+  .devRail span {
+    display: none;
+  }
+
+  .devRail a {
+    flex: 0 0 auto;
+    min-height: 32px;
+    white-space: nowrap;
+  }
+
+  .devHero {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .devTimeline,
+  .devPlatformGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .devEndpointRow {
+    grid-template-columns: 76px minmax(0, 1fr);
+  }
+
+  .devEndpointRow span {
+    grid-column: 2;
+  }
+
+  .devRequestGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   /* Hide sidebar by default; slide it in as an overlay when .sidebarOpen is added */
   .sidebar {
     display: none;
@@ -2224,6 +2670,49 @@
 
   .developerAuthList strong {
     text-align: left;
+  }
+
+  .devPortal {
+    padding: 0 12px;
+  }
+
+  .devHeroCopy,
+  .devCodePanel,
+  .devCredentialCard,
+  .devSection,
+  .devPlatformCard {
+    border-radius: 14px;
+  }
+
+  .devHeroCopy {
+    padding: 20px;
+  }
+
+  .devHeroCopy h1 {
+    font-size: 34px;
+  }
+
+  .devTimeline,
+  .devPlatformGrid,
+  .devRequestGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .devCodePanel pre {
+    min-height: 240px;
+  }
+
+  .devSectionHeader {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .devEndpointRow {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .devEndpointRow span {
+    grid-column: auto;
   }
 
   /* Tighter topbar padding */
