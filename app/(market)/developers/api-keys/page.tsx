@@ -1,5 +1,6 @@
 import Link from "next/link";
 import styles from "../../market.module.css";
+import ApiKeyRequestClient from "./ApiKeyRequestClient";
 
 const protectedCalls = [
   ["Preview campaign", "POST /api/agent/campaigns/preview", "x-agent-api-key"],
@@ -7,15 +8,6 @@ const protectedCalls = [
   ["Funding status", "GET /api/agent/campaigns/{id}/funding", "x-agent-api-key"],
   ["Publish campaign", "POST /api/agent/campaigns/{id}/publish", "x-agent-api-key + confirmation"],
   ["B20 preview", "POST /api/agent/b20/preview", "no broadcast"]
-];
-
-const requestFields = [
-  "Project name",
-  "X handle",
-  "Expected campaign volume",
-  "Reward budget range",
-  "Agent platform",
-  "Webhook needs"
 ];
 
 export default function ApiKeysPage() {
@@ -37,69 +29,58 @@ export default function ApiKeysPage() {
               <span className={styles.devLiveDot} />
               API keys
             </div>
-            <h1>Project-scoped credentials for agent-created campaigns.</h1>
+            <h1>Apply for a scoped AI2Human Agent API key.</h1>
             <p>
-              AI2Human keys identify the project behind an agent request. They protect preview, draft creation,
-              funding repair, and publish actions while keeping the human proof loop auditable.
+              API keys are issued to real projects, not anonymous traffic. Tell us what your agent will create,
+              which proof flows it needs, and how rewards will be funded.
             </p>
             <div className={styles.devHeroActions}>
-              <a href="https://x.com/ai2humannetwork" target="_blank" rel="noopener noreferrer" className={styles.devPrimaryAction}>
-                Request access
-              </a>
+              <a href="#request" className={styles.devPrimaryAction}>Start request</a>
               <Link href="/agent/skill-console" className={styles.devSecondaryAction}>Open console</Link>
             </div>
           </div>
 
           <div className={styles.devCredentialCard}>
             <div className={styles.devCredentialTop}>
-              <span>Credential status</span>
-              <strong>Closed beta</strong>
+              <span>Credential model</span>
+              <strong>Manual review</strong>
             </div>
             <div className={styles.devKeyPreview}>
               <span>a2h_live_</span>
-              <i>************************</i>
+              <i>project_scoped_secret</i>
             </div>
             <p>
-              Keys are issued manually while we tune campaign safety, funding gates, and agent publish controls.
+              A key can preview campaigns, create drafts, inspect funding, and publish only after the required
+              confirmation gates pass.
             </p>
           </div>
         </section>
 
-        <section id="request" className={styles.devSection}>
-          <div className={styles.devSectionHeader}>
-            <span>Request access</span>
-            <h2>Send enough context for us to approve a real key.</h2>
-          </div>
-          <div className={styles.devRequestGrid}>
-            {requestFields.map((field) => (
-              <div key={field} className={styles.devRequestField}>{field}</div>
-            ))}
-          </div>
-        </section>
+        <ApiKeyRequestClient />
 
         <section id="usage" className={styles.devSection}>
           <div className={styles.devSectionHeader}>
             <span>OpenClaw usage</span>
-            <h2>Keep the key as an agent secret.</h2>
+            <h2>Give the agent a key, but keep publish approval human-gated.</h2>
           </div>
           <div className={styles.devCodePanel}>
             <div className={styles.devCodeHeader}>
-              <span>prompt</span>
-              <strong>short enough for operators</strong>
+              <span>operator prompt</span>
+              <strong>safe default</strong>
             </div>
             <pre>{`Read https://ai2human.io/agent/skill.md
 
 Help me create a reward campaign for my project.
-Ask what info you need.
-Use my AI2HUMAN_AGENT_KEY for preview.
-Do not publish without my confirmation.`}</pre>
+Ask for missing campaign details.
+Use my AI2HUMAN_AGENT_KEY for preview and draft creation.
+Do not publish without my explicit confirmation.`}</pre>
           </div>
         </section>
 
         <section id="protected" className={styles.devSection}>
           <div className={styles.devSectionHeader}>
             <span>Protected calls</span>
-            <h2>Auth boundaries are explicit.</h2>
+            <h2>Credentials unlock creation, not uncontrolled publishing.</h2>
           </div>
           <div className={styles.devEndpointTable}>
             {protectedCalls.map(([name, path, auth]) => (

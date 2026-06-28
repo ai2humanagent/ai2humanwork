@@ -1307,6 +1307,363 @@
   font-weight: 800;
 }
 
+.devApiWorkspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 330px;
+  gap: 18px;
+  align-items: start;
+}
+
+.devApplicationPanel,
+.devReviewCard {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.022)),
+    rgba(10, 13, 22, 0.78);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.25);
+}
+
+.devApplicationPanel {
+  padding: 18px;
+}
+
+.devApplicationHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: flex-start;
+  padding-bottom: 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.devApplicationHeader span,
+.devUseCaseGroup > div:first-child span,
+.devReviewCard > span {
+  color: rgba(128, 255, 234, 0.86);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.devApplicationHeader h2 {
+  margin: 8px 0 8px;
+  font-size: 26px;
+  line-height: 1.08;
+}
+
+.devApplicationHeader p,
+.devUseCaseGroup p {
+  margin: 0;
+  max-width: 700px;
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.devReadinessMeter {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 78px;
+  height: 78px;
+  border: 1px solid rgba(128, 255, 234, 0.16);
+  border-radius: 18px;
+  background: radial-gradient(circle at 50% 10%, rgba(128, 255, 234, 0.2), rgba(255, 255, 255, 0.035) 62%);
+}
+
+.devReadinessMeter strong {
+  color: var(--tm-text);
+  font-size: 22px;
+  line-height: 1;
+}
+
+.devReadinessMeter span {
+  color: rgba(255, 255, 255, 0.52);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.devAccessForm {
+  display: grid;
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.devHoneypot {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.devFormGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.devField {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.devField span {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.devField input,
+.devField select,
+.devField textarea {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 12px;
+  background: rgba(3, 6, 11, 0.68);
+  color: var(--tm-text);
+  padding: 0 12px;
+  font: inherit;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
+}
+
+.devField input,
+.devField select {
+  height: 42px;
+}
+
+.devField textarea {
+  min-height: 112px;
+  padding-top: 12px;
+  resize: vertical;
+}
+
+.devField input:focus,
+.devField select:focus,
+.devField textarea:focus {
+  border-color: rgba(128, 255, 234, 0.44);
+  background: rgba(3, 6, 11, 0.86);
+  box-shadow: 0 0 0 4px rgba(128, 255, 234, 0.08);
+}
+
+.devField input::placeholder,
+.devField textarea::placeholder {
+  color: rgba(255, 255, 255, 0.28);
+}
+
+.devField em,
+.devUseCaseGroup em {
+  color: #ff9d9d;
+  font-size: 12px;
+  font-style: normal;
+  line-height: 1.4;
+}
+
+.devUseCaseGroup {
+  display: grid;
+  gap: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 14px;
+}
+
+.devUseCaseGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.devUseCase,
+.devUseCaseActive {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  padding: 9px 12px;
+  color: rgba(255, 255, 255, 0.68);
+  background: rgba(255, 255, 255, 0.045);
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.devUseCaseActive {
+  color: #04100e;
+  border-color: transparent;
+  background: linear-gradient(120deg, var(--tm-cyan), var(--tm-green));
+}
+
+.devSwitchGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.devSwitchGrid label {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.035);
+  padding: 12px;
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.devSwitchGrid input {
+  margin-top: 3px;
+  accent-color: var(--tm-cyan);
+}
+
+.devFormAlert,
+.devSuccessPanel {
+  display: grid;
+  gap: 6px;
+  border-radius: 14px;
+  padding: 14px;
+  font-size: 13px;
+}
+
+.devFormAlert {
+  border: 1px solid rgba(255, 129, 129, 0.22);
+  background: rgba(255, 129, 129, 0.08);
+  color: #ffd4d4;
+}
+
+.devSuccessPanel {
+  border: 1px solid rgba(50, 231, 152, 0.2);
+  background: rgba(50, 231, 152, 0.08);
+  color: rgba(235, 255, 248, 0.86);
+}
+
+.devSuccessPanel span {
+  color: var(--tm-green);
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.devSuccessPanel strong,
+.devSuccessPanel code {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+}
+
+.devSuccessPanel p {
+  margin: 0;
+  color: rgba(235, 255, 248, 0.72);
+  line-height: 1.6;
+}
+
+.devFormFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.devSubmitButton {
+  min-height: 44px;
+  border: 0;
+  border-radius: 12px;
+  background: linear-gradient(120deg, var(--tm-cyan), var(--tm-green));
+  color: #04100e;
+  padding: 0 18px;
+  font-size: 13px;
+  font-weight: 950;
+  cursor: pointer;
+  box-shadow: 0 18px 40px rgba(128, 255, 234, 0.14);
+}
+
+.devSubmitButton:disabled {
+  cursor: wait;
+  opacity: 0.72;
+}
+
+.devFormFooter a {
+  color: rgba(128, 255, 234, 0.82);
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.devReviewPanel {
+  display: grid;
+  gap: 14px;
+  position: sticky;
+  top: 72px;
+}
+
+.devReviewCard {
+  padding: 16px;
+}
+
+.devReviewCard ol {
+  display: grid;
+  gap: 12px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: review-step;
+}
+
+.devReviewCard li {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  color: rgba(255, 255, 255, 0.72);
+  counter-increment: review-step;
+}
+
+.devReviewCard li::before {
+  content: counter(review-step);
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: rgba(128, 255, 234, 0.1);
+  color: var(--tm-cyan);
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.devReviewCard li strong {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--tm-text);
+  font-size: 13px;
+}
+
+.devReviewCard li small {
+  display: block;
+  color: rgba(255, 255, 255, 0.56);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.devReviewCard pre {
+  margin: 14px 0 0;
+  overflow: auto;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.25);
+  padding: 12px;
+  color: rgba(236, 255, 251, 0.9);
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 12px;
+  line-height: 1.65;
+}
+
 .panel {
   border: 1px solid var(--tm-border);
   background: var(--tm-panel);
@@ -2449,6 +2806,22 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .devApiWorkspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .devReviewPanel {
+    position: static;
+  }
+
+  .devFormGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .devSwitchGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   /* Hide sidebar by default; slide it in as an overlay when .sidebarOpen is added */
   .sidebar {
     display: none;
@@ -2694,8 +3067,26 @@
 
   .devTimeline,
   .devPlatformGrid,
-  .devRequestGrid {
+  .devRequestGrid,
+  .devFormGrid,
+  .devSwitchGrid {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .devApplicationHeader,
+  .devFormFooter {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .devReadinessMeter {
+    width: 100%;
+    height: 58px;
+    align-content: center;
+  }
+
+  .devSubmitButton {
+    width: 100%;
   }
 
   .devCodePanel pre {
