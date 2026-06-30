@@ -159,10 +159,11 @@ function readText(value: unknown) {
   return String(value || "").trim();
 }
 
-function buildCurl(endpoint: string, payload: string) {
+function buildCurl(endpoint: string, payload: string, includeApiKey: boolean) {
+  const authHeader = includeApiKey ? ` \\
+  -H "x-agent-api-key: $AI2HUMAN_AGENT_KEY"` : "";
   return `curl https://ai2human.io${endpoint} \\
-  -H "Content-Type: application/json" \\
-  -H "x-agent-api-key: $AI2HUMAN_AGENT_KEY" \\
+  -H "Content-Type: application/json"${authHeader} \\
   -d '${payload.replaceAll("'", "'\\''")}'`;
 }
 
@@ -187,8 +188,9 @@ export default function AgentSkillConsoleClient() {
   }, [payloadText]);
 
   const taskId = readText(created?.task?.id);
-  const previewCurl = payload ? buildCurl("/api/agent/campaigns/preview", stringifyJson(payload)) : "";
-  const createCurl = payload ? buildCurl("/api/agent/campaigns", stringifyJson(payload)) : "";
+  const hasApiKey = Boolean(apiKey.trim());
+  const previewCurl = payload ? buildCurl("/api/agent/campaigns/preview", stringifyJson(payload), hasApiKey) : "";
+  const createCurl = payload ? buildCurl("/api/agent/campaigns", stringifyJson(payload), hasApiKey) : "";
 
   function choosePreset(nextId: PresetId) {
     setPresetId(nextId);
@@ -208,16 +210,11 @@ export default function AgentSkillConsoleClient() {
 
   async function callApi(kind: typeof busy, endpoint: string, body?: unknown) {
     const trimmedApiKey = apiKey.trim();
-    if (!trimmedApiKey) {
-      setError("Enter your AI2Human Agent API key first.");
-      return;
-    }
     setBusy(kind);
     setError("");
     try {
-      const headers: Record<string, string> = {
-        "x-agent-api-key": trimmedApiKey
-      };
+      const headers: Record<string, string> = {};
+      if (trimmedApiKey) headers["x-agent-api-key"] = trimmedApiKey;
       if (body) headers["Content-Type"] = "application/json";
       const res = await fetch(endpoint, {
         method: kind === "funding" && !body ? "GET" : "POST",
@@ -293,22 +290,22 @@ export default function AgentSkillConsoleClient() {
 
         <section className={styles.keyPanel}>
           <div>
-            <span className={styles.kicker}>Developer credential</span>
-            <h2>Enter your AI2Human Agent API key</h2>
+            <span className={styles.kicker}>Public test mode</span>
+            <h2>API key is optional for safe testing</h2>
             <p>
-              Preview, draft creation, funding checks, and publish actions are protected. Store keys as agent
-              secrets in production; this console keeps the value only in local page state.
+              OpenClaw can preview, create, and publish no-payout test campaigns without a key. Add a key only for
+              production campaigns, funding checks, managed pools, or real settlement flows.
             </p>
           </div>
           <div className={styles.keyInputWrap}>
             <input
               value={apiKey}
               onChange={(event) => setApiKey(event.target.value)}
-              placeholder="a2h_live_... or test project key"
+              placeholder="Optional: a2h_live_... for production"
               type="password"
               autoComplete="off"
             />
-            <Link href="/developers/api-keys">How to get a key</Link>
+            <Link href="/developers/api-keys">Need production access?</Link>
           </div>
         </section>
 
@@ -335,8 +332,8 @@ export default function AgentSkillConsoleClient() {
             <div className={styles.safeBox}>
               <strong>Safe testing rule</strong>
               <p>
-                Preview is always dry-run. Create writes a draft. Publish opens the campaign only when funding and
-                preflight rules pass.
+                No-key mode only accepts environment=test and fundingMode=test_no_payout. It can open a test task,
+                but it cannot create PrizePools, send payouts, or blast user notifications.
               </p>
             </div>
           </aside>
@@ -363,7 +360,7 @@ export default function AgentSkillConsoleClient() {
                 {busy === "preview" ? "Running preview..." : "Run safe preview"}
               </button>
               <button type="button" className={styles.secondaryButton} onClick={createDraft} disabled={busy !== "" || !payload || preview?.readyToCreate === false}>
-                {busy === "create" ? "Creating draft..." : "Create draft"}
+                {busy === "create" ? "Creating..." : hasApiKey ? "Create draft" : "Create public test"}
               </button>
               <button type="button" className={styles.secondaryButton} onClick={checkFunding} disabled={busy !== "" || !taskId}>
                 {busy === "funding" ? "Checking..." : "Check funding"}
@@ -384,7 +381,7 @@ export default function AgentSkillConsoleClient() {
               <article className={styles.statusCard}>
                 <span>Draft</span>
                 <strong>{taskId ? taskId : "No draft yet"}</strong>
-                <p>{created?.task?.taskState ? `State: ${created.task.taskState}` : "Draft creation writes a task row but keeps it closed."}</p>
+                <p>{created?.task?.taskState ? `State: ${created.task.taskState}` : "No-key creation opens only safe test campaigns."}</p>
               </article>
               <article className={styles.statusCard}>
                 <span>Funding</span>
