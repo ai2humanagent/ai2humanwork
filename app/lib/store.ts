@@ -1586,6 +1586,42 @@ async function writeProfileSetToSupabase<T>(writeSet: ProfileWriteSet<T>): Promi
   }
 }
 
+export async function upsertTaskOnly(task: Task): Promise<void> {
+  if (isSupabaseEnabled) {
+    const includeTaskPoolAddress = await supportsTaskPoolAddress();
+    const { error } = await supabase!
+      .from("tasks")
+      .upsert([taskToSbTask(task, includeTaskPoolAddress)], { onConflict: "id" });
+    if (error) {
+      throw new Error(`Supabase task write failed: ${error.message}`);
+    }
+    if (!isProductionRuntime()) {
+      const db = await readDb();
+      const existingIndex = db.tasks.findIndex((item) => item.id === task.id);
+      if (existingIndex >= 0) {
+        db.tasks[existingIndex] = task;
+      } else {
+        db.tasks.unshift(task);
+      }
+      await writeDbToFile(db);
+    }
+    return;
+  }
+
+  if (isProductionRuntime()) {
+    throw new Error("Supabase is required in production.");
+  }
+
+  const db = await readDbFromFile();
+  const existingIndex = db.tasks.findIndex((item) => item.id === task.id);
+  if (existingIndex >= 0) {
+    db.tasks[existingIndex] = task;
+  } else {
+    db.tasks.unshift(task);
+  }
+  await writeDbToFile(db);
+}
+
 // ---- Public API ----
 
 export async function readDb(): Promise<Db> {

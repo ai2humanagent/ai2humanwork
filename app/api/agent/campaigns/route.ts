@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import {
   readDb,
   updateDb,
+  upsertTaskOnly,
   type Task,
   type Notification,
   type UserAccount
@@ -63,6 +64,42 @@ export async function POST(request: Request) {
     task = managed.task as Task;
     creationPreview = managed.preview;
     const taskNotifications: Array<{ user: UserAccount; notification: Notification }> = [];
+
+    if (publicAccess) {
+      try {
+        await upsertTaskOnly(task);
+        return NextResponse.json({
+          task,
+          preview: {
+            ...creationPreview,
+            warnings: dbWarning
+              ? [
+                  ...(creationPreview.warnings || []),
+                  "Public test used fallback state while reading optional collections, but the task was persisted."
+                ]
+              : creationPreview.warnings
+          },
+          publicAccess
+        }, { status: 201 });
+      } catch (error) {
+        return NextResponse.json(
+          {
+            task,
+            preview: {
+              ...creationPreview,
+              warnings: [
+                ...(creationPreview.warnings || []),
+                "Public test task was generated but not persisted. Preview/create semantics are still valid for agent testing."
+              ]
+            },
+            publicAccess,
+            notPersisted: true,
+            persistenceError: error instanceof Error ? error.message : "Task write failed."
+          },
+          { status: 201 }
+        );
+      }
+    }
 
     try {
       await updateDb((draft) => {
