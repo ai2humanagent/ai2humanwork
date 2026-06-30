@@ -28,6 +28,25 @@ function parseDeadlineUnix(raw) {
   return Math.floor(fallback / 1000);
 }
 
+function normalizeTaskDeadline(raw) {
+  const value = readString(raw);
+  const timestamp = Date.parse(value);
+  if (Number.isFinite(timestamp)) return new Date(timestamp).toISOString();
+
+  const match = value.match(/^(\d+(?:\.\d+)?)\s*(m|min|minute|minutes|h|hr|hour|hours|d|day|days)$/i);
+  if (match) {
+    const amount = Number(match[1]);
+    const unit = match[2].toLowerCase();
+    const multiplier =
+      unit.startsWith("m") ? 60 * 1000 :
+      unit.startsWith("h") ? 60 * 60 * 1000 :
+      24 * 60 * 60 * 1000;
+    return new Date(Date.now() + amount * multiplier).toISOString();
+  }
+
+  return new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+}
+
 function createNumericCampaignId() {
   return Math.floor(Date.now() / 1000) * 1000 + crypto.randomInt(100, 999);
 }
@@ -299,7 +318,7 @@ export function buildAgentCampaignTask(input = {}, preview) {
     id: taskId,
     title: campaignTask.title,
     budget: campaignTask.budget,
-    deadline: campaignTask.deadline,
+    deadline: normalizeTaskDeadline(campaignTask.deadline),
     acceptance: campaignTask.acceptance,
     campaign: {
       ...campaignTask.campaign,
