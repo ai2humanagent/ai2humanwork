@@ -10,6 +10,7 @@ import { readDb, updateDb, upsertTaskOnly, type Task } from "../../../../../lib/
 import {
   XLAYER_CAIP2_NETWORK,
   X402_PAYMENT_HEADER,
+  X402_PAYMENT_REQUIRED_HEADER,
   X402_PAYMENT_RESPONSE_HEADER,
   X402_SCHEME,
   X402_VERSION,
@@ -79,7 +80,7 @@ function getPaymentConfig() {
     tokenName: readString(process.env.AI2HUMAN_A2MCP_TOKEN_NAME || process.env.XLAYER_X402_TOKEN_NAME, "USD Tether"),
     tokenVersion: readString(process.env.AI2HUMAN_A2MCP_TOKEN_VERSION || process.env.XLAYER_X402_TOKEN_VERSION),
     decimals: Number.isFinite(decimals) ? decimals : 6,
-    strict: process.env.AI2HUMAN_A2MCP_REQUIRE_PAYMENT === "true"
+    strict: process.env.AI2HUMAN_A2MCP_REQUIRE_PAYMENT !== "false"
   };
 }
 
@@ -87,10 +88,40 @@ function buildX402Challenge(request: Request) {
   const config = getPaymentConfig();
   return {
     x402Version: X402_VERSION,
+    resource: {
+      url: request.url,
+      method: request.method,
+      contentType: "application/json",
+      service: "AI2Human Task Router",
+      outputSchema: {
+        input: {
+          type: "http",
+          method: "POST",
+          bodyType: "json",
+          body: {
+            type: "object",
+            required: ["title", "description", "targetUrl"],
+            properties: {
+              title: { type: "string", description: "Task title to create on AI2Human." },
+              description: { type: "string", description: "Human execution or verification brief." },
+              targetUrl: { type: "string", description: "Target URL, post, site, or evidence location." },
+              budget: { type: "string", description: "Suggested task budget, if known." },
+              deadline: { type: "string", description: "Suggested task deadline, if known." },
+              proofRequired: {
+                type: "array",
+                items: { type: "string" },
+                description: "Structured proof items required from the human executor."
+              }
+            }
+          }
+        }
+      }
+    },
     accepts: [
       {
         scheme: X402_SCHEME,
         network: config.network,
+        amount: config.amountBaseUnits,
         maxAmountRequired: config.amountBaseUnits,
         resource: request.url,
         description: "Create an AI2Human human-executed task through the OKX.AI A2MCP service.",
@@ -114,10 +145,11 @@ function buildX402Challenge(request: Request) {
 
 function isSafePublicDemo(input: Record<string, unknown>) {
   return (
-    input.publicDemo === true ||
-    readString(input.mode).toLowerCase() === "demo" ||
-    (readString(input.environment).toLowerCase() === "test" &&
-      readString(input.fundingMode).toLowerCase() === "test_no_payout")
+    process.env.AI2HUMAN_A2MCP_ALLOW_PUBLIC_DEMO === "true" &&
+    (input.publicDemo === true ||
+      readString(input.mode).toLowerCase() === "demo" ||
+      (readString(input.environment).toLowerCase() === "test" &&
+        readString(input.fundingMode).toLowerCase() === "test_no_payout"))
   );
 }
 
@@ -290,17 +322,19 @@ export async function POST(request: Request) {
     const config = getPaymentConfig();
 
     if (config.strict && !paid && !demoMode) {
+      const challenge = buildX402Challenge(request);
+      const encodedChallenge = encodeBase64Json(challenge);
       return NextResponse.json(
         {
           error: "Payment required.",
-          ...buildX402Challenge(request)
+          ...challenge
         },
         {
           status: 402,
           headers: {
             "Cache-Control": "no-store",
-            "Access-Control-Expose-Headers": X402_PAYMENT_RESPONSE_HEADER,
-            "WWW-Authenticate": `Payment realm="AI2Human Task Router", price="${config.displayAmount} ${config.symbol}"`
+            "Access-Control-Expose-Headers": `${X402_PAYMENT_REQUIRED_HEADER}, ${X402_PAYMENT_RESPONSE_HEADER}`,
+            [X402_PAYMENT_REQUIRED_HEADER]: encodedChallenge
           }
         }
       );

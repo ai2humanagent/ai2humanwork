@@ -2,6 +2,7 @@ export const XLAYER_CAIP2_NETWORK = "eip155:196";
 export const XLAYER_CHAIN_ID = 196;
 export const X402_VERSION = 1;
 export const X402_PAYMENT_HEADER = "X-PAYMENT";
+export const X402_PAYMENT_REQUIRED_HEADER = "PAYMENT-REQUIRED";
 export const X402_PAYMENT_RESPONSE_HEADER = "X-PAYMENT-RESPONSE";
 export const X402_SCHEME = "exact";
 
@@ -20,6 +21,7 @@ export type X402Requirement = {
 
 export type X402Challenge = {
   x402Version: number;
+  resource?: Record<string, unknown>;
   accepts: X402Requirement[];
 };
 
