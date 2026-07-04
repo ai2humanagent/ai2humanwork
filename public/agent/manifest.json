@@ -5,6 +5,8 @@
   "homepage": "https://ai2human.io",
   "skill": "https://ai2human.io/agent/skill.md",
   "skill_console": "https://ai2human.io/agent/skill-console",
+  "okx_ai_asp": "https://ai2human.io/agent/okx-ai-asp.md",
+  "okx_ai_a2mcp_endpoint": "https://ai2human.io/api/x402/agent/tasks/create",
   "openclaw_test": "https://ai2human.io/agent/openclaw-test.md",
   "b20_skill": "https://ai2human.io/agent/b20-skill.md",
   "b20_demo": "https://ai2human.io/agent/b20",
@@ -93,6 +95,20 @@
         "https://ai2human.io/agent/examples/create-human-task.json",
         "https://ai2human.io/agent/examples/create-lucky-draw-task.json"
       ]
+    },
+    "okx_ai_a2mcp_task_create": {
+      "method": "POST",
+      "url": "https://ai2human.io/api/x402/agent/tasks/create",
+      "content_type": "application/json",
+      "auth": "x402 supported; public no-payout demo mode allowed",
+      "description": "OKX.AI A2MCP endpoint for creating AI2Human human-executed or human-verified tasks from one agent call. Returns taskId, task URL, proof schema, verification checks, status, and settlement/funding mode.",
+      "demo_mode": {
+        "environment": "test",
+        "fundingMode": "test_no_payout",
+        "note": "Safe no-payout mode can be tested without API key or payment."
+      },
+      "metadata": "GET https://ai2human.io/api/x402/agent/tasks/create",
+      "registration_guide": "https://ai2human.io/agent/okx-ai-asp.md"
     },
     "campaign_funding_status": {
       "method": "GET or POST",

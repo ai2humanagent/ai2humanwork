@@ -22,6 +22,18 @@ Human-readable console:
 https://ai2human.io/agent/skill-console
 ```
 
+OKX.AI ASP / A2MCP registration guide:
+
+```text
+https://ai2human.io/agent/okx-ai-asp.md
+```
+
+OKX.AI A2MCP task endpoint:
+
+```text
+https://ai2human.io/api/x402/agent/tasks/create
+```
+
 Machine-readable manifest:
 
 ```text
@@ -195,6 +207,7 @@ https://ai2human.io/agent/openclaw-test.md
 | Contract preflight | POST | `/api/agent/campaigns/{id}/preflight` | `x-agent-api-key` |
 | Publish draft | POST | `/api/agent/campaigns/{id}/publish` | `x-agent-api-key` |
 | B20 proof-to-policy preview | POST | `/api/agent/b20/preview` | Not required |
+| OKX.AI A2MCP task create | POST | `/api/x402/agent/tasks/create` | x402 supported / public demo no-payout |
 
 ## What The Agent Should Say Back
 
