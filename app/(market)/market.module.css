@@ -48,29 +48,30 @@
 }
 
 .sidebar {
-  width: 164px;
-  flex: 0 0 164px;
+  width: 218px;
+  flex: 0 0 218px;
   border-right: 1px solid var(--tm-border);
   background: var(--tm-sidebar);
   backdrop-filter: blur(18px);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 12px 12px 16px;
+  padding: 14px 12px 16px;
 }
 
 .sidebarTop {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 18px;
 }
 
 .brand {
   display: flex;
   align-items: center;
-  gap: 8px;
-  height: 28px;
-  padding: 4px 8px;
+  gap: 10px;
+  min-height: 40px;
+  padding: 4px 8px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   font-family: var(--font-display), serif;
   font-size: 15px;
   font-weight: 700;
@@ -85,31 +86,61 @@
   flex: 0 0 auto;
 }
 
+.brand span {
+  display: grid;
+  gap: 2px;
+  line-height: 1;
+}
+
+.brand small {
+  color: rgba(255, 255, 255, 0.48);
+  font-family: var(--market-font), system-ui, sans-serif;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
 .navGroup {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 5px;
 }
 
 .navLabel {
+  display: grid;
+  gap: 4px;
+  padding: 0 8px 7px;
+}
+
+.navLabel span {
+  color: rgba(255, 255, 255, 0.82);
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 900;
   line-height: 1;
-  letter-spacing: 0.08em;
-  color: var(--tm-muted);
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  padding: 0 8px 8px;
+}
+
+.navLabel small {
+  color: rgba(255, 255, 255, 0.38);
+  font-size: 10px;
+  font-weight: 650;
+  line-height: 1.25;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .navLink {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 8px;
-  min-height: 30px;
-  padding: 8px 8px 8px 16px;
-  border-radius: 8px;
+  gap: 9px;
+  min-height: 34px;
+  padding: 8px 9px 8px 12px;
+  border-radius: 10px;
   font-size: 13px;
+  font-weight: 700;
   color: rgba(255, 255, 255, 0.72);
   transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
   border: 1px solid transparent;
@@ -123,9 +154,11 @@
 
 .navLinkActive {
   color: var(--tm-cyan);
-  font-weight: 700;
-  background: rgba(128, 255, 234, 0.08);
-  border-color: rgba(128, 255, 234, 0.18);
+  font-weight: 900;
+  background:
+    linear-gradient(90deg, rgba(128, 255, 234, 0.13), rgba(124, 92, 255, 0.08)),
+    rgba(255, 255, 255, 0.035);
+  border-color: rgba(128, 255, 234, 0.24);
 }
 
 .navLinkActive::before {
@@ -146,13 +179,17 @@
 }
 
 .navIcon {
-  width: 16px;
-  height: 16px;
-  flex: 0 0 16px;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
   display: flex;
   align-items: center;
   justify-content: center;
   opacity: 0.75;
+}
+
+.navLinkActive .navIcon {
+  opacity: 1;
 }
 
 .sidebarFooter {

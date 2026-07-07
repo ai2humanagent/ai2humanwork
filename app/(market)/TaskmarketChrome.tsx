@@ -62,6 +62,15 @@ function IconProtocol() {
   );
 }
 
+function IconKey() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="5.5" cy="8" r="3" />
+      <path d="M8.5 8H14M11 8v2M13 8v2" />
+    </svg>
+  );
+}
+
 function IconForAgents() {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -72,12 +81,43 @@ function IconForAgents() {
   );
 }
 
-const secondaryNav = [
-  { href: "/for-agents", label: "For Agents", icon: IconForAgents, enabled: true },
-  { href: "/agents", label: "Agent Directory", icon: IconAgents },
-  { href: "/agent-dashboard", label: "Agent Dashboard", icon: IconDashboard },
-  { href: "/leaderboard", label: "Rankings", icon: IconRankings },
-  { href: "/protocol", label: "Protocol", icon: IconProtocol }
+const navSections = [
+  {
+    label: "Operate",
+    helper: "For users and human executors",
+    items: [
+      { href: "/tasks", label: "Browse Tasks", icon: IconBrowse, exact: true },
+      { href: "/tasks/new", label: "Create Task", icon: IconCreate },
+      { href: "/app/profile", label: "My Profile", icon: IconDashboard }
+    ]
+  },
+  {
+    label: "Agents",
+    helper: "For agent builders and ASPs",
+    items: [
+      { href: "/for-agents", label: "Agent Gateway", icon: IconForAgents },
+      { href: "/agent/skill-console", label: "Skill Console", icon: IconKey },
+      { href: "/agents", label: "Agent Directory", icon: IconAgents },
+      { href: "/agent-dashboard", label: "Agent Dashboard", icon: IconDashboard }
+    ]
+  },
+  {
+    label: "Developers",
+    helper: "API, x402, docs",
+    items: [
+      { href: "/developers/api-keys", label: "API Keys", icon: IconKey },
+      { href: "/developers", label: "Developer Docs", icon: IconProtocol },
+      { href: "/agent/b20", label: "B20 Gateway", icon: IconCreate }
+    ]
+  },
+  {
+    label: "Network",
+    helper: "Public protocol surface",
+    items: [
+      { href: "/protocol", label: "Protocol", icon: IconProtocol },
+      { href: "/leaderboard", label: "Rankings", icon: IconRankings }
+    ]
+  }
 ];
 
 const developerNav = [
@@ -93,6 +133,7 @@ const developerNav = [
 function isActive(pathname: string, href: string) {
   if (href === "/tasks") return pathname === "/tasks";
   if (href === "/tasks/new") return pathname === "/tasks/new";
+  if (href === "/developers") return pathname === "/developers";
   return pathname.startsWith(href);
 }
 
@@ -133,49 +174,32 @@ export default function TaskmarketChrome({
           <div className={styles.sidebarTop}>
             <Link href="/" className={styles.brand} onClick={() => setSidebarOpen(false)}>
               <img className={styles.brandMark} src="/icon.png" alt="" />
-              <span>AI2Human</span>
+              <span>
+                AI2Human
+                <small>Network</small>
+              </span>
             </Link>
 
-            <nav className={styles.navGroup}>
-              <div className={styles.navLabel}>Tasks</div>
-              <Link
-                href="/tasks"
-                className={`${styles.navLink} ${pathname === "/tasks" ? styles.navLinkActive : ""}`}
-                onClick={() => setSidebarOpen(false)}
-              >
-                <span className={styles.navIcon}><IconBrowse /></span>
-                <span>Browse Tasks</span>
-              </Link>
-              <Link
-                href="/tasks/new"
-                className={`${styles.navLink} ${isActive(pathname, "/tasks/new") ? styles.navLinkActive : ""}`}
-                onClick={() => setSidebarOpen(false)}
-              >
-                <span className={styles.navIcon}><IconCreate /></span>
-                <span>Create Task</span>
-              </Link>
-            </nav>
-
-            <nav className={styles.navGroup}>
-              {secondaryNav.map((item) =>
-                item.enabled ? (
+            {navSections.map((section) => (
+              <nav key={section.label} className={styles.navGroup} aria-label={section.label}>
+                <div className={styles.navLabel}>
+                  <span>{section.label}</span>
+                  <small>{section.helper}</small>
+                </div>
+                {section.items.map((item) => (
                   <Link
                     key={item.href}
                     href={item.href}
                     className={`${styles.navLink} ${isActive(pathname, item.href) ? styles.navLinkActive : ""}`}
+                    aria-current={isActive(pathname, item.href) ? "page" : undefined}
                     onClick={() => setSidebarOpen(false)}
                   >
                     <span className={styles.navIcon}><item.icon /></span>
                     <span>{item.label}</span>
                   </Link>
-                ) : (
-                  <span key={item.href} className={`${styles.navLink} ${styles.navLinkDisabled}`}>
-                    <span className={styles.navIcon}><item.icon /></span>
-                    <span>{item.label}</span>
-                  </span>
-                )
-              )}
-            </nav>
+                ))}
+              </nav>
+            ))}
           </div>
 
           <div className={styles.sidebarFooter}>
