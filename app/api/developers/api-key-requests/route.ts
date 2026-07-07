@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import { NextResponse } from "next/server";
 import { supabase } from "../../../lib/supabase";
+import { getAuthContext } from "../../../lib/auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -23,6 +24,11 @@ type ApiKeyRequestInput = {
   notes: string;
   walletAddress: string;
   honeypot?: string;
+};
+
+type SimplifiedApiKeyInput = {
+  apiKeyName: string;
+  scopes: string[];
 };
 
 function cleanString(value: unknown, max = 300) {
@@ -52,6 +58,56 @@ function normalizeBody(body: Record<string, unknown>): ApiKeyRequestInput {
     notes: cleanString(body.notes, 1200),
     walletAddress: cleanString(body.walletAddress, 80),
     honeypot: cleanString(body.honeypot, 80)
+  };
+}
+
+function normalizeScopes(value: unknown) {
+  return Array.isArray(value)
+    ? value.map((item) => cleanString(item, 80)).filter(Boolean).slice(0, 8)
+    : [];
+}
+
+async function normalizeSimplifiedBody(
+  request: Request,
+  body: Record<string, unknown>
+): Promise<{ input?: ApiKeyRequestInput; error?: string; status?: number }> {
+  const simplified: SimplifiedApiKeyInput = {
+    apiKeyName: cleanString(body.apiKeyName, 120),
+    scopes: normalizeScopes(body.scopes)
+  };
+  if (!simplified.apiKeyName) return {};
+
+  const auth = await getAuthContext(request);
+  if (!auth.ok) {
+    return {
+      error: "Connect wallet before generating an API key.",
+      status: 401
+    };
+  }
+
+  const user = auth.user;
+  const xUsername = user.xAccount?.username ? `@${user.xAccount.username.replace(/^@+/, "")}` : "@ai2humannetwork";
+  const email = user.contactEmail || user.email || "";
+  const fallbackEmail = EMAIL_RE.test(email) ? email : `wallet-${user.id.slice(0, 8)}@ai2human.io`;
+  const scopes = simplified.scopes.length > 0 ? simplified.scopes : ["Agent API", "Read-only"];
+
+  return {
+    input: {
+      projectName: simplified.apiKeyName,
+      contactName: user.xAccount?.username || user.humanId || "Developer",
+      email: fallbackEmail.toLowerCase(),
+      xHandle: xUsername,
+      website: "https://ai2human.io",
+      agentPlatform: scopes.includes("LLM Gateway") ? "Custom agent" : "OpenClaw",
+      expectedVolume: "1-5 campaigns / month",
+      rewardBudget: "100-1,000 USDC",
+      useCases: scopes,
+      needsWebhooks: scopes.includes("Webhooks"),
+      needsX402: scopes.includes("x402 Cloud"),
+      walletAddress: user.walletAddress || "",
+      notes: `API key name: ${simplified.apiKeyName}\nScopes: ${scopes.join(", ")}`,
+      honeypot: ""
+    }
   };
 }
 
@@ -118,7 +174,12 @@ async function notifyAdmin(input: ApiKeyRequestInput, requestId: string) {
 
 export async function POST(request: Request) {
   const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
-  const input = normalizeBody(body);
+  const simplified = await normalizeSimplifiedBody(request, body);
+  if (simplified.error) {
+    return NextResponse.json({ error: simplified.error }, { status: simplified.status || 400 });
+  }
+
+  const input = simplified.input || normalizeBody(body);
   if (input.honeypot) {
     return NextResponse.json({ ok: true, requestId: "req_filtered", status: "received" }, { status: 202 });
   }

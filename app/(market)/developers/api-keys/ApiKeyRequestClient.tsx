@@ -1,102 +1,130 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
-import Link from "next/link";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import styles from "../../market.module.css";
+
+type KeyState = "active" | "pending" | "revoked";
+
+type ApiKeyCard = {
+  id: string;
+  name: string;
+  maskedKey: string;
+  scopes: string[];
+  state: KeyState;
+  createdAt: string;
+  requests: number;
+};
 
 type RequestStatus =
   | { state: "idle" }
   | { state: "submitting" }
-  | { state: "success"; requestId: string; persistence?: string }
-  | { state: "error"; message: string; errors?: Record<string, string> };
+  | { state: "success"; message: string }
+  | { state: "error"; message: string };
 
-const useCaseOptions = [
-  "Reward campaigns",
-  "Human proof tasks",
-  "B20 proof gateway",
-  "x402 paid access",
-  "Compliance / RWA checks",
-  "Custom agent workflows"
-];
+const storageKey = "ai2human.developer.apiKeys.v1";
 
-const platformOptions = ["OpenClaw", "Bankr", "Claude / Codex", "Custom agent", "Internal backend", "Not sure yet"];
-const volumeOptions = ["1-5 campaigns / month", "6-25 campaigns / month", "26-100 campaigns / month", "100+ campaigns / month"];
-const budgetOptions = ["Under 100 USDC", "100-1,000 USDC", "1,000-10,000 USDC", "10,000+ USDC"];
+const scopeOptions = ["Agent API", "LLM Gateway", "x402 Cloud", "Read-only", "IP allowlist"];
+const defaultScopes = ["Agent API", "Read-only"];
 
-const defaultForm = {
-  projectName: "",
-  contactName: "",
-  email: "",
-  xHandle: "",
-  website: "",
-  agentPlatform: "OpenClaw",
-  expectedVolume: "1-5 campaigns / month",
-  rewardBudget: "100-1,000 USDC",
-  useCases: ["Reward campaigns", "Human proof tasks"],
-  needsWebhooks: false,
-  needsX402: false,
-  walletAddress: "",
-  notes: "",
-  honeypot: ""
-};
+function createLocalKey(name: string, requestId: string, scopes: string[]): ApiKeyCard {
+  return {
+    id: requestId,
+    name,
+    maskedKey: `a2h_live_${requestId.slice(-6)}••••••••`,
+    scopes,
+    state: "pending",
+    createdAt: new Date().toISOString(),
+    requests: 0
+  };
+}
 
-function fieldError(status: RequestStatus, field: string) {
-  return status.state === "error" ? status.errors?.[field] : undefined;
+function formatDate(value: string) {
+  return new Intl.DateTimeFormat("en", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit"
+  }).format(new Date(value));
+}
+
+function loadStoredKeys(): ApiKeyCard[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(storageKey) || "[]");
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
 }
 
 export default function ApiKeyRequestClient() {
-  const [form, setForm] = useState(defaultForm);
+  const [apiKeyName, setApiKeyName] = useState("");
+  const [selectedScopes, setSelectedScopes] = useState(defaultScopes);
+  const [statusFilter, setStatusFilter] = useState<"all" | KeyState>("all");
+  const [query, setQuery] = useState("");
+  const [keys, setKeys] = useState<ApiKeyCard[]>([]);
   const [status, setStatus] = useState<RequestStatus>({ state: "idle" });
 
-  const readiness = useMemo(() => {
-    const required = [
-      form.projectName,
-      form.contactName,
-      form.email,
-      form.xHandle,
-      form.agentPlatform,
-      form.expectedVolume,
-      form.rewardBudget
-    ].filter(Boolean).length;
-    return Math.round((required / 7) * 100);
-  }, [form]);
+  useEffect(() => {
+    setKeys(loadStoredKeys());
+  }, []);
 
-  function update<K extends keyof typeof form>(key: K, value: (typeof form)[K]) {
-    setForm((current) => ({ ...current, [key]: value }));
-  }
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(storageKey, JSON.stringify(keys));
+  }, [keys]);
 
-  function toggleUseCase(value: string) {
-    setForm((current) => ({
-      ...current,
-      useCases: current.useCases.includes(value)
-        ? current.useCases.filter((item) => item !== value)
-        : [...current.useCases, value]
-    }));
+  const visibleKeys = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase();
+    return keys.filter((item) => {
+      const matchesState = statusFilter === "all" || item.state === statusFilter;
+      const matchesQuery =
+        !normalizedQuery ||
+        item.name.toLowerCase().includes(normalizedQuery) ||
+        item.maskedKey.toLowerCase().includes(normalizedQuery) ||
+        item.scopes.some((scope) => scope.toLowerCase().includes(normalizedQuery));
+      return matchesState && matchesQuery;
+    });
+  }, [keys, query, statusFilter]);
+
+  const canGenerate = apiKeyName.trim().length >= 2 && status.state !== "submitting";
+
+  function toggleScope(scope: string) {
+    setSelectedScopes((current) =>
+      current.includes(scope) ? current.filter((item) => item !== scope) : [...current, scope]
+    );
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const name = apiKeyName.trim();
+    if (!name) return;
+
     setStatus({ state: "submitting" });
     try {
       const response = await fetch("/api/developers/api-key-requests", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form)
+        credentials: "same-origin",
+        body: JSON.stringify({
+          apiKeyName: name,
+          scopes: selectedScopes
+        })
       });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) {
         setStatus({
           state: "error",
-          message: payload.error || "Unable to submit request.",
-          errors: payload.errors
+          message: payload.error || "Unable to generate key request."
         });
         return;
       }
-      setStatus({
-        state: "success",
-        requestId: payload.requestId,
-        persistence: payload.persistence
-      });
+
+      const nextKey = createLocalKey(name, payload.requestId || crypto.randomUUID(), selectedScopes);
+      setKeys((current) => [nextKey, ...current]);
+      setApiKeyName("");
+      setStatus({ state: "success", message: "API key request created. Approval is pending." });
     } catch (error) {
       setStatus({
         state: "error",
@@ -105,170 +133,130 @@ export default function ApiKeyRequestClient() {
     }
   }
 
+  function revokeKey(id: string) {
+    setKeys((current) => current.map((item) => (item.id === id ? { ...item, state: "revoked" } : item)));
+  }
+
+  function removeKey(id: string) {
+    setKeys((current) => current.filter((item) => item.id !== id));
+  }
+
   return (
-    <div className={styles.devApiWorkspace}>
-      <section className={styles.devApplicationPanel} id="request">
-        <div className={styles.devApplicationHeader}>
-          <div>
-            <span>Developer access</span>
-            <h2>Request an AI2Human Agent API key</h2>
-            <p>
-              Tell us what your agent needs to create. We review project identity, reward flow, and risk level
-              before issuing a scoped key.
-            </p>
-          </div>
-          <div className={styles.devReadinessMeter} aria-label={`Application readiness ${readiness}%`}>
-            <strong>{readiness}%</strong>
-            <span>ready</span>
-          </div>
+    <div className={styles.apiKeysShell}>
+      <section className={styles.apiCreatePanel}>
+        <div className={styles.apiCreateCopy}>
+          <h2>Create API Key</h2>
+          <p>Create your API key first, then configure Agent API, LLM Gateway, x402, IP allowlisting, and read-only access.</p>
         </div>
 
-        <form className={styles.devAccessForm} onSubmit={submit}>
-          <input
-            className={styles.devHoneypot}
-            tabIndex={-1}
-            autoComplete="off"
-            value={form.honeypot}
-            onChange={(event) => update("honeypot", event.target.value)}
-          />
+        <div className={styles.apiScopePills} aria-label="API key scopes">
+          {scopeOptions.map((scope) => (
+            <button
+              key={scope}
+              type="button"
+              className={selectedScopes.includes(scope) ? styles.apiScopePillActive : styles.apiScopePill}
+              onClick={() => toggleScope(scope)}
+            >
+              {scope}
+            </button>
+          ))}
+        </div>
 
-          <div className={styles.devFormGrid}>
-            <label className={styles.devField}>
-              <span>Project name</span>
-              <input value={form.projectName} onChange={(event) => update("projectName", event.target.value)} placeholder="Nova Agent Labs" />
-              {fieldError(status, "projectName") ? <em>{fieldError(status, "projectName")}</em> : null}
-            </label>
-            <label className={styles.devField}>
-              <span>Contact name</span>
-              <input value={form.contactName} onChange={(event) => update("contactName", event.target.value)} placeholder="Richard" />
-              {fieldError(status, "contactName") ? <em>{fieldError(status, "contactName")}</em> : null}
-            </label>
-            <label className={styles.devField}>
-              <span>Work email</span>
-              <input value={form.email} onChange={(event) => update("email", event.target.value)} placeholder="team@example.com" inputMode="email" />
-              {fieldError(status, "email") ? <em>{fieldError(status, "email")}</em> : null}
-            </label>
-            <label className={styles.devField}>
-              <span>Project X handle</span>
-              <input value={form.xHandle} onChange={(event) => update("xHandle", event.target.value)} placeholder="@yourproject" />
-              {fieldError(status, "xHandle") ? <em>{fieldError(status, "xHandle")}</em> : null}
-            </label>
-            <label className={styles.devField}>
-              <span>Website</span>
-              <input value={form.website} onChange={(event) => update("website", event.target.value)} placeholder="https://yourproject.xyz" inputMode="url" />
-              {fieldError(status, "website") ? <em>{fieldError(status, "website")}</em> : null}
-            </label>
-            <label className={styles.devField}>
-              <span>Admin / treasury wallet</span>
-              <input value={form.walletAddress} onChange={(event) => update("walletAddress", event.target.value)} placeholder="0x..." />
-            </label>
-          </div>
-
-          <div className={styles.devFormGrid}>
-            <label className={styles.devField}>
-              <span>Agent platform</span>
-              <select value={form.agentPlatform} onChange={(event) => update("agentPlatform", event.target.value)}>
-                {platformOptions.map((item) => <option key={item}>{item}</option>)}
-              </select>
-            </label>
-            <label className={styles.devField}>
-              <span>Expected volume</span>
-              <select value={form.expectedVolume} onChange={(event) => update("expectedVolume", event.target.value)}>
-                {volumeOptions.map((item) => <option key={item}>{item}</option>)}
-              </select>
-            </label>
-            <label className={styles.devField}>
-              <span>Reward budget</span>
-              <select value={form.rewardBudget} onChange={(event) => update("rewardBudget", event.target.value)}>
-                {budgetOptions.map((item) => <option key={item}>{item}</option>)}
-              </select>
-            </label>
-          </div>
-
-          <div className={styles.devUseCaseGroup}>
-            <div>
-              <span>Use cases</span>
-              <p>Select the surfaces your key should unlock.</p>
-            </div>
-            <div className={styles.devUseCaseGrid}>
-              {useCaseOptions.map((item) => (
-                <button
-                  type="button"
-                  key={item}
-                  className={form.useCases.includes(item) ? styles.devUseCaseActive : styles.devUseCase}
-                  onClick={() => toggleUseCase(item)}
-                >
-                  {item}
-                </button>
-              ))}
-            </div>
-            {fieldError(status, "useCases") ? <em>{fieldError(status, "useCases")}</em> : null}
-          </div>
-
-          <div className={styles.devSwitchGrid}>
-            <label>
-              <input type="checkbox" checked={form.needsWebhooks} onChange={(event) => update("needsWebhooks", event.target.checked)} />
-              <span>We need webhook callbacks for proof, review, funding, or settlement events.</span>
-            </label>
-            <label>
-              <input type="checkbox" checked={form.needsX402} onChange={(event) => update("needsX402", event.target.checked)} />
-              <span>We want to test x402 paid access for API calls or proof bundles.</span>
-            </label>
-          </div>
-
-          <label className={styles.devField}>
-            <span>What will your agent create?</span>
-            <textarea
-              value={form.notes}
-              onChange={(event) => update("notes", event.target.value)}
-              placeholder="Example: Create holder-gated reward campaigns, collect X proof, fund managed PrizePool campaigns, and publish only after admin confirmation."
+        <form className={styles.apiCreateForm} onSubmit={submit}>
+          <label>
+            <span>API Key Name *</span>
+            <input
+              value={apiKeyName}
+              onChange={(event) => setApiKeyName(event.target.value)}
+              placeholder="e.g., Production Bot, OpenClaw Skill, Trading Script"
             />
           </label>
-
-          {status.state === "error" ? (
-            <div className={styles.devFormAlert} role="alert">
-              <strong>Request needs attention</strong>
-              <span>{status.message}</span>
-            </div>
-          ) : null}
-
-          {status.state === "success" ? (
-            <div className={styles.devSuccessPanel} role="status">
-              <span>Request received</span>
-              <strong>{status.requestId}</strong>
-              <p>
-                We will review the project and issue a scoped key manually. Once approved, keep the key as an
-                agent secret and pass it as <code>x-agent-api-key</code>.
-              </p>
-            </div>
-          ) : null}
-
-          <div className={styles.devFormFooter}>
-            <button className={styles.devSubmitButton} type="submit" disabled={status.state === "submitting"}>
-              {status.state === "submitting" ? "Submitting request..." : "Submit API key request"}
-            </button>
-            <Link href="/agent/skill-console">Test with demo console first</Link>
-          </div>
+          <button type="submit" disabled={!canGenerate}>
+            {status.state === "submitting" ? "Generating..." : "Generate Key"}
+          </button>
         </form>
+
+        {status.state === "error" ? <p className={styles.apiStatusError}>{status.message}</p> : null}
+        {status.state === "success" ? <p className={styles.apiStatusSuccess}>{status.message}</p> : null}
       </section>
 
-      <aside className={styles.devReviewPanel} aria-label="API key review status">
-        <div className={styles.devReviewCard}>
-          <span>Review pipeline</span>
-          <ol>
-            <li><strong>Received</strong><small>Project and contact details are captured.</small></li>
-            <li><strong>Risk check</strong><small>We review campaign type, funding flow, and abuse surface.</small></li>
-            <li><strong>Scoped key</strong><small>Approved projects receive a key for preview and draft APIs.</small></li>
-            <li><strong>Publish gate</strong><small>Campaigns still require confirmation before going live.</small></li>
-          </ol>
+      <section className={styles.apiKeysListSection}>
+        <div className={styles.apiKeysListHeader}>
+          <div>
+            <h2>
+              Your API keys <span>{keys.length} API keys</span>
+            </h2>
+            <p>Manage access, permissions, and usage settings.</p>
+          </div>
         </div>
 
-        <div className={styles.devReviewCard}>
-          <span>Header format</span>
-          <pre>{`x-agent-api-key: $AI2HUMAN_AGENT_KEY
-x-agent-id: optional_agent_id`}</pre>
+        <div className={styles.apiKeysToolbar}>
+          <label className={styles.apiSearchBox}>
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+              <circle cx="8" cy="8" r="5.4" stroke="currentColor" strokeWidth="2" />
+              <path d="m12.4 12.4 3 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search API keys" />
+          </label>
+
+          <div className={styles.apiFilterGroup}>
+            {(["all", "active", "pending", "revoked"] as const).map((item) => (
+              <button
+                key={item}
+                type="button"
+                className={statusFilter === item ? styles.apiFilterActive : styles.apiFilter}
+                onClick={() => setStatusFilter(item)}
+              >
+                {item === "all" ? "All" : item[0].toUpperCase() + item.slice(1)}
+              </button>
+            ))}
+            <button type="button" className={styles.apiRefreshButton} onClick={() => setKeys(loadStoredKeys())}>
+              ↻ Refresh
+            </button>
+          </div>
         </div>
-      </aside>
+
+        {visibleKeys.length > 0 ? (
+          <div className={styles.apiKeyGrid}>
+            {visibleKeys.map((item) => (
+              <article key={item.id} className={styles.apiKeyCard}>
+                <div className={styles.apiKeyCardTop}>
+                  <h3>{item.name}</h3>
+                  <span className={styles[`apiKeyState_${item.state}`]}>{item.state}</span>
+                </div>
+                <code>{item.maskedKey}</code>
+                <div className={styles.apiKeyScopes}>
+                  {item.scopes.slice(0, 3).map((scope) => <span key={scope}>{scope}</span>)}
+                  {item.scopes.length > 3 ? <span>+{item.scopes.length - 3}</span> : null}
+                </div>
+                <dl>
+                  <div>
+                    <dt>Created</dt>
+                    <dd>{formatDate(item.createdAt)}</dd>
+                  </div>
+                  <div>
+                    <dt>Requests</dt>
+                    <dd>{item.requests}</dd>
+                  </div>
+                </dl>
+                <div className={styles.apiKeyActions}>
+                  <button type="button">View details</button>
+                  {item.state !== "revoked" ? (
+                    <button type="button" onClick={() => revokeKey(item.id)}>Revoke</button>
+                  ) : (
+                    <button type="button" onClick={() => removeKey(item.id)}>Remove</button>
+                  )}
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <div className={styles.apiEmptyState}>
+            <strong>No API keys yet</strong>
+            <span>Create your first key above.</span>
+          </div>
+        )}
+      </section>
     </div>
   );
 }
