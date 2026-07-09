@@ -10,10 +10,13 @@ import {
   type Address,
   type Hex
 } from "viem";
-import { baseSepolia } from "viem/chains";
+import { base, baseSepolia, type Chain } from "viem/chains";
 import styles from "./b20Skill.module.css";
 import {
+  BASE_MAINNET_CHAIN_ID,
+  BASE_MAINNET_RPC,
   BASE_SEPOLIA_CHAIN_ID,
+  BASE_SEPOLIA_RPC,
   B20_FACTORY_ADDRESS,
   b20FactoryAbi,
   buildB20DeployPlan,
@@ -27,14 +30,80 @@ const previewEndpoint = "/api/agent/b20/preview";
 const proofTokenAddress = "0xb200000000000000000000eaE911AAD5435c86F3";
 const baseSepoliaFaucetUrl = "https://www.alchemy.com/faucets/base-sepolia";
 
+type B20NetworkMode = "sepolia" | "mainnet";
+type B20NetworkConfig = {
+  mode: B20NetworkMode;
+  name: string;
+  chainId: number;
+  chainHex: `0x${string}`;
+  chain: Chain;
+  rpcUrl: string;
+  explorerUrl: string;
+  gasLabel: string;
+  actionLabel: string;
+  description: string;
+  nativeCurrency: { name: string; symbol: string; decimals: number };
+};
+
+const b20Networks: Record<B20NetworkMode, B20NetworkConfig> = {
+  sepolia: {
+    mode: "sepolia" as const,
+    name: "Base Sepolia",
+    chainId: BASE_SEPOLIA_CHAIN_ID,
+    chainHex: "0x14a34",
+    chain: baseSepolia,
+    rpcUrl: BASE_SEPOLIA_RPC,
+    explorerUrl: "https://sepolia.basescan.org",
+    gasLabel: "Base Sepolia ETH",
+    actionLabel: "Issue Testnet B20",
+    description: "Safe test mode for rehearsing B20 issuance before a mainnet launch.",
+    nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 }
+  },
+  mainnet: {
+    mode: "mainnet" as const,
+    name: "Base Mainnet",
+    chainId: BASE_MAINNET_CHAIN_ID,
+    chainHex: "0x2105",
+    chain: base,
+    rpcUrl: BASE_MAINNET_RPC,
+    explorerUrl: "https://basescan.org",
+    gasLabel: "Base ETH",
+    actionLabel: "Issue Mainnet B20",
+    description: "Real mainnet issuance. Use only after the token name, roles, and supply cap are final.",
+    nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 }
+  }
+};
+
 const flowSteps = [
   { id: 1, title: "Set rules", hint: "Name, type, supply, proof gate" },
   { id: 2, title: "Preview plan", hint: "Generate the B20 config package" },
-  { id: 3, title: "Issue token", hint: "Base Sepolia createB20" },
+  { id: 3, title: "Issue token", hint: "Sepolia or mainnet createB20" },
   { id: 4, title: "Mint + proof", hint: "Test mint, then route access through AI2Human" }
 ];
 
 const examples = [
+  {
+    id: "ai2human",
+    label: "AI2Human Proof",
+    summary: "Proof-gated access token for the network",
+    variant: "ASSET" as const,
+    name: "AI2Human Proof Token",
+    symbol: "A2HP",
+    decimals: 18,
+    supplyCap: "100000000",
+    prompt:
+      "Create the AI2Human Proof Token as a B20 asset. Max supply 100,000,000. Mint access requires AI2Human proof. Roles and allowlists should be granted only after structured human verification.",
+    token: {
+      variant: "ASSET",
+      name: "AI2Human Proof Token",
+      symbol: "A2HP",
+      decimals: 18,
+      maxSupply: "100000000",
+      initialAdmin: "0x1111111111111111111111111111111111111111",
+      contractURI: "https://ai2human.io/agent/b20/manifest.json",
+      useCase: "ai2human-proof-network"
+    }
+  },
   {
     id: "rwa",
     label: "RWA community",
@@ -177,19 +246,19 @@ function getFlowClass(current: number, step: number) {
   return styles.flowStep;
 }
 
-function normalizeRpcError(err: unknown) {
+function normalizeRpcError(err: unknown, network: B20NetworkConfig = b20Networks.sepolia) {
   const message = err instanceof Error ? err.message : String(err || "Transaction failed.");
   if (/gas limit too high/i.test(message)) {
-    return "RPC refused the transaction during gas estimation. Usually this means the wallet has no Base Sepolia ETH for gas, or the B20 preflight reverted before signing.";
+    return `RPC refused the transaction during gas estimation. Usually this means the wallet has no ${network.gasLabel} for gas, or the B20 preflight reverted before signing.`;
   }
   if (/insufficient funds/i.test(message)) {
-    return "This wallet does not have enough Base Sepolia ETH to pay gas.";
+    return `This wallet does not have enough ${network.gasLabel} to pay gas.`;
   }
   if (/user rejected|rejected the request/i.test(message)) {
     return "Wallet signature was rejected.";
   }
   if (/execution reverted/i.test(message)) {
-    return "B20 preflight reverted before signing. Check token parameters and make sure the B20 precompile is active on Base Sepolia.";
+    return `B20 preflight reverted before signing. Check token parameters and make sure the B20 precompile is active on ${network.name}.`;
   }
   return message;
 }
@@ -202,22 +271,25 @@ function formatEthAmount(value: bigint) {
   return formatted.toFixed(6).replace(/0+$/, "").replace(/\.$/, "");
 }
 
-async function ensureBaseSepolia(provider: { request: (args: { method: string; params?: unknown[] }) => Promise<unknown> }) {
+async function ensureB20Network(
+  provider: { request: (args: { method: string; params?: unknown[] }) => Promise<unknown> },
+  network: B20NetworkConfig
+) {
   try {
     await provider.request({
       method: "wallet_switchEthereumChain",
-      params: [{ chainId: "0x14a34" }]
+      params: [{ chainId: network.chainHex }]
     });
   } catch {
     await provider.request({
       method: "wallet_addEthereumChain",
       params: [
         {
-          chainId: "0x14a34",
-          chainName: "Base Sepolia",
-          nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
-          rpcUrls: ["https://sepolia.base.org"],
-          blockExplorerUrls: ["https://sepolia.basescan.org"]
+          chainId: network.chainHex,
+          chainName: network.name,
+          nativeCurrency: network.nativeCurrency,
+          rpcUrls: [network.rpcUrl],
+          blockExplorerUrls: [network.explorerUrl]
         }
       ]
     });
@@ -237,6 +309,7 @@ export default function B20SkillDemoClient() {
   const [currency, setCurrency] = useState("USD");
   const [proofGate, setProofGate] = useState(true);
   const [mintAmount, setMintAmount] = useState("1000");
+  const [networkMode, setNetworkMode] = useState<B20NetworkMode>("sepolia");
 
   const [preview, setPreview] = useState<Preview | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
@@ -259,6 +332,7 @@ export default function B20SkillDemoClient() {
     wallets.find((item) => item.address);
   const walletAddress = wallet?.address as Address | undefined;
   const activeWalletAddress = walletAddress;
+  const selectedNetwork = b20Networks[networkMode];
 
   const tokenOverrides = useMemo(
     () => ({
@@ -332,6 +406,17 @@ export default function B20SkillDemoClient() {
     setMintError("");
   }
 
+  function chooseNetwork(nextMode: B20NetworkMode) {
+    setNetworkMode(nextMode);
+    setDeployTxHash("");
+    setTokenAddress("");
+    setMintTxHash("");
+    setDeployStatus("");
+    setMintStatus("");
+    setDeployError("");
+    setMintError("");
+  }
+
   async function deployToken() {
     const provider = await getActiveProvider();
     if (!provider || !activeWalletAddress) {
@@ -341,7 +426,7 @@ export default function B20SkillDemoClient() {
 
     setDeployLoading(true);
     setDeployError("");
-    setDeployStatus("Checking Base Sepolia network and wallet gas...");
+    setDeployStatus(`Checking ${selectedNetwork.name} network and wallet gas...`);
     setDeployTxHash("");
     setTokenAddress("");
     setMintTxHash("");
@@ -358,18 +443,18 @@ export default function B20SkillDemoClient() {
         saltText: `ai2human-${tokenSymbol.toLowerCase()}-${Date.now()}`
       });
 
-      await ensureBaseSepolia(provider);
+      await ensureB20Network(provider, selectedNetwork);
 
       const publicClient = createPublicClient({
-        chain: baseSepolia,
-        transport: http("https://sepolia.base.org")
+        chain: selectedNetwork.chain,
+        transport: http(selectedNetwork.rpcUrl)
       });
 
       const balance = await publicClient.getBalance({ address: activeWalletAddress });
       if (balance === BigInt(0)) {
         setDeployStatus("");
         throw new Error(
-          "This wallet has 0 Base Sepolia ETH. B20 deployment needs ETH for gas. Sending LINK, USDC, or other test tokens is not enough."
+          `This wallet has 0 ${selectedNetwork.gasLabel}. B20 deployment needs native ETH for gas. Sending LINK, USDC, or other tokens is not enough.`
         );
       }
 
@@ -395,9 +480,9 @@ export default function B20SkillDemoClient() {
       if (balance < estimatedGasCost) {
         setDeployStatus("");
         throw new Error(
-          `This wallet has ${formatEthAmount(balance)} Base Sepolia ETH, but the estimated gas cost is about ${formatEthAmount(
+          `This wallet has ${formatEthAmount(balance)} ${selectedNetwork.gasLabel}, but the estimated gas cost is about ${formatEthAmount(
             estimatedGasCost
-          )} ETH. Add Base Sepolia ETH and retry.`
+          )} ETH. Add ${selectedNetwork.gasLabel} and retry.`
         );
       }
 
@@ -417,7 +502,7 @@ export default function B20SkillDemoClient() {
       })) as Hex;
 
       setDeployTxHash(txHash);
-      setDeployStatus("Transaction submitted. Waiting for Base Sepolia receipt...");
+      setDeployStatus(`Transaction submitted. Waiting for ${selectedNetwork.name} receipt...`);
       const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
       if (receipt.status !== "success") {
         throw new Error("Deployment transaction failed. Check BaseScan for the revert reason.");
@@ -427,7 +512,7 @@ export default function B20SkillDemoClient() {
       setDeployStatus(`Deployment confirmed. Token address: ${shortAddress(predicted)}.`);
       await runPreview();
     } catch (err) {
-      setDeployError(normalizeRpcError(err));
+      setDeployError(normalizeRpcError(err, selectedNetwork));
     } finally {
       setDeployLoading(false);
     }
@@ -442,17 +527,17 @@ export default function B20SkillDemoClient() {
 
     setMintLoading(true);
     setMintError("");
-    setMintStatus("Checking Base Sepolia gas before mint...");
+    setMintStatus(`Checking ${selectedNetwork.name} gas before mint...`);
     try {
-      await ensureBaseSepolia(provider);
+      await ensureB20Network(provider, selectedNetwork);
       const publicClient = createPublicClient({
-        chain: baseSepolia,
-        transport: http("https://sepolia.base.org")
+        chain: selectedNetwork.chain,
+        transport: http(selectedNetwork.rpcUrl)
       });
       const balance = await publicClient.getBalance({ address: activeWalletAddress });
       if (balance === BigInt(0)) {
         setMintStatus("");
-        throw new Error("This wallet has 0 Base Sepolia ETH. Mint needs ETH for gas.");
+        throw new Error(`This wallet has 0 ${selectedNetwork.gasLabel}. Mint needs native ETH for gas.`);
       }
       const unit = BigInt(10) ** BigInt(variant === "STABLECOIN" ? 6 : Number(decimals) || 18);
       const amount = BigInt(mintAmount || "1000") * unit;
@@ -469,7 +554,7 @@ export default function B20SkillDemoClient() {
       if (balance < estimatedGasCost) {
         setMintStatus("");
         throw new Error(
-          `This wallet has ${formatEthAmount(balance)} Base Sepolia ETH, but mint gas is about ${formatEthAmount(estimatedGasCost)} ETH.`
+          `This wallet has ${formatEthAmount(balance)} ${selectedNetwork.gasLabel}, but mint gas is about ${formatEthAmount(estimatedGasCost)} ETH.`
         );
       }
 
@@ -495,7 +580,7 @@ export default function B20SkillDemoClient() {
       }
       setMintStatus("Mint confirmed.");
     } catch (err) {
-      setMintError(normalizeRpcError(err));
+      setMintError(normalizeRpcError(err, selectedNetwork));
     } finally {
       setMintLoading(false);
     }
@@ -517,9 +602,9 @@ export default function B20SkillDemoClient() {
           <h1>Issue B20 tokens with a human proof gate.</h1>
           <p className={styles.tagline}>B20 enforces native token rules. AI2Human verifies who is allowed to use them.</p>
           <p>
-            Connect from the top-right header, issue a B20 token on Base Sepolia, then attach AI2Human proof requirements
-            for mint access, allowlists, and role assignment. Live proof-of-concept:{" "}
-            <Link href={buildExplorerAddressUrl(proofTokenAddress)} target="_blank" rel="noreferrer" className={styles.mono}>
+            Connect from the top-right header, issue a B20 token on Sepolia or Base mainnet, then attach AI2Human proof
+            requirements for mint access, allowlists, and role assignment. Sepolia proof-of-concept:{" "}
+            <Link href={buildExplorerAddressUrl(proofTokenAddress, BASE_SEPOLIA_CHAIN_ID)} target="_blank" rel="noreferrer" className={styles.mono}>
               A2HP
             </Link>
             .
@@ -543,6 +628,33 @@ export default function B20SkillDemoClient() {
             <p>Choose a use-case template, define token parameters, and decide whether mint or allowlist access requires AI2Human review.</p>
           </div>
           <div className={styles.panelBody}>
+            <div className={styles.networkSwitch}>
+              <div>
+                <strong>Network</strong>
+                <span>{selectedNetwork.description}</span>
+              </div>
+              <div className={styles.segmented}>
+                <button
+                  type="button"
+                  className={networkMode === "sepolia" ? styles.segmentActive : styles.segment}
+                  onClick={() => chooseNetwork("sepolia")}
+                >
+                  Base Sepolia
+                </button>
+                <button
+                  type="button"
+                  className={networkMode === "mainnet" ? styles.segmentActive : styles.segment}
+                  onClick={() => chooseNetwork("mainnet")}
+                >
+                  Base Mainnet
+                </button>
+              </div>
+            </div>
+            {networkMode === "mainnet" && (
+              <p className={styles.mainnetWarning}>
+                Mainnet mode creates a real B20 token on Base. Finalize token name, ticker, admin wallet, roles, and supply cap before signing.
+              </p>
+            )}
             <div className={styles.presets}>
               {examples.map((item, index) => (
                 <button
@@ -665,13 +777,13 @@ export default function B20SkillDemoClient() {
         <section className={styles.panel}>
           <div className={styles.panelHead}>
             <h2>3. Issue with wallet</h2>
-            <p>Use the top-right header wallet, then sign createB20 here. Base Sepolia ETH is required for gas.</p>
+            <p>Use the top-right header wallet, then sign createB20 here. {selectedNetwork.gasLabel} is required for gas.</p>
           </div>
           <div className={styles.panelBody}>
             <div className={styles.walletBar}>
               <div>
                 <strong>{activeWalletAddress ? shortAddress(activeWalletAddress) : "No wallet connected"}</strong>
-                <span>Header wallet only · Base Sepolia · Chain ID {BASE_SEPOLIA_CHAIN_ID}</span>
+                <span>Header wallet only · {selectedNetwork.name} · Chain ID {selectedNetwork.chainId}</span>
               </div>
               <div className={styles.walletActions}>
                 {activeWalletAddress ? (
@@ -685,14 +797,18 @@ export default function B20SkillDemoClient() {
                   onClick={() => deployToken()}
                   disabled={deployLoading || !activeWalletAddress}
                 >
-                  {deployLoading ? "Issuing..." : activeWalletAddress ? "Issue B20 Token" : "Header wallet required"}
+                  {deployLoading
+                    ? "Issuing..."
+                    : activeWalletAddress
+                      ? selectedNetwork.actionLabel
+                      : `${selectedNetwork.actionLabel} requires wallet`}
                 </button>
               </div>
             </div>
 
             {deployStatus && <p className={styles.notice}>{deployStatus}</p>}
             {deployError && <p className={styles.error}>{deployError}</p>}
-            {deployError && /Base Sepolia ETH|gas/i.test(deployError) && (
+            {networkMode === "sepolia" && deployError && /Base Sepolia ETH|gas/i.test(deployError) && (
               <Link href={baseSepoliaFaucetUrl} target="_blank" rel="noreferrer" className={styles.linkButton}>
                 Get Base Sepolia ETH
               </Link>
@@ -704,11 +820,11 @@ export default function B20SkillDemoClient() {
                 <p>Token address</p>
                 <div className={styles.mono}>{tokenAddress}</div>
                 <div className={styles.receiptActions}>
-                  <Link href={buildExplorerAddressUrl(tokenAddress)} target="_blank" rel="noreferrer" className={styles.linkButton}>
+                  <Link href={buildExplorerAddressUrl(tokenAddress, selectedNetwork.chainId)} target="_blank" rel="noreferrer" className={styles.linkButton}>
                     View token
                   </Link>
                   {deployTxHash && (
-                    <Link href={buildExplorerTxUrl(deployTxHash)} target="_blank" rel="noreferrer" className={styles.linkButton}>
+                    <Link href={buildExplorerTxUrl(deployTxHash, selectedNetwork.chainId)} target="_blank" rel="noreferrer" className={styles.linkButton}>
                       View deploy tx
                     </Link>
                   )}
@@ -747,7 +863,7 @@ export default function B20SkillDemoClient() {
               <div className={styles.receipt} style={{ marginTop: 14 }}>
                 <strong>Mint confirmed</strong>
                 <p>Minted {mintAmount} {tokenSymbol} to {shortAddress(activeWalletAddress)}</p>
-                <Link href={buildExplorerTxUrl(mintTxHash)} target="_blank" rel="noreferrer" className={styles.linkButton}>
+                <Link href={buildExplorerTxUrl(mintTxHash, selectedNetwork.chainId)} target="_blank" rel="noreferrer" className={styles.linkButton}>
                   View mint tx
                 </Link>
               </div>

@@ -9,6 +9,8 @@ import {
 } from "viem";
 
 export const B20_FACTORY_ADDRESS = "0xB20f000000000000000000000000000000000000" as const;
+export const BASE_MAINNET_CHAIN_ID = 8453;
+export const BASE_MAINNET_RPC = "https://mainnet.base.org";
 export const BASE_SEPOLIA_CHAIN_ID = 84532;
 export const BASE_SEPOLIA_RPC = "https://sepolia.base.org";
 export const DEFAULT_CONTRACT_URI = "https://ai2human.work/agent/b20/manifest.json";
@@ -255,6 +257,9 @@ export function encodeCreateB20Call(plan: B20DeployPlan) {
 }
 
 export function buildExplorerAddressUrl(address: string, chainId = BASE_SEPOLIA_CHAIN_ID) {
+  if (chainId === BASE_MAINNET_CHAIN_ID) {
+    return `https://basescan.org/address/${address}`;
+  }
   if (chainId === BASE_SEPOLIA_CHAIN_ID) {
     return `https://sepolia.basescan.org/address/${address}`;
   }
@@ -262,6 +267,9 @@ export function buildExplorerAddressUrl(address: string, chainId = BASE_SEPOLIA_
 }
 
 export function buildExplorerTxUrl(txHash: string, chainId = BASE_SEPOLIA_CHAIN_ID) {
+  if (chainId === BASE_MAINNET_CHAIN_ID) {
+    return `https://basescan.org/tx/${txHash}`;
+  }
   if (chainId === BASE_SEPOLIA_CHAIN_ID) {
     return `https://sepolia.basescan.org/tx/${txHash}`;
   }
