@@ -88,17 +88,17 @@ const examples = [
     summary: "Proof-gated access token for the network",
     variant: "ASSET" as const,
     name: "AI2Human Proof Token",
-    symbol: "A2HP",
+    symbol: "PROOF",
     decimals: 18,
-    supplyCap: "100000000",
+    supplyCap: "100000000000",
     prompt:
-      "Create the AI2Human Proof Token as a B20 asset. Max supply 100,000,000. Mint access requires AI2Human proof. Roles and allowlists should be granted only after structured human verification.",
+      "Create the AI2Human Proof Token as a B20 asset. Max supply 100,000,000,000. Mint access requires AI2Human proof. Roles and allowlists should be granted only after structured human verification.",
     token: {
       variant: "ASSET",
       name: "AI2Human Proof Token",
-      symbol: "A2HP",
+      symbol: "PROOF",
       decimals: 18,
-      maxSupply: "100000000",
+      maxSupply: "100000000000",
       initialAdmin: "0x1111111111111111111111111111111111111111",
       contractURI: "https://ai2human.io/agent/b20/manifest.json",
       useCase: "ai2human-proof-network"
