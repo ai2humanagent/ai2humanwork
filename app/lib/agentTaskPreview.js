@@ -158,6 +158,12 @@ export function getMissingAgentTaskInputs(input = {}, rewardDistribution) {
       if (!funding.depositAmount) missingInputs.push("depositAmount");
     }
   }
+
+  // Public production campaigns created through an agent must have a funded
+  // AI2Human-managed PrizePool. Draft creation returns its funding invoice.
+  if (funding.environment === "production" && funding.fundingMode !== "ai2human_managed_pool") {
+    missingInputs.push("fundingMode=ai2human_managed_pool");
+  }
   return missingInputs;
 }
 
@@ -170,6 +176,7 @@ export function buildNextQuestions(missingInputs = []) {
     deadline: "What exact deadline or task window should this activity use?",
     brief: "What should humans do, what proof should they submit, and when is it complete?",
     fundingMode: "Which funding mode should this campaign use: ai2human_managed_pool, test_no_payout, unfunded_campaign, escrow_deposit, or prize_pool_contract?",
+    "fundingMode=ai2human_managed_pool": "Production Agent API campaigns must use ai2human_managed_pool. AI2Human creates the PrizePool and returns the Base USDC funding invoice after draft creation.",
     validFundingMode: "Use a supported funding mode: ai2human_managed_pool, test_no_payout, unfunded_campaign, escrow_deposit, or prize_pool_contract.",
     environment: "Is this campaign test or production?",
     "environment=test": "For test_no_payout campaigns, confirm environment is test.",

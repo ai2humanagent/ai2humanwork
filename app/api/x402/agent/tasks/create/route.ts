@@ -164,7 +164,7 @@ function normalizeA2mcpTaskInput(input: Record<string, unknown>, paid: boolean) 
   const requestedEnvironment = readString(source.environment);
 
   const environment = paid ? readString(requestedEnvironment, "production") : "test";
-  const fundingMode = paid ? readString(requestedFundingMode, "unfunded_campaign") : "test_no_payout";
+  const fundingMode = paid ? "ai2human_managed_pool" : "test_no_payout";
   const brief = [
     description,
     proofRequired.length ? `Required proof: ${proofRequired.join(", ")}.` : "",
@@ -190,7 +190,7 @@ function normalizeA2mcpTaskInput(input: Record<string, unknown>, paid: boolean) 
     completionLoop: "task -> human execution -> structured proof -> verify -> settle",
     environment,
     fundingMode,
-    publishNow: source.publishNow === true,
+    publishNow: false,
     authenticatedTest: !paid,
     rewardDistribution: source.rewardDistribution,
     campaignLinks: source.campaignLinks,

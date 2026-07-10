@@ -66,6 +66,18 @@ test("agent lucky draw preview requires funding mode and environment", () => {
   assert.ok(result.nextQuestions.some((item) => item.field === "fundingMode"));
 });
 
+test("production Agent API campaigns require a managed PrizePool", () => {
+  const payload = {
+    ...readExample("create-lucky-draw-task.json"),
+    environment: "production",
+    fundingMode: "unfunded_campaign"
+  };
+  const result = buildAgentTaskPreview(payload);
+
+  assert.equal(result.readyToCreate, false);
+  assert.ok(result.missingInputs.includes("fundingMode=ai2human_managed_pool"));
+});
+
 test("agent preview preserves optional holder-only eligibility", () => {
   const payload = readExample("create-lucky-draw-task.json");
   payload.eligibility = {

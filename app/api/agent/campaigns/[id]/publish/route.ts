@@ -36,6 +36,9 @@ function readCampaignFundingMode(value: unknown): CampaignFundingMode | undefine
 }
 
 function canPublishWithFunding(task: Awaited<ReturnType<typeof readDb>>["tasks"][number], contractPreflight: { ok?: boolean }, fundingPlan: ReturnType<typeof readFundingPlan>) {
+  if (task.campaign?.environment === "production" && fundingPlan.fundingMode !== "ai2human_managed_pool") {
+    return { ok: false, error: "Production Agent API campaigns require an AI2Human-managed PrizePool and confirmed Base USDC funding." };
+  }
   if (fundingPlan.payoutDisabled) return { ok: true };
   if (fundingPlan.fundingMode === "unfunded_campaign") return { ok: true };
   if (fundingPlan.fundingMode === "prize_pool_contract" || fundingPlan.fundingMode === "ai2human_managed_pool") {

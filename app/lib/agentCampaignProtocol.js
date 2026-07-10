@@ -312,7 +312,9 @@ export function buildAgentCampaignTask(input = {}, preview) {
   const fundingPlan = preview.fundingPlan || readFundingPlan(input, rewardDistribution);
   const now = new Date().toISOString();
   const taskId = readString(input.id) || `agent-campaign-${crypto.randomUUID().slice(0, 12)}`;
-  const isDraft = input.publishNow !== true;
+  // Agent-created work always starts as a draft. Publishing must happen through
+  // the gated publish endpoint after managed-pool funding is verified.
+  const isDraft = true;
 
   return {
     id: taskId,

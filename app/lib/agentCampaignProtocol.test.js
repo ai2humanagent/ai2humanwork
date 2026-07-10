@@ -41,6 +41,16 @@ test("agent campaign task starts as draft by default", async () => {
   assert.equal(task.drawResult.winners.length, 0);
 });
 
+test("agent campaign creation ignores publishNow and always starts as a draft", async () => {
+  const db = { tasks: [] };
+  const payload = { ...readExample("create-lucky-draw-task.json"), publishNow: true };
+  const preview = await buildAgentCampaignPreview(db, payload);
+  const task = buildAgentCampaignTask(payload, preview);
+
+  assert.equal(task.taskState, "closed");
+  assert.equal(task.campaign.agentLifecycle.status, "draft");
+});
+
 test("agent campaign contract preflight blocks reused pool addresses", async () => {
   const poolAddress = "0x1111111111111111111111111111111111111111";
   const payload = {
