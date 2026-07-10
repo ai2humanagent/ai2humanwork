@@ -443,7 +443,7 @@ export default function AgentSkillConsoleClient() {
             <div className={styles.links}>
               <Link href="/agent/skill.md">Read skill.md</Link>
               <Link href="/agent/manifest.json">Open manifest</Link>
-              <Link href="/agent/openclaw-test.md">OpenClaw test script</Link>
+              <Link href="/agent/openclaw.md">OpenClaw launch guide</Link>
               <Link href="/agent/b20">B20 Proof Gateway</Link>
             </div>
           </aside>

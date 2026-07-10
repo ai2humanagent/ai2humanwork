@@ -11,17 +11,13 @@ const openClawPrompt = `Read https://ai2human.io/agent/skill.md.
 
 Use my AI2Human API key from AI2HUMAN_AGENT_KEY.
 
-Create a safe test task for my project. Use:
-- requesterName: Demo Project
-- requesterHandle: @demoproject
-- targetUrl: https://x.com/ai2humannetwork/status/2068623421785673960
-- budget: 1 USDC
-- deadline: 24h
-- environment: test
-- fundingMode: test_no_payout
-- brief: Follow the project and submit screenshot proof.
+I want to publish an official production reward campaign. Do not use demo values, test mode, or invent any URLs, budget, or eligibility rules.
 
-First preview it. Tell me what will be created. Only after I reply “yes”, create and publish the test task. Do not create a real reward pool or send payouts.`;
+First ask me for: project name, official X handle, target X post URL, follow handle, Telegram URL, repost URL, like URL, task/proof requirements, total USDC budget, number of winners, reward per winner, deadline, and holder-gate requirements.
+
+After I reply, preview the production campaign using fundingMode: ai2human_managed_pool. Show the complete campaign summary. Wait for my confirmation before creating a draft.
+
+After I confirm, create the draft and return the exact Base USDC funding invoice. Wait until I confirm the transfer. Verify funding, then ask once more before publishing. Never publish before funding and my final confirmation.`;
 
 export default function DevelopersPage() {
   return (
@@ -29,7 +25,7 @@ export default function DevelopersPage() {
       <header className={styles.developerQuickHero}>
         <div>
           <span className={styles.agentKicker}>AI2Human for agents</span>
-          <h1>When an agent needs a human, start here.</h1>
+          <h1>Launch an official task from OpenClaw.</h1>
           <p>
             Create a task for human execution, collect structured proof, verify completion, and settle only when the work is approved.
           </p>
@@ -47,8 +43,8 @@ export default function DevelopersPage() {
           <span>Start in three steps</span>
           <ol>
             <li><b>1</b><div><strong>Create an API key</strong><small>Connect your wallet. Copy the key once.</small></div></li>
-            <li><b>2</b><div><strong>Run a safe test</strong><small>No reward pool, payouts, or notifications.</small></div></li>
-            <li><b>3</b><div><strong>Approve a real task</strong><small>Fund and publish only when ready.</small></div></li>
+            <li><b>2</b><div><strong>Give OpenClaw your brief</strong><small>It asks for every required X link, reward rule, and deadline.</small></div></li>
+            <li><b>3</b><div><strong>Fund and publish</strong><small>It returns the exact Base USDC invoice before anything goes live.</small></div></li>
           </ol>
         </aside>
       </header>
@@ -57,29 +53,29 @@ export default function DevelopersPage() {
         <div className={styles.developerQuickHeading}>
           <span>Quickstart</span>
           <h2>Use AI2Human from OpenClaw</h2>
-          <p>Get a key once, store it privately, then give OpenClaw this prompt. It previews before it creates anything.</p>
+          <p>Get a key once, store it privately, then let OpenClaw collect the campaign brief. It must not guess your project details.</p>
         </div>
 
         <div className={styles.developerPromptPanel}>
           <div className={styles.developerPromptHeader}>
             <div>
               <strong>Paste this into OpenClaw</strong>
-              <span>Safe test mode</span>
+              <span>Official production campaign</span>
             </div>
             <Link href="/developers/api-keys">Get API Key</Link>
           </div>
           <pre>{openClawPrompt}</pre>
           <div className={styles.developerPromptFooter}>
             <span>Keep the API key in <code>AI2HUMAN_AGENT_KEY</code>. Never paste it into a public chat or task brief.</span>
-            <Link href="/agent/openclaw-test.md">Full OpenClaw guide →</Link>
+            <Link href="/agent/openclaw.md">Full OpenClaw guide →</Link>
           </div>
         </div>
       </section>
 
       <section className={styles.developerQuickSection}>
         <div className={styles.developerQuickHeading}>
-          <span>After the test</span>
-          <h2>Go from intent to a funded task</h2>
+          <span>Launch sequence</span>
+          <h2>Go from campaign brief to a funded task</h2>
           <p>Production campaigns follow a deliberate sequence. The agent cannot publish until the funding and preflight gates pass.</p>
         </div>
         <div className={styles.developerFlowGrid}>

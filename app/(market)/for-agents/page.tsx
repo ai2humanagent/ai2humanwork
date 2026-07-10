@@ -80,9 +80,9 @@ const resources = [
     text: "A reward campaign payload using lucky draw distribution."
   },
   {
-    title: "OpenClaw Test Script",
-    href: "/agent/openclaw-test.md",
-    text: "A copyable prompt for testing the Agent Skill from OpenClaw without creating a live task."
+    title: "OpenClaw Launch Guide",
+    href: "/agent/openclaw.md",
+    text: "A copyable production workflow: collect the project brief, fund Base USDC, then publish with confirmation."
   },
   {
     title: "B20 Issuance Flow",

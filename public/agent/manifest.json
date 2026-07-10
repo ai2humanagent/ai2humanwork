@@ -8,6 +8,7 @@
   "developer_api_keys": "https://ai2human.io/developers/api-keys",
   "okx_ai_asp": "https://ai2human.io/agent/okx-ai-asp.md",
   "okx_ai_a2mcp_endpoint": "https://ai2human.io/api/x402/agent/tasks/create",
+  "openclaw_launch_guide": "https://ai2human.io/agent/openclaw.md",
   "openclaw_test": "https://ai2human.io/agent/openclaw-test.md",
   "b20_skill": "https://ai2human.io/agent/b20-skill.md",
   "b20_demo": "https://ai2human.io/agent/b20",

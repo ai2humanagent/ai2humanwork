@@ -46,6 +46,12 @@ Developer API keys:
 https://ai2human.io/developers/api-keys
 ```
 
+Official OpenClaw production launch guide:
+
+```text
+https://ai2human.io/agent/openclaw.md
+```
+
 Every Agent API request requires an API key, including `test_no_payout` requests. Test mode disables payouts; it does not disable authentication. Send the key as:
 
 ```text
@@ -235,7 +241,22 @@ Use `eligibility.tokenGate` when the requester wants only holders of a configure
 
 Do not invent token contracts, links, budgets, deadlines, winner counts, or handles. Ask the requester project for exact values.
 
-## Safe Test Payloads
+## Official OpenClaw Launch
+
+For a real campaign, OpenClaw must collect the project identity, exact social URLs, proof rules, reward design, deadline, and eligibility from the project owner. It must use:
+
+```text
+environment: production
+fundingMode: ai2human_managed_pool
+```
+
+It previews first, creates a draft only after approval, returns the exact Base USDC funding invoice, verifies the transfer, and asks for final approval before publishing.
+
+```text
+https://ai2human.io/agent/openclaw.md
+```
+
+## Optional Test Payloads
 
 ```text
 https://ai2human.io/agent/examples/create-human-task.json
