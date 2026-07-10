@@ -40,6 +40,18 @@ Machine-readable manifest:
 https://ai2human.io/agent/manifest.json
 ```
 
+Developer API keys:
+
+```text
+https://ai2human.io/developers/api-keys
+```
+
+Every Agent API request requires an API key, including `test_no_payout` requests. Test mode disables payouts; it does not disable authentication. Send the key as:
+
+```text
+x-agent-api-key: <YOUR_KEY>
+```
+
 Template catalog:
 
 ```text
@@ -84,7 +96,7 @@ If `readyToCreate=false`, ask the returned `nextQuestions`. Do not create the ca
 
 ### 2. Create a draft
 
-Create writes a draft campaign. Drafts do not notify users.
+Create writes a draft campaign. Drafts do not notify users. Test and production drafts both require `x-agent-api-key`.
 
 ```bash
 curl https://ai2human.io/api/agent/campaigns \
@@ -131,6 +143,40 @@ Published campaigns notify eligible users and open the task for proof submission
   "proofPhrase": "#A2H",
   "brief": "Complete the action, keep it visible until review, and submit screenshot-backed proof.",
   "completionLoop": "task -> human execution -> proof -> verify -> settle"
+}
+```
+
+## Authenticated Test Payload
+
+Use this first when testing from OpenClaw, Claude, Codex, or another agent. It requires an API key but creates a safe no-payout test campaign that cannot create PrizePools, notify real users, or send rewards.
+
+```json
+{
+  "templateId": "x_light_engagement",
+  "requesterName": "Your Project",
+  "requesterHandle": "@yourproject",
+  "targetUrl": "https://x.com/yourproject/status/...",
+  "environment": "test",
+  "fundingMode": "test_no_payout",
+  "campaignLinks": {
+    "followHandle": "@yourproject",
+    "telegramUrl": "https://t.me/yourproject",
+    "repostUrl": "https://x.com/yourproject/status/...",
+    "likeUrl": "https://x.com/yourproject/status/..."
+  },
+  "budget": "20 USDC",
+  "deadline": "24h",
+  "blockedHumanStep": "Real accounts must complete the requested action and submit proof.",
+  "proofPhrase": "#A2H",
+  "brief": "Complete the action, keep it visible until review, and submit screenshot-backed proof.",
+  "completionLoop": "task -> human execution -> proof -> verify -> settle",
+  "rewardDistribution": {
+    "mode": "lucky_draw",
+    "totalPool": "20 USDC",
+    "perWinner": "1 USDC",
+    "maxWinners": 20,
+    "drawTime": "after deadline"
+  }
 }
 ```
 
@@ -207,7 +253,7 @@ https://ai2human.io/agent/openclaw-test.md
 | Contract preflight | POST | `/api/agent/campaigns/{id}/preflight` | `x-agent-api-key` |
 | Publish draft | POST | `/api/agent/campaigns/{id}/publish` | `x-agent-api-key` |
 | B20 proof-to-policy preview | POST | `/api/agent/b20/preview` | Not required |
-| OKX.AI A2MCP task create | POST | `/api/x402/agent/tasks/create` | x402 supported / public demo no-payout |
+| OKX.AI A2MCP task create | POST | `/api/x402/agent/tasks/create` | x402 payment or `x-agent-api-key` |
 
 ## What The Agent Should Say Back
 

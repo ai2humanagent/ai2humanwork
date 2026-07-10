@@ -306,6 +306,7 @@ export type UserAccount = {
     emailTaskAlerts?: boolean;
     emailRewardAlerts?: boolean;
   };
+  developerApiKeys?: DeveloperApiKeyRecord[];
   xAccount?: {
     subject: string;
     username: string;
@@ -313,6 +314,18 @@ export type UserAccount = {
     profilePictureUrl?: string;
     linkedAt?: string;
   };
+};
+
+export type DeveloperApiKeyRecord = {
+  id: string;
+  name: string;
+  keyPrefix: string;
+  apiKeyHash: string;
+  scopes: string[];
+  state: "active" | "revoked";
+  requests: number;
+  createdAt: string;
+  revokedAt?: string;
 };
 
 export type AuthSession = {
@@ -982,6 +995,7 @@ async function writeDbToFile(db: Db): Promise<void> {
 type StoredXAccount = (Partial<UserAccount["xAccount"]> & {
   __contactEmail?: string;
   __notificationPreferences?: UserAccount["notificationPreferences"];
+  __developerApiKeys?: UserAccount["developerApiKeys"];
 }) | null;
 
 interface SbUser {
@@ -1081,6 +1095,15 @@ function readNotificationPreferencesFromSbUser(s: SbUser): UserAccount["notifica
   return undefined;
 }
 
+function readDeveloperApiKeysFromSbUser(s: SbUser): UserAccount["developerApiKeys"] | undefined {
+  const xAccount = readStoredXAccount(s.x_account);
+  const embedded = xAccount.__developerApiKeys;
+  if (!Array.isArray(embedded)) return undefined;
+  return embedded
+    .filter((item) => item && typeof item === "object")
+    .map((item) => item as NonNullable<UserAccount["developerApiKeys"]>[number]);
+}
+
 function readPublicXAccountFromSbUser(s: SbUser): UserAccount["xAccount"] | undefined {
   const xAccount = readStoredXAccount(s.x_account);
   if (typeof xAccount.subject !== "string" || typeof xAccount.username !== "string") {
@@ -1105,6 +1128,7 @@ function sbUserToHuman(s: SbUser): UserAccount {
     walletAddress: s.wallet_address || undefined,
     contactEmail: readContactEmailFromSbUser(s),
     notificationPreferences: readNotificationPreferencesFromSbUser(s),
+    developerApiKeys: readDeveloperApiKeysFromSbUser(s),
     authProvider: (s.auth_provider || undefined) as "privy" | "local" | undefined,
     privyUserId: s.privy_user_id || undefined,
     xAccount: readPublicXAccountFromSbUser(s)
@@ -1162,6 +1186,9 @@ function sbServiceToService(s: SbService): HumanService { return { id: s.id, pro
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function humanToSbUser(h: UserAccount, includeContactColumns = false): any {
   const storedXAccount: Record<string, unknown> = h.xAccount ? { ...h.xAccount } : {};
+  if (h.developerApiKeys?.length) {
+    storedXAccount.__developerApiKeys = h.developerApiKeys;
+  }
   if (!includeContactColumns) {
     if (h.contactEmail) {
       storedXAccount.__contactEmail = h.contactEmail;
@@ -1192,6 +1219,11 @@ function humanToSbUser(h: UserAccount, includeContactColumns = false): any {
 
 function userToSbProfileUpdate(h: UserAccount, includeContactColumns = false): Record<string, unknown> {
   const storedXAccount: Record<string, unknown> = h.xAccount ? { ...h.xAccount } : {};
+  if (h.developerApiKeys?.length) {
+    storedXAccount.__developerApiKeys = h.developerApiKeys;
+  } else {
+    delete storedXAccount.__developerApiKeys;
+  }
   if (!includeContactColumns) {
     if (h.contactEmail) {
       storedXAccount.__contactEmail = h.contactEmail;
@@ -1207,14 +1239,13 @@ function userToSbProfileUpdate(h: UserAccount, includeContactColumns = false): R
 
   return {
     human_id: h.humanId ?? null,
+    x_account: Object.keys(storedXAccount).length > 0 ? storedXAccount : null,
     ...(includeContactColumns
       ? {
           contact_email: h.contactEmail ?? null,
           notification_preferences: h.notificationPreferences ?? null
         }
-      : {
-          x_account: Object.keys(storedXAccount).length > 0 ? storedXAccount : null
-        })
+      : {})
   };
 }
 

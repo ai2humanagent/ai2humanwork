@@ -5,6 +5,7 @@
   "homepage": "https://ai2human.io",
   "skill": "https://ai2human.io/agent/skill.md",
   "skill_console": "https://ai2human.io/agent/skill-console",
+  "developer_api_keys": "https://ai2human.io/developers/api-keys",
   "okx_ai_asp": "https://ai2human.io/agent/okx-ai-asp.md",
   "okx_ai_a2mcp_endpoint": "https://ai2human.io/api/x402/agent/tasks/create",
   "openclaw_test": "https://ai2human.io/agent/openclaw-test.md",
@@ -37,7 +38,7 @@
       "method": "POST",
       "url": "https://ai2human.io/api/agent/campaigns/preview",
       "content_type": "application/json",
-      "auth": "x-agent-api-key",
+      "auth": "x-agent-api-key required for test and production.",
       "description": "Dry-run a campaign payload. Validates fields, asks missing questions, describes funding mode, winner distribution, and contract preflight without creating a task.",
       "required_fields": ["templateId", "requesterName", "requesterHandle", "targetUrl", "budget", "deadline", "brief"],
       "conditional_required_fields": {
@@ -72,7 +73,7 @@
       "method": "POST",
       "url": "https://ai2human.io/api/agent/campaigns",
       "content_type": "application/json",
-      "auth": "x-agent-api-key",
+      "auth": "x-agent-api-key required for test and production.",
       "required_fields": ["templateId", "requesterName", "requesterHandle", "targetUrl", "budget", "deadline", "brief"],
       "conditional_required_fields": {
         "rewardDistribution.mode=lucky_draw": [
@@ -83,7 +84,7 @@
         ]
       },
       "optional_fields": ["targetUrl", "campaignLinks", "proofPhrase", "rewardDistribution", "fundingMode", "environment", "poolAddress", "agentId", "depositAmount"],
-      "note": "Creates a draft campaign by default. For fundingMode=ai2human_managed_pool, AI2Human deploys a PrizePool and returns fundingPlan.fundingInvoice with a real Base recipient address. Do not ask the requester to inspect the web page for the address. Drafts do not notify users. Use campaign_publish after funding/preflight is ready.",
+      "note": "Creates a draft campaign by default. Every request requires x-agent-api-key. test_no_payout disables payouts but does not disable authentication. For fundingMode=ai2human_managed_pool, AI2Human deploys a PrizePool and returns fundingPlan.fundingInvoice with a real Base recipient address. Do not ask the requester to inspect the web page for the address. Drafts do not notify users. Use campaign_publish after funding/preflight is ready.",
       "response": {
         "success_status": 201,
         "body": {
@@ -100,12 +101,12 @@
       "method": "POST",
       "url": "https://ai2human.io/api/x402/agent/tasks/create",
       "content_type": "application/json",
-      "auth": "x402 supported; public no-payout demo mode allowed",
+      "auth": "x402 payment or x-agent-api-key required",
       "description": "OKX.AI A2MCP endpoint for creating AI2Human human-executed or human-verified tasks from one agent call. Returns taskId, task URL, proof schema, verification checks, status, and settlement/funding mode.",
       "demo_mode": {
         "environment": "test",
         "fundingMode": "test_no_payout",
-        "note": "Safe no-payout mode can be tested without API key or payment."
+        "note": "Safe no-payout mode requires x-agent-api-key. Paid production calls use x402."
       },
       "metadata": "GET https://ai2human.io/api/x402/agent/tasks/create",
       "registration_guide": "https://ai2human.io/agent/okx-ai-asp.md"
@@ -114,7 +115,7 @@
       "method": "GET or POST",
       "url": "https://ai2human.io/api/agent/campaigns/{id}/funding",
       "content_type": "application/json",
-      "auth": "x-agent-api-key",
+      "auth": "x-agent-api-key required for test and production.",
       "description": "Returns the machine-readable funding invoice and current funding/preflight status. POST also creates or repairs the managed PrizePool for ai2human_managed_pool drafts when no usable pool exists.",
       "response": {
         "success_status": 200,
@@ -131,7 +132,7 @@
       "method": "POST",
       "url": "https://ai2human.io/api/agent/campaigns/{id}/preflight",
       "content_type": "application/json",
-      "auth": "x-agent-api-key",
+      "auth": "x-agent-api-key required for test and production.",
       "description": "Runs contract preflight for PrizePool-backed campaigns after the project has funded the pool."
     },
     "campaign_fund_escrow": {

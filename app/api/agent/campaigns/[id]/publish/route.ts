@@ -13,7 +13,7 @@ import {
 } from "../../../../../lib/agentCampaignProtocol.js";
 import { addNotification, sendEmailNotification } from "../../../../../lib/notificationDelivery";
 import { isReadyForTaskNotifications } from "../../../../../lib/operatorAccess";
-import { isPublicAgentCampaignRequest, requireAgentCampaignAuth } from "../../auth";
+import { requireAgentCampaignAuth } from "../../auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -58,6 +58,9 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const authError = await requireAgentCampaignAuth(request);
+  if (authError) return authError;
+
   const { id } = await params;
   const body = await request.json().catch(() => ({}));
   const db = await readDb();
@@ -80,10 +83,6 @@ export async function POST(
     environment: body.environment || task.campaign?.environment,
     poolAddress: body.poolAddress || task.poolAddress || task.campaign?.poolAddress
   };
-  const publicAccess = isPublicAgentCampaignRequest(request, input);
-  const authError = await requireAgentCampaignAuth(request, { allowPublicTest: true, input });
-  if (authError) return authError;
-
   const fundingPlan = readFundingPlan(input, task.rewardDistribution);
   const existingFundingPlan =
     task.campaign?.agentLifecycle?.fundingPlan && typeof task.campaign.agentLifecycle.fundingPlan === "object"
@@ -140,7 +139,7 @@ export async function POST(
       createdAt: publishedAt
     });
 
-    if (!publicAccess && environment !== "test") {
+    if (environment !== "test") {
       for (const user of draft.users) {
         if (!isReadyForTaskNotifications(user)) continue;
         const notification = addNotification(draft, {
@@ -165,5 +164,5 @@ export async function POST(
     )
   );
 
-  return NextResponse.json({ success: true, taskId: id, publishedAt, fundingPlan: publishFundingPlan, contractPreflight, notifications: notifications.length, publicAccess });
+  return NextResponse.json({ success: true, taskId: id, publishedAt, fundingPlan: publishFundingPlan, contractPreflight, notifications: notifications.length });
 }

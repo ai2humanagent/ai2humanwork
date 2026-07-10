@@ -3,7 +3,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import styles from "../../market.module.css";
 
-type KeyState = "active" | "pending" | "revoked";
+type KeyState = "active" | "revoked";
 
 type ApiKeyCard = {
   id: string;
@@ -21,22 +21,8 @@ type RequestStatus =
   | { state: "success"; message: string }
   | { state: "error"; message: string };
 
-const storageKey = "ai2human.developer.apiKeys.v1";
-
 const scopeOptions = ["Agent API", "LLM Gateway", "x402 Cloud", "Read-only", "IP allowlist"];
 const defaultScopes = ["Agent API", "Read-only"];
-
-function createLocalKey(name: string, requestId: string, scopes: string[]): ApiKeyCard {
-  return {
-    id: requestId,
-    name,
-    maskedKey: `a2h_live_${requestId.slice(-6)}••••••••`,
-    scopes,
-    state: "pending",
-    createdAt: new Date().toISOString(),
-    requests: 0
-  };
-}
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("en", {
@@ -48,16 +34,6 @@ function formatDate(value: string) {
   }).format(new Date(value));
 }
 
-function loadStoredKeys(): ApiKeyCard[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const parsed = JSON.parse(window.localStorage.getItem(storageKey) || "[]");
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
 export default function ApiKeyRequestClient() {
   const [apiKeyName, setApiKeyName] = useState("");
   const [selectedScopes, setSelectedScopes] = useState(defaultScopes);
@@ -65,15 +41,23 @@ export default function ApiKeyRequestClient() {
   const [query, setQuery] = useState("");
   const [keys, setKeys] = useState<ApiKeyCard[]>([]);
   const [status, setStatus] = useState<RequestStatus>({ state: "idle" });
+  const [revealedKey, setRevealedKey] = useState("");
+  const [copied, setCopied] = useState("");
 
   useEffect(() => {
-    setKeys(loadStoredKeys());
+    void loadKeys();
   }, []);
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    window.localStorage.setItem(storageKey, JSON.stringify(keys));
-  }, [keys]);
+  async function loadKeys() {
+    try {
+      const response = await fetch("/api/developers/api-keys", { credentials: "same-origin", cache: "no-store" });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || "Unable to load API keys.");
+      setKeys(Array.isArray(payload.keys) ? payload.keys : []);
+    } catch (error) {
+      setStatus({ state: "error", message: error instanceof Error ? error.message : "Unable to load API keys." });
+    }
+  }
 
   const visibleKeys = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -103,7 +87,7 @@ export default function ApiKeyRequestClient() {
 
     setStatus({ state: "submitting" });
     try {
-      const response = await fetch("/api/developers/api-key-requests", {
+      const response = await fetch("/api/developers/api-keys", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "same-origin",
@@ -116,15 +100,15 @@ export default function ApiKeyRequestClient() {
       if (!response.ok) {
         setStatus({
           state: "error",
-          message: payload.error || "Unable to generate key request."
+          message: payload.error || "Unable to generate API key."
         });
         return;
       }
 
-      const nextKey = createLocalKey(name, payload.requestId || crypto.randomUUID(), selectedScopes);
-      setKeys((current) => [nextKey, ...current]);
+      setKeys((current) => [payload.key as ApiKeyCard, ...current]);
+      setRevealedKey(String(payload.apiKey || ""));
       setApiKeyName("");
-      setStatus({ state: "success", message: "API key request created. Approval is pending." });
+      setStatus({ state: "success", message: "API key created. Copy it now; it will not be shown again." });
     } catch (error) {
       setStatus({
         state: "error",
@@ -133,12 +117,25 @@ export default function ApiKeyRequestClient() {
     }
   }
 
-  function revokeKey(id: string) {
-    setKeys((current) => current.map((item) => (item.id === id ? { ...item, state: "revoked" } : item)));
+  async function revokeKey(id: string) {
+    try {
+      const response = await fetch(`/api/developers/api-keys/${encodeURIComponent(id)}`, {
+        method: "DELETE",
+        credentials: "same-origin"
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || "Unable to revoke API key.");
+      setKeys((current) => current.map((item) => (item.id === id ? { ...item, state: "revoked" } : item)));
+      setStatus({ state: "success", message: "API key revoked. Calls using it will now be rejected." });
+    } catch (error) {
+      setStatus({ state: "error", message: error instanceof Error ? error.message : "Unable to revoke API key." });
+    }
   }
 
-  function removeKey(id: string) {
-    setKeys((current) => current.filter((item) => item.id !== id));
+  async function copyText(label: string, value: string) {
+    await navigator.clipboard.writeText(value);
+    setCopied(label);
+    window.setTimeout(() => setCopied(""), 1600);
   }
 
   return (
@@ -178,6 +175,21 @@ export default function ApiKeyRequestClient() {
 
         {status.state === "error" ? <p className={styles.apiStatusError}>{status.message}</p> : null}
         {status.state === "success" ? <p className={styles.apiStatusSuccess}>{status.message}</p> : null}
+        {revealedKey ? (
+          <article className={styles.apiKeyCard}>
+            <div className={styles.apiKeyCardTop}>
+              <h3>Your new API key</h3>
+              <span className={styles.apiKeyState_active}>shown once</span>
+            </div>
+            <code>{revealedKey}</code>
+            <div className={styles.apiKeyActions}>
+              <button type="button" onClick={() => copyText("new-key", revealedKey)}>
+                {copied === "new-key" ? "Copied" : "Copy API key"}
+              </button>
+              <button type="button" onClick={() => setRevealedKey("")}>Hide</button>
+            </div>
+          </article>
+        ) : null}
       </section>
 
       <section className={styles.apiKeysListSection}>
@@ -200,7 +212,7 @@ export default function ApiKeyRequestClient() {
           </label>
 
           <div className={styles.apiFilterGroup}>
-            {(["all", "active", "pending", "revoked"] as const).map((item) => (
+            {(["all", "active", "revoked"] as const).map((item) => (
               <button
                 key={item}
                 type="button"
@@ -210,7 +222,7 @@ export default function ApiKeyRequestClient() {
                 {item === "all" ? "All" : item[0].toUpperCase() + item.slice(1)}
               </button>
             ))}
-            <button type="button" className={styles.apiRefreshButton} onClick={() => setKeys(loadStoredKeys())}>
+            <button type="button" className={styles.apiRefreshButton} onClick={() => void loadKeys()}>
               ↻ Refresh
             </button>
           </div>
@@ -240,11 +252,13 @@ export default function ApiKeyRequestClient() {
                   </div>
                 </dl>
                 <div className={styles.apiKeyActions}>
-                  <button type="button">View details</button>
+                  <button type="button" onClick={() => copyText(item.id, item.id)}>
+                    {copied === item.id ? "Copied" : "Copy key ID"}
+                  </button>
                   {item.state !== "revoked" ? (
-                    <button type="button" onClick={() => revokeKey(item.id)}>Revoke</button>
+                    <button type="button" onClick={() => void revokeKey(item.id)}>Revoke</button>
                   ) : (
-                    <button type="button" onClick={() => removeKey(item.id)}>Remove</button>
+                    <button type="button" disabled>Revoked</button>
                   )}
                 </div>
               </article>

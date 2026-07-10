@@ -112,6 +112,8 @@
     "read this template catalog",
     "choose a template",
     "ask the requester agent/project for every required field",
+    "obtain an API key from /developers/api-keys and send it as x-agent-api-key",
+    "for first-time testing, use environment=test and fundingMode=test_no_payout with the API key",
     "POST /api/agent/campaigns/preview",
     "if readyToCreate is false, ask nextQuestions",
     "POST /api/agent/campaigns to create a draft",

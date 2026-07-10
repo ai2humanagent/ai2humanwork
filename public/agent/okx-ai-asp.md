@@ -38,7 +38,7 @@ Metadata:
 GET https://ai2human.io/api/x402/agent/tasks/create
 ```
 
-The endpoint supports x402-style paid calls for OKX.AI A2MCP registration and also supports a public no-payout demo mode for testing.
+The endpoint supports x402-style paid calls for OKX.AI A2MCP registration. Authenticated developers can also use an AI2Human API key for no-payout testing.
 
 ## What The Endpoint Does
 
@@ -91,6 +91,7 @@ Use this first when testing with OpenClaw, Codex, Claude, or OKX.AI.
 ```bash
 curl https://ai2human.io/api/x402/agent/tasks/create \
   -H "Content-Type: application/json" \
+  -H "x-agent-api-key: $AI2HUMAN_AGENT_KEY" \
   -d '{
     "mode": "demo",
     "environment": "test",

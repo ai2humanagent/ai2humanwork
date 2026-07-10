@@ -16,6 +16,7 @@ import {
   X402_VERSION,
   encodeBase64Json
 } from "../../../../../lib/x402Shared";
+import { requireAgentCampaignAuth } from "../../../../agent/campaigns/auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -143,16 +144,6 @@ function buildX402Challenge(request: Request) {
   };
 }
 
-function isSafePublicDemo(input: Record<string, unknown>) {
-  return (
-    process.env.AI2HUMAN_A2MCP_ALLOW_PUBLIC_DEMO === "true" &&
-    (input.publicDemo === true ||
-      readString(input.mode).toLowerCase() === "demo" ||
-      (readString(input.environment).toLowerCase() === "test" &&
-        readString(input.fundingMode).toLowerCase() === "test_no_payout"))
-  );
-}
-
 function normalizeA2mcpTaskInput(input: Record<string, unknown>, paid: boolean) {
   const task = readObject(input.task);
   const source = Object.keys(task).length ? task : input;
@@ -200,7 +191,7 @@ function normalizeA2mcpTaskInput(input: Record<string, unknown>, paid: boolean) 
     environment,
     fundingMode,
     publishNow: source.publishNow === true,
-    publicDemo: !paid,
+    authenticatedTest: !paid,
     rewardDistribution: source.rewardDistribution,
     campaignLinks: source.campaignLinks,
     eligibility: source.eligibility,
@@ -244,7 +235,7 @@ async function createTask(input: Record<string, unknown>) {
   task = managed.task as Task;
   creationPreview = managed.preview;
 
-  if (input.publicDemo) {
+  if (input.authenticatedTest) {
     await upsertTaskOnly(task);
   } else {
     await updateDb((draft) => {
@@ -298,7 +289,7 @@ export async function GET(request: Request) {
     endpoint: `${baseUrl}/api/x402/agent/tasks/create`,
     x402: {
       supported: true,
-      mode: config.strict ? "required" : "supported_with_public_demo_mode",
+      mode: config.strict ? "x402_payment_or_agent_api_key" : "agent_api_key_or_optional_x402_payment",
       price: `${config.displayAmount} ${config.symbol}`,
       network: config.network,
       payTo: config.payTo,
@@ -317,27 +308,36 @@ export async function POST(request: Request) {
   try {
     const body = readObject(await request.json());
     const paymentHeader = request.headers.get(X402_PAYMENT_HEADER);
-    const demoMode = isSafePublicDemo(body);
     const paid = Boolean(paymentHeader);
     const config = getPaymentConfig();
+    const hasApiCredential = Boolean(
+      request.headers.get("x-agent-api-key") || request.headers.get("authorization")
+    );
 
-    if (config.strict && !paid && !demoMode) {
-      const challenge = buildX402Challenge(request);
-      const encodedChallenge = encodeBase64Json(challenge);
-      return NextResponse.json(
-        {
-          error: "Payment required.",
-          ...challenge
-        },
-        {
-          status: 402,
-          headers: {
-            "Cache-Control": "no-store",
-            "Access-Control-Expose-Headers": `${X402_PAYMENT_REQUIRED_HEADER}, ${X402_PAYMENT_RESPONSE_HEADER}`,
-            [X402_PAYMENT_REQUIRED_HEADER]: encodedChallenge
+    if (!paid) {
+      const authError = await requireAgentCampaignAuth(request);
+      if (authError) {
+        if (!config.strict || hasApiCredential) return authError;
+
+        const challenge = buildX402Challenge(request);
+        const encodedChallenge = encodeBase64Json(challenge);
+        return NextResponse.json(
+          {
+            error: "Agent API key or x402 payment required.",
+            code: "AGENT_AUTH_OR_PAYMENT_REQUIRED",
+            apiKeyUrl: "https://ai2human.io/developers/api-keys",
+            ...challenge
+          },
+          {
+            status: 402,
+            headers: {
+              "Cache-Control": "no-store",
+              "Access-Control-Expose-Headers": `${X402_PAYMENT_REQUIRED_HEADER}, ${X402_PAYMENT_RESPONSE_HEADER}`,
+              [X402_PAYMENT_REQUIRED_HEADER]: encodedChallenge
+            }
           }
-        }
-      );
+        );
+      }
     }
 
     const normalized = normalizeA2mcpTaskInput(body, paid);
@@ -347,12 +347,12 @@ export async function POST(request: Request) {
       a2mcp: {
         service: "AI2Human Task Router",
         paid,
-        demoMode,
+        authenticatedTest: !paid,
         x402HeaderReceived: paid,
-        paymentMode: paid ? "x402_header_received" : "public_demo_no_payout",
+        paymentMode: paid ? "x402_header_received" : "api_key_test_no_payout",
         note: paid
           ? "Payment header received. Production settlement verification should be enforced by OKX Payment SDK before broad launch."
-          : "No-payment mode is limited to test_no_payout task creation."
+          : "API-key test mode is limited to test_no_payout task creation."
       }
     };
 

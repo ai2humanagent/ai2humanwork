@@ -159,11 +159,10 @@ function readText(value: unknown) {
   return String(value || "").trim();
 }
 
-function buildCurl(endpoint: string, payload: string, includeApiKey: boolean) {
-  const authHeader = includeApiKey ? ` \\
-  -H "x-agent-api-key: $AI2HUMAN_AGENT_KEY"` : "";
+function buildCurl(endpoint: string, payload: string) {
   return `curl https://ai2human.io${endpoint} \\
-  -H "Content-Type: application/json"${authHeader} \\
+  -H "Content-Type: application/json" \\
+  -H "x-agent-api-key: $AI2HUMAN_AGENT_KEY" \\
   -d '${payload.replaceAll("'", "'\\''")}'`;
 }
 
@@ -189,8 +188,8 @@ export default function AgentSkillConsoleClient() {
 
   const taskId = readText(created?.task?.id);
   const hasApiKey = Boolean(apiKey.trim());
-  const previewCurl = payload ? buildCurl("/api/agent/campaigns/preview", stringifyJson(payload), hasApiKey) : "";
-  const createCurl = payload ? buildCurl("/api/agent/campaigns", stringifyJson(payload), hasApiKey) : "";
+  const previewCurl = payload ? buildCurl("/api/agent/campaigns/preview", stringifyJson(payload)) : "";
+  const createCurl = payload ? buildCurl("/api/agent/campaigns", stringifyJson(payload)) : "";
 
   function choosePreset(nextId: PresetId) {
     setPresetId(nextId);
@@ -210,6 +209,10 @@ export default function AgentSkillConsoleClient() {
 
   async function callApi(kind: typeof busy, endpoint: string, body?: unknown) {
     const trimmedApiKey = apiKey.trim();
+    if (!trimmedApiKey) {
+      setError("API key required. Create one in Developer API Keys, then paste it here.");
+      return;
+    }
     setBusy(kind);
     setError("");
     try {
@@ -290,22 +293,22 @@ export default function AgentSkillConsoleClient() {
 
         <section className={styles.keyPanel}>
           <div>
-            <span className={styles.kicker}>Public test mode</span>
-            <h2>API key is optional for safe testing</h2>
+            <span className={styles.kicker}>Authenticated Agent API</span>
+            <h2>Connect your agent with an API key</h2>
             <p>
-              OpenClaw can preview, create, and publish no-payout test campaigns without a key. Add a key only for
-              production campaigns, funding checks, managed pools, or real settlement flows.
+              Every request is authenticated, including no-payout tests. The key identifies the calling agent,
+              protects campaign creation, and gives AI2Human an auditable usage boundary.
             </p>
           </div>
           <div className={styles.keyInputWrap}>
             <input
               value={apiKey}
               onChange={(event) => setApiKey(event.target.value)}
-              placeholder="Optional: a2h_live_... for production"
+              placeholder="Required: paste your AI2Human API key"
               type="password"
               autoComplete="off"
             />
-            <Link href="/developers/api-keys">Need production access?</Link>
+            <Link href="/developers/api-keys">Create or manage API keys</Link>
           </div>
         </section>
 
@@ -330,10 +333,10 @@ export default function AgentSkillConsoleClient() {
             </div>
 
             <div className={styles.safeBox}>
-              <strong>Safe testing rule</strong>
+              <strong>Authenticated test rule</strong>
               <p>
-                No-key mode only accepts environment=test and fundingMode=test_no_payout. It can open a test task,
-                but it cannot create PrizePools, send payouts, or blast user notifications.
+                Use environment=test and fundingMode=test_no_payout for a safe dry run. A key is still required,
+                while PrizePools, payouts, and user notifications stay disabled.
               </p>
             </div>
           </aside>
@@ -356,16 +359,16 @@ export default function AgentSkillConsoleClient() {
             />
 
             <div className={styles.actions}>
-              <button type="button" className={styles.primaryButton} onClick={runPreview} disabled={busy !== "" || !payload}>
-                {busy === "preview" ? "Running preview..." : "Run safe preview"}
+              <button type="button" className={styles.primaryButton} onClick={runPreview} disabled={busy !== "" || !payload || !hasApiKey}>
+                {busy === "preview" ? "Running preview..." : "Run authenticated preview"}
               </button>
-              <button type="button" className={styles.secondaryButton} onClick={createDraft} disabled={busy !== "" || !payload || preview?.readyToCreate === false}>
-                {busy === "create" ? "Creating..." : hasApiKey ? "Create draft" : "Create public test"}
+              <button type="button" className={styles.secondaryButton} onClick={createDraft} disabled={busy !== "" || !payload || !hasApiKey || preview?.readyToCreate === false}>
+                {busy === "create" ? "Creating..." : "Create draft"}
               </button>
-              <button type="button" className={styles.secondaryButton} onClick={checkFunding} disabled={busy !== "" || !taskId}>
+              <button type="button" className={styles.secondaryButton} onClick={checkFunding} disabled={busy !== "" || !taskId || !hasApiKey}>
                 {busy === "funding" ? "Checking..." : "Check funding"}
               </button>
-              <button type="button" className={styles.publishButton} onClick={publishDraft} disabled={busy !== "" || !taskId}>
+              <button type="button" className={styles.publishButton} onClick={publishDraft} disabled={busy !== "" || !taskId || !hasApiKey}>
                 {busy === "publish" ? "Publishing..." : "Publish after gates"}
               </button>
             </div>
@@ -381,7 +384,7 @@ export default function AgentSkillConsoleClient() {
               <article className={styles.statusCard}>
                 <span>Draft</span>
                 <strong>{taskId ? taskId : "No draft yet"}</strong>
-                <p>{created?.task?.taskState ? `State: ${created.task.taskState}` : "No-key creation opens only safe test campaigns."}</p>
+                <p>{created?.task?.taskState ? `State: ${created.task.taskState}` : "Authenticated creation supports safe tests and production drafts."}</p>
               </article>
               <article className={styles.statusCard}>
                 <span>Funding</span>

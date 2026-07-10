@@ -1,17 +1,16 @@
 import { NextResponse } from "next/server";
 import { readDb } from "../../../../lib/store";
 import { buildAgentCampaignPreview } from "../../../../lib/agentCampaignProtocol.js";
-import { isPublicAgentCampaignRequest, requireAgentCampaignAuth } from "../auth";
+import { requireAgentCampaignAuth } from "../auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const publicAccess = isPublicAgentCampaignRequest(request, body);
-    const authError = await requireAgentCampaignAuth(request, { allowPublicTest: true, input: body });
+    const authError = await requireAgentCampaignAuth(request);
     if (authError) return authError;
+    const body = await request.json();
 
     let db: Awaited<ReturnType<typeof readDb>>;
     let dbWarning = "";
@@ -24,13 +23,10 @@ export async function POST(request: Request) {
     const preview = await buildAgentCampaignPreview(db, body);
     return NextResponse.json({
       ...preview,
-      publicAccess,
       warnings: dbWarning
         ? [
             ...(preview.warnings || []),
-            publicAccess
-              ? "Public test preview used fallback state because persistence is temporarily unavailable."
-              : `Preview used fallback DB state: ${dbWarning}`
+            `Preview used fallback DB state: ${dbWarning}`
           ]
         : preview.warnings
     });

@@ -1263,6 +1263,117 @@
   text-transform: uppercase;
 }
 
+/* Feature cards (product-page style platform grid) */
+.devFeatureGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.devFeatureCard {
+  display: grid;
+  gap: 9px;
+  border: 1px solid var(--tm-border);
+  background: rgba(255, 255, 255, 0.035);
+  border-radius: 16px;
+  padding: 18px;
+  color: inherit;
+  text-decoration: none;
+  transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+}
+
+.devFeatureCard:hover {
+  border-color: rgba(128, 255, 234, 0.3);
+  background: rgba(128, 255, 234, 0.05);
+  transform: translateY(-2px);
+}
+
+.devFeatureCard span {
+  color: var(--tm-cyan);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.devFeatureCard h3 {
+  margin: 0;
+  color: var(--tm-text);
+  font-size: 18px;
+  line-height: 1.2;
+}
+
+.devFeatureCard p {
+  margin: 0;
+  color: var(--tm-muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* Endpoint showcase (product-page style, not reference-table style) */
+.devEndpointShowcase {
+  display: grid;
+  overflow: hidden;
+  border: 1px solid rgba(128, 255, 234, 0.14);
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.devEndpointShowcaseRow {
+  display: grid;
+  grid-template-columns: 80px minmax(0, 1fr) minmax(220px, 0.52fr);
+  gap: 14px;
+  align-items: center;
+  min-height: 50px;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.02);
+  transition: background 0.15s ease;
+}
+
+.devEndpointShowcaseRow:last-child {
+  border-bottom: 0;
+}
+
+.devEndpointShowcaseRow:hover {
+  background: rgba(128, 255, 234, 0.04);
+}
+
+.devEndpointShowcaseRow strong {
+  color: var(--tm-green);
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.devEndpointShowcaseRow code {
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.9);
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.devEndpointShowcaseRow span {
+  color: var(--tm-muted);
+  font-size: 13px;
+}
+
+@media (max-width: 768px) {
+  .devFeatureGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .devEndpointShowcaseRow {
+    grid-template-columns: 72px minmax(0, 1fr);
+  }
+
+  .devEndpointShowcaseRow span {
+    grid-column: 2;
+  }
+}
+
 .devCredentialCard {
   display: grid;
   gap: 14px;

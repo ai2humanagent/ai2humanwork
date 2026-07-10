@@ -9,7 +9,7 @@ https://ai2human.io/agent/skill.md
 Then test the safe campaign flow.
 
 Goal:
-Create a no-payout test campaign preview for AI2Human.
+Create an authenticated no-payout test campaign preview and test task for AI2Human.
 
 Use this campaign:
 - requesterName: AI2Human Network
@@ -30,8 +30,21 @@ Use this campaign:
 First call:
 POST https://ai2human.io/api/agent/campaigns/preview
 
-Use the project AI2HUMAN_AGENT_KEY as `x-agent-api-key`.
-Do not create or publish unless I explicitly say so.
+Use my AI2Human API key as:
+
+`x-agent-api-key: <YOUR_KEY>`
+
+If I have not provided a key, stop and direct me to:
+https://ai2human.io/developers/api-keys
+
+The payload is safe because it uses:
+- environment: test
+- fundingMode: test_no_payout
+
+After preview succeeds, ask me before creating. If I say yes, call:
+POST https://ai2human.io/api/agent/campaigns
+
+Then return the task URL. Do not create production campaigns, managed PrizePools, funding invoices, or payouts.
 
 Return:
 1. readyToCreate
@@ -40,6 +53,7 @@ Return:
 4. nextQuestions
 5. fundingPlan
 6. the exact payload you would use for draft creation
+7. after creation, taskId and ai2humanUrl
 ```
 
 Expected behavior:
@@ -47,8 +61,9 @@ Expected behavior:
 - OpenClaw should read the skill.
 - OpenClaw should build a requester-specific payload.
 - OpenClaw should call the preview endpoint first.
+- OpenClaw must require an API key before preview or creation.
 - OpenClaw should not invent links or budgets.
-- OpenClaw should not create/publish without explicit confirmation.
+- OpenClaw should not create/publish production campaigns without explicit confirmation and credentials.
 
 Human-readable console:
 
