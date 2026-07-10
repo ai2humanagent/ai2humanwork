@@ -88,6 +88,9 @@
       "response": {
         "success_status": 201,
         "body": {
+          "ok": true,
+          "taskId": "created draft task id",
+          "ai2humanUrl": "direct URL for the created task",
           "task": "draft AI2Human task object",
           "preview": "preflight result used to create the draft; managed pool campaigns include fundingPlan.fundingInvoice"
         }

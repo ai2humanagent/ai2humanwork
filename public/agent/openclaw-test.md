@@ -44,7 +44,10 @@ The payload is safe because it uses:
 After preview succeeds, ask me before creating. If I say yes, call:
 POST https://ai2human.io/api/agent/campaigns
 
-Then return the task URL. Do not create production campaigns, managed PrizePools, funding invoices, or payouts.
+After the authenticated test draft is created, publish that test task with:
+POST https://ai2human.io/api/agent/campaigns/{taskId}/publish
+
+Use the same `x-agent-api-key` header. Then return the task URL and published status. Do not create production campaigns, managed PrizePools, funding invoices, or payouts.
 
 Return:
 1. readyToCreate
@@ -54,6 +57,7 @@ Return:
 5. fundingPlan
 6. the exact payload you would use for draft creation
 7. after creation, taskId and ai2humanUrl
+8. after test publish, publishedAt and final task URL
 ```
 
 Expected behavior:
@@ -62,6 +66,7 @@ Expected behavior:
 - OpenClaw should build a requester-specific payload.
 - OpenClaw should call the preview endpoint first.
 - OpenClaw must require an API key before preview or creation.
+- OpenClaw should publish only the authenticated `test_no_payout` task after explicit confirmation.
 - OpenClaw should not invent links or budgets.
 - OpenClaw should not create/publish production campaigns without explicit confirmation and credentials.
 

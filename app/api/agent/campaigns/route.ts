@@ -80,6 +80,9 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({
+      ok: true,
+      taskId: task.id,
+      ai2humanUrl: `${new URL(request.url).origin}/tasks/${task.id}`,
       task,
       preview: creationPreview
     }, { status: 201 });
