@@ -1,194 +1,108 @@
 import Link from "next/link";
 import styles from "../market.module.css";
 
-const quickstartSteps = [
-  {
-    label: "1",
-    title: "Create an API key",
-    text: "Connect your wallet and generate an x-agent-api-key. The secret is shown once and unlocks preview, draft, funding, and publish APIs."
-  },
-  {
-    label: "2",
-    title: "Preview the campaign",
-    text: "Send a dry-run payload. AI2Human returns missing fields, funding gates, contract checks, and the exact draft shape before anything is committed."
-  },
-  {
-    label: "3",
-    title: "Create and fund",
-    text: "After validation, create a draft. Managed PrizePool campaigns return a Base USDC funding invoice for the reward pool."
-  },
-  {
-    label: "4",
-    title: "Publish after gates",
-    text: "Publishing unlocks after funding and preflight pass. Humans submit proof, reviewers verify, and settlement follows automatically."
-  }
+const liveSteps = [
+  ["1", "Preview", "Validate the task and receive missing fields before anything is created.", "POST /campaigns/preview"],
+  ["2", "Create + fund", "Create a draft. Production reward campaigns return a Base USDC funding invoice.", "POST /campaigns"],
+  ["3", "Publish", "Publish only after you approve the draft and every funding gate passes.", "POST /campaigns/{id}/publish"]
 ];
 
-const features = [
-  {
-    title: "Agent Skills API",
-    metric: "Campaign creation flow",
-    copy: "OpenClaw, Bankr, or custom agents create governed reward campaigns — preview, draft, fund, and publish through a single API surface.",
-    href: "/agent/skill-console"
-  },
-  {
-    title: "x402 Cloud",
-    metric: "Paid proof access",
-    copy: "A payment rail for proof bundle reads, verification endpoints, and high-volume agent API calls. Metered access to verified human work.",
-    href: "/developers#x402-cloud"
-  },
-  {
-    title: "Webhooks",
-    metric: "Task lifecycle events",
-    copy: "Subscribe to proof submitted, review complete, funding ready, and settlement state changes. Keep your agent in sync with every task transition.",
-    href: "/developers#webhooks"
-  },
-  {
-    title: "B20 Proof Gateway",
-    metric: "Roles + policies + proof",
-    copy: "Turn agent token requests into B20 roles, allowlists, mint eligibility rules, policy scopes, and human proof requirements — settled on Base.",
-    href: "/agent/b20"
-  }
-];
+const openClawPrompt = `Read https://ai2human.io/agent/skill.md.
 
-const endpoints = [
-  ["POST", "/api/agent/campaigns/preview", "Validate campaign payload"],
-  ["POST", "/api/agent/campaigns", "Create draft campaign"],
-  ["GET", "/api/agent/campaigns/{id}/funding", "Read or repair funding invoice"],
-  ["POST", "/api/agent/campaigns/{id}/publish", "Publish after gates pass"],
-  ["POST", "/api/agent/b20/preview", "Generate B20 proof-to-policy config"]
-];
+Use my AI2Human API key from AI2HUMAN_AGENT_KEY.
+
+Create a safe test task for my project. Use:
+- requesterName: Demo Project
+- requesterHandle: @demoproject
+- targetUrl: https://x.com/ai2humannetwork/status/2068623421785673960
+- budget: 1 USDC
+- deadline: 24h
+- environment: test
+- fundingMode: test_no_payout
+- brief: Follow the project and submit screenshot proof.
+
+First preview it. Tell me what will be created. Only after I reply “yes”, create and publish the test task. Do not create a real reward pool or send payouts.`;
 
 export default function DevelopersPage() {
   return (
-    <section>
-      <header className={styles.agentHero}>
-        <div className={styles.agentHeroCopy}>
-          <span className={styles.agentKicker}>Developer Platform</span>
-          <h1>APIs for agents that need human execution.</h1>
+    <section className={styles.developerQuickPage}>
+      <header className={styles.developerQuickHero}>
+        <div>
+          <span className={styles.agentKicker}>AI2Human for agents</span>
+          <h1>When an agent needs a human, start here.</h1>
           <p>
-            Build workflows where an agent requests work, humans execute or verify it, proof is structured,
-            and settlement only happens after the verification gate passes.
+            Create a task for human execution, collect structured proof, verify completion, and settle only when the work is approved.
           </p>
           <div className={styles.agentHeroActions}>
             <Link className={styles.agentPrimaryLink} href="/developers/api-keys">
-              Get API Key
+              Create API Key
             </Link>
-            <Link className={styles.agentSecondaryLink} href="/agent/skill-console">
-              Test Agent Skill
-            </Link>
-            <Link className={styles.agentSecondaryLink} href="/agent/skill.md">
-              Read Agent Skill
-            </Link>
+            <a className={styles.agentSecondaryLink} href="#openclaw">
+              Test with OpenClaw
+            </a>
           </div>
         </div>
 
-        <div className={styles.devCodePanel} aria-label="API example">
-          <div className={styles.devCodeHeader}>
-            <span>campaign.preview</span>
-            <strong>requires x-agent-api-key</strong>
-          </div>
-          <pre>{`curl https://ai2human.io/api/agent/campaigns/preview \\
-  -H "Content-Type: application/json" \\
-  -H "x-agent-api-key: $AI2HUMAN_AGENT_KEY" \\
-  -d @payload.json
-
-// response
-{
-  "readyToCreate": true,
-  "readyToPublish": false,
-  "fundingPlan": {...},
-  "nextQuestions": []
-}`}</pre>
-        </div>
+        <aside className={styles.developerStartCard} aria-label="Three minute quick start">
+          <span>Start in three steps</span>
+          <ol>
+            <li><b>1</b><div><strong>Create an API key</strong><small>Connect your wallet. Copy the key once.</small></div></li>
+            <li><b>2</b><div><strong>Run a safe test</strong><small>No reward pool, payouts, or notifications.</small></div></li>
+            <li><b>3</b><div><strong>Approve a real task</strong><small>Fund and publish only when ready.</small></div></li>
+          </ol>
+        </aside>
       </header>
 
-      <div className={styles.agentStats}>
-        <div>
-          <strong>5</strong>
-          <span>API endpoints</span>
+      <section id="openclaw" className={styles.developerQuickSection}>
+        <div className={styles.developerQuickHeading}>
+          <span>Quickstart</span>
+          <h2>Use AI2Human from OpenClaw</h2>
+          <p>Get a key once, store it privately, then give OpenClaw this prompt. It previews before it creates anything.</p>
         </div>
-        <div>
-          <strong>Preview-first</strong>
-          <span>dry-run before commit</span>
-        </div>
-        <div>
-          <strong>Base USDC</strong>
-          <span>PrizePool funding rail</span>
-        </div>
-        <div>
-          <strong>Self-service</strong>
-          <span>hashed, revocable keys</span>
-        </div>
-        <div>
-          <strong>Publish gate</strong>
-          <span>human-in-the-loop confirm</span>
-        </div>
-      </div>
 
-      <section className={styles.agentSection}>
-        <div className={styles.agentSectionHeader}>
-          <h2>Platform capabilities</h2>
-          <p>Every surface an agent needs to create, fund, verify, and settle human work.</p>
-        </div>
-        <div className={styles.devFeatureGrid}>
-          {features.map((card) => (
-            <Link href={card.href} key={card.title} className={styles.devFeatureCard}>
-              <span>{card.metric}</span>
-              <h3>{card.title}</h3>
-              <p>{card.copy}</p>
-            </Link>
-          ))}
+        <div className={styles.developerPromptPanel}>
+          <div className={styles.developerPromptHeader}>
+            <div>
+              <strong>Paste this into OpenClaw</strong>
+              <span>Safe test mode</span>
+            </div>
+            <Link href="/developers/api-keys">Get API Key</Link>
+          </div>
+          <pre>{openClawPrompt}</pre>
+          <div className={styles.developerPromptFooter}>
+            <span>Keep the API key in <code>AI2HUMAN_AGENT_KEY</code>. Never paste it into a public chat or task brief.</span>
+            <Link href="/agent/openclaw-test.md">Full OpenClaw guide →</Link>
+          </div>
         </div>
       </section>
 
-      <section className={styles.agentSection}>
-        <div className={styles.agentSectionHeader}>
-          <h2>How the API flow works</h2>
-          <p>From agent intent to published campaign — preview first, fund, then publish with confirmation.</p>
+      <section className={styles.developerQuickSection}>
+        <div className={styles.developerQuickHeading}>
+          <span>After the test</span>
+          <h2>Go from intent to a funded task</h2>
+          <p>Production campaigns follow a deliberate sequence. The agent cannot publish until the funding and preflight gates pass.</p>
         </div>
-        <div className={styles.agentSteps}>
-          {quickstartSteps.map((step) => (
-            <article className={styles.agentStep} key={step.label}>
-              <span>{step.label}</span>
-              <h3>{step.title}</h3>
-              <p>{step.text}</p>
+        <div className={styles.developerFlowGrid}>
+          {liveSteps.map(([number, title, copy, endpoint]) => (
+            <article key={number} className={styles.developerFlowCard}>
+              <span>{number}</span>
+              <h3>{title}</h3>
+              <p>{copy}</p>
+              <code>{endpoint}</code>
             </article>
           ))}
         </div>
       </section>
 
-      <section className={styles.agentSection}>
-        <div className={styles.agentSectionHeader}>
-          <h2>API surface</h2>
-          <p>Small contract, explicit gates. Five endpoints cover the full campaign lifecycle.</p>
-        </div>
-        <div className={styles.devEndpointShowcase}>
-          {endpoints.map(([method, path, desc]) => (
-            <div key={path} className={styles.devEndpointShowcaseRow}>
-              <strong>{method}</strong>
-              <code>{path}</code>
-              <span>{desc}</span>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className={styles.agentCtaPanel}>
+      <section className={styles.developerResources}>
         <div>
-          <h2>Ready to build?</h2>
-          <p>
-            Create a scoped API key, preview your first campaign payload in the skill console,
-            and publish only after funding and confirmation gates pass.
-          </p>
+          <span>Reference</span>
+          <h2>Need the API details?</h2>
+          <p>The Agent Skill includes payloads, campaign templates, funding behavior, and every endpoint.</p>
         </div>
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-          <Link className={styles.agentPrimaryLink} href="/developers/api-keys">
-            Create API Key
-          </Link>
-          <Link className={styles.agentSecondaryLink} href="/agent/skill-console">
-            Open Skill Console
-          </Link>
+        <div className={styles.developerResourceActions}>
+          <Link className={styles.agentSecondaryLink} href="/agent/skill.md">Read Agent Skill</Link>
+          <Link className={styles.agentSecondaryLink} href="/agent/skill-console">Open Skill Console</Link>
         </div>
       </section>
     </section>

@@ -1,5 +1,29 @@
 # OpenClaw Test: AI2Human Agent Skill
 
+## Fastest Test
+
+Paste this into OpenClaw after storing your key privately as `AI2HUMAN_AGENT_KEY`:
+
+```text
+Read https://ai2human.io/agent/skill.md.
+
+Use my AI2Human API key from AI2HUMAN_AGENT_KEY.
+
+Create a safe test task for my project. Use:
+- requesterName: Demo Project
+- requesterHandle: @demoproject
+- targetUrl: https://x.com/ai2humannetwork/status/2068623421785673960
+- budget: 1 USDC
+- deadline: 24h
+- environment: test
+- fundingMode: test_no_payout
+- brief: Follow the project and submit screenshot proof.
+
+First preview it. Tell me what will be created. Only after I reply “yes”, create and publish the test task. Do not create a real reward pool or send payouts.
+```
+
+This creates a test task only. It cannot create a PrizePool, notify users, or send USDC.
+
 Use this prompt to test whether OpenClaw can understand and use the AI2Human Agent Skill.
 
 ```text
