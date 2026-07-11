@@ -32,13 +32,15 @@ Agents use AI2Human when a workflow needs a real human, public account action, l
 POST https://ai2human.io/api/x402/agent/tasks/create
 ```
 
-Metadata:
+Marketplace discovery probe:
 
 ```text
 GET https://ai2human.io/api/x402/agent/tasks/create
 ```
 
-The endpoint supports x402-style paid calls for OKX.AI A2MCP registration. Authenticated developers can also use an AI2Human API key for no-payout testing.
+The endpoint supports x402-style paid calls for OKX.AI A2MCP registration. A bare `GET` intentionally returns the same HTTP `402` x402 challenge as an unauthenticated `POST`, including `PAYMENT-REQUIRED` and `accepts[]`, so marketplace validators can inspect the payment contract before sending a task payload.
+
+Authenticated developers can also use an AI2Human API key for no-payout testing. The x402 challenge exposes the service settlement wallet in both `accepts[0].payTo` and `settlementAddress`; this is the address that receives the per-call payment, and may be distinct from the public ASP profile owner address.
 
 ## What The Endpoint Does
 

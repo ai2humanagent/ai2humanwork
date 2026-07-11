@@ -91,7 +91,9 @@ function buildX402Challenge(request: Request) {
     x402Version: X402_VERSION,
     resource: {
       url: request.url,
-      method: request.method,
+      // This service creates tasks through POST. Keep the advertised action stable
+      // even when an A2MCP validator probes the endpoint with a bare GET request.
+      method: "POST",
       contentType: "application/json",
       service: "AI2Human Task Router",
       outputSchema: {
@@ -142,6 +144,30 @@ function buildX402Challenge(request: Request) {
       }
     ]
   };
+}
+
+function x402PaymentRequiredResponse(request: Request) {
+  const challenge = buildX402Challenge(request);
+  const settlementAddress = challenge.accepts[0]?.payTo;
+  const encodedChallenge = encodeBase64Json(challenge);
+
+  return NextResponse.json(
+    {
+      error: "Agent API key or x402 payment required.",
+      code: "AGENT_AUTH_OR_PAYMENT_REQUIRED",
+      apiKeyUrl: "https://ai2human.io/developers/api-keys",
+      settlementAddress,
+      ...challenge
+    },
+    {
+      status: 402,
+      headers: {
+        "Cache-Control": "no-store",
+        "Access-Control-Expose-Headers": `${X402_PAYMENT_REQUIRED_HEADER}, ${X402_PAYMENT_RESPONSE_HEADER}`,
+        [X402_PAYMENT_REQUIRED_HEADER]: encodedChallenge
+      }
+    }
+  );
 }
 
 function normalizeA2mcpTaskInput(input: Record<string, unknown>, paid: boolean) {
@@ -278,30 +304,7 @@ async function createTask(input: Record<string, unknown>) {
 }
 
 export async function GET(request: Request) {
-  const baseUrl = getBaseUrl(request);
-  const config = getPaymentConfig();
-  return NextResponse.json({
-    ok: true,
-    service: "AI2Human Task Router",
-    aspType: "A2MCP",
-    description:
-      "Create human-executed or human-verified AI2Human tasks from an agent call, returning task URL, proof schema, verification requirements, and settlement status.",
-    endpoint: `${baseUrl}/api/x402/agent/tasks/create`,
-    x402: {
-      supported: true,
-      mode: config.strict ? "x402_payment_or_agent_api_key" : "agent_api_key_or_optional_x402_payment",
-      price: `${config.displayAmount} ${config.symbol}`,
-      network: config.network,
-      payTo: config.payTo,
-      asset: config.asset
-    },
-    completionLoop: "agent request -> human execution -> structured proof -> verify -> settle",
-    registration: {
-      okxAiRole: "ASP",
-      serviceType: "Agent-to-MCP",
-      serviceName: "AI2Human Task Router"
-    }
-  });
+  return x402PaymentRequiredResponse(request);
 }
 
 export async function POST(request: Request) {
@@ -318,25 +321,7 @@ export async function POST(request: Request) {
       const authError = await requireAgentCampaignAuth(request);
       if (authError) {
         if (!config.strict || hasApiCredential) return authError;
-
-        const challenge = buildX402Challenge(request);
-        const encodedChallenge = encodeBase64Json(challenge);
-        return NextResponse.json(
-          {
-            error: "Agent API key or x402 payment required.",
-            code: "AGENT_AUTH_OR_PAYMENT_REQUIRED",
-            apiKeyUrl: "https://ai2human.io/developers/api-keys",
-            ...challenge
-          },
-          {
-            status: 402,
-            headers: {
-              "Cache-Control": "no-store",
-              "Access-Control-Expose-Headers": `${X402_PAYMENT_REQUIRED_HEADER}, ${X402_PAYMENT_RESPONSE_HEADER}`,
-              [X402_PAYMENT_REQUIRED_HEADER]: encodedChallenge
-            }
-          }
-        );
+        return x402PaymentRequiredResponse(request);
       }
     }
 
