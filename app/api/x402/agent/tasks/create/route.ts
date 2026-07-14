@@ -24,6 +24,13 @@ export const dynamic = "force-dynamic";
 const DEFAULT_SERVICE_PRICE = "0.01";
 const DEFAULT_PAY_TO = "0x0000000000000000000000000000000000000000";
 const DEFAULT_USDT0 = "0x779ded0c9e1022225f8e0630b35a9b54be713736";
+const PAYMENT_REPLAY_HEADERS = [
+  X402_PAYMENT_HEADER,
+  "X-PAYMENT-SIGNATURE",
+  "PAYMENT-SIGNATURE",
+  "PAYMENT",
+  "X-OKX-PAYMENT"
+];
 
 function normalizePrivateKey(value: string): `0x${string}` {
   return (value.startsWith("0x") ? value : `0x${value}`) as `0x${string}`;
@@ -36,6 +43,19 @@ function readObject(value: unknown): Record<string, unknown> {
 function readString(value: unknown, fallback = "") {
   const text = String(value || "").trim();
   return text || fallback;
+}
+
+function readPaymentReplayHeader(request: Request) {
+  for (const header of PAYMENT_REPLAY_HEADERS) {
+    const value = request.headers.get(header);
+    if (value?.trim()) {
+      return {
+        name: header,
+        value: value.trim()
+      };
+    }
+  }
+  return null;
 }
 
 function parseBaseUnits(amount: string, decimals = 6) {
@@ -173,6 +193,7 @@ function x402PaymentRequiredResponse(request: Request) {
 function normalizeA2mcpTaskInput(input: Record<string, unknown>, paid: boolean) {
   const task = readObject(input.task);
   const source = Object.keys(task).length ? task : input;
+  const hasRewardDistribution = Boolean(source.rewardDistribution && typeof source.rewardDistribution === "object");
   const proofRequired = Array.isArray(source.proofRequired)
     ? source.proofRequired.map((item) => String(item).trim()).filter(Boolean)
     : [];
@@ -190,7 +211,9 @@ function normalizeA2mcpTaskInput(input: Record<string, unknown>, paid: boolean) 
   const requestedEnvironment = readString(source.environment);
 
   const environment = paid ? readString(requestedEnvironment, "production") : "test";
-  const fundingMode = paid ? "ai2human_managed_pool" : "test_no_payout";
+  const fundingMode = paid
+    ? readString(requestedFundingMode, hasRewardDistribution ? "ai2human_managed_pool" : "unfunded_campaign")
+    : "test_no_payout";
   const brief = [
     description,
     proofRequired.length ? `Required proof: ${proofRequired.join(", ")}.` : "",
@@ -227,11 +250,18 @@ function normalizeA2mcpTaskInput(input: Record<string, unknown>, paid: boolean) 
       service: "AI2Human Task Router",
       source: "okx_ai_a2mcp",
       paid
+    },
+    deliverable: {
+      status: "pending_human_execution",
+      statusEvent: "task_created_waiting_for_human_proof",
+      estimatedDelivery: readString(source.estimatedDelivery || source.eta, deadline),
+      pollingHint: "Fetch the returned taskUrl to monitor submitted proof and verification status."
     }
   };
 }
 
 async function createTask(input: Record<string, unknown>) {
+  const deliverable = readObject(input.deliverable);
   let db: Awaited<ReturnType<typeof readDb>>;
   let dbWarning = "";
   try {
@@ -283,6 +313,16 @@ async function createTask(input: Record<string, unknown>) {
       okxAiSyncStatus: "ready_for_listing",
       status: task.campaign?.agentLifecycle?.status || "draft",
       task,
+      taskUrl: `${process.env.NEXT_PUBLIC_APP_URL || "https://ai2human.io"}/tasks/${task.id}`,
+      statusUrl: `${process.env.NEXT_PUBLIC_APP_URL || "https://ai2human.io"}/tasks/${task.id}`,
+      deliverableStatus: readString(deliverable.status, "pending_human_execution"),
+      deliverableEvent: readString(deliverable.statusEvent, "task_created_waiting_for_human_proof"),
+      estimatedDelivery: readString(deliverable.estimatedDelivery, task.deadline),
+      polling: {
+        mode: "task_url",
+        url: `${process.env.NEXT_PUBLIC_APP_URL || "https://ai2human.io"}/tasks/${task.id}`,
+        note: readString(deliverable.pollingHint, "Open the task URL to track human proof and verification status.")
+      },
       preview: {
         ...creationPreview,
         warnings: dbWarning
@@ -310,8 +350,8 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = readObject(await request.json());
-    const paymentHeader = request.headers.get(X402_PAYMENT_HEADER);
-    const paid = Boolean(paymentHeader);
+    const paymentHeader = readPaymentReplayHeader(request);
+    const paid = Boolean(paymentHeader?.value);
     const config = getPaymentConfig();
     const hasApiCredential = Boolean(
       request.headers.get("x-agent-api-key") || request.headers.get("authorization")
@@ -334,9 +374,13 @@ export async function POST(request: Request) {
         paid,
         authenticatedTest: !paid,
         x402HeaderReceived: paid,
+        paymentHeaderName: paymentHeader?.name,
         paymentMode: paid ? "x402_header_received" : "api_key_test_no_payout",
+        deliverableStatus: created.body.deliverableStatus,
+        taskUrl: created.body.taskUrl,
+        statusUrl: created.body.statusUrl,
         note: paid
-          ? "Payment header received. Production settlement verification should be enforced by OKX Payment SDK before broad launch."
+          ? "Payment replay accepted. AI2Human task created and awaiting human proof."
           : "API-key test mode is limited to test_no_payout task creation."
       }
     };

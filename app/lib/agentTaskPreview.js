@@ -159,9 +159,10 @@ export function getMissingAgentTaskInputs(input = {}, rewardDistribution) {
     }
   }
 
-  // Public production campaigns created through an agent must have a funded
-  // AI2Human-managed PrizePool. Draft creation returns its funding invoice.
-  if (funding.environment === "production" && funding.fundingMode !== "ai2human_managed_pool") {
+  // Public production reward campaigns created through an agent must have a
+  // funded AI2Human-managed PrizePool. Plain A2MCP human tasks can be created
+  // as production service requests without deploying a PrizePool.
+  if (rewardDistribution && funding.environment === "production" && funding.fundingMode !== "ai2human_managed_pool") {
     missingInputs.push("fundingMode=ai2human_managed_pool");
   }
   return missingInputs;

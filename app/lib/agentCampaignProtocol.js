@@ -312,6 +312,9 @@ export function buildAgentCampaignTask(input = {}, preview) {
   const fundingPlan = preview.fundingPlan || readFundingPlan(input, rewardDistribution);
   const now = new Date().toISOString();
   const taskId = readString(input.id) || `agent-campaign-${crypto.randomUUID().slice(0, 12)}`;
+  const deliverable = input.deliverable && typeof input.deliverable === "object" ? input.deliverable : {};
+  const deliverableStatus = readString(deliverable.status);
+  const deliverableEvent = readString(deliverable.statusEvent);
   // Agent-created work always starts as a draft. Publishing must happen through
   // the gated publish endpoint after managed-pool funding is verified.
   const isDraft = true;
@@ -365,7 +368,18 @@ export function buildAgentCampaignTask(input = {}, preview) {
         type: "log",
         content: `agent_campaign_created: ${isDraft ? "draft" : "published"} | funding=${fundingPlan.fundingMode || "none"} | environment=${fundingPlan.environment || "unspecified"}`,
         createdAt: now
-      }
+      },
+      ...(deliverableStatus || deliverableEvent
+        ? [
+            {
+              id: crypto.randomUUID(),
+              by: "system",
+              type: "log",
+              content: `agent_deliverable_status: ${deliverableStatus || "pending"} | ${deliverableEvent || "task_created"}`,
+              createdAt: now
+            }
+          ]
+        : [])
     ]
   };
 }
