@@ -24,6 +24,7 @@ export const dynamic = "force-dynamic";
 const DEFAULT_SERVICE_PRICE = "0.01";
 const DEFAULT_PAY_TO = "0x0000000000000000000000000000000000000000";
 const DEFAULT_USDT0 = "0x779ded0c9e1022225f8e0630b35a9b54be713736";
+const DEFAULT_HUMAN_EXECUTION_ETA = "24h";
 const PAYMENT_REPLAY_HEADERS = [
   X402_PAYMENT_HEADER,
   "X-PAYMENT-SIGNATURE",
@@ -109,6 +110,15 @@ function buildX402Challenge(request: Request) {
   const config = getPaymentConfig();
   return {
     x402Version: X402_VERSION,
+    serviceContract: {
+      realtime: false,
+      expectedDeliveryWindow: DEFAULT_HUMAN_EXECUTION_ETA,
+      chargeTiming: "charged_before_human_execution",
+      buyerNotice:
+        "This endpoint creates an AI2Human human-execution task after payment. The immediate replay returns a task URL and proof schema; human notes/screenshots are delivered after execution.",
+      finalDeliverable:
+        "Human review notes, screenshot or evidence URLs, verification result, and settlement-ready proof bundle."
+    },
     resource: {
       url: request.url,
       // This service creates tasks through POST. Keep the advertised action stable
@@ -134,6 +144,14 @@ function buildX402Challenge(request: Request) {
                 type: "array",
                 items: { type: "string" },
                 description: "Structured proof items required from the human executor."
+              },
+              requestType: {
+                type: "string",
+                description: "Original requested task type, e.g. landing_page_review, mobile_check, link_verification, local_check."
+              },
+              device: {
+                type: "string",
+                description: "Optional device or viewport to check, e.g. iPhone mobile, desktop Chrome."
               }
             }
           }
@@ -159,7 +177,10 @@ function buildX402Challenge(request: Request) {
           name: config.tokenName,
           version: config.tokenVersion || undefined,
           displayAmount: config.displayAmount,
-          completionLoop: "agent request -> human execution -> structured proof -> verify -> settle"
+          completionLoop: "agent request -> human execution -> structured proof -> verify -> settle",
+          realtime: false,
+          expectedDeliveryWindow: DEFAULT_HUMAN_EXECUTION_ETA,
+          finalDeliverable: "review notes + screenshots/evidence + verification result"
         }
       }
     ]
@@ -190,19 +211,90 @@ function x402PaymentRequiredResponse(request: Request) {
   );
 }
 
+function inferRequestType(source: Record<string, unknown>) {
+  const explicit = readString(source.requestType || source.taskType || source.action);
+  if (explicit) return explicit;
+
+  const text = [
+    source.title,
+    source.description,
+    source.brief,
+    source.targetUrl,
+    source.url
+  ]
+    .map((value) => String(value || "").toLowerCase())
+    .join(" ");
+
+  if (text.includes("landing") || text.includes("homepage")) return "landing_page_review";
+  if (text.includes("mobile") || text.includes("iphone") || text.includes("responsive")) return "mobile_page_check";
+  if (text.includes("screenshot") || text.includes("visual")) return "visual_review";
+  if (text.includes("local") || text.includes("store") || text.includes("location")) return "local_verification";
+  return "human_execution_request";
+}
+
+function buildProofSchemaForRequest(source: Record<string, unknown>, requestType: string) {
+  const explicitProof = Array.isArray(source.proofRequired)
+    ? source.proofRequired.map((item) => String(item).trim()).filter(Boolean)
+    : [];
+  if (explicitProof.length > 0) {
+    return {
+      proofRequirements: explicitProof,
+      verificationChecks: [
+        "Requested proof items are present.",
+        "Evidence is specific to the target URL or requested context.",
+        "Execution notes explain what was checked and what was found."
+      ],
+      submissionFields: ["reviewNotes", "evidenceUrls", "screenshotUrls", "summary"]
+    };
+  }
+
+  if (requestType === "landing_page_review" || requestType === "mobile_page_check" || requestType === "visual_review") {
+    return {
+      proofRequirements: [
+        "Open the original target URL and inspect the requested page or flow.",
+        "Capture at least one screenshot or evidence URL from the reviewed page.",
+        "Write concise review notes covering what was checked and what changed or failed.",
+        "Include device, viewport, browser, or environment when relevant.",
+        "Add a final pass/fail/needs_review verdict."
+      ],
+      verificationChecks: [
+        "Review notes are present and specific to the target URL.",
+        "At least one screenshot or evidence URL is attached.",
+        "Device, viewport, or environment is stated when relevant.",
+        "Final verdict is present."
+      ],
+      submissionFields: ["reviewNotes", "screenshotUrls", "deviceViewport", "verdict", "summary"]
+    };
+  }
+
+  return {
+    proofRequirements: [
+      "Complete or verify the requested human step.",
+      "Attach evidence URLs, screenshots, files, or notes that prove the work was performed.",
+      "Explain the result in a short execution summary.",
+      "Add a final pass/fail/needs_review verdict."
+    ],
+    verificationChecks: [
+      "Execution summary is present.",
+      "Evidence is attached or linked.",
+      "Final verdict is present."
+    ],
+    submissionFields: ["executionNotes", "evidenceUrls", "verdict", "summary"]
+  };
+}
+
 function normalizeA2mcpTaskInput(input: Record<string, unknown>, paid: boolean) {
   const task = readObject(input.task);
   const source = Object.keys(task).length ? task : input;
   const hasRewardDistribution = Boolean(source.rewardDistribution && typeof source.rewardDistribution === "object");
-  const proofRequired = Array.isArray(source.proofRequired)
-    ? source.proofRequired.map((item) => String(item).trim()).filter(Boolean)
-    : [];
   const title = readString(source.title, "Human-verified agent task");
   const description = readString(
     source.description || source.brief,
     "Complete the requested human step, submit structured proof, and wait for verification before settlement."
   );
   const targetUrl = readString(source.targetUrl || source.url, "https://ai2human.io");
+  const requestType = inferRequestType(source);
+  const proofSchema = buildProofSchemaForRequest(source, requestType);
   const requesterName = readString(source.requesterName || source.projectName || source.agentName, "OKX.AI Agent");
   const requesterHandle = readString(source.requesterHandle || source.projectHandle, "@ai2humannetwork");
   const budget = readString(source.budget || source.reward, paid ? "TBD" : "0 USDC");
@@ -216,14 +308,21 @@ function normalizeA2mcpTaskInput(input: Record<string, unknown>, paid: boolean) 
     : "test_no_payout";
   const brief = [
     description,
-    proofRequired.length ? `Required proof: ${proofRequired.join(", ")}.` : "",
+    `Original request type: ${requestType}.`,
+    proofSchema.proofRequirements.length ? `Required proof: ${proofSchema.proofRequirements.join(" ")}` : "",
     "The result must be auditable: task -> human execution -> structured proof -> verify -> settle."
   ]
     .filter(Boolean)
     .join("\n\n");
 
   return {
-    templateId: readString(source.templateId, "community_proof_task"),
+    serviceRequest: true,
+    requestType,
+    originalRequest: {
+      ...source,
+      requestType,
+      preservedBy: "ai2human_a2mcp"
+    },
     requesterName,
     requesterHandle,
     title,
@@ -235,6 +334,9 @@ function normalizeA2mcpTaskInput(input: Record<string, unknown>, paid: boolean) 
       "A human operator must complete or verify the step and submit proof."
     ),
     proofPhrase: readString(source.proofPhrase),
+    proofRequirements: proofSchema.proofRequirements,
+    verificationChecks: proofSchema.verificationChecks,
+    submissionFields: proofSchema.submissionFields,
     brief,
     completionLoop: "task -> human execution -> structured proof -> verify -> settle",
     environment,
@@ -254,7 +356,8 @@ function normalizeA2mcpTaskInput(input: Record<string, unknown>, paid: boolean) 
     deliverable: {
       status: "pending_human_execution",
       statusEvent: "task_created_waiting_for_human_proof",
-      estimatedDelivery: readString(source.estimatedDelivery || source.eta, deadline),
+      estimatedDelivery: readString(source.estimatedDelivery || source.eta, DEFAULT_HUMAN_EXECUTION_ETA),
+      finalDeliverable: "human review notes, screenshots/evidence, verification result",
       pollingHint: "Fetch the returned taskUrl to monitor submitted proof and verification status."
     }
   };
@@ -318,6 +421,7 @@ async function createTask(input: Record<string, unknown>) {
       deliverableStatus: readString(deliverable.status, "pending_human_execution"),
       deliverableEvent: readString(deliverable.statusEvent, "task_created_waiting_for_human_proof"),
       estimatedDelivery: readString(deliverable.estimatedDelivery, task.deadline),
+      finalDeliverable: readString(deliverable.finalDeliverable, "human proof bundle"),
       polling: {
         mode: "task_url",
         url: `${process.env.NEXT_PUBLIC_APP_URL || "https://ai2human.io"}/tasks/${task.id}`,
@@ -377,10 +481,12 @@ export async function POST(request: Request) {
         paymentHeaderName: paymentHeader?.name,
         paymentMode: paid ? "x402_header_received" : "api_key_test_no_payout",
         deliverableStatus: created.body.deliverableStatus,
+        estimatedDelivery: created.body.estimatedDelivery,
+        finalDeliverable: created.body.finalDeliverable,
         taskUrl: created.body.taskUrl,
         statusUrl: created.body.statusUrl,
         note: paid
-          ? "Payment replay accepted. AI2Human task created and awaiting human proof."
+          ? "Payment replay accepted. AI2Human task created and awaiting human proof; the creation receipt is not the final human proof deliverable."
           : "API-key test mode is limited to test_no_payout task creation."
       }
     };

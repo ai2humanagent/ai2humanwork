@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import { buildAgentTaskPreview, parseRewardDistribution, readFundingPlan } from "./agentTaskPreview.js";
 import { buildOfficialCampaignTask } from "./officialCampaignTasks.js";
+import { createAgentWorkflowLifecycle } from "./agentWorkflowState.js";
 
 export { readFundingPlan } from "./agentTaskPreview.js";
 
@@ -294,20 +295,67 @@ export async function attachManagedPrizePool(db, input = {}, task, preview) {
 }
 
 export function buildAgentCampaignTask(input = {}, preview) {
-  const campaignTask = buildOfficialCampaignTask({
-    templateId: input.templateId,
-    title: input.title || undefined,
-    budget: input.budget || undefined,
-    deadline: input.deadline || undefined,
-    requesterName: input.requesterName || undefined,
-    requesterHandle: input.requesterHandle || undefined,
-    targetUrl: input.targetUrl || undefined,
-    proofPhrase: input.proofPhrase || undefined,
-    brief: input.brief || undefined,
-    eligibility: input.eligibility || undefined,
-    tokenGate: input.tokenGate || undefined,
-    campaignLinks: input.campaignLinks
-  });
+  const serviceRequest = input.serviceRequest === true;
+  const proofRequirements = Array.isArray(input.proofRequirements)
+    ? input.proofRequirements.map((item) => readString(item)).filter(Boolean)
+    : [];
+  const verificationChecks = Array.isArray(input.verificationChecks)
+    ? input.verificationChecks.map((item) => readString(item)).filter(Boolean)
+    : [];
+  const submissionFields = Array.isArray(input.submissionFields)
+    ? input.submissionFields.map((item) => readString(item)).filter(Boolean)
+    : [];
+  const campaignTask = serviceRequest
+    ? {
+        title: readString(input.title, "Human-verified agent task"),
+        budget: readString(input.budget, "TBD"),
+        deadline: readString(input.deadline, "24h"),
+        acceptance: proofRequirements.join(" ") || "Submit review notes, evidence, and a final verdict.",
+        campaign: {
+          requesterName: readString(input.requesterName, "OKX.AI Agent"),
+          requesterHandle: readString(input.requesterHandle) || undefined,
+          platform: "real_world",
+          action: readString(input.requestType, "human_execution_request"),
+          label: "Agent Service Request",
+          targetUrl: readString(input.targetUrl) || undefined,
+          targetLabel: "Target",
+          brief: readString(input.brief) || undefined,
+          proofRequirements: proofRequirements.length
+            ? proofRequirements
+            : [
+                "Complete or verify the requested human step.",
+                "Attach evidence URLs, screenshots, files, or notes that prove the work was performed.",
+                "Add a final pass/fail/needs_review verdict."
+              ],
+          verificationChecks: verificationChecks.length
+            ? verificationChecks
+            : [
+                "Execution summary is present.",
+                "Evidence is attached or linked.",
+                "Final verdict is present."
+              ],
+          submissionFields: submissionFields.length
+            ? submissionFields
+            : ["executionNotes", "evidenceUrls", "verdict", "summary"],
+          originalRequest: input.originalRequest && typeof input.originalRequest === "object"
+            ? input.originalRequest
+            : undefined
+        }
+      }
+    : buildOfficialCampaignTask({
+        templateId: input.templateId,
+        title: input.title || undefined,
+        budget: input.budget || undefined,
+        deadline: input.deadline || undefined,
+        requesterName: input.requesterName || undefined,
+        requesterHandle: input.requesterHandle || undefined,
+        targetUrl: input.targetUrl || undefined,
+        proofPhrase: input.proofPhrase || undefined,
+        brief: input.brief || undefined,
+        eligibility: input.eligibility || undefined,
+        tokenGate: input.tokenGate || undefined,
+        campaignLinks: input.campaignLinks
+      });
   const rewardDistribution = parseRewardDistribution(input.rewardDistribution, campaignTask.budget);
   const fundingPlan = preview.fundingPlan || readFundingPlan(input, rewardDistribution);
   const now = new Date().toISOString();
@@ -318,6 +366,19 @@ export function buildAgentCampaignTask(input = {}, preview) {
   // Agent-created work always starts as a draft. Publishing must happen through
   // the gated publish endpoint after managed-pool funding is verified.
   const isDraft = true;
+  const source = input.source && typeof input.source === "object" ? input.source : undefined;
+  const canonicalLifecycle = createAgentWorkflowLifecycle({
+    fundingRequired: input.requiresFundingConfirmation === true || !fundingPlan.payoutDisabled,
+    actor: source?.platform === "x" && source?.authorId ? `x:${source.authorId}` : "agent",
+    reason: "Validated agent campaign draft created",
+    evidence: {
+      taskId,
+      sourcePlatform: source?.platform || "agent_api",
+      sourceTweetId: source?.tweetId || ""
+    },
+    idempotencyKey: source?.tweetId ? `x-create:${source.tweetId}` : `campaign-create:${taskId}`,
+    at: now
+  });
 
   return {
     id: taskId,
@@ -331,8 +392,10 @@ export function buildAgentCampaignTask(input = {}, preview) {
       fundingMode: fundingPlan.fundingMode || undefined,
       isTest: fundingPlan.environment === "test" || undefined,
       payoutDisabled: fundingPlan.payoutDisabled || undefined,
+      source,
       agentLifecycle: {
         status: isDraft ? "draft" : "published",
+        ...canonicalLifecycle,
         readyToCreate: preview.readyToCreate,
         readyToPublish: preview.readyToPublish,
         createdBy: "agent",
