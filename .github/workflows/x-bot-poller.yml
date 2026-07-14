@@ -2,8 +2,10 @@ name: X Bot Poller
 
 on:
   schedule:
-    # Avoid GitHub Actions' busiest minute boundaries while keeping a 5-minute cadence.
+    # Drain the durable webhook queue every 5 minutes without paying for an X read.
     - cron: "2-57/5 * * * *"
+    # Low-frequency recovery poll catches any webhook delivery that never arrived.
+    - cron: "17 */6 * * *"
   workflow_dispatch:
     inputs:
       setup_webhook:
@@ -43,19 +45,36 @@ jobs:
           set -euo pipefail
           test -n "${CRON_SECRET:-}"
 
+          endpoint="https://ai2human.io/api/cron/x-bot"
+          if [[ "${{ github.event_name }}" == "schedule" && "${{ github.event.schedule }}" != "17 */6 * * *" ]]; then
+            endpoint="${endpoint}?skip_fetch=true"
+          fi
+
           response="$(curl --fail-with-body --silent --show-error \
             --max-time 55 \
             --retry 2 \
             --retry-delay 2 \
             --retry-all-errors \
             -H "Authorization: Bearer ${CRON_SECRET}" \
-            "https://ai2human.io/api/cron/x-bot")"
+            "${endpoint}")"
 
-          echo "${response}" | jq -c '{
-            ok,
-            dryRun,
-            checkedAt,
-            mentionsFetched,
-            jobsClaimed,
-            results: [.results[]? | {sourceTweetId, intent, status}]
-          }'
+          echo "${response}" | jq -ec '
+            if .ok != true then error("x bot worker returned ok=false")
+            elif .reason == "daily_reply_safety_limit"
+              then error("x bot daily reply safety limit reached; queued jobs were deferred")
+            elif any(.results[]?; .status == "failed" or .status == "needs_review")
+              then error("x bot worker contains failed or ambiguous jobs")
+            else {
+              ok,
+              dryRun,
+              deferred,
+              reason,
+              retryAt,
+              checkedAt,
+              mentionsFetched,
+              jobsClaimed,
+              repliesLast24Hours,
+              maxRepliesPerDay,
+              results: [.results[]? | {sourceTweetId, intent, status}]
+            }
+            end'
