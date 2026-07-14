@@ -2,7 +2,8 @@ name: X Bot Poller
 
 on:
   schedule:
-    - cron: "*/5 * * * *"
+    # Avoid GitHub Actions' busiest minute boundaries while keeping a 5-minute cadence.
+    - cron: "2-57/5 * * * *"
   workflow_dispatch:
 
 concurrency:
