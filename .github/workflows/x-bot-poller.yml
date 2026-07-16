@@ -54,6 +54,30 @@ jobs:
             -H "Authorization: Bearer ${CRON_SECRET}" \
             "${endpoint}")"
 
+          # Always emit a redacted operational summary before enforcing the
+          # failure gate so needs_review errors remain diagnosable in Actions.
+          echo "${response}" | jq -c '{
+            ok,
+            dryRun,
+            deferred,
+            reason,
+            retryAt,
+            checkedAt,
+            mentionsFetched,
+            jobsClaimed,
+            repliesLast24Hours,
+            maxRepliesPerDay,
+            results: [.results[]? | {sourceTweetId, intent, status}],
+            autoPublishResults: [.autoPublishResults[]? | {
+              taskId: .task.id,
+              status,
+              balance,
+              required,
+              error,
+              txHash
+            }]
+          }'
+
           echo "${response}" | jq -ec '
             if .ok != true then error("x bot worker returned ok=false")
             elif .reason == "daily_reply_safety_limit"
@@ -62,25 +86,5 @@ jobs:
               then error("x bot worker contains failed or ambiguous jobs")
             elif any(.autoPublishResults[]?; .status == "needs_review")
               then error("x bot auto-publish contains a task that needs review")
-            else {
-              ok,
-              dryRun,
-              deferred,
-              reason,
-              retryAt,
-              checkedAt,
-              mentionsFetched,
-              jobsClaimed,
-              repliesLast24Hours,
-              maxRepliesPerDay,
-              results: [.results[]? | {sourceTweetId, intent, status}],
-              autoPublishResults: [.autoPublishResults[]? | {
-                taskId: .task.id,
-                status,
-                balance,
-                required,
-                error,
-                txHash
-              }]
-            }
+            else true
             end'
