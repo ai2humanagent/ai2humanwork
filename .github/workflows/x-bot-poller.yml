@@ -2,10 +2,9 @@ name: X Bot Poller
 
 on:
   schedule:
-    # Drain the durable webhook queue every 5 minutes without paying for an X read.
+    # Webhook is primary; polling is the recovery path when X misses a delivery.
+    # Empty reads are not billed, and returned mentions use Owned Read pricing.
     - cron: "2-57/5 * * * *"
-    # Low-frequency recovery poll catches any webhook delivery that never arrived.
-    - cron: "17 */6 * * *"
   workflow_dispatch:
     inputs:
       setup_webhook:
@@ -46,9 +45,6 @@ jobs:
           test -n "${CRON_SECRET:-}"
 
           endpoint="https://ai2human.io/api/cron/x-bot"
-          if [[ "${{ github.event_name }}" == "schedule" && "${{ github.event.schedule }}" != "17 */6 * * *" ]]; then
-            endpoint="${endpoint}?skip_fetch=true"
-          fi
 
           response="$(curl --fail-with-body --silent --show-error \
             --max-time 55 \
