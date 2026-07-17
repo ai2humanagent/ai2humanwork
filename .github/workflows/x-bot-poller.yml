@@ -5,6 +5,8 @@ on:
     # Webhook is primary; polling is the recovery path when X misses a delivery.
     # Empty reads are not billed, and returned mentions use Owned Read pricing.
     - cron: "2-57/5 * * * *"
+    # A daily CRC validation keeps X delivery active even during quiet periods.
+    - cron: "0 0 * * *"
   workflow_dispatch:
     inputs:
       setup_webhook:
@@ -26,7 +28,7 @@ jobs:
     timeout-minutes: 2
     steps:
       - name: Configure X Account Activity webhook
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.setup_webhook }}
+        if: ${{ (github.event_name == 'workflow_dispatch' && inputs.setup_webhook) || github.event.schedule == '0 0 * * *' }}
         env:
           CRON_SECRET: ${{ secrets.X_BOT_CRON_SECRET }}
         run: |
@@ -64,6 +66,8 @@ jobs:
             retryAt,
             checkedAt,
             mentionsFetched,
+            webhookMissesRecovered,
+            webhookRecovery,
             jobsClaimed,
             repliesLast24Hours,
             maxRepliesPerDay,
@@ -86,5 +90,7 @@ jobs:
               then error("x bot worker contains failed or ambiguous jobs")
             elif any(.autoPublishResults[]?; .status == "needs_review")
               then error("x bot auto-publish contains a task that needs review")
+            elif .webhookRecovery.attempted == true and .webhookRecovery.ok != true
+              then error("x bot recovered missed mentions but webhook repair failed")
             else true
             end'
