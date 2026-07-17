@@ -4,7 +4,9 @@ on:
   schedule:
     # Webhook is primary; polling is the recovery path when X misses a delivery.
     # Empty reads are not billed, and returned mentions use Owned Read pricing.
-    - cron: "2-57/5 * * * *"
+    # GitHub may heavily delay high-frequency cron starts. Keep one runner
+    # active for most of each hour and poll inside it instead.
+    - cron: "7 * * * *"
     # A daily CRC validation keeps X delivery active even during quiet periods.
     - cron: "0 0 * * *"
   workflow_dispatch:
@@ -17,7 +19,7 @@ on:
 
 concurrency:
   group: x-bot-poller
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -25,7 +27,7 @@ permissions:
 jobs:
   poll:
     runs-on: ubuntu-latest
-    timeout-minutes: 2
+    timeout-minutes: 59
     steps:
       - name: Configure X Account Activity webhook
         if: ${{ (github.event_name == 'workflow_dispatch' && inputs.setup_webhook) || github.event.schedule == '0 0 * * *' }}
@@ -48,17 +50,18 @@ jobs:
 
           endpoint="https://ai2human.io/api/cron/x-bot"
 
-          response="$(curl --fail-with-body --silent --show-error \
-            --max-time 55 \
-            --retry 2 \
-            --retry-delay 2 \
-            --retry-all-errors \
-            -H "Authorization: Bearer ${CRON_SECRET}" \
-            "${endpoint}")"
+          poll_once() {
+            response="$(curl --fail-with-body --silent --show-error \
+              --max-time 55 \
+              --retry 2 \
+              --retry-delay 2 \
+              --retry-all-errors \
+              -H "Authorization: Bearer ${CRON_SECRET}" \
+              "${endpoint}")" || return 1
 
-          # Always emit a redacted operational summary before enforcing the
-          # failure gate so needs_review errors remain diagnosable in Actions.
-          echo "${response}" | jq -c '{
+            # Always emit a redacted operational summary before enforcing the
+            # failure gate so needs_review errors remain diagnosable in Actions.
+            echo "${response}" | jq -c '{
             ok,
             dryRun,
             deferred,
@@ -71,6 +74,18 @@ jobs:
             jobsClaimed,
             repliesLast24Hours,
             maxRepliesPerDay,
+            expiredTaskRefunds: {
+              due: .expiredTaskRefunds.due,
+              results: [.expiredTaskRefunds.results[]? | {
+                taskId,
+                status,
+                amount,
+                asset,
+                poolTxHash,
+                returnTxHash,
+                error
+              }]
+            },
             results: [.results[]? | {sourceTweetId, intent, status}],
             autoPublishResults: [.autoPublishResults[]? | {
               taskId: .task.id,
@@ -80,17 +95,28 @@ jobs:
               error,
               txHash
             }]
-          }'
+            }'
 
-          echo "${response}" | jq -ec '
-            if .ok != true then error("x bot worker returned ok=false")
-            elif .reason == "daily_reply_safety_limit"
-              then error("x bot daily reply safety limit reached; queued jobs were deferred")
-            elif any(.results[]?; .status == "failed" or .status == "needs_review")
-              then error("x bot worker contains failed or ambiguous jobs")
-            elif any(.autoPublishResults[]?; .status == "needs_review")
-              then error("x bot auto-publish contains a task that needs review")
-            elif .webhookRecovery.attempted == true and .webhookRecovery.ok != true
-              then error("x bot recovered missed mentions but webhook repair failed")
-            else true
-            end'
+            echo "${response}" | jq -ec '
+              if .ok != true then error("x bot worker returned ok=false")
+              elif .reason == "daily_reply_safety_limit"
+                then error("x bot daily reply safety limit reached; queued jobs were deferred")
+              elif any(.results[]?; .status == "failed" or .status == "needs_review")
+                then error("x bot worker contains failed or ambiguous jobs")
+              elif any(.autoPublishResults[]?; .status == "needs_review")
+                then error("x bot auto-publish contains a task that needs review")
+              elif any(.expiredTaskRefunds.results[]?; .status == "needs_review")
+                then error("an expired task refund requires review")
+              elif .webhookRecovery.attempted == true and .webhookRecovery.ok != true
+                then error("x bot recovered missed mentions but webhook repair failed")
+              else true
+              end'
+          }
+
+          had_error=0
+          for iteration in $(seq 1 70); do
+            echo "poll iteration ${iteration}/70"
+            poll_once || had_error=1
+            if [ "${iteration}" -lt 70 ]; then sleep 45; fi
+          done
+          exit "${had_error}"
