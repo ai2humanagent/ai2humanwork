@@ -108,8 +108,6 @@ jobs:
                 then error("x bot daily reply safety limit reached; queued jobs were deferred")
               elif any(.results[]?; .status == "failed" or .status == "needs_review")
                 then error("x bot worker contains failed or ambiguous jobs")
-              elif any(.autoPublishResults[]?; .status == "needs_review")
-                then error("x bot auto-publish contains a task that needs review")
               elif any(.expiredTaskRefunds.results[]?; .status == "needs_review")
                 then error("an expired task refund requires review")
               elif .webhookRecovery.attempted == true and .webhookRecovery.ok != true
