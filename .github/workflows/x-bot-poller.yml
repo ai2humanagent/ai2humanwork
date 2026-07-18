@@ -4,8 +4,8 @@ on:
   schedule:
     # Webhook is primary; polling is the recovery path when X misses a delivery.
     # Empty reads are not billed, and returned mentions use Owned Read pricing.
-    # GitHub may heavily delay high-frequency cron starts. Keep one runner
-    # active for most of each hour and poll inside it instead.
+    # GitHub may heavily delay high-frequency cron starts. Keep one bounded
+    # runner active for part of each hour and poll mentions inside it.
     - cron: "7 * * * *"
     # A daily CRC validation keeps X delivery active even during quiet periods.
     - cron: "0 0 * * *"
@@ -27,7 +27,7 @@ permissions:
 jobs:
   poll:
     runs-on: ubuntu-latest
-    timeout-minutes: 59
+    timeout-minutes: 52
     steps:
       - name: Configure X Account Activity webhook
         if: ${{ (github.event_name == 'workflow_dispatch' && inputs.setup_webhook) || github.event.schedule == '0 0 * * *' }}
@@ -51,13 +51,18 @@ jobs:
           endpoint="https://ai2human.io/api/cron/x-bot"
 
           poll_once() {
+            local skip_maintenance="${1:-false}"
+            local url="${endpoint}"
+            if [ "${skip_maintenance}" = "true" ]; then
+              url="${endpoint}?skip_maintenance=true"
+            fi
             response="$(curl --fail-with-body --silent --show-error \
               --max-time 55 \
               --retry 2 \
               --retry-delay 2 \
               --retry-all-errors \
               -H "Authorization: Bearer ${CRON_SECRET}" \
-              "${endpoint}")" || return 1
+              "${url}")" || return 1
 
             # Always emit a redacted operational summary before enforcing the
             # failure gate so needs_review errors remain diagnosable in Actions.
@@ -114,9 +119,13 @@ jobs:
           }
 
           had_error=0
-          for iteration in $(seq 1 70); do
-            echo "poll iteration ${iteration}/70"
-            poll_once || had_error=1
-            if [ "${iteration}" -lt 70 ]; then sleep 45; fi
+          for iteration in $(seq 1 45); do
+            echo "poll iteration ${iteration}/45"
+            if [ "${iteration}" -eq 1 ]; then
+              poll_once false || had_error=1
+            else
+              poll_once true || had_error=1
+            fi
+            if [ "${iteration}" -lt 45 ]; then sleep 60; fi
           done
           exit "${had_error}"
