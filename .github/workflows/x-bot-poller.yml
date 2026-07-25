@@ -37,7 +37,7 @@ jobs:
             --max-time 55 \
             -X POST \
             -H "Authorization: Bearer ${CRON_SECRET}" \
-            "https://ai2human.io/api/admin/x-webhook/setup" | jq -c .
+            "https://ai2human.io/api/admin/x-webhook/setup?resubscribe=true" | jq -c .
 
       - name: Trigger protected X bot worker
         env:
