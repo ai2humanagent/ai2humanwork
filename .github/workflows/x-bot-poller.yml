@@ -2,10 +2,8 @@ name: X Bot Poller
 
 on:
   schedule:
-    # Webhook is primary; polling is the recovery path when X misses a delivery.
-    # Empty reads are not billed, and returned mentions use Owned Read pricing.
-    - cron: "2-57/5 * * * *"
-    # Revalidate CRC and the app-level subscription list every six hours.
+    # The Jakarta systemd worker is the minute-level recovery path. GitHub is
+    # retained only as a low-frequency provider validation and disaster backup.
     - cron: "0 */6 * * *"
   workflow_dispatch:
     inputs:
