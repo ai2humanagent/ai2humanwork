@@ -1,0 +1,12 @@
+{
+  "prompt": "come here",
+  "action": "walk_forward",
+  "endpoint": "POST /command",
+  "note": "If GET /state shows the robot is not ready (fsm != balance_stand), first send stand_up then balance_stand, then walk_forward.",
+  "sequence": [
+    { "action": "stand_up" },
+    { "action": "balance_stand" },
+    { "action": "walk_forward" }
+  ],
+  "expectReport": "stood up, balanced, and walked forward. battery ~84%."
+}

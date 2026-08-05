@@ -1,0 +1,7 @@
+{
+  "prompt": "wave hello on my G1",
+  "action": "wave",
+  "endpoint": "POST /command",
+  "body": { "action": "wave" },
+  "expectReport": "done on your G1: waved hello 👋 — battery ~86%."
+}

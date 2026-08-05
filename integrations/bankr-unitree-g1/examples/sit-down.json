@@ -1,0 +1,7 @@
+{
+  "prompt": "sit down",
+  "action": "sit",
+  "endpoint": "POST /command",
+  "body": { "action": "sit" },
+  "expectReport": "done on your G1: sat down — battery ~85%."
+}
