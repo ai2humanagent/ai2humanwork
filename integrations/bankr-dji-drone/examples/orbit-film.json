@@ -1,0 +1,9 @@
+{
+  "prompt": "orbit that antenna and film it",
+  "steps": [
+    { "endpoint": "GET /state", "expect": { "flight_status": "flying", "battery": 78 } },
+    { "endpoint": "POST /command", "body": { "action": "orbit", "radius_m": 20, "alt_m": 30 }, "expect": { "ok": true } },
+    { "endpoint": "POST /command", "body": { "action": "start_video" }, "expect": { "ok": true } }
+  ],
+  "expectReport": "🚁 orbiting at 20 m radius and recording — battery 76%."
+}

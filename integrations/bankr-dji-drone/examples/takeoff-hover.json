@@ -1,0 +1,10 @@
+{
+  "prompt": "take off and hover",
+  "steps": [
+    { "endpoint": "GET /state", "expect": { "online": true, "flight_status": "on_dock", "gps_fix": "good", "battery": 92, "geofence_ok": true } },
+    { "confirm": "Taking off puts a real drone in the air. Confirm?" },
+    { "endpoint": "POST /command", "body": { "action": "takeoff", "confirm": true }, "expect": { "ok": true, "state": { "flight_status": "flying" } } },
+    { "endpoint": "POST /command", "body": { "action": "hover" }, "expect": { "ok": true } }
+  ],
+  "expectReport": "🚁 airborne and holding at 15 m — battery 90%, inside geofence."
+}

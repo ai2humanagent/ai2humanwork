@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DJI Drone Simulator — Bankr Bridge</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+  :root {
+    --bg: #0b0f14; --panel: #141b24; --panel2: #1b2532; --line: #263241;
+    --text: #e6edf3; --muted: #8b98a5; --accent: #35c2ff; --good: #3fb950;
+    --warn: #d29922; --bad: #f85149; --track: #35c2ff;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg); color: var(--text); height: 100vh; overflow: hidden; }
+  .app { display: grid; grid-template-columns: 1fr 380px; height: 100vh; }
+  #map { height: 100vh; background: #0b0f14; }
+  .side { background: var(--panel); border-left: 1px solid var(--line);
+    display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+  .head { padding: 16px 18px; border-bottom: 1px solid var(--line); }
+  .head h1 { margin: 0; font-size: 16px; letter-spacing: .3px; }
+  .head .sub { color: var(--muted); font-size: 12px; margin-top: 4px; }
+  .badge { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 20px;
+    background: var(--panel2); color: var(--accent); margin-left: 6px; border: 1px solid var(--line); }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 16px 18px; }
+  .stat { background: var(--panel2); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+  .stat .k { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .5px; }
+  .stat .v { font-size: 20px; font-weight: 600; margin-top: 3px; }
+  .stat .v small { font-size: 12px; color: var(--muted); font-weight: 400; }
+  .bar { height: 6px; border-radius: 4px; background: #22303f; margin-top: 8px; overflow: hidden; }
+  .bar > i { display: block; height: 100%; background: var(--good); transition: width .4s, background .4s; }
+  .pill { font-size: 12px; padding: 3px 10px; border-radius: 20px; font-weight: 600; }
+  .pill.on_dock { background: #1f2d1f; color: var(--good); }
+  .pill.flying { background: #10344a; color: var(--accent); }
+  .pill.returning { background: #3a2f12; color: var(--warn); }
+  .pill.idle { background: #2a2f36; color: var(--muted); }
+  .controls { padding: 8px 18px 12px; border-top: 1px solid var(--line); }
+  .controls h2 { font-size: 12px; color: var(--muted); text-transform: uppercase;
+    letter-spacing: .5px; margin: 8px 0; }
+  .btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  button { font-family: inherit; font-size: 13px; padding: 10px; border-radius: 9px;
+    border: 1px solid var(--line); background: var(--panel2); color: var(--text);
+    cursor: pointer; transition: .15s; }
+  button:hover { border-color: var(--accent); background: #1e2c3a; }
+  button.danger { color: var(--bad); }
+  button.rth { grid-column: 1 / -1; background: #10344a; border-color: #1c4a63; color: var(--accent); font-weight: 600; }
+  button:disabled { opacity: .4; cursor: not-allowed; }
+  .log { flex: 1; overflow-y: auto; padding: 8px 18px 18px; border-top: 1px solid var(--line);
+    font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12px; }
+  .log h2 { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin: 10px 0 6px; }
+  .row { padding: 6px 9px; border-radius: 7px; margin-bottom: 5px; background: var(--panel2);
+    border-left: 3px solid var(--line); display: flex; gap: 8px; }
+  .row.ok { border-left-color: var(--good); }
+  .row.refused { border-left-color: var(--bad); }
+  .row.evt { border-left-color: var(--accent); }
+  .row .t { color: var(--muted); flex-shrink: 0; }
+  .row .m { color: var(--text); }
+  .conn { font-size: 11px; padding: 3px 8px; border-radius: 20px; }
+  .conn.up { background: #1f2d1f; color: var(--good); }
+  .conn.down { background: #3a1f1f; color: var(--bad); }
+  .droneicon { font-size: 26px; filter: drop-shadow(0 0 6px rgba(53,194,255,.8)); }
+  .hint { color: var(--muted); font-size: 11px; padding: 0 18px 10px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div id="map"></div>
+  <div class="side">
+    <div class="head">
+      <h1>🚁 DJI Drone Simulator
+        <span class="badge" id="mockBadge">MOCK</span>
+        <span class="conn down" id="conn">connecting…</span>
+      </h1>
+      <div class="sub">agent → bridge (HTTP) → this simulator. No real aircraft.</div>
+    </div>
+
+    <div class="grid">
+      <div class="stat">
+        <div class="k">Status</div>
+        <div class="v"><span class="pill idle" id="status">—</span></div>
+      </div>
+      <div class="stat">
+        <div class="k">Battery</div>
+        <div class="v" id="battery">—<small>%</small></div>
+        <div class="bar"><i id="batteryBar" style="width:0%"></i></div>
+      </div>
+      <div class="stat">
+        <div class="k">Altitude</div>
+        <div class="v" id="alt">—<small> m</small></div>
+      </div>
+      <div class="stat">
+        <div class="k">Dist from home</div>
+        <div class="v" id="dist">—<small> m</small></div>
+      </div>
+      <div class="stat">
+        <div class="k">GPS</div>
+        <div class="v" id="gps" style="font-size:15px">—</div>
+      </div>
+      <div class="stat">
+        <div class="k">Geofence</div>
+        <div class="v" id="geo" style="font-size:15px">—</div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <h2>Manual control (sends real /command to bridge)</h2>
+      <div class="btns">
+        <button onclick="cmd('takeoff',{confirm:true})">Take off</button>
+        <button onclick="cmd('orbit',{radius_m:60,alt_m:40})">Orbit tower</button>
+        <button onclick="cmd('goto',gotoNorth())">Fly 200 m N</button>
+        <button onclick="cmd('goto',{lat:0,lon:0,alt_m:60})" title="outside geofence → 422">Fly 2 km (refused)</button>
+        <button onclick="toggleVideo()" id="vidBtn">Start video</button>
+        <button onclick="cmd('set_altitude',{alt_m:90})">Climb 90 m</button>
+        <button class="danger" onclick="cmd('land_now',{confirm:true})">Emergency land</button>
+        <button onclick="cmd('hover')">Hover</button>
+        <button class="rth" onclick="cmd('return_to_home')">Return to home (always safe)</button>
+      </div>
+    </div>
+    <div class="hint">Tip: the agent (or <code>scripts/smoke.mjs</code>) can drive this too — any command routed through the bridge shows here live.</div>
+
+    <div class="log">
+      <h2>Live event log</h2>
+      <div id="logRows"></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+let TOKEN = "dev-token";
+let HOME = [40.7484, -73.9857];
+let GEOFENCE = 500, MAXALT = 120;
+let recording = false;
+
+const map = L.map('map', { zoomControl: true, attributionControl: false }).setView(HOME, 16);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 20 }).addTo(map);
+
+let homeMarker, fenceCircle, droneMarker, track;
+const trackPts = [];
+
+function initMap() {
+  homeMarker = L.marker(HOME, { title: 'Home / Dock',
+    icon: L.divIcon({ className:'', html:'<div style="font-size:22px">🏠</div>', iconSize:[24,24], iconAnchor:[12,12] }) }).addTo(map);
+  fenceCircle = L.circle(HOME, { radius: GEOFENCE, color:'#35c2ff', weight:1.5,
+    fillColor:'#35c2ff', fillOpacity:0.06, dashArray:'6 6' }).addTo(map);
+  droneMarker = L.marker(HOME, { title:'Drone', zIndexOffset:1000,
+    icon: L.divIcon({ className:'', html:'<div class="droneicon">🚁</div>', iconSize:[30,30], iconAnchor:[15,15] }) }).addTo(map);
+  track = L.polyline([], { color:'#35c2ff', weight:2, opacity:0.7 }).addTo(map);
+}
+
+function gotoNorth() {
+  const dlat = 200 / 6371000 * 180 / Math.PI;
+  return { lat: HOME[0] + dlat, lon: HOME[1], alt_m: 50 };
+}
+
+async function loadConfig() {
+  try {
+    const r = await fetch('/config');
+    const c = await r.json();
+    TOKEN = c.token; HOME = [c.home_lat, c.home_lon];
+    GEOFENCE = c.geofence_radius_m; MAXALT = c.max_alt_m;
+  } catch (e) {}
+  initMap();
+  map.setView(HOME, 16);
+}
+
+async function cmd(action, params = {}) {
+  addLog('evt', `→ ${action}`, JSON.stringify(params));
+  try {
+    const r = await fetch('/command', {
+      method:'POST',
+      headers:{ 'Authorization':'Bearer '+TOKEN, 'Content-Type':'application/json' },
+      body: JSON.stringify(Object.assign({ action }, params))
+    });
+    const j = await r.json();
+    if (r.status === 200 && j.ok) addLog('ok', `✓ ${action}`, j.message);
+    else if (r.status === 422) addLog('refused', `✗ ${action} refused`, j.message);
+    else addLog('refused', `✗ ${action}`, (j.detail||j.message||('HTTP '+r.status)));
+  } catch (e) {
+    addLog('refused', `✗ ${action}`, String(e));
+  }
+}
+
+function toggleVideo() {
+  recording ? cmd('stop_video') : cmd('start_video');
+}
+
+function addLog(cls, tag, msg) {
+  const rows = document.getElementById('logRows');
+  const d = document.createElement('div');
+  d.className = 'row ' + cls;
+  const t = new Date().toLocaleTimeString();
+  d.innerHTML = `<span class="t">${t}</span><span class="m"><b>${tag}</b> ${msg||''}</span>`;
+  rows.insertBefore(d, rows.firstChild);
+  while (rows.children.length > 60) rows.removeChild(rows.lastChild);
+}
+
+function render(s) {
+  document.getElementById('status').textContent = s.flight_status;
+  document.getElementById('status').className = 'pill ' + s.flight_status;
+  document.getElementById('battery').innerHTML = s.battery + '<small>%</small>';
+  const bar = document.getElementById('batteryBar');
+  bar.style.width = s.battery + '%';
+  bar.style.background = s.battery <= 20 ? 'var(--bad)' : (s.battery <= 40 ? 'var(--warn)' : 'var(--good)');
+  document.getElementById('alt').innerHTML = s.altitude_m + '<small> m</small>';
+  document.getElementById('dist').innerHTML = s.dist_from_home_m + '<small> m</small>';
+  document.getElementById('gps').textContent = s.gps_fix;
+  document.getElementById('gps').style.color = s.gps_fix==='good' ? 'var(--good)' : 'var(--warn)';
+  const geo = document.getElementById('geo');
+  geo.textContent = s.geofence_ok ? 'inside ✓' : 'BREACH ✗';
+  geo.style.color = s.geofence_ok ? 'var(--good)' : 'var(--bad)';
+  document.getElementById('mockBadge').style.display = s.mock ? 'inline-block' : 'none';
+
+  recording = s.recording;
+  document.getElementById('vidBtn').textContent = recording ? 'Stop video ●' : 'Start video';
+  document.getElementById('vidBtn').style.color = recording ? 'var(--bad)' : '';
+
+  if (droneMarker && s.lat && s.lon) {
+    const p = [s.lat, s.lon];
+    droneMarker.setLatLng(p);
+    const flying = s.flight_status === 'flying' || s.flight_status === 'returning';
+    if (flying) {
+      trackPts.push(p);
+      if (trackPts.length > 400) trackPts.shift();
+      track.setLatLngs(trackPts);
+    } else if (s.flight_status === 'on_dock') {
+      trackPts.length = 0; track.setLatLngs([]);
+    }
+  }
+}
+
+function connect() {
+  const es = new EventSource('/events');
+  const conn = document.getElementById('conn');
+  es.onopen = () => { conn.textContent = 'live'; conn.className = 'conn up'; };
+  es.onerror = () => { conn.textContent = 'reconnecting…'; conn.className = 'conn down'; };
+  es.onmessage = (ev) => {
+    const d = JSON.parse(ev.data);
+    if (d.kind === 'state') render(d.payload);
+    else if (d.kind === 'command') {
+      const p = d.payload;
+      addLog(p.ok ? 'ok' : 'refused', (p.ok?'✓ ':'✗ ') + p.action, p.message);
+    }
+  };
+}
+
+loadConfig().then(connect);
+</script>
+</body>
+</html>

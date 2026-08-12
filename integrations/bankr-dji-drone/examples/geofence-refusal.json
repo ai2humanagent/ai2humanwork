@@ -1,0 +1,8 @@
+{
+  "prompt": "fly 2 km east",
+  "steps": [
+    { "endpoint": "GET /state", "expect": { "flight_status": "flying", "geofence_ok": true } },
+    { "endpoint": "POST /command", "body": { "action": "goto", "lat": 40.7580, "lon": -73.9455, "alt_m": 60 }, "expect": { "http": 422, "ok": false, "message": "target outside geofence (max ~500 m from home)" } }
+  ],
+  "expectReport": "Can't — that's outside the geofence your bridge enforces (max ~500 m from home). I can fly to a point inside it or orbit here instead."
+}
