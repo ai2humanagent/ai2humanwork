@@ -45,16 +45,16 @@
 | 0029 | cross_evidence_consistency | 对比两个公开追踪站的 repo stars | urls + notes | 差异如实报告 |
 | 0030 | cross_evidence_consistency | 核验活动页日期与公告帖一致 | urls + notes | 日期核对有据 |
 
-## 2b. 每类任务菜单（用户自由创建时可参考，不限于矩阵）
+## 2b. 每类任务菜单（5 倍扩容版，用户自由创建时可参考，不限于矩阵）
 
-| 类 | 更多具体任务变体 |
+| 类 | 具体任务变体（每类 15–20 个） |
 |---|---|
-| social_content | 回复公开提问、引用文章发评论、发产品反馈帖、发每日状态、参与公开话题接龙、发投票 |
-| account_configuration | 建测试仓库、改 bio、加 topic/label、开公开开关、设资料链接、创建测试组织/项目、改昵称 |
-| content_publication | 发短文、发 gist、发 changelog、发 wiki 页、发论坛公告、发 README 更新、发数据集条目、发更新日志 |
-| form_document_submission | 反馈表单、问卷、feature request、issue 工单、公开投票、登记表、测试申请单 |
-| time_sensitive_digital_state | 记录粉丝数、commit 数、star 数、release 版本、页面可用性、活动状态、badge 状态、价格/计数 |
-| cross_evidence_consistency | 双源声明核对、README 与文件结构、主页与内容关联、日期一致性、两站指标差异、账号一致性 |
+| social_content | 回复公开提问、引用文章发评论、发产品反馈帖、发每日状态、参与话题接龙、发投票、发感谢帖、发经验分享、发教程链接帖、发活动预告、发问答帖、发资源帖、发调查帖、发公告、发打卡帖、发二创引用、发翻译帖、发盘点帖、发推荐帖、发纠错帖 |
+| account_configuration | 建测试仓库、改 bio、加 topic/label、开公开开关、设资料链接、创建测试组织、改昵称、加公开邮箱、设公开主页、建测试项目、加 README、改头像描述、设公开时区、加社交链接、建公开列表、改简介、加徽章、设公开仓库默认分支、加协作者说明、开公开讨论区 |
+| content_publication | 发短文、发 gist、发 changelog、发 wiki 页、发论坛公告、发 README 更新、发数据集条目、发更新日志、发博客、发新闻稿、发操作指南、发 FAQ、发路线图、发版本说明、发教程、发案例研究、发白皮书摘要、发代码片段、发配置文件、发公开笔记 |
+| form_document_submission | 反馈表单、问卷、feature request、issue 工单、公开投票、登记表、测试申请单、bug 报告、文档勘误、翻译投稿、活动报名、试用申请、白名单申请、许可申请、简历模板提交、项目提案、投票委托、社区提案、RFC 评论、公开签到表 |
+| time_sensitive_digital_state | 记录粉丝数、commit 数、star 数、release 版本、页面可用性、活动状态、badge 状态、价格、计数、排名、投票数、在线人数、库存状态、开票状态、版本时间戳、最后更新时间、域名状态、API 状态、指标快照、榜单位置 |
+| cross_evidence_consistency | 双源声明核对、README 与文件结构、主页与内容关联、日期一致性、两站指标差异、账号一致性、版本号一致性、作者身份核对、链接有效性交叉、官方公告与媒体对比、截图与页面现状对比、元数据与实际内容、价格与账单、状态与时间线、来源权威性对比、引用真实性、翻译与原文、数据口径对比、品牌一致性、许可证一致性 |
 
 ## 3. 每类 G3 mutation 钩子（confirmatory 用，pilot 不做）
 
@@ -75,8 +75,24 @@
 3. 证据只收 brief 要求的最小字段；`validate-pilot` 会校验 consent、policy 版本、hash 与回执结构；
 4. 全部任务保持 payout-disabled（研究模式默认）。
 
+## 4b. 候选池（无限容量，正式研究 G3 用）
+
+pilot 的 30 槽是科学上限（可行性试运行，20–30 例）。参与者创建的研究任务**超过 30 个也没关系**：
+
+- 满足 pilot 槽位的 → 按类归档进 manifest；
+- 其余研究同意任务 → 登记进 `pilot/candidates.csv`（候选池），不参与 pilot 校验，**作为 G3 confirmatory（200 base / 600 bundle）的候选池**；
+- G3 最终规模在 pilot 完成后由成对功效分析决定（`config/study.json`：`final_size_requires_pilot_power_analysis: true`），候选池保证到时有料可用。
+
+候选池登记示例：
+
+```csv
+candidate_id,task_class,product_task_id,consent_version,consented_at,created_at,notes
+JVC-2026-0001,content_publication,a2h-x-<id>,jove-core-consent-v1,2026-08-20T09:00:00Z,2026-08-20T09:05:00Z,user-created
+```
+
 ## 5. 与现有工具链对接
 
 - manifest：`pilot/manifest.csv`（30 槽，5/5/5/5/5/5）
 - launch plan：`pilot/launch-plan.csv`（4 retrospective blocked，26 prospective ready，已填具体任务）
+- 候选池：`pilot/candidates.csv`（研究同意任务，容量不限，G3 用）
 - 校验：`npm run research:jove:launch-plan` + `npm run research:jove:validate` + `npm run research:jove:audit`
