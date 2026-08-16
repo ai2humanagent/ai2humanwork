@@ -10,7 +10,7 @@
 | 类别 | 动作 | 归属 | 是否阻塞投稿 |
 |---|---|---|---|
 | A. 文档交付物（数据无关） | E&D datasheet / author statement / checklist / broader impact | **已由工件补齐**（见 §5） | E&D 需要 |
-| B. 人为决策门禁 | G1 分析冻结（clean tree → freeze → tag） | **人（作者）** | 是，必须先于任何 confirmatory 数据 |
+| B. 人为决策门禁 | G1 分析冻结（clean tree → freeze → tag） | **人（作者）** | ✅ 已完成（2026-08-16，见 §1） |
 | C. 真人参与 | G2 pilot 采集 + 2 盲评员 | **人（作者 + 参与者 + 评审员）** | 是 |
 | C. 真人参与 | G3 全量采集（200 base / 600 bundle / 3 盲评员） | **人** | 是 |
 | D. 一键产出 | G4 跑冻结脚本出 §8 结果 | 人触发，脚本自动 | 是 |
@@ -20,33 +20,19 @@
 
 ---
 
-## 1. G1 — 分析冻结（下一步，作者亲自执行）
+## 1. G1 — 分析冻结（✅ 已完成 2026-08-16）
 
-**为什么必须现在做且必须由人做：** 冻结是预注册承诺，必须发生在**第一个 confirmatory 数据点之前**；`freeze-analysis.mjs` 拒绝在 git 脏树上运行，以保证被钉住的 commit hash 有意义。当前工作树很脏（含大量与本论文无关的改动）。
+**冻结是预注册承诺，必须发生在第一个 confirmatory 数据点之前。已完成：**
 
-### 前置条件（全部满足才冻结）
-- [ ] `preregistration.md` ⇄ `paper/main-v5.tex` 逐字一致（G0 已完成）
-- [ ] 所有分析脚本 final，无计划中的评分/推断逻辑改动（当前测试 15/15 通过）
-- [ ] git 工作树干净
-
-### 执行步骤（作者手动）
-```bash
-# 建议：先把 jove-core 相关改动单独成分支/提交，与无关改动隔离
-git add docs/jove-core && git commit -m "freeze: JOVE-Core confirmatory analysis (pre-data)"
-
-# 创建冻结记录
-npm run research:jove:freeze          # 写 analysis-freeze.json（含 hash/commit/UTC）
-
-git add docs/jove-core/analysis-freeze.json && git commit -m "freeze: pin analysis-freeze.json"
-
-# 外部可信时间戳（择一或多选）
-git tag jove-freeze-$(date -u +%Y%m%d)
-#  + 推荐同时做 OSF 预注册登记，把 commit hash 写进去，论文引用此时间戳
-```
+- **冻结记录：** `docs/jove-core/analysis-freeze.json`（frozen_at `2026-08-16T09:55:29Z`，commit `9417ffc`，11 个工件 sha256 锁定）
+- **提交链：** `9417ffc`（freeze: JOVE-Core confirmatory analysis）→ `58816db`（freeze: pin analysis-freeze.json）
+- **外部时间戳：** tag `jove-freeze-20260816` → `58816db`，已推送 `origin`（branch `feature/twitter-tasks-verification`，fast-forward）
+- **验证：** `freeze-analysis.mjs --verify` → `verified: true`
+- **尚余（作者，外部）：** OSF 预注册登记（把 commit hash `9417ffc` 写进去，论文引用此时间戳）——推荐在 G2 采集前完成
 
 ### 验证（冻结后持续跑）
 ```bash
-npm run research:jove:freeze-verify   # 内容篡改 or 数据文件早于冻结时间 → 失败
+node docs/jove-core/scripts/freeze-analysis.mjs --verify   # 内容篡改 or 数据文件早于冻结时间 → 失败
 ```
 
 ---
@@ -134,4 +120,4 @@ G1 冻结（人，天级） → G2 pilot（周级，需招募+评审员）
 
 ## 7. 一句话状态
 
-> 方法与工程 100% 就绪并已冻结准备；E&D 数据无关文档已补齐；**唯一剩余是真人参与的 confirmatory 数据采集（G1→G4），这必须由作者线下执行，不能自动化，否则违反预注册与科学诚信。**
+> ✅ G1 分析冻结已完成（2026-08-16，tag `jove-freeze-20260816`）。方法与工程 100% 就绪；E&D 数据无关文档已补齐；**唯一剩余是真人参与的 confirmatory 数据采集（G2→G4），这必须由作者线下执行，不能自动化，否则违反预注册与科学诚信。**
