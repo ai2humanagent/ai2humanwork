@@ -1,6 +1,9 @@
 import {
   buildOfficialCampaignTask,
-  getOfficialCampaignTemplates
+  buildResearchEvidenceTask,
+  getOfficialCampaignTemplates,
+  getResearchEvidenceTemplates,
+  isResearchEvidenceTemplate
 } from "./officialCampaignTasks.js";
 
 export const VALID_REWARD_DISTRIBUTION_MODES = [
@@ -100,6 +103,7 @@ export function readFundingPlan(input = {}, rewardDistribution) {
 }
 
 const OFFICIAL_TEMPLATE_IDS = new Set(getOfficialCampaignTemplates().map((template) => template.id));
+const RESEARCH_TEMPLATE_IDS = new Set(getResearchEvidenceTemplates().map((template) => template.id));
 
 function isBlankOrPlaceholder(value) {
   const text = String(value || "").trim().toLowerCase();
@@ -120,17 +124,18 @@ export function getMissingAgentTaskInputs(input = {}, rewardDistribution) {
   const funding = readFundingPlan(input, rewardDistribution);
   const templateId = String(input.templateId || "").trim();
   const usesOfficialTemplate = OFFICIAL_TEMPLATE_IDS.has(templateId);
+  const usesResearchTemplate = RESEARCH_TEMPLATE_IDS.has(templateId);
   const isLuckyDraw = rewardDistribution?.mode === "lucky_draw";
 
-  if (usesOfficialTemplate || rewardDistribution) {
+  if (usesOfficialTemplate || usesResearchTemplate || rewardDistribution) {
     if (isBlankOrPlaceholder(input.requesterName)) missingInputs.push("requesterName");
-    if (isBlankOrPlaceholder(input.requesterHandle)) missingInputs.push("requesterHandle");
+    if (!usesResearchTemplate && isBlankOrPlaceholder(input.requesterHandle)) missingInputs.push("requesterHandle");
     if (isBlankOrPlaceholder(input.budget)) missingInputs.push("budget");
     if (isBlankOrPlaceholder(input.deadline)) missingInputs.push("deadline");
     if (isBlankOrPlaceholder(input.brief)) missingInputs.push("brief");
   }
 
-  if (usesOfficialTemplate && isBlankOrPlaceholder(input.targetUrl)) {
+  if ((usesOfficialTemplate || usesResearchTemplate) && isBlankOrPlaceholder(input.targetUrl)) {
     missingInputs.push("targetUrl");
   }
 
@@ -210,7 +215,17 @@ export function buildAgentTaskPreview(input = {}) {
   }
 
   const campaignTask = templateId
-    ? buildOfficialCampaignTask({
+    ? (isResearchEvidenceTemplate(templateId) ? buildResearchEvidenceTask({
+        templateId,
+        title: title || undefined,
+        budget: budget || undefined,
+        deadline: deadline || undefined,
+        requesterName: input.requesterName || undefined,
+        requesterHandle: input.requesterHandle || undefined,
+        targetUrl: input.targetUrl || undefined,
+        brief: input.brief || undefined,
+        researchConsent: input.researchConsent || undefined
+      }) : buildOfficialCampaignTask({
         templateId,
         title: title || undefined,
         budget: budget || undefined,
@@ -223,7 +238,7 @@ export function buildAgentTaskPreview(input = {}) {
         eligibility: input.eligibility || undefined,
         tokenGate: input.tokenGate || undefined,
         campaignLinks: input.campaignLinks
-      })
+      }))
     : null;
 
   const finalBudget = campaignTask?.budget || budget || "TBD";
@@ -238,7 +253,7 @@ export function buildAgentTaskPreview(input = {}) {
   if (!String(input.requesterName || "").trim()) {
     warnings.push("Add requesterName so users know which project created the task.");
   }
-  if (!String(input.requesterHandle || "").trim()) {
+  if (!isResearchEvidenceTemplate(templateId) && !String(input.requesterHandle || "").trim()) {
     warnings.push("Add requesterHandle when the project has a public X account.");
   }
   if (templateId && !String(input.targetUrl || "").trim()) {

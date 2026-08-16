@@ -2220,6 +2220,18 @@
   cursor: not-allowed;
 }
 
+.apiAuthRecovery {
+  width: 100%;
+  height: 46px;
+  border: 1px solid #111217;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #111217;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
 .apiStatusError,
 .apiStatusSuccess {
   margin: 0;
@@ -3115,6 +3127,56 @@
 
 .modeHelp strong {
   color: var(--tm-text);
+}
+
+.templateFillButton {
+  width: fit-content;
+  min-height: 30px;
+  border: 1px solid rgba(128, 255, 234, 0.38);
+  border-radius: 8px;
+  background: rgba(128, 255, 234, 0.1);
+  color: var(--tm-cyan);
+  padding: 0 10px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.researchSafetyNote {
+  display: grid;
+  gap: 4px;
+  margin: 10px 0 14px;
+  border: 1px solid rgba(128, 255, 234, 0.18);
+  border-radius: 10px;
+  background: rgba(128, 255, 234, 0.06);
+  padding: 10px 12px;
+  color: var(--tm-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.researchSafetyNote strong {
+  color: var(--tm-text);
+}
+
+.researchConsentRow {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin: 10px 0 14px;
+  padding: 10px 12px;
+  border: 1px solid rgba(128, 255, 234, 0.18);
+  border-radius: 10px;
+  background: rgba(128, 255, 234, 0.06);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--tm-muted);
+  cursor: pointer;
+}
+
+.researchConsentRow input {
+  margin-top: 2px;
 }
 
 .row2 {
@@ -4148,4 +4210,121 @@
   .developerFlowCard {
     min-height: 0;
   }
+}
+.quickTaskActions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+
+.taskExampleRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.taskExampleRow button,
+.secondaryTaskButton {
+  min-height: 32px;
+  border: 1px solid var(--tm-border);
+  border-radius: 999px;
+  background: var(--tm-panel-soft);
+  color: var(--tm-text);
+  padding: 0 12px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.taskExampleRow button:hover,
+.secondaryTaskButton:hover {
+  border-color: rgba(128, 255, 234, 0.55);
+}
+
+.advancedTaskEditor {
+  margin-top: 16px;
+  border: 1px solid var(--tm-border);
+  border-radius: 16px;
+  background: var(--tm-panel-soft);
+}
+
+.advancedTaskEditor > summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.advancedTaskEditor > summary span {
+  color: var(--tm-muted);
+  font-size: 12px;
+}
+
+.advancedTaskEditor[open] > summary {
+  border-bottom: 1px solid var(--tm-border);
+}
+
+.advancedTaskEditor .createGrid {
+  padding: 16px;
+}
+
+.quickTaskPreview {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.quickTaskPreview > div {
+  display: grid;
+  gap: 5px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--panel-soft);
+}
+
+.quickTaskPreview span {
+  color: var(--text-muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+
+.quickTaskWide { grid-column: 1 / -1; }
+
+.taskPublishProgress {
+  display: grid;
+  gap: 9px;
+  margin-top: 16px;
+  padding: 15px 16px;
+  border: 1px solid rgba(128, 255, 234, .28);
+  border-radius: 14px;
+  background: rgba(128, 255, 234, .055);
+}
+
+.taskPublishProgress > div { display: grid; grid-template-columns: 18px 1fr; align-items: center; gap: 8px; color: var(--tm-muted); font-size: 12px; }
+.taskPublishProgress > div > span:first-child { width: 15px; height: 15px; border: 1px solid rgba(255,255,255,.18); border-radius: 50%; }
+.taskPublishProgress .taskPublishDone { display: grid; place-items: center; border-color: var(--tm-cyan); color: var(--tm-cyan); font-size: 10px; }
+.taskPublishProgress .taskPublishActive { border: 2px solid rgba(128,255,234,.25); border-top-color: var(--tm-cyan); animation: taskPublishSpin .8s linear infinite; }
+.taskPublishProgress small, .taskBudgetConsent { color: var(--tm-muted); font-size: 11px; line-height: 1.55; }
+.taskBudgetConsent { margin: 10px 0 0; }
+.reviewPolicyPicker { border: 0; padding: 0; margin: 18px 0 4px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.reviewPolicyPicker legend { grid-column: 1 / -1; margin-bottom: 8px; font-size: 13px; font-weight: 700; }
+.reviewPolicyPicker label { display: flex; gap: 10px; padding: 14px; border: 1px solid var(--tm-border); border-radius: 12px; cursor: pointer; background: var(--tm-surface); }
+.reviewPolicyPicker label:hover, .reviewPolicyPicker .reviewPolicySelected { border-color: var(--tm-accent); box-shadow: 0 0 0 1px var(--tm-accent); }
+.reviewPolicyPicker input { margin-top: 3px; }
+.reviewPolicyPicker span { display: grid; gap: 4px; }
+.reviewPolicyPicker small { color: var(--tm-muted); line-height: 1.45; }
+@media (max-width: 720px) { .reviewPolicyPicker { grid-template-columns: 1fr; } }
+@keyframes taskPublishSpin { to { transform: rotate(360deg); } }
+
+@media (max-width: 720px) {
+  .quickTaskPreview { grid-template-columns: 1fr; }
+  .quickTaskWide { grid-column: auto; }
 }

@@ -36,3 +36,21 @@ node docs/jove-core/scripts/register-consent.mjs \
 ```
 
 红线：**不得把历史生产数据当作默认 consent**；consent 必须逐案例、逐版本记录。
+
+## 产品内采集（主要路径，已实现）
+
+平台创建研究任务时，用户勾选同意框后，任务记录写入：
+
+```json
+{
+  "campaign": {
+    "researchConsent": {
+      "version": "jove-core-consent-v1",
+      "consentedAt": "<ISO 时间>",
+      "retention": "2027-08-16"
+    }
+  }
+}
+```
+
+`export-live-case.mjs` 导出时优先读取该字段（无 `--consent-at` 也能导出）；缺失 consent 的任务拒绝进入研究案例。此表格外的书面同意仅用于补充记录。

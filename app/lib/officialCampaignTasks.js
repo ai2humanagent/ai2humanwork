@@ -9,6 +9,7 @@ export const DEFAULT_TARGET_URL = "https://x.com/ai2humannetwork/status/20576691
 export const DEFAULT_REPLY_TARGET_URL = "https://x.com/ai2humannetwork/status/2021889560729321898";
 export const DEFAULT_X_TASK_BUDGET = formatSettlementBudget("0.01");
 export const DEFAULT_REAL_WORLD_TASK_BUDGET = formatSettlementBudget("45");
+export const DEFAULT_RESEARCH_EVIDENCE_TASK_BUDGET = formatSettlementBudget("10");
 
 const X_CAMPAIGN_TEMPLATES = [
   {
@@ -362,6 +363,32 @@ const REAL_WORLD_TEMPLATES = [
   }
 ];
 
+const RESEARCH_EVIDENCE_TEMPLATES = [
+  {
+    id: "research_code_dataset_access",
+    label: "Research Evidence Bundle",
+    action: "code_dataset_access_check",
+    title: "Verify public code and dataset access for an open research paper",
+    defaultBrief:
+      "Use the supplied public paper, code repository, and data source to verify whether a fresh reader can reach the referenced artifacts and identify the documented setup path. Return source links, access evidence, concise limitation notes, and a bounded verdict. This task does not determine scientific validity or publication eligibility.",
+    defaultTargetUrl: "https://github.com/netneurolab/neuromaps",
+    targetLabel: "Paper, DOI, code repository, or dataset reference",
+    proofRequirements: [
+      "Submit the direct public URL for the paper, code repository, or dataset checked.",
+      "Submit a concise written result with the access path, observed result, and any missing setup-critical information.",
+      "State one bounded verdict: publicly accessible, partially accessible, metadata only, unavailable, or needs expert review.",
+      "State what this check does not establish."
+    ],
+    verificationChecks: [
+      "At least one public source link is present.",
+      "The written result identifies the artifact checked and the observed access result.",
+      "The result includes a limitation statement.",
+      "The result does not claim scientific validity, replication success, or publication eligibility."
+    ],
+    submissionFields: ["evidenceUrl", "summary"]
+  }
+];
+
 function normalizeHandle(value) {
   const handle = String(value || "").trim();
   if (!handle) return "";
@@ -418,6 +445,13 @@ function findRealWorldTemplate(templateId) {
   );
 }
 
+function findResearchEvidenceTemplate(templateId) {
+  return (
+    RESEARCH_EVIDENCE_TEMPLATES.find((template) => template.id === templateId) ||
+    RESEARCH_EVIDENCE_TEMPLATES[0]
+  );
+}
+
 function isNonEmpty(value, minLength = 3) {
   return String(value || "").trim().length >= minLength;
 }
@@ -434,14 +468,26 @@ export function getTaskEvidenceFields(task) {
   const values = {};
   const textLines = [];
   const screenshots = [];
+  const artifacts = [];
+  let proofBundle = null;
+  let customVerification = null;
 
   for (const item of notes) {
     const content = String(item?.content || "").trim();
     if (!content) continue;
-    if (item?.type === "photo") {
+    if (item?.type === "photo" || item?.type === "video" || item?.type === "link") {
       screenshots.push(content);
-      continue;
     }
+    if (item?.metadata?.artifact && typeof item.metadata.artifact === "object") {
+      artifacts.push(item.metadata.artifact);
+    }
+    if (!proofBundle && item?.metadata?.proofBundle && typeof item.metadata.proofBundle === "object") {
+      proofBundle = item.metadata.proofBundle;
+    }
+    if (!customVerification && item?.metadata?.customVerification && typeof item.metadata.customVerification === "object") {
+      customVerification = item.metadata.customVerification;
+    }
+    if (item?.type === "photo" || item?.type === "video" || item?.type === "link") continue;
     textLines.push(content.toLowerCase());
     const match = content.match(/^([a-z_]+):\s*(.+)$/i);
     if (!match) continue;
@@ -455,6 +501,9 @@ export function getTaskEvidenceFields(task) {
   return {
     values,
     screenshots,
+    artifacts,
+    proofBundle,
+    customVerification,
     textBlob: textLines.join("\n"),
     normalizedPostUrl: normalizeXUrl(values.post_url),
     normalizedProfileUrl: normalizeXUrl(values.profile_url),
@@ -470,6 +519,14 @@ export function getOfficialCampaignTemplates() {
 
 export function getRealWorldTaskTemplates() {
   return REAL_WORLD_TEMPLATES.map((template) => ({ ...template }));
+}
+
+export function getResearchEvidenceTemplates() {
+  return RESEARCH_EVIDENCE_TEMPLATES.map((template) => ({ ...template }));
+}
+
+export function isResearchEvidenceTemplate(templateId) {
+  return RESEARCH_EVIDENCE_TEMPLATES.some((template) => template.id === templateId);
 }
 
 export function buildOfficialCampaignTask(input = {}) {
@@ -571,7 +628,112 @@ export function buildRealWorldTask(input = {}) {
   };
 }
 
+export function buildResearchEvidenceTask(input = {}) {
+  const template = findResearchEvidenceTemplate(input.templateId);
+  const requesterName = String(input.requesterName || "AI2Human Research Pilot").trim();
+  const requesterHandle = normalizeHandle(input.requesterHandle || "");
+  const targetUrl = String(input.targetUrl || template.defaultTargetUrl || "").trim();
+  const brief = String(input.brief || template.defaultBrief || "").trim();
+  const researchConsent = input.researchConsent && typeof input.researchConsent === "object"
+    ? {
+        version: String(input.researchConsent.version || "").trim(),
+        consentedAt: String(input.researchConsent.consentedAt || "").trim(),
+        retention: String(input.researchConsent.retention || "").trim(),
+        participantReference: String(input.researchConsent.participantReference || "").trim() || undefined
+      }
+    : null;
+  if (!researchConsent || !researchConsent.version || !researchConsent.consentedAt || !researchConsent.retention) {
+    const error = new Error("Research task creation requires researchConsent (version, consentedAt, retention).");
+    error.status = 400;
+    throw error;
+  }
+  const customTaskSpec = {
+    version: "custom-task-spec/v1",
+    kind: "research_evidence",
+    compiler: "deterministic_research_template",
+    compilerReason: "research_evidence_bundle_template",
+    compiledAt: new Date().toISOString(),
+    brief,
+    operatorInstructions: [
+      "Open only the supplied public research source and linked public artifacts.",
+      "Record the direct source URL and the observable access result.",
+      "Do not bypass paywalls, logins, access controls, or licenses.",
+      "State what was not checked; do not infer scientific validity or reproducibility beyond the evidence."
+    ],
+    evidenceRequirements: [
+      {
+        id: "public_source_link",
+        label: "Public research artifact link",
+        instruction: "Submit a direct, publicly accessible paper, repository, or dataset URL that was checked.",
+        kind: "link",
+        required: true,
+        minCount: 1,
+        capturePreference: "upload_or_link"
+      },
+      {
+        id: "structured_research_result",
+        label: "Structured access result and limitations",
+        instruction: "State the artifact checked, access path, observed result, bounded verdict, and what this check does not establish.",
+        kind: "text",
+        required: true,
+        minCount: 1,
+        capturePreference: "upload_or_link"
+      }
+    ],
+    verificationRules: [
+      {
+        id: "public_source_reachable",
+        label: "Submitted source is a public research artifact",
+        instruction: "The submitted URL must resolve to a relevant public paper, code repository, dataset page, or public artifact.",
+        method: "deterministic",
+        severity: "required"
+      },
+      {
+        id: "bounded_result",
+        label: "Result is scoped to access and setup evidence",
+        instruction: "The written result must identify the access outcome and limitations without claiming scientific validity, full replication, or publication eligibility.",
+        method: "deterministic",
+        severity: "required"
+      }
+    ],
+    locationPolicy: { mode: "not_needed", reason: "Public research artifact check; no physical presence is required." },
+    timePolicy: { serverTimestampRequired: true, freshnessMinutes: 10080 },
+    submission: { allowedKinds: ["link", "text"], summaryRequired: true, maxArtifacts: 2 },
+    settlementPolicy: {
+      requireAllRequiredRules: true,
+      lowConfidenceAction: "manual_review",
+      resubmissionAllowed: true,
+      maxSubmissionAttempts: 3
+    }
+  };
+
+  return {
+    title: String(input.title || template.title).trim(),
+    budget: String(input.budget || DEFAULT_RESEARCH_EVIDENCE_TASK_BUDGET).trim(),
+    deadline: String(input.deadline || "48h").trim(),
+    acceptance: template.proofRequirements.join(" "),
+    campaign: {
+      requesterName,
+      requesterHandle: requesterHandle || undefined,
+      platform: "research",
+      action: template.action,
+      label: template.label,
+      targetUrl: targetUrl || undefined,
+      targetLabel: template.targetLabel,
+      brief,
+      proofRequirements: [...template.proofRequirements],
+      verificationChecks: [...template.verificationChecks],
+      submissionFields: [...template.submissionFields],
+      researchConsent,
+      customTaskSpec
+    }
+  };
+}
+
 export function getTaskSubmissionFields(task) {
+  if (task?.campaign?.customTaskSpec?.version === "custom-task-spec/v1") {
+    return ["artifact", "evidenceUrl", "summary", "optionalLocation"];
+  }
   if (Array.isArray(task?.campaign?.submissionFields) && task.campaign.submissionFields.length > 0) {
     return [...task.campaign.submissionFields];
   }
@@ -604,9 +766,37 @@ export function getTaskVerificationStatus(task) {
     screenshots,
     textBlob,
     extractedHandle,
-    normalizedExecutorHandle
+    normalizedExecutorHandle,
+    customVerification
   } = getTaskEvidenceFields(task);
   const checks = [];
+
+  if (task?.campaign?.customTaskSpec?.version === "custom-task-spec/v1") {
+    const resultChecks = Array.isArray(customVerification?.checks) ? customVerification.checks : [];
+    const normalizedChecks = resultChecks.map((check, index) => ({
+      id: String(check?.id || `custom_check_${index + 1}`),
+      label: String(check?.label || check?.reason || `Verification check ${index + 1}`),
+      passed: check?.passed === true,
+      confidence: Number(check?.confidence || 0),
+      reason: String(check?.reason || ""),
+      severity: String(check?.severity || "advisory"),
+      method: String(check?.method || "")
+    }));
+    const settlementAllowed = customVerification?.settlementAllowed === true;
+    return {
+      ok: settlementAllowed,
+      verdict: String(customVerification?.verdict || "pending"),
+      confidence: Number(customVerification?.confidence || 0),
+      checks: normalizedChecks,
+      missing: normalizedChecks.filter((check) => !check.passed).map((check) => check.label),
+      reviewCause: String(customVerification?.reviewCause || ""),
+      providerDiagnostic: customVerification?.providerDiagnostic || null,
+      providerDiagnostics: Array.isArray(customVerification?.providerDiagnostics)
+        ? customVerification.providerDiagnostics
+        : [],
+      reason: String(customVerification?.reason || (normalizedChecks.length ? "Verification has not passed." : "Proof has not been verified yet."))
+    };
+  }
 
   if (task.campaign.platform === "x") {
     const action = task.campaign.action;

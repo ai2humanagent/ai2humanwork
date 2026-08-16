@@ -111,3 +111,24 @@ test("agent preview requires requester-provided target URLs for campaign templat
 test("agent preview rejects empty payloads", () => {
   assert.throws(() => buildAgentTaskPreview({}), /Title or templateId is required/);
 });
+
+test("research evidence preview does not require an X handle", () => {
+  const result = buildAgentTaskPreview({
+    templateId: "research_code_dataset_access",
+    requesterName: "AI2Human Research Pilot",
+    targetUrl: "https://github.com/netneurolab/neuromaps",
+    budget: "10 USDC",
+    deadline: "48h",
+    brief: "Verify public code and documented dataset access without assessing scientific validity.",
+    researchConsent: {
+      version: "jove-core-consent-v1",
+      consentedAt: "2026-08-16T10:00:00.000Z",
+      retention: "2027-08-16"
+    }
+  });
+
+  assert.equal(result.readyToCreate, true);
+  assert.equal(result.preview.campaign.platform, "research");
+  assert.equal(result.preview.campaign.customTaskSpec.kind, "research_evidence");
+  assert.equal(result.missingInputs.includes("requesterHandle"), false);
+});

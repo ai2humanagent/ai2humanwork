@@ -4,6 +4,9 @@ import {
   DEFAULT_TARGET_URL,
   buildOfficialCampaignTask,
   buildRealWorldTask,
+  buildResearchEvidenceTask,
+  getResearchEvidenceTemplates,
+  isResearchEvidenceTemplate,
   getTaskVerificationStatus
 } from "./officialCampaignTasks.js";
 
@@ -296,4 +299,36 @@ test("real-world verification fails when the timestamp note is missing", () => {
 
   assert.equal(result.ok, false);
   assert.ok(result.missing.includes("Timestamp note is present."));
+});
+
+test("research evidence template creates a bounded public-source task", () => {
+  const task = buildResearchEvidenceTask({
+    templateId: "research_code_dataset_access",
+    requesterName: "AI2Human Research Pilot",
+    targetUrl: "https://github.com/netneurolab/neuromaps",
+    researchConsent: {
+      version: "jove-core-consent-v1",
+      consentedAt: "2026-08-16T10:00:00.000Z",
+      retention: "2027-08-16"
+    }
+  });
+
+  assert.equal(isResearchEvidenceTemplate("research_code_dataset_access"), true);
+  assert.equal(getResearchEvidenceTemplates().length, 1);
+  assert.equal(task.campaign.platform, "research");
+  assert.equal(task.campaign.customTaskSpec.kind, "research_evidence");
+  assert.deepEqual(task.campaign.customTaskSpec.submission.allowedKinds, ["link", "text"]);
+  assert.ok(task.campaign.proofRequirements.some((item) => item.includes("does not establish")));
+  assert.equal(task.campaign.researchConsent.version, "jove-core-consent-v1");
+  assert.equal(task.campaign.researchConsent.consentedAt, "2026-08-16T10:00:00.000Z");
+});
+
+test("research evidence template requires research consent", () => {
+  assert.throws(
+    () => buildResearchEvidenceTask({
+      templateId: "research_code_dataset_access",
+      targetUrl: "https://github.com/netneurolab/neuromaps"
+    }),
+    /researchConsent/
+  );
 });

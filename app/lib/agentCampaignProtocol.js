@@ -9,6 +9,20 @@ function readString(value) {
   return String(value || "").trim();
 }
 
+function readResearchConsent(value) {
+  if (!value || typeof value !== "object") return undefined;
+  const version = readString(value.version);
+  const consentedAt = readString(value.consentedAt);
+  const retention = readString(value.retention);
+  if (!version || !consentedAt || !retention) return undefined;
+  return {
+    version,
+    consentedAt,
+    retention,
+    participantReference: readString(value.participantReference) || undefined
+  };
+}
+
 function parseAmount(raw) {
   const match = String(raw || "").replace(/,/g, "").match(/\d+(?:\.\d+)?/);
   return match ? Number(match[0]) : 0;
@@ -29,7 +43,7 @@ function parseDeadlineUnix(raw) {
   return Math.floor(fallback / 1000);
 }
 
-function normalizeTaskDeadline(raw) {
+export function normalizeTaskDeadline(raw) {
   const value = readString(raw);
   const timestamp = Date.parse(value);
   if (Number.isFinite(timestamp)) return new Date(timestamp).toISOString();
@@ -58,15 +72,20 @@ export function buildFundingInvoice(input = {}) {
     throw new Error("Cannot build funding invoice without a real PrizePool recipient address.");
   }
   const amount = readString(input.amount || input.totalPool || input.budget);
+  const tokenSymbol = readString(input.tokenSymbol || "USDC").toUpperCase();
+  const tokenAddress = readString(
+    input.tokenAddress ||
+    (tokenSymbol === "A2H" ? process.env.A2H_TOKEN_ADDRESS : process.env.BASE_SETTLEMENT_TOKEN_ADDRESS)
+  );
   return {
-    type: "usdc_transfer",
+    type: "erc20_transfer",
     network: process.env.NEXT_PUBLIC_DEFAULT_SETTLEMENT_RAIL || process.env.DEFAULT_SETTLEMENT_RAIL || "base",
     chainId: Number(process.env.BASE_CHAIN_ID || 8453),
-    tokenSymbol: process.env.BASE_SETTLEMENT_TOKEN_SYMBOL || "USDC",
-    tokenAddress: process.env.BASE_SETTLEMENT_TOKEN_ADDRESS || "",
+    tokenSymbol,
+    tokenAddress,
     amount,
     recipientAddress: poolAddress,
-    memo: "Fund this AI2Human PrizePool before publishing. Transfer exact USDC amount, then call campaign_publish.",
+    memo: `Fund this AI2Human PrizePool before publishing. Transfer the exact ${tokenSymbol} amount, then call campaign_publish.`,
     nextAction: "POST /api/agent/campaigns/{id}/publish"
   };
 }
@@ -168,7 +187,10 @@ export async function runAgentCampaignContractPreflight(db, input = {}, rewardDi
     poolAddress: funding.poolAddress,
     expectedPayoutTotal: expectedPayoutTotal(input, rewardDistribution),
     expectedWinners: winnerDistribution.maxWinners,
-    expectedAgent: readString(input.expectedAgent || process.env.PRIZE_POOL_EXPECTED_AGENT_ADDRESS)
+    expectedAgent: readString(input.expectedAgent || process.env.PRIZE_POOL_EXPECTED_AGENT_ADDRESS),
+    expectedTokenAddress: readString(input.expectedTokenAddress),
+    tokenSymbol: readString(input.tokenSymbol),
+    tokenDecimals: Number.isInteger(Number(input.tokenDecimals)) ? Number(input.tokenDecimals) : undefined
   });
 
   return {
@@ -337,9 +359,13 @@ export function buildAgentCampaignTask(input = {}, preview) {
           submissionFields: submissionFields.length
             ? submissionFields
             : ["executionNotes", "evidenceUrls", "verdict", "summary"],
+          customTaskSpec: input.customTaskSpec && typeof input.customTaskSpec === "object"
+            ? input.customTaskSpec
+            : undefined,
           originalRequest: input.originalRequest && typeof input.originalRequest === "object"
             ? input.originalRequest
-            : undefined
+            : undefined,
+          reviewPolicy: input.reviewPolicy === "publisher_approval" ? "publisher_approval" : "ai_auto"
         }
       }
     : buildOfficialCampaignTask({
@@ -388,6 +414,8 @@ export function buildAgentCampaignTask(input = {}, preview) {
     acceptance: campaignTask.acceptance,
     campaign: {
       ...campaignTask.campaign,
+      researchConsent: readResearchConsent(input.researchConsent),
+      reviewPolicy: input.reviewPolicy === "publisher_approval" ? "publisher_approval" : "ai_auto",
       environment: fundingPlan.environment || undefined,
       fundingMode: fundingPlan.fundingMode || undefined,
       isTest: fundingPlan.environment === "test" || undefined,

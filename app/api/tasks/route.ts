@@ -11,17 +11,28 @@ import {
   type UserAccount
 } from "../../lib/store";
 import { appendEvidence } from "../../lib/taskEvidence";
-import { buildOfficialCampaignTask } from "../../lib/officialCampaignTasks.js";
+import {
+  buildOfficialCampaignTask,
+  buildResearchEvidenceTask,
+  isResearchEvidenceTemplate
+} from "../../lib/officialCampaignTasks.js";
 import { getMissingAgentTaskInputs, readFundingPlan } from "../../lib/agentTaskPreview.js";
 import { sortTasksForBoard } from "../../lib/taskBoard.js";
 import { isReadyForTaskNotifications } from "../../lib/operatorAccess";
 import { addNotification, sendEmailNotification } from "../../lib/notificationDelivery";
+import { getAuthContext } from "../../lib/auth";
+import {
+  deliverTaskCreatorNotification,
+  queueTaskCreatorNotification,
+  type QueuedCreatorNotification
+} from "../../lib/taskCreatorNotifications";
 import {
   executeEscrowDeposit,
   getEscrowWalletAddress,
   getEscrowAllowance,
   getEscrowBalance
 } from "../../lib/escrowSettlement";
+import { isTaskPublishedByUser } from "../../lib/taskOwnership";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -65,8 +76,21 @@ function parseRewardDistribution(raw: unknown, fallbackBudget: string): RewardDi
   };
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   const db = await readDb();
+  const url = new URL(request.url);
+  if (url.searchParams.get("scope") === "created") {
+    const auth = await getAuthContext(request);
+    if (!auth.ok) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
+    }
+    const createdTasks = db.tasks.filter((task) =>
+      isTaskPublishedByUser(task, auth.user, db.users, db.agents)
+    );
+    const response = NextResponse.json(sortTasksForBoard(createdTasks));
+    response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate");
+    return response;
+  }
   const publicTasks = db.tasks.filter((task) => task.campaign?.agentLifecycle?.status !== "draft");
   const response = NextResponse.json(sortTasksForBoard(publicTasks));
   response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
@@ -77,6 +101,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   const body = await request.json();
+  const creatorAuth = await getAuthContext(request);
   const templateId = String(body.templateId || "").trim();
   const title = String(body.title || "").trim();
   const budget = String(body.budget || "").trim();
@@ -88,6 +113,7 @@ export async function POST(request: Request) {
   const proofPhrase = String(body.proofPhrase || "").trim();
   const brief = String(body.brief || "").trim();
   const campaignLinks = body.campaignLinks && typeof body.campaignLinks === "object" ? body.campaignLinks : undefined;
+  const researchConsent = body.researchConsent && typeof body.researchConsent === "object" ? body.researchConsent : undefined;
   const fundingMode = String(body.fundingMode || "").trim();
   const environment = String(body.environment || "").trim();
   const poolAddress = String(body.poolAddress || "").trim() || undefined;
@@ -154,7 +180,17 @@ export async function POST(request: Request) {
 
   const now = new Date().toISOString();
   const campaignTask = templateId
-    ? buildOfficialCampaignTask({
+    ? (isResearchEvidenceTemplate(templateId) ? buildResearchEvidenceTask({
+        templateId,
+        title: title || undefined,
+        budget: budget || undefined,
+        deadline: deadline || undefined,
+        requesterName: requesterName || undefined,
+        requesterHandle: requesterHandle || undefined,
+        targetUrl: targetUrl || undefined,
+        brief: brief || undefined,
+        researchConsent: typeof researchConsent !== "undefined" ? researchConsent : undefined
+      }) : buildOfficialCampaignTask({
         templateId,
         title: title || undefined,
         budget: budget || undefined,
@@ -165,7 +201,7 @@ export async function POST(request: Request) {
         proofPhrase: proofPhrase || undefined,
         brief: brief || undefined,
         campaignLinks
-      })
+      }))
     : null;
 
   const finalBudget = campaignTask?.budget || budget || "TBD";
@@ -181,15 +217,25 @@ export async function POST(request: Request) {
     );
   }
   const fundingPlan = readFundingPlan(body, rewardDistribution);
-  const campaign = campaignTask?.campaign
-    ? {
+  let campaign: Task["campaign"] = campaignTask?.campaign
+    ? ({
         ...campaignTask.campaign,
         ...(environment ? { environment } : {}),
         ...(fundingMode ? { fundingMode } : {}),
         ...(fundingPlan.payoutDisabled ? { payoutDisabled: true } : {}),
         ...(environment === "test" ? { isTest: true } : {})
-      }
+      } as Task["campaign"])
     : undefined;
+  if (campaign && creatorAuth.ok) {
+    campaign = {
+      ...campaign,
+      source: {
+        ...(campaign.source || {}),
+        requesterUserId: creatorAuth.user.id,
+        requesterWallet: creatorAuth.user.walletAddress || ""
+      }
+    };
+  }
 
   const task: Task = {
     id: crypto.randomUUID(),
@@ -237,12 +283,19 @@ export async function POST(request: Request) {
   }
 
   const taskNotifications: Array<{ user: UserAccount; notification: Notification }> = [];
+  const creatorNotifications: QueuedCreatorNotification[] = [];
 
   await updateDb((db) => {
     if (escrowDepositRecord) {
       db.escrowDeposits.unshift(escrowDepositRecord);
     }
     db.tasks.unshift(task);
+    if (task.campaign?.agentLifecycle?.status === "published") {
+      const creatorNotification = queueTaskCreatorNotification(db, task, "live", {
+        eventKey: task.createdAt
+      });
+      if (creatorNotification) creatorNotifications.push(creatorNotification);
+    }
     for (const user of db.users) {
       if (!isReadyForTaskNotifications(user)) continue;
       const notification = addNotification(db, {
@@ -261,13 +314,16 @@ export async function POST(request: Request) {
   });
 
   await Promise.allSettled(
-    taskNotifications.map((item) =>
-      sendEmailNotification({
-        user: item.user,
-        notification: item.notification,
-        reason: "task"
-      })
-    )
+    [
+      ...taskNotifications.map((item) =>
+        sendEmailNotification({
+          user: item.user,
+          notification: item.notification,
+          reason: "task"
+        })
+      ),
+      ...creatorNotifications.map((item) => deliverTaskCreatorNotification(item))
+    ]
   );
 
   const response: Record<string, unknown> = { task };
