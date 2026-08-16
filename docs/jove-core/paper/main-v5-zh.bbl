@@ -1,0 +1,530 @@
+\begin{thebibliography}{67}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Angelopoulos and Bates(2023)]{angelopoulos2023conformal}
+Anastasios~N. Angelopoulos and Stephen Bates.
+\newblock Conformal prediction: A gentle introduction.
+\newblock \emph{Foundations and Trends in Machine Learning}, 16\penalty0
+  (4):\penalty0 494--591, 2023.
+\newblock \doi{10.1561/2200000101}.
+
+\bibitem[{Anthropic}(2024)]{anthropic2024mcp}
+{Anthropic}.
+\newblock Model context protocol.
+\newblock Protocol specification, 2024.
+\newblock URL \url{https://modelcontextprotocol.io}.
+
+\bibitem[Ben-Sasson et~al.(2014)Ben-Sasson, Chiesa, Tromer, and
+  Virza]{ben2014succinct}
+Eli Ben-Sasson, Alessandro Chiesa, Eran Tromer, and Madars Virza.
+\newblock Succinct non-interactive zero knowledge for a von neumann
+  architecture.
+\newblock In \emph{Proceedings of the 23rd USENIX Security Symposium}, pages
+  781--796, 2014.
+
+\bibitem[Bender and Friedman(2018)]{bender2018data}
+Emily~M. Bender and Batya Friedman.
+\newblock Data statements for natural language processing: Toward mitigating
+  system bias and enabling better science.
+\newblock \emph{Transactions of the Association for Computational Linguistics},
+  6:\penalty0 587--604, 2018.
+\newblock \doi{10.1162/tacl_a_00041}.
+
+\bibitem[Breidenbach et~al.(2021)Breidenbach, Cachin, Chan, Coventry, Ellis,
+  Juels, Koushanfar, Miller, Magauran, Moroz, Nazarov, Topliceanu, Tram{\`e}r,
+  and Zhang]{breidenbach2021chainlink}
+Lorenz Breidenbach, Christian Cachin, Benedict Chan, Alex Coventry, Steve
+  Ellis, Ari Juels, Farinaz Koushanfar, Andrew Miller, Brendan Magauran, Daniel
+  Moroz, Sergey Nazarov, Alexandru Topliceanu, Florian Tram{\`e}r, and Fan
+  Zhang.
+\newblock Chainlink 2.0: Next steps in the evolution of decentralized oracle
+  networks.
+\newblock Chainlink Labs whitepaper, 2021.
+\newblock URL \url{https://research.chain.link/whitepaper-v2.pdf}.
+
+\bibitem[Buchman(2016)]{buchman2016tendermint}
+Ethan Buchman.
+\newblock Tendermint: Byzantine fault tolerance in the age of blockchains.
+\newblock In \emph{M.Sc. Thesis, University of Guelph}, 2016.
+\newblock URL
+  \url{https://atrium.lib.uoguelph.ca/items/e299f095-9c31-4e5c-92c7-e75b4a3affff}.
+
+\bibitem[Buterin et~al.(2020)Buterin, Hernandez, Kamphefner, Pham, Qiao, Ryan,
+  Sin, Wang, and Zhang]{buterin2020gasper}
+Vitalik Buterin, Diego Hernandez, Thor Kamphefner, Khiem Pham, Zhi Qiao, Danny
+  Ryan, Juhyeok Sin, Ying Wang, and Yan~X. Zhang.
+\newblock Combining {GHOST} and casper.
+\newblock In \emph{arXiv preprint arXiv:2003.03052}, 2020.
+\newblock URL \url{https://arxiv.org/abs/2003.03052}.
+
+\bibitem[Caldarelli(2020)]{caldarelli2020oracle}
+Giulio Caldarelli.
+\newblock Understanding the blockchain oracle problem: A call for action.
+\newblock \emph{Information}, 11\penalty0 (11):\penalty0 509, 2020.
+\newblock \doi{10.3390/info11110509}.
+
+\bibitem[Chambers and Tzavella(2022)]{chambers2022registered}
+Christopher~D. Chambers and Loukia Tzavella.
+\newblock The past, present and future of registered reports.
+\newblock \emph{Nature Human Behaviour}, 6\penalty0 (1):\penalty0 29--42, 2022.
+\newblock \doi{10.1038/s41562-021-01193-7}.
+
+\bibitem[{Coalition for Content Provenance and
+  Authenticity}(2023)]{c2pa2023spec}
+{Coalition for Content Provenance and Authenticity}.
+\newblock Coalition for content provenance and authenticity (c2pa)
+  specifications, version 1.3.
+\newblock Technical report, C2PA, 2023.
+\newblock URL \url{https://c2pa.org/specifications/}.
+
+\bibitem[{Coinbase}(2025)]{coinbase2025x402}
+{Coinbase}.
+\newblock x402: An open protocol for internet-native payments over {HTTP}.
+\newblock Protocol specification, 2025.
+\newblock URL \url{https://www.x402.org}.
+
+\bibitem[Costan and Devadas(2016)]{costan2016sgx}
+Victor Costan and Srinivas Devadas.
+\newblock Intel sgx explained.
+\newblock In \emph{IACR Cryptology ePrint Archive}, 2016.
+\newblock URL \url{https://eprint.iacr.org/2016/086}.
+\newblock Report 2016/086.
+
+\bibitem[Efron and Tibshirani(1994)]{efron1994bootstrap}
+Bradley Efron and Robert~J. Tibshirani.
+\newblock \emph{An Introduction to the Bootstrap}.
+\newblock Chapman \& Hall/CRC, New York, 1994.
+\newblock \doi{10.1201/9780429246593}.
+
+\bibitem[Ellis et~al.(2017)Ellis, Juels, and Nazarov]{ellis2017chainlink}
+Steve Ellis, Ari Juels, and Sergey Nazarov.
+\newblock Chainlink: A decentralized oracle network.
+\newblock \emph{Whitepaper}, 2017.
+\newblock URL \url{https://research.chain.link/whitepaper-v1.pdf}.
+
+\bibitem[Fitting(1994)]{fitting1994kleene}
+Melvin Fitting.
+\newblock Kleene's three valued logics and their children.
+\newblock \emph{Fundamenta Informaticae}, 20\penalty0 (1--3):\penalty0
+  113--131, 1994.
+\newblock \doi{10.3233/FI-1994-201234}.
+
+\bibitem[Franklin et~al.(2011)Franklin, Kossmann, Kraska, Ramesh, and
+  Xin]{franklin2011crowddb}
+Michael~J. Franklin, Donald Kossmann, Tim Kraska, Sukriti Ramesh, and Reynold
+  Xin.
+\newblock Crowddb: Answering queries with crowdsourcing.
+\newblock In \emph{Proceedings of the 2011 ACM SIGMOD International Conference
+  on Management of Data}. Association for Computing Machinery, 2011.
+\newblock \doi{10.1145/1989323.1989331}.
+\newblock URL \url{https://doi.org/10.1145/1989323.1989331}.
+
+\bibitem[Gama et~al.(2014)Gama, Zliobaite, Bifet, Pechenizkiy, and
+  Bouchachia]{gama2014survey}
+Joao Gama, Indre Zliobaite, Albert Bifet, Mykola Pechenizkiy, and Abdelhamid
+  Bouchachia.
+\newblock A survey on concept drift adaptation.
+\newblock \emph{ACM Computing Surveys}, 46\penalty0 (4):\penalty0 1--37, 2014.
+\newblock \doi{10.1145/2523813}.
+
+\bibitem[Garay et~al.(2015)Garay, Kiayias, and Leonardos]{garay2015backbone}
+Juan Garay, Aggelos Kiayias, and Nikos Leonardos.
+\newblock The bitcoin backbone protocol: Analysis and applications.
+\newblock In \emph{Advances in Cryptology --- EUROCRYPT 2015}, pages 281--310,
+  2015.
+\newblock \doi{10.1007/978-3-662-46803-6_10}.
+
+\bibitem[Gebru et~al.(2021)Gebru, Morgenstern, Vecchione, Vaughan, Wallach,
+  Daum{\\'e}~III, and Crawford]{gebru2021datasheets}
+Timnit Gebru, Jamie Morgenstern, Briana Vecchione, Jennifer~Wortman Vaughan,
+  Hanna Wallach, Hal Daum{\\'e}~III, and Kate Crawford.
+\newblock Datasheets for datasets.
+\newblock \emph{Communications of the ACM}, 64\penalty0 (12):\penalty0 86--92,
+  2021.
+\newblock \doi{10.1145/3458723}.
+\newblock URL \url{https://doi.org/10.1145/3458723}.
+
+\bibitem[Geifman and El-Yaniv(2017)]{geifman2017selective}
+Yonatan Geifman and Ran El-Yaniv.
+\newblock Selective classification for deep neural networks.
+\newblock In \emph{Advances in Neural Information Processing Systems},
+  volume~30, 2017.
+
+\bibitem[Geifman and El-Yaniv(2019)]{geifman2019selectivenet}
+Yonatan Geifman and Ran El-Yaniv.
+\newblock Selectivenet: A deep neural network with an integrated reject option.
+\newblock In \emph{Proceedings of the 36th International Conference on Machine
+  Learning}, pages 2151--2159, 2019.
+
+\bibitem[Goldwasser et~al.(1989)Goldwasser, Micali, and
+  Rackoff]{goldwasser1989knowledge}
+Shafi Goldwasser, Silvio Micali, and Charles Rackoff.
+\newblock The knowledge complexity of interactive proof systems.
+\newblock \emph{SIAM Journal on Computing}, 18\penalty0 (1):\penalty0 186--208,
+  1989.
+\newblock \doi{10.1137/0218012}.
+
+\bibitem[{Google}(2025)]{google2025ap2}
+{Google}.
+\newblock Agent payments protocol ({AP2}).
+\newblock Technical specification, 2025.
+\newblock URL \url{https://ap2-protocol.org}.
+
+\bibitem[Greshake et~al.(2023)Greshake, Abdelnabi, Mishra, Endres, Holz, and
+  Fritz]{greshake2023injection}
+Kai Greshake, Sahar Abdelnabi, Shailesh Mishra, Christoph Endres, Thorsten
+  Holz, and Mario Fritz.
+\newblock Not what you've signed up for: Compromising real-world
+  {LLM}-integrated applications with indirect prompt injection.
+\newblock In \emph{Proceedings of the 16th ACM Workshop on Artificial
+  Intelligence and Security (AISec)}, pages 79--90, 2023.
+\newblock \doi{10.1145/3605764.3623985}.
+
+\bibitem[Guo et~al.(2017)Guo, Pleiss, Sun, and Weinberger]{guo2017calibration}
+Chuan Guo, Geoff Pleiss, Yu~Sun, and Kilian~Q. Weinberger.
+\newblock On calibration of modern neural networks.
+\newblock In \emph{Proceedings of the 34th International Conference on Machine
+  Learning}, pages 1321--1330, 2017.
+
+\bibitem[Hayes and Krippendorff(2007)]{hayes2007answering}
+Andrew~F. Hayes and Klaus Krippendorff.
+\newblock Answering the call for a standard reliability measure for coding
+  data.
+\newblock \emph{Communication Methods and Measures}, 1\penalty0 (1):\penalty0
+  77--89, 2007.
+\newblock \doi{10.1080/19312450709336664}.
+
+\bibitem[Hendrickx et~al.(2024)Hendrickx, Perini, Van~der Plas, Meert, and
+  Davis]{hendrickx2024reject}
+Kilian Hendrickx, Lorenzo Perini, Dries Van~der Plas, Wannes Meert, and Jesse
+  Davis.
+\newblock Machine learning with a reject option: a survey.
+\newblock \emph{Machine Learning}, 2024.
+\newblock \doi{10.1007/s10994-024-06534-x}.
+
+\bibitem[{Intel Corporation}(2021)]{intel2021tdx}
+{Intel Corporation}.
+\newblock Intel trust domain extensions (intel tdx).
+\newblock White paper, Intel, 2021.
+\newblock URL
+  \url{https://www.intel.com/content/www/us/en/developer/articles/technical/intel-trust-domain-extensions.html}.
+
+\bibitem[Ji et~al.(2023)Ji, Lee, Frieske, Yu, Su, Xu, Ishii, Bang, Madotto, and
+  Fung]{ji2023hallucination}
+Ziwei Ji, Nayeon Lee, Rita Frieske, Tiezheng Yu, Dan Su, Yan Xu, Etsuko Ishii,
+  Ye~Jin Bang, Andrea Madotto, and Pascale Fung.
+\newblock Survey of hallucination in natural language generation.
+\newblock \emph{ACM Computing Surveys}, 55\penalty0 (12):\penalty0 1--38, 2023.
+\newblock \doi{10.1145/3571730}.
+
+\bibitem[Kamath et~al.(2020)Kamath, Jia, and Liang]{kamath2020selectiveqa}
+Amita Kamath, Robin Jia, and Percy Liang.
+\newblock Selective question answering under domain shift.
+\newblock In \emph{Proceedings of the 58th Annual Meeting of the Association
+  for Computational Linguistics}, pages 5684--5696, 2020.
+\newblock \doi{10.18653/v1/2020.acl-main.503}.
+
+\bibitem[Kang et~al.(2024)Kang, Li, Stoica, Guestrin, Zaharia, and
+  Hashimoto]{kang2024exploiting}
+Daniel Kang, Xuechen Li, Ion Stoica, Carlos Guestrin, Matei Zaharia, and
+  Tatsunori Hashimoto.
+\newblock Exploiting programmatic behavior of {LLM}s: Dual-use through standard
+  security attacks.
+\newblock In \emph{Proceedings of the 2024 IEEE Security and Privacy Workshops
+  (SPW)}, pages 132--143, 2024.
+\newblock \doi{10.1109/SPW63631.2024.00018}.
+
+\bibitem[Kittur et~al.(2011)Kittur, Smus, Khamkar, and
+  Kraut]{kittur2011crowdforge}
+Aniket Kittur, Boris Smus, Susheel Khamkar, and Robert~E. Kraut.
+\newblock Crowdforge: Crowdsourcing complex work.
+\newblock In \emph{Proceedings of the 24th Annual ACM Symposium on User
+  Interface Software and Technology}. Association for Computing Machinery,
+  2011.
+\newblock \doi{10.1145/1979742.1979902}.
+\newblock URL \url{https://doi.org/10.1145/1979742.1979902}.
+
+\bibitem[Kleene(1952)]{kleene1952metamathematics}
+Stephen~Cole Kleene.
+\newblock \emph{Introduction to Metamathematics}.
+\newblock North-Holland, Amsterdam, 1952.
+
+\bibitem[Leucker and Schallhart(2009)]{leucker2009brief}
+Martin Leucker and Christian Schallhart.
+\newblock A brief account of runtime verification.
+\newblock \emph{Journal of Logic and Algebraic Programming}, 78\penalty0
+  (5):\penalty0 293--303, 2009.
+\newblock \doi{10.1016/j.jlap.2008.08.004}.
+
+\bibitem[Little et~al.(2010)Little, Chilton, Goldman, and
+  Miller]{little2010turkit}
+Greg Little, Lydia~B. Chilton, Max Goldman, and Robert~C. Miller.
+\newblock Turkit: Human computation algorithms on mechanical turk.
+\newblock In \emph{Proceedings of the 23nd Annual ACM Symposium on User
+  Interface Software and Technology}. Association for Computing Machinery,
+  2010.
+\newblock URL
+  \url{https://dspace.mit.edu/bitstreams/c8e0c8c3-fd19-4593-b3bc-ee3c9535532b/download}.
+
+\bibitem[Liu et~al.(2023{\natexlab{a}})Liu, Yu, Zhang, Xu, Lei, Lai, Gu, Ding,
+  Men, Yang, Zhang, Deng, Zeng, Du, Zhang, Shen, Zhang, Su, Sun, Huang, Dong,
+  and Tang]{liu2023agentbench}
+Xiao Liu, Hao Yu, Hanchen Zhang, Yifan Xu, Xuanyu Lei, Hanyu Lai, Yu~Gu,
+  Hangliang Ding, Kaiwen Men, Kejuan Yang, Shudan Zhang, Xiang Deng, Aohan
+  Zeng, Zhengxiao Du, Chenhui Zhang, Sheng Shen, Tianjun Zhang, Yu~Su, Huan
+  Sun, Minlie Huang, Yuxiao Dong, and Jie Tang.
+\newblock Agentbench: Evaluating llms as agents, 2023{\natexlab{a}}.
+
+\bibitem[Liu et~al.(2023{\natexlab{b}})Liu, Iter, Xu, Wang, Xu, and
+  Zhu]{liu2023geval}
+Yang Liu, Dan Iter, Yichong Xu, Shuohang Wang, Ruochen Xu, and Chenguang Zhu.
+\newblock G-eval: Nlg evaluation using gpt-4 with better human alignment.
+\newblock In \emph{Proceedings of the 2023 Conference on Empirical Methods in
+  Natural Language Processing}, pages 2511--2522, 2023{\natexlab{b}}.
+\newblock \doi{10.18653/v1/2023.emnlp-main.153}.
+
+\bibitem[Maram et~al.(2021)Maram, Malvai, Zhang, Jean-Louis, Frolov, Kell,
+  Lobban, Moy, Juels, and Miller]{maram2021candid}
+Deepak Maram, Harjasleen Malvai, Fan Zhang, Nerla Jean-Louis, Alexander Frolov,
+  Tyler Kell, Tyrone Lobban, Christine Moy, Ari Juels, and Andrew Miller.
+\newblock {CanDID}: Can-do decentralized identity with legacy compatibility,
+  sybil-resistance, and accountability.
+\newblock In \emph{Proceedings of the 2021 IEEE Symposium on Security and
+  Privacy (S\&P)}, pages 1348--1366, 2021.
+\newblock \doi{10.1109/SP40001.2021.00038}.
+
+\bibitem[Meyer(1997)]{meyer1997object}
+Bertrand Meyer.
+\newblock \emph{Object-Oriented Software Construction}.
+\newblock Prentice Hall, 2 edition, 1997.
+
+\bibitem[Miller(2006)]{miller2006capability}
+Mark~Samuel Miller.
+\newblock \emph{Robust Composition: Towards a Unified Approach to Access
+  Control and Concurrency Control}.
+\newblock PhD thesis, Johns Hopkins University, 2006.
+
+\bibitem[Mitchell et~al.(2019)Mitchell, Wu, Zaldivar, Barnes, Vasserman,
+  Hutchinson, Spitzer, Raji, and Gebru]{mitchell2019modelcards}
+Margaret Mitchell, Simone Wu, Andrew Zaldivar, Parker Barnes, Lucy Vasserman,
+  Ben Hutchinson, Elena Spitzer, Inioluwa~Deborah Raji, and Timnit Gebru.
+\newblock Model cards for model reporting.
+\newblock In \emph{Proceedings of the Conference on Fairness, Accountability,
+  and Transparency}, pages 220--229. Association for Computing Machinery, 2019.
+\newblock \doi{10.1145/3287560.3287596}.
+\newblock URL \url{https://doi.org/10.1145/3287560.3287596}.
+
+\bibitem[Nakamoto(2008)]{nakamoto2008bitcoin}
+Satoshi Nakamoto.
+\newblock Bitcoin: A peer-to-peer electronic cash system.
+\newblock \emph{Whitepaper}, 2008.
+\newblock URL \url{https://bitcoin.org/bitcoin.pdf}.
+
+\bibitem[Necula(1997)]{necula1997proof}
+George~C. Necula.
+\newblock Proof-carrying code.
+\newblock In \emph{Proceedings of the 24th ACM SIGPLAN-SIGACT Symposium on
+  Principles of Programming Languages}, pages 106--119. ACM, 1997.
+\newblock \doi{10.1145/263699.263712}.
+
+\bibitem[Nosek et~al.(2018)Nosek, Ebersole, DeHaven, and
+  Mellor]{nosek2018preregistration}
+Brian~A. Nosek, Charles~R. Ebersole, Alexander~C. DeHaven, and David~T. Mellor.
+\newblock The preregistration revolution.
+\newblock \emph{Proceedings of the National Academy of Sciences}, 115\penalty0
+  (11):\penalty0 2600--2606, 2018.
+\newblock \doi{10.1073/pnas.1708274114}.
+
+\bibitem[{Open Policy Agent Project}(2023)]{opa2023}
+{Open Policy Agent Project}.
+\newblock Open policy agent: Policy-based control for cloud native
+  environments.
+\newblock Cloud Native Computing Foundation graduated project, 2023.
+\newblock URL \url{https://www.openpolicyagent.org/docs/latest/}.
+
+\bibitem[Park et~al.(2023)Park, O'Brien, Cai, Morris, Liang, and
+  Bernstein]{park2023generative}
+Joon~Sung Park, Joseph~C. O'Brien, Carrie~J. Cai, Meredith~Ringel Morris, Percy
+  Liang, and Michael~S. Bernstein.
+\newblock Generative agents: Interactive simulacra of human behavior.
+\newblock \emph{Proceedings of the 36th Annual ACM Symposium on User Interface
+  Software and Technology (UIST)}, pages 1--22, 2023.
+\newblock \doi{10.1145/3586183.3606763}.
+
+\bibitem[Parno et~al.(2013)Parno, Howell, Gentry, and
+  Raykova]{parno2013pinocchio}
+Bryan Parno, Jon Howell, Craig Gentry, and Mariana Raykova.
+\newblock Pinocchio: Nearly practical verifiable computation.
+\newblock In \emph{Proceedings of the 2013 IEEE Symposium on Security and
+  Privacy (S\&P)}, pages 238--252, 2013.
+\newblock \doi{10.1109/SP.2013.47}.
+
+\bibitem[Retelny et~al.(2014)Retelny, Robaszkiewicz, To, Lasecki, Patel,
+  Rahmati, Doshi, Valentine, and Bernstein]{retelny2014flashteams}
+Daniela Retelny, Sebastien Robaszkiewicz, Alexandra To, Walter~S. Lasecki, Jay
+  Patel, Negar Rahmati, Tulsee Doshi, Melissa Valentine, and Michael~S.
+  Bernstein.
+\newblock Expert crowdsourcing with flash teams.
+\newblock In \emph{Proceedings of the 27th Annual ACM Symposium on User
+  Interface Software and Technology}. Association for Computing Machinery,
+  2014.
+\newblock \doi{10.1145/2642918.2647409}.
+\newblock URL \url{https://doi.org/10.1145/2642918.2647409}.
+
+\bibitem[Ruan et~al.(2024)Ruan, Dong, Wang, Pitis, Zhou, Ba, Dubois, Maddison,
+  and Hashimoto]{ruan2024toolemu}
+Yangjun Ruan, Honghua Dong, Andrew Wang, Silviu Pitis, Yongchao Zhou, Jimmy Ba,
+  Yann Dubois, Chris~J. Maddison, and Tatsunori Hashimoto.
+\newblock Identifying the risks of {LM} agents with an {LM}-emulated sandbox.
+\newblock In \emph{Proceedings of the 12th International Conference on Learning
+  Representations (ICLR)}, 2024.
+\newblock URL \url{https://arxiv.org/abs/2309.15817}.
+
+\bibitem[Sabt et~al.(2015)Sabt, Achemlal, and Bouabdallah]{sabt2015tee}
+Mohamed Sabt, Mohammed Achemlal, and Abdelmadjid Bouabdallah.
+\newblock Trusted execution environment: What it is, and what it is not.
+\newblock In \emph{Proceedings of the 2015 IEEE Trustcom/BigDataSE/ISPA},
+  volume~1, pages 57--64, 2015.
+\newblock \doi{10.1109/Trustcom.2015.357}.
+
+\bibitem[Saltzer and Schroeder(1975)]{saltzer1975protection}
+Jerome~H. Saltzer and Michael~D. Schroeder.
+\newblock The protection of information in computer systems.
+\newblock \emph{Proceedings of the IEEE}, 63\penalty0 (9):\penalty0 1278--1308,
+  1975.
+\newblock \doi{10.1109/PROC.1975.9939}.
+
+\bibitem[Schemmer et~al.(2023)Schemmer, Kuehl, Benz, Bartos, and
+  Satzger]{schemmer2023reliance}
+Max Schemmer, Niklas Kuehl, Constantin Benz, Alena Bartos, and Gerhard Satzger.
+\newblock Appropriate reliance on ai advice: Conceptualization and the effect
+  of explanations.
+\newblock In \emph{Proceedings of the 2023 CHI Conference on Human Factors in
+  Computing Systems}, 2023.
+\newblock \doi{10.1145/3581641.3584066}.
+
+\bibitem[Sporny et~al.(2022)Sporny, Longley, and Chadwick]{sporny2022vc}
+Manu Sporny, Dave Longley, and David Chadwick.
+\newblock Verifiable credentials data model v1.1.
+\newblock W3c recommendation, World Wide Web Consortium (W3C), 2022.
+\newblock URL \url{https://www.w3.org/TR/vc-data-model/}.
+
+\bibitem[Thaler(2022)]{thaler2022proofs}
+Justin Thaler.
+\newblock Proofs, arguments, and zero-knowledge.
+\newblock Foundations and Trends in Privacy and Security, 2022.
+\newblock Vol. 4, No. 2--4.
+
+\bibitem[Vaccaro et~al.(2024)Vaccaro, Almaatouq, and
+  Malone]{vaccaro2024combinations}
+Michelle Vaccaro, Abdullah Almaatouq, and Thomas Malone.
+\newblock When combinations of humans and ai are useful: A systematic review
+  and meta-analysis.
+\newblock \emph{Nature Human Behaviour}, 2024.
+\newblock \doi{10.1038/s41562-024-02024-1}.
+
+\bibitem[Van~Bulck et~al.(2018)Van~Bulck, Minkin, Weisse, Genkin, Kasikci,
+  Piessens, Silberstein, Wenisch, Yarom, and Strackx]{vanbulck2018foreshadow}
+Jo~Van~Bulck, Marina Minkin, Ofir Weisse, Daniel Genkin, Baris Kasikci, Frank
+  Piessens, Mark Silberstein, Thomas~F. Wenisch, Yuval Yarom, and Raoul
+  Strackx.
+\newblock Foreshadow: Extracting the keys to the intel {SGX} kingdom with
+  transient out-of-order execution.
+\newblock In \emph{Proceedings of the 27th USENIX Security Symposium}, pages
+  991--1008, 2018.
+
+\bibitem[Verdoliva(2020)]{verdoliva2020media}
+Luisa Verdoliva.
+\newblock Media forensics and deepfakes: An overview.
+\newblock \emph{IEEE Journal of Selected Topics in Signal Processing},
+  14\penalty0 (5):\penalty0 910--932, 2020.
+\newblock \doi{10.1109/JSTSP.2020.3002101}.
+
+\bibitem[Vogelsteller and Buterin(2015)]{vogelsteller2015erc20}
+Fabian Vogelsteller and Vitalik Buterin.
+\newblock Erc-20: Token standard.
+\newblock Ethereum Improvement Proposals, EIP-20, 2015.
+\newblock URL \url{https://eips.ethereum.org/EIPS/eip-20}.
+
+\bibitem[Vovk et~al.(2005)Vovk, Gammerman, and Shafer]{vovk2005algorithmic}
+Vladimir Vovk, Alexander Gammerman, and Glenn Shafer.
+\newblock \emph{Algorithmic Learning in a Random World}.
+\newblock Springer, New York, 2005.
+\newblock \doi{10.1007/b106715}.
+
+\bibitem[Wang et~al.(2024)Wang, Li, Chen, Zhu, Lin, Cao, Liu, Liu, and
+  Sui]{wang2024fair}
+Peiyi Wang, Lei Li, Liang Chen, Dawei Zhu, Binghuai Lin, Yunbo Cao, Qi~Liu,
+  Tianyu Liu, and Zhifang Sui.
+\newblock Large language models are not fair evaluators.
+\newblock In \emph{Proceedings of the 62nd Annual Meeting of the Association
+  for Computational Linguistics}, pages 9440--9450, 2024.
+\newblock \doi{10.18653/v1/2024.acl-long.511}.
+
+\bibitem[Xie et~al.(2024)Xie, Zhang, Chen, Li, Zhao, Cao, Hua, Cheng, Shin,
+  Lei, Liu, Xu, Zhou, Savarese, Xiong, Zhong, and Yu]{xie2024osworld}
+Tianbao Xie, Danyang Zhang, Jixuan Chen, Xiaochuan Li, Siheng Zhao, Ruisheng
+  Cao, Toh~Jing Hua, Zhoujun Cheng, Dongchan Shin, Fangyu Lei, Yitao Liu,
+  Yiheng Xu, Shuyan Zhou, Silvio Savarese, Caiming Xiong, Victor Zhong, and Tao
+  Yu.
+\newblock Osworld: Benchmarking multimodal agents for open-ended tasks in real
+  computer environments, 2024.
+\newblock URL \url{https://arxiv.org/abs/2404.07972}.
+
+\bibitem[Xu et~al.(2024)Xu, Song, Li, Tang, Jain, Bao, Wang, Zhou, Guo, Cao,
+  Yang, Lu, Martin, Su, Maben, Mehta, Chi, Jang, Xie, Zhou, and
+  Neubig]{xu2024theagentcompany}
+Frank~F. Xu, Yufan Song, Boxuan Li, Yuxuan Tang, Kritanjali Jain, Mengxue Bao,
+  Zora~Z. Wang, Xuhui Zhou, Zhitong Guo, Murong Cao, Mingyang Yang, Hao~Yang
+  Lu, Amaad Martin, Zhe Su, Leander Maben, Raj Mehta, Wayne Chi, Lawrence Jang,
+  Yiqing Xie, Shuyan Zhou, and Graham Neubig.
+\newblock Theagentcompany: Benchmarking llm agents on consequential real world
+  tasks, 2024.
+\newblock URL \url{https://arxiv.org/abs/2412.14161}.
+
+\bibitem[Yang et~al.(2024)Yang, Jimenez, Wettig, Lieret, Yao, Narasimhan, and
+  Press]{yang2024sweagent}
+John Yang, Carlos~E. Jimenez, Alexander Wettig, Kilian Lieret, Shunyu Yao,
+  Karthik Narasimhan, and Ofir Press.
+\newblock Swe-agent: Agent-computer interfaces enable automated software
+  engineering, 2024.
+\newblock URL \url{https://arxiv.org/abs/2405.15793}.
+
+\bibitem[Zhang et~al.(2016)Zhang, Cecchetti, Croman, Juels, and
+  Shi]{zhang2016towncrier}
+Fan Zhang, Ethan Cecchetti, Kyle Croman, Ari Juels, and Elaine Shi.
+\newblock Town crier: An authenticated data feed for smart contracts.
+\newblock In \emph{Proceedings of the 2016 ACM SIGSAC Conference on Computer
+  and Communications Security}, pages 270--282. Association for Computing
+  Machinery, 2016.
+\newblock \doi{10.1145/2976749.2978326}.
+
+\bibitem[Zhang et~al.(2020)Zhang, Maram, Malvai, Goldfeder, and
+  Juels]{zhang2020deco}
+Fan Zhang, Deepak Maram, Harjasleen Malvai, Steven Goldfeder, and Ari Juels.
+\newblock {DECO}: Liberating web data using decentralized oracles for {TLS}.
+\newblock In \emph{Proceedings of the 2020 ACM SIGSAC Conference on Computer
+  and Communications Security (CCS)}, pages 1919--1938, 2020.
+\newblock \doi{10.1145/3372297.3417239}.
+
+\bibitem[Zheng et~al.(2023)Zheng, Chiang, Sheng, Zhuang, Wu, Zhuang, Lin, Li,
+  Li, Xing, Zhang, Gonzalez, and Stoica]{zheng2023judging}
+Lianmin Zheng, Wei-Lin Chiang, Ying Sheng, Siyuan Zhuang, Zhanghao Wu, Yonghao
+  Zhuang, Zi~Lin, Zhuohan Li, Dacheng Li, Eric~P. Xing, Hao Zhang, Joseph~E.
+  Gonzalez, and Ion Stoica.
+\newblock Judging llm-as-a-judge with mt-bench and chatbot arena, 2023.
+
+\bibitem[Zhou et~al.(2023)Zhou, Xu, Zhu, Zhou, Lo, Sridhar, Cheng, Ou, Bisk,
+  Fried, Alon, and Neubig]{zhou2023webarena}
+Shuyan Zhou, Frank~F. Xu, Hao Zhu, Xuhui Zhou, Robert Lo, Abishek Sridhar,
+  Xianyi Cheng, Tianyue Ou, Yonatan Bisk, Daniel Fried, Uri Alon, and Graham
+  Neubig.
+\newblock Webarena: A realistic web environment for building autonomous agents,
+  2023.
+\newblock URL \url{https://arxiv.org/abs/2307.13854}.
+
+\end{thebibliography}

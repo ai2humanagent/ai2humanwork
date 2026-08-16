@@ -1,0 +1,78 @@
+This is BibTeX, Version 0.99d (TeX Live 2022)
+Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
+The top-level auxiliary file: main.aux
+The style file: ACM-Reference-Format.bst
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated wiz_functions (elt_size=4) to 6000 items from 3000.
+Database file #1: references.bib
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated glb_str_ptr (elt_size=4) to 20 items from 10.
+Reallocated global_strs (elt_size=200001) to 20 items from 10.
+Reallocated glb_str_end (elt_size=4) to 20 items from 10.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Warning--empty publisher in geifman2017selective
+Warning--empty address in geifman2017selective
+Warning--page numbers missing in both pages and numpages fields in geifman2017selective
+Warning--empty publisher in geifman2019selectivenet
+Warning--empty address in geifman2019selectivenet
+Warning--empty publisher in guo2017calibration
+Warning--empty address in guo2017calibration
+Warning--no number and no volume in hendrickx2024reject
+Warning--page numbers missing in both pages and numpages fields in hendrickx2024reject
+Warning--empty publisher in kamath2020selectiveqa
+Warning--empty address in kamath2020selectiveqa
+Warning--empty publisher in liu2023geval
+Warning--empty address in liu2023geval
+Warning--empty address in meyer1997object
+Warning--empty address in mitchell2019modelcards
+Warning--empty address in necula1997proof
+Warning--empty publisher in schemmer2023reliance
+Warning--empty address in schemmer2023reliance
+Warning--page numbers missing in both pages and numpages fields in schemmer2023reliance
+Warning--no number and no volume in vaccaro2024combinations
+Warning--page numbers missing in both pages and numpages fields in vaccaro2024combinations
+Warning--empty publisher in wang2024fair
+Warning--empty address in wang2024fair
+You've used 22 entries,
+            5981 wiz_defined-function locations,
+            1606 strings with 23613 characters,
+and the built_in function-call counts, 27945 in all, are:
+= -- 3136
+> -- 1407
+< -- 0
++ -- 499
+- -- 500
+* -- 2356
+:= -- 3046
+add.period$ -- 109
+call.type$ -- 22
+change.case$ -- 246
+chr.to.int$ -- 21
+cite$ -- 45
+duplicate$ -- 2188
+empty$ -- 1541
+format.name$ -- 575
+if$ -- 6389
+int.to.chr$ -- 3
+int.to.str$ -- 1
+missing$ -- 75
+newline$ -- 263
+num.names$ -- 153
+pop$ -- 956
+preamble$ -- 1
+purify$ -- 414
+quote$ -- 0
+skip$ -- 808
+stack$ -- 0
+substring$ -- 1798
+swap$ -- 201
+text.length$ -- 0
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 541
+warning$ -- 23
+while$ -- 130
+width$ -- 0
+write$ -- 498
+(There were 23 warnings)

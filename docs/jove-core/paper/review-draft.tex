@@ -1,0 +1,271 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{microtype}
+\usepackage{hyperref}
+\title{Proof-Carrying Agent Actions: Selective Verification of Judgment-Based Outcomes}\author{Anonymous Draft}\date{August 2026}\begin{document}\maketitle\begin{abstract}\textbf{DEPRECATED DRAFT --- DO NOT SUBMIT OR CITE.} This early review draft uses superseded naming (B0/B1/V3/V4) and superseded sample sizes (30 base cases / 240 bundles / single coverage floor). The current, authoritative manuscript is \texttt{paper/main-v5.tex} (naming J0/J1/J1-IM/J1+abstain/K-P/K-B/K-S/K-Full; 200 base cases / 600 bundles / full risk--coverage primary endpoint), kept term-for-term consistent with \texttt{preregistration.md}. This file is retained only for historical diff.\end{abstract}
+
+\textbf{Anonymous research draft v3 --- August 2026}  \par
+\textbf{Target shape:} AAMAS / AAAI trustworthy agent systems  \par
+\textbf{Result status:} Study design complete; independent evaluation pending. Bracketed fields must be replaced only by measured results.\par
+
+\section{Abstract}
+
+AI agents increasingly initiate actions whose outcomes are represented by judgment-based evidence: screenshots, photographs, documents, and contextual claims that cannot be validated through a deterministic API alone. Existing systems often ask a general-purpose language or vision-language model for a binary judgment. This collapses four distinct questions---what evidence should exist, whether the submitted files are structurally credible, whether their content supports the requested outcome, and whether uncertainty is low enough to permit a consequential action---into one opaque prediction.\par
+
+We introduce \textbf{Proof-Carrying Agent Actions}, a selective verification framework that compiles a natural-language request into a typed proof policy before execution, binds resulting evidence to that policy, combines deterministic validation, media-forensic risk signals, and multimodal semantic judgments, and abstains to structured human adjudication when automation is degraded or uncertain. The framework emits a versioned receipt that records the policy, evidence commitment, observations, decision provenance, and downstream eligibility. We operationalize the problem through \textbf{JOVE}, a matched benchmark of judgment-based outcomes containing valid evidence and controlled variants for missing, stale, replayed, structurally conflicting, edited, semantically mismatched, contradictory, and privacy-excessive submissions. We compare generic and policy-aware model judges with layered and selectively escalating verifiers across multiple model families. Our primary endpoint is false-accept risk at a pre-registered automation coverage floor; secondary outcomes include false rejection, risk--coverage, calibration, cost, latency, privacy burden, and audit reconstruction. [Insert independently measured principal result.] The study positions outcome verification---not generation alone---as a first-class reliability problem for consequential agent systems.\par
+
+\section{1. Introduction}
+
+An agent can publish content, modify an account, submit a form, or coordinate a multi-step digital workflow. Whether the resulting action actually occurred is a different problem. In software-native workflows, a transaction receipt, signed response, or database state may provide a deterministic answer. Across web platforms and identity-bound services, however, the result often arrives as a screenshot, image, document, link, or contextual statement. Such evidence is neither a direct view of authoritative state nor ordinary generated text. It must be interpreted against an explicit request, checked for structural and temporal risk, and handled conservatively when uncertainty remains.\par
+
+A common implementation sends the task and evidence to a large multimodal model and asks whether the task passed. This approach is attractive because it is simple and general. It is also structurally incomplete. First, the evidence requirement is often invented after submission, enabling post-hoc and inconsistent judgment. Second, semantic models may overlook stale, replayed, or structurally conflicting files. Third, model confidence is not equivalent to calibrated decision risk, especially under provider degradation or distribution shift. Fourth, a binary answer hides whether rejection is caused by a terminal failure, a correctable evidence gap, or uncertainty that should trigger review. These distinctions matter when the output controls payment, access, publication, or another irreversible state transition.\par
+
+We study \textbf{judgment-based outcome verification}: deciding whether task-conditioned evidence is sufficient to support an agent-requested outcome when neither a deterministic API nor unconstrained model judgment is adequate. Our approach borrows only the portable, independently inspectable structure of proof-carrying systems. We use ``proof'' operationally rather than mathematically: an action carries a versioned policy, evidence commitment, verification observations, and decision record that a downstream agent can inspect. We do not claim formal soundness, completeness, or proof-carrying-code guarantees.\par
+
+The key design choice is to compile the acceptance contract before evidence is produced. A \textbf{Proof Compiler} converts natural-language intent into typed evidence requirements, rule severities, capture and privacy constraints, and decision thresholds. A layered verifier then evaluates a submitted bundle through deterministic checks, media-forensic risk signals, and policy-specific multimodal judgments. It accepts only when required rules are satisfied, rejects or requests resubmission for correctable insufficiency, and abstains when integrity risk, model disagreement, provider degradation, or low confidence makes automation unsafe. A human adjudicator receives the policy and structured observations rather than an unexplained model verdict. The resulting receipt separates semantic verification from downstream settlement or workflow transition.\par
+
+We make four contributions:\par
+
+\begin{enumerate}\item We formalize judgment-based agent outcome verification as selective prediction conditioned on an ex-ante proof policy.\end{enumerate}
+\begin{enumerate}\item We introduce Proof-Carrying Agent Actions, a model-independent protocol for proof compilation, layered observation, abstention, adjudication, and portable receipts.\end{enumerate}
+\begin{enumerate}\item We define JOVE, a grouped and independently adjudicated benchmark of valid and adversarially transformed evidence bundles.\end{enumerate}
+\begin{enumerate}\item We design a cross-model evaluation that compares generic judges, policy-aware judges, layered verifiers, and selective escalation through main effects, ablations, attack slices, unseen-class transfer, human review, and audit reconstruction.\end{enumerate}
+
+The paper does not claim universal truth verification, media authenticity detection, reliable authorship attribution, or autonomous self-improvement. Its claim is narrower and testable: explicit proof policies and selective layered verification can reduce unsafe acceptance and improve accountability for the tested classes of judgment-based evidence.\par
+
+\section{2. Background and Related Work}
+
+\subsection{2.1 LLMs as evaluators}
+
+LLM-based evaluators such as MT-Bench, G-Eval, and rubric-conditioned evaluators demonstrate that strong models can approximate human preferences for generated text. Subsequent work documents position bias, self-preference, style sensitivity, and fairness limitations. These systems primarily compare or score model outputs. Outcome verification differs because evidence has task binding, time, file integrity, and downstream action semantics. We therefore include both generic and strong policy-aware model judges as baselines, but do not treat a model judgment as a complete verification protocol.\par
+
+\subsection{2.2 Selective prediction}
+
+Selective classification and reject-option learning formalize the tradeoff between prediction risk and coverage. Selective QA shows that confidence may fail under domain shift. We adopt risk--coverage as the central evaluation, but extend abstention to a structured workflow in which evidence defects may be correctable, integrity conflicts require specialized review, and a receipt must explain the transition.\par
+
+\subsection{2.3 Agent benchmarks}
+
+AgentBench, WebArena, OSWorld, and TheAgentCompany evaluate agents in increasingly realistic digital environments. Their evaluators rely on environment state, scripts, or model/human checking. Our work treats the evaluator itself as the research object, focusing on outcomes represented by evidence that lacks a single authoritative state query.\par
+
+\subsection{2.4 Media forensics and provenance}
+
+Media forensics studies manipulation indicators, compression artifacts, metadata, and provenance. These signals are probabilistic and platform-dependent; absence of metadata is not evidence of fraud, while provenance presence does not establish the truth of a depicted claim. We therefore use forensic observations as policy-scoped risk signals, not as a universal authenticity oracle. The current artifact detects C2PA/JUMBF presence but does not claim cryptographic signature validation.\par
+
+\subsection{2.5 Human-AI decision making}
+
+Research on appropriate reliance shows that explanations do not automatically produce better human-AI teams and can induce overreliance. Meta-analytic evidence likewise finds that human-AI combinations are not uniformly complementary. Our human study therefore compares structured and unstructured review directly and measures accuracy, time, agreement, confidence, and workload rather than assuming manual escalation is beneficial.\par
+
+\subsection{2.6 Dataset documentation}
+
+JOVE follows datasheet and data-statement principles: provenance, mutation, privacy processing, split construction, exclusions, and maintenance are documented. Matched variants are grouped by base case to prevent leakage.\par
+
+\section{3. Problem Formulation}
+
+Let \texttt{q  in  Q} be an agent request containing intent, constraints, context, deadline, and an optional downstream-action policy. A compiler \texttt{C} emits proof policy \texttt{p = C(q)}. An executor or external process produces evidence bundle \texttt{e  in  E}. Each bundle has an independently adjudicated outcome \texttt{y  in  \{0,1\}} and, where applicable, defect class \texttt{a}.\par
+
+A verifier returns:\par
+
+\texttt{f(p,e) = (d,c,r)}\par
+
+where \texttt{d  in  \{accept, reject, abstain\}}, \texttt{c  in  [0,1]}, and \texttt{r} is a structured receipt. Product systems may subdivide \texttt{reject} into terminal rejection and correctable resubmission; the research abstraction keeps outcome prediction and workflow policy separate.\par
+
+At threshold \texttt{tau}, automation coverage is:\par
+
+\texttt{Cov(tau) = P[d != abstain]}.\par
+
+Selective risk is:\par
+
+\texttt{Risk(tau) = E[L(d,y) | d != abstain]}.\par
+
+Because false acceptance can trigger consequential downstream actions, we use asymmetric loss:\par
+
+\texttt{L(accept,0)=lambda\_FA}, \texttt{L(reject,1)=lambda\_FR}, with \texttt{lambda\_FA > lambda\_FR} in the primary analysis and sensitivity analysis over plausible ratios.\par
+
+The operating objective is:\par
+
+\texttt{min\_tau Risk(tau)}\par
+
+subject to \texttt{Cov(tau) >= kappa}, receipt audit completeness \texttt{A(r) >= alpha}, and privacy burden \texttt{B(p,e) <= beta}. Values for \texttt{kappa}, \texttt{alpha}, the loss ratio, and primary statistical tests are pre-registered before the held-out evaluation.\par
+
+\subsection{3.1 Judgment-based evidence}
+
+Evidence is judgment-based when no single authoritative query establishes the outcome and at least one task-conditioned semantic inference is required. This excludes purely deterministic transaction validation and includes cases where a photograph, screenshot, document, or cross-artifact account must support a specific claim.\par
+
+\subsection{3.2 Threat assumptions}
+
+The requester may be ambiguous or strategically reject valid work. The submitter may omit, replay, modify, or over-disclose evidence. Models may hallucinate, disagree, or become unavailable. Reviewers may be inconsistent. Storage and settlement systems may replay requests. We do not assume access to trusted capture hardware, universal provenance, or complete ground truth about physical reality.\par
+
+\section{4. Proof-Carrying Agent Actions}
+
+\subsection{4.1 Proof policy}
+
+A proof policy is:\par
+
+\texttt{p = (R, V, C, P, Theta, nu)}\par
+
+where \texttt{R} is a set of typed evidence requirements, \texttt{V} verification rules, \texttt{C} capture/context constraints, \texttt{P} privacy constraints, \texttt{Theta} decision thresholds, and \texttt{nu} the policy version. Each evidence requirement has an identifier, modality, instruction, required flag, minimum count, and capture preference. Each rule has a method, severity, and decision-relevant instruction.\par
+
+The compiler enforces three invariants:\par
+
+\begin{itemize}\item **Intent preservation:** every required rule traces to the request.\end{itemize}
+\begin{itemize}\item **Minimal sufficiency:** the policy requests no evidence without decision value.\end{itemize}
+\begin{itemize}\item **Decision relevance:** every required artifact maps to at least one rule.\end{itemize}
+
+The implemented compiler supports model-assisted generation and deterministic heuristic fallback. The fallback matters experimentally because provider availability must not erase the acceptance contract.\par
+
+\subsection{4.2 Evidence bundle}
+
+Evidence includes artifacts, claims, server receipt time, optional location or identity binding, and a SHA-256 integrity commitment. File observations may include detected type, container structure, EXIF/XMP fields, capture-time source and timezone confidence, editing-history signals, JPEG segments, PNG chunks, C2PA/JUMBF presence, and cross-file consistency.\par
+
+These observations are not direct authenticity labels. A benignly edited file may contain editing metadata; an unmodified platform-downloaded file may lack original metadata. Policies determine which observations are relevant and when they require review.\par
+
+\subsection{4.3 Layered observations}
+
+The verifier constructs:\par
+
+\texttt{o = D(p,e)  union  F(e)  union  M(p,e)}\par
+
+where \texttt{D} contains deterministic validation, \texttt{F} forensic risk signals, and \texttt{M} policy-specific multimodal judgments. Deterministic checks include schema validity, required artifact counts, deadlines, commitments, and task binding. Forensic analysis detects narrow structural and temporal signals. Multimodal models return per-rule decisions, reasons, confidence, and provider metadata.\par
+
+\subsection{4.4 Selective decision policy}
+
+The verifier does not average all signals into an unrestricted scalar. Hard required failures produce rejection or resubmission. Independent integrity conflict produces abstention. Model unavailability, unsupported required materials, excessive ensemble disagreement, or confidence below a policy threshold produce abstention. In the current artifact, degraded ensemble operation uses a stricter threshold of 0.85; this value must be calibrated experimentally rather than presented as universally optimal.\par
+
+p ← C(q)\par
+if invalid\_or\_missing(e,p): reject\_or\_resubmit\par
+od ← deterministic\_checks(p,e)\par
+of ← forensic\_signals(e)\par
+if hard\_integrity\_conflict(of,p): abstain\par
+om ← multimodal\_ensemble(p,e)\par
+if degraded(om) or disagreement(om)>thetad: abstain\par
+s ← aggregate(od,of,om)\par
+if required\_rules\_pass and s>=thetaa: accept\par
+if correctable\_gap: reject\_or\_resubmit\par
+abstain\par
+
+\subsection{4.5 Human adjudication}
+
+An adjudicator receives the original policy, privacy-scoped evidence, deterministic and forensic observations, model-level judgments, conflict indicators, and reason codes. Human decisions are recorded separately from machine output. Financial interest in the outcome is not treated as neutral ground truth.\par
+
+\subsection{4.6 Receipt}
+
+The receipt includes request and policy identifiers, policy version, evidence commitment, observation summary, model/provider versions, decision thresholds, disagreement and degradation status, adjudication record where applicable, final decision, timestamp, and downstream eligibility. Public receipts may disclose commitments and decisive reasons without publishing raw sensitive evidence.\par
+
+\section{5. JOVE-Core Benchmark}
+
+JOVE evaluates verification rather than agent task completion. To match the deployed system's present capability, the confirmatory study is limited to \textbf{JOVE-Core}, a digital-evidence benchmark. Development begins with a 20-case live pilot. The minimum confirmatory target is 30 independently sourced base cases across six digital task classes and approximately 240 matched evidence bundles. Expansion beyond this minimum is permitted only before preregistration and dataset freeze.\par
+
+\subsection{5.1 Digital-evidence core}
+
+The confirmatory classes are social-content completion, account configuration, content publication, form or document submission, time-sensitive digital state, and cross-evidence consistency. Evidence may include screenshots, exported images, links, text claims, and documents. Every core class is executable through the current product and can produce a real verification receipt.\par
+
+\subsection{5.2 Future physical extension}
+
+Physical signage, delivery or pickup, and location-visit evidence are excluded from the primary paper and all confirmatory claims. They form a future \texttt{JOVE-Physical} extension requiring separate collection protocols, consent, location/privacy controls, threat assumptions, and validation. Results from JOVE-Core must not be generalized to physical execution.\par
+
+\subsection{5.3 Matched variants}
+
+For each base case, JOVE contains valid evidence and controlled variants: missing required evidence, stale evidence, cross-task replay, metadata conflict, benign edit, controlled deceptive edit where ethically permitted, semantic mismatch, contradictory bundle, and privacy overcollection. Mutation logs are stored separately from blinded evaluation inputs.\par
+
+\subsection{5.4 Ground truth}
+
+The 20-case pilot uses two independent raters to test rubric clarity and estimate disagreement; it is developmental and cannot support the main confirmatory claim. The frozen confirmatory test uses at least three independent raters applying the ex-ante policy. They label outcome, sufficiency, defect class, privacy excess, confidence, and decisive evidence. We report Fleiss' kappa or Krippendorff's alpha, preserve raw disagreement, and use a documented adjudication process. Authors may design the rubric but are not the sole test-label providers.\par
+
+\subsection{5.5 Splits}
+
+All variants of a base case remain in the same split. Thresholds and prompts are frozen using train/dev data. The held-out test includes at least two unseen task classes for leave-one-class-out or class-held-out evaluation.\par
+
+\subsection{5.6 Ethics and privacy}
+
+Raw evidence is separated from derived research features. Personally identifying content is minimized or redacted. Controlled deceptive edits avoid harmful real-world publication. Dataset documentation records consent, retention, exclusions, and known representational limitations.\par
+
+\section{6. Experimental Design}
+
+\subsection{6.1 Systems}
+
+\begin{itemize}\item **B0 Generic Judge:** request and evidence to a general binary judge.\end{itemize}
+\begin{itemize}\item **B1 Policy Judge:** proof policy and evidence to the same model family.\end{itemize}
+\begin{itemize}\item **V1 Structured:** policy, deterministic checks, and one multimodal judge.\end{itemize}
+\begin{itemize}\item **V2 Forensic:** V1 plus media and temporal risk signals.\end{itemize}
+\begin{itemize}\item **V3 Ensemble:** V2 plus multiple independent multimodal judgments.\end{itemize}
+\begin{itemize}\item **V4 Selective:** V3 plus calibrated abstention and human escalation.\end{itemize}
+
+We use at least one frontier proprietary, one efficient proprietary, and one open-weight model family. We additionally consider a tool-augmented policy judge and human-only review as strong secondary baselines.\par
+
+\subsection{6.2 Hypotheses}
+
+\begin{itemize}\item **H1:** B1 has lower false-accept rate than B0, showing value from ex-ante policy.\end{itemize}
+\begin{itemize}\item **H2:** V2 reduces acceptance of replayed, stale, and structurally conflicting evidence relative to V1.\end{itemize}
+\begin{itemize}\item **H3:** V4 reduces selective risk relative to V3 at the pre-registered coverage floor.\end{itemize}
+\begin{itemize}\item **H4:** Structured review packets improve human decision accuracy and/or time relative to raw review.\end{itemize}
+\begin{itemize}\item **H5:** Minimal proof policies reduce unnecessary private disclosure without reducing sufficiency.\end{itemize}
+
+\subsection{6.3 Metrics}
+
+Primary: false-accept rate at coverage \texttt{kappa}. Secondary: false-reject rate, macro F1, expected asymmetric cost, risk--coverage curve, AURC, calibration error, escalation, p50/p95 latency, automated cost, reviewer minutes, privacy burden, reason agreement, receipt completeness, and audit reconstruction.\par
+
+\subsection{6.4 Statistical analysis}
+
+Power analysis is performed before dataset freeze. Confidence intervals use bootstrap resampling clustered by base case. Paired decisions use McNemar tests or hierarchical models appropriate to repeated matched variants. Secondary comparisons receive multiplicity correction. Thresholds are selected on development data only. API failures, timeouts, and malformed outputs remain in the denominator.\par
+
+\subsection{6.5 Human review study}
+
+Reviewers are randomized between raw task/evidence and a structured packet containing policy and machine observations. Conditions are balanced by base case and defect class. Outcomes include accuracy, false acceptance, time, confidence, workload, and agreement. A separate blinded audit task asks participants to reconstruct the governing rule, decisive evidence, degradation/escalation reason, and downstream eligibility from either a receipt or an unstructured log.\par
+
+\section{7. Results}
+
+This section is intentionally incomplete until independent experiments are run.\par
+
+\subsection{7.0 Live feasibility pilot}
+
+Before dataset freeze, we run a 20-case live digital-evidence pilot spanning the six JOVE-Core classes. Every case must preserve the natural-language request, compiled policy, submitted evidence commitment, automated observations, model provenance, two independent developmental ratings, final adjudication, receipt, latency, and cost. This pilot tests instrumentation and rubric feasibility; it is reported descriptively and is not used to tune on, or substantiate, the confirmatory test result.\par
+
+\subsection{7.1 Main outcome}
+
+At the pre-registered coverage floor \texttt{kappa=[TBD]}, V4 achieved a false-accept rate of \texttt{[TBD]}, compared with \texttt{[TBD]} for B0 and \texttt{[TBD]} for B1. The paired difference was \texttt{[TBD, 95\% clustered CI]}. False rejection was \texttt{[TBD]}, and AURC was \texttt{[TBD]}.\par
+
+\subsection{7.2 Ablation}
+
+[Report whether removing proof policy, deterministic checks, forensics, ensemble, or escalation significantly changes errors. Do not claim a component contribution when its confidence interval includes no meaningful effect.]\par
+
+\subsection{7.3 Attack classes}
+
+[Report per-class results. Forensics should be expected to affect only mutation types connected to observable structure or timing; semantic mismatch should primarily test policy-conditioned multimodal review.]\par
+
+\subsection{7.4 Generalization}
+
+[Report class-held-out results and whether threshold calibration transfers.]\par
+
+\subsection{7.5 Human review and auditability}
+
+[Report accuracy, time, workload, agreement, and reconstruction. Explicitly report any overreliance caused by machine observations.]\par
+
+\subsection{7.6 Cost and latency}
+
+[Report provider, model version, date, token use, p50/p95, human minutes, and cost. Do not generalize beyond measured pricing and deployment configuration.]\par
+
+\section{8. Discussion}
+
+The framework separates four responsibilities often collapsed into one model call: ex-ante specification, structural observation, semantic judgment, and uncertainty handling. If the hypotheses hold, the primary result would not be that an ensemble is more accurate than a single model. It would be that consequential agent outcomes benefit from carrying an explicit, inspectable verification contract and from treating abstention as a valid protocol state.\par
+
+Proof-policy compilation can also fail. Natural-language requests may be ambiguous, policies may over-collect evidence, and a deterministic fallback may underspecify novel tasks. Forensic observations can be absent or misleading. Models may share correlated blind spots. Human reviewers may anchor on machine explanations. Receipts improve reconstructability but do not make the underlying claim objectively true.\par
+
+The framework is most appropriate when downstream value justifies verification cost and when evidence can support a bounded claim. It is inappropriate for high-stakes regulated decisions without domain governance, for tasks requiring trusted hardware guarantees not present in the system, or where collecting evidence itself creates unacceptable privacy risk.\par
+
+\section{9. Limitations}
+
+JOVE-Core cannot represent all open-world actions and explicitly excludes physical execution. Matched mutations may contain artifacts that differ from naturally occurring fraud. Task categories and reviewer populations may be geographically or culturally narrow. Model APIs change over time. Confidence calibration can drift. The implemented artifact currently detects C2PA/JUMBF presence but does not validate the complete signature trust chain. Editing metadata is a risk signal, not a fraud label. The study does not establish authorship. Human escalation introduces cost, delay, and potential inconsistency. Downstream settlement auditability does not establish semantic truth.\par
+
+\section{10. Ethics, Governance, and Reproducibility}
+
+The study minimizes personal data, separates raw evidence from derived features, records consent and retention, and excludes harmful real-world deception. Reviewer compensation and exclusions are reported. We release proof-policy schemas, privacy-safe fixtures, mutation scripts, split manifests, frozen prompts, model-output caches where licensing allows, scoring code, and figure-generation scripts. Proprietary calls are documented with model identifiers, dates, parameters, request hashes, failures, and cost.\par
+
+\section{11. Conclusion}
+
+Agent reliability cannot end at action generation. When an outcome is represented by judgment-based evidence, the system needs an ex-ante definition of proof, explicit integrity and semantic observations, a principled ability to abstain, and a receipt that explains why downstream action is or is not permitted. Proof-Carrying Agent Actions offers this protocol abstraction. The decisive next step is empirical: determine, under independent and reproducible evaluation, which layers reduce unsafe acceptance, where selective verification fails, and when human adjudication provides genuine complementarity.\par
+
+\section{References to include in final BibTeX}
+
+The verified source list and positioning notes are maintained in \texttt{ai2human-literature-and-positioning-review.md}. The final submission must convert every cited item to a checked BibTeX entry and rerun a forward literature search before submission.\par
+
+\end{document}

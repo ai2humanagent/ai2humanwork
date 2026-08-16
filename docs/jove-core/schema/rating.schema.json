@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "JOVE-Core Blinded Rating",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["case_id", "rater_id", "outcome", "sufficiency", "privacy_excess", "confidence", "decisive_evidence", "reason", "rated_at"],
+  "properties": {
+    "case_id": { "type": "string", "pattern": "^jove_core_[0-9]{4}$" },
+    "rater_id": { "type": "string", "pattern": "^rater_[a-z0-9_-]+$" },
+    "outcome": { "enum": ["supported", "unsupported", "insufficient_to_decide"] },
+    "sufficiency": { "enum": ["sufficient", "correctable_gap", "terminal_failure", "uncertain"] },
+    "defect_class": { "enum": ["none", "missing", "stale", "replay", "metadata_conflict", "benign_edit", "semantic_mismatch", "contradiction", "other"] },
+    "privacy_excess": { "type": "boolean" },
+    "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+    "decisive_evidence": { "type": "array", "items": { "type": "string" } },
+    "reason": { "type": "string", "minLength": 8 },
+    "rated_at": { "type": "string", "format": "date-time" }
+  }
+}

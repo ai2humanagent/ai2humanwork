@@ -1,0 +1,21 @@
+case_id,source_strategy,required_action,consent_state,execution_state
+jove_core_0001,retrospective_candidate,request explicit consent for a2h-x-2081475399658410370,missing,blocked
+jove_core_0002,retrospective_candidate,request explicit consent for a2h-x-2081206439067230591,missing,blocked
+jove_core_0003,retrospective_candidate,request explicit consent for a2h-x-2079902774654091682,missing,blocked
+jove_core_0004,retrospective_candidate,request explicit consent for a2h-x-2079099590058598642,missing,blocked
+jove_core_0005,prospective_live,run account configuration template,required,ready
+jove_core_0006,prospective_live,run account configuration template,required,ready
+jove_core_0007,prospective_live,run account configuration template,required,ready
+jove_core_0008,prospective_live,run content publication template,required,ready
+jove_core_0009,prospective_live,run content publication template,required,ready
+jove_core_0010,prospective_live,run content publication template,required,ready
+jove_core_0011,prospective_live,run content publication template,required,ready
+jove_core_0012,prospective_live,run form submission template,required,ready
+jove_core_0013,prospective_live,run document submission template,required,ready
+jove_core_0014,prospective_live,run form submission template,required,ready
+jove_core_0015,prospective_live,run time-sensitive digital state template,required,ready
+jove_core_0016,prospective_live,run time-sensitive digital state template,required,ready
+jove_core_0017,prospective_live,run time-sensitive digital state template,required,ready
+jove_core_0018,prospective_live,run cross-evidence template,required,ready
+jove_core_0019,prospective_live,run cross-evidence template,required,ready
+jove_core_0020,prospective_live,run cross-evidence template,required,ready

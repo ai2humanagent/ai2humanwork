@@ -1,0 +1,15 @@
+{
+  "audited_at": "2026-08-08T15:00:00.000Z",
+  "total_tasks_scanned": 95,
+  "complete_chain_candidates": 4,
+  "consent_status": "not_recorded",
+  "eligible_for_research_export": 0,
+  "candidate_task_ids": [
+    "a2h-x-2081475399658410370",
+    "a2h-x-2081206439067230591",
+    "a2h-x-2079902774654091682",
+    "a2h-x-2079099590058598642"
+  ],
+  "observed_verdicts": { "manual_review": 4 },
+  "decision": "Do not export until explicit research consent is recorded. Use as retrospective candidates only."
+}

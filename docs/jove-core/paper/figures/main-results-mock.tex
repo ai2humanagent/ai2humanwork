@@ -1,0 +1,13 @@
+\begin{tabular}{lrrrrrr}
+\toprule
+System & UPT $\downarrow$ & Coverage $\uparrow$ & AURC $\downarrow$ & ECE $\downarrow$ & Cost & Latency \\
+\midrule
+J0 Generic judge   & 0.412 & 1.000 & 0.318 & 0.214 & \$0.011 & 1.2\,s \\
+J1 Policy-aware    & 0.301 & 1.000 & 0.242 & 0.176 & \$0.014 & 1.4\,s \\
+J1-IM Info-matched & 0.287 & 1.000 & 0.229 & 0.169 & \$0.017 & 1.7\,s \\
+K-P Policy contract & 0.196 & 1.000 & 0.174 & 0.121 & \$0.019 & 1.8\,s \\
+K-B Bound binary   & 0.121 & 0.981 & 0.132 & 0.098 & \$0.021 & 2.0\,s \\
+K-S Selective      & 0.043 & 0.842 & 0.061 & 0.052 & \$0.024 & 2.2\,s \\
+K-Full             & \textbf{0.028} & 0.826 & \textbf{0.048} & \textbf{0.041} & \$0.026 & 2.4\,s \\
+\bottomrule
+\end{tabular}

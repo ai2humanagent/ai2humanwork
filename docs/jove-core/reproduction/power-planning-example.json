@@ -1,0 +1,34 @@
+{
+  "assumptions": {
+    "baseline": 0.3,
+    "treatment": 0.2,
+    "variants_per_base": 3,
+    "intra_base_correlation": 0.2,
+    "alpha": 0.05,
+    "target_power": 0.8,
+    "simulations": 3000,
+    "seed": 20260809,
+    "minimum_cluster_floor": 30
+  },
+  "recommended_base_cases": 110,
+  "estimated_power": 0.808,
+  "nearby": [
+    {
+      "base_cases": 95,
+      "estimated_power": 0.749
+    },
+    {
+      "base_cases": 100,
+      "estimated_power": 0.774
+    },
+    {
+      "base_cases": 105,
+      "estimated_power": 0.792
+    },
+    {
+      "base_cases": 110,
+      "estimated_power": 0.808
+    }
+  ],
+  "warning": "Freeze only after replacing assumptions with pilot estimates and running sensitivity over effect and correlation; this is planning evidence, not a study result."
+}

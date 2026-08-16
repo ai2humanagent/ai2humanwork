@@ -1,0 +1,13 @@
+{
+  "case_id": "jove_core_0001",
+  "study_phase": "live_pilot",
+  "task_class": "social_content",
+  "request": { "text": "REPLACE_WITH_LIVE_REQUEST", "created_at": "2026-08-08T00:00:00.000Z", "source": "live_product", "product_task_id": null },
+  "consent": { "research_use": true, "recorded_at": "2026-08-08T00:00:00.000Z", "retention_policy": "REPLACE_WITH_APPROVED_RETENTION_POLICY" },
+  "policy": { "version": "custom-task-spec/v1", "snapshot_sha256": "0000000000000000000000000000000000000000000000000000000000000000", "compiled_at": "2026-08-08T00:00:00.000Z", "requirements": [{}], "rules": [{}] },
+  "evidence": { "version": "proof-bundle/v1", "bundle_id": "REPLACE", "integrity_hash": "0000000000000000000000000000000000000000000000000000000000000000", "artifact_count": 0, "server_received_at": "2026-08-08T00:00:00.000Z", "private_source_retained": true, "privacy_notes": [] },
+  "verification": { "system_decision": "error", "confidence": null, "deterministic_checks": [], "forensic_observations": [], "model_reviews": [], "degraded": false, "escalated": false, "latency_ms": 0, "model_cost_usd": 0, "human_review_seconds": null },
+  "receipt": { "receipt_id": "REPLACE", "receipt_sha256": "0000000000000000000000000000000000000000000000000000000000000000", "reconstructable": false, "settlement": { "status": "not_applicable", "tx_hash": null } },
+  "research_status": "planned",
+  "exclusion_reason": null
+}

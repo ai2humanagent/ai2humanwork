@@ -1,0 +1,198 @@
+{
+  "study_version": "jove-core-study/v1",
+  "synthetic": true,
+  "note": "MOCK / PLACEHOLDER DATA. Numbers are hand-authored to be internally consistent and to exercise the paper's tables and analysis wiring. They carry NO empirical meaning and MUST be replaced by frozen confirmatory metrics before submission.",
+  "generated_at": "2026-08-09T00:00:00.000Z",
+  "systems_order": [
+    "J0_generic_judge",
+    "J1_policy_judge",
+    "J1IM_info_matched",
+    "KP_policy_contract",
+    "KB_bound_binary",
+    "KS_selective",
+    "KFull"
+  ],
+  "metrics": {
+    "J0_generic_judge": {
+      "display_name": "J0 Generic judge",
+      "cases": 240,
+      "unsafe_positive_transition_rate": 0.412,
+      "automation_coverage": 1.0,
+      "aurc": 0.318,
+      "ece": 0.214,
+      "false_accept_rate": 0.412,
+      "false_reject_rate": 0.061,
+      "automated_accuracy": 0.588,
+      "selective_risk": 0.412,
+      "runtime_failure_rate": 0.0,
+      "mean_latency_ms": 1200,
+      "mean_cost_usd": 0.011,
+      "counts": {
+        "auto": 240,
+        "accepted": 172,
+        "rejected": 68,
+        "false_accepts": 71,
+        "false_rejects": 11,
+        "correct": 141,
+        "runtime_failures": 0
+      }
+    },
+    "J1_policy_judge": {
+      "display_name": "J1 Policy-aware",
+      "cases": 240,
+      "unsafe_positive_transition_rate": 0.301,
+      "automation_coverage": 1.0,
+      "aurc": 0.242,
+      "ece": 0.176,
+      "false_accept_rate": 0.301,
+      "false_reject_rate": 0.058,
+      "automated_accuracy": 0.699,
+      "selective_risk": 0.301,
+      "runtime_failure_rate": 0.0,
+      "mean_latency_ms": 1400,
+      "mean_cost_usd": 0.014,
+      "counts": {
+        "auto": 240,
+        "accepted": 168,
+        "rejected": 72,
+        "false_accepts": 52,
+        "false_rejects": 10,
+        "correct": 168,
+        "runtime_failures": 0
+      }
+    },
+    "J1IM_info_matched": {
+      "display_name": "J1-IM Info-matched",
+      "cases": 240,
+      "unsafe_positive_transition_rate": 0.287,
+      "automation_coverage": 1.0,
+      "aurc": 0.229,
+      "ece": 0.169,
+      "false_accept_rate": 0.287,
+      "false_reject_rate": 0.056,
+      "automated_accuracy": 0.713,
+      "selective_risk": 0.287,
+      "runtime_failure_rate": 0.0,
+      "mean_latency_ms": 1700,
+      "mean_cost_usd": 0.017,
+      "counts": {
+        "auto": 240,
+        "accepted": 166,
+        "rejected": 74,
+        "false_accepts": 49,
+        "false_rejects": 10,
+        "correct": 171,
+        "runtime_failures": 0
+      }
+    },
+    "KP_policy_contract": {
+      "display_name": "K-P Policy contract",
+      "cases": 240,
+      "unsafe_positive_transition_rate": 0.196,
+      "automation_coverage": 1.0,
+      "aurc": 0.174,
+      "ece": 0.121,
+      "false_accept_rate": 0.196,
+      "false_reject_rate": 0.052,
+      "automated_accuracy": 0.804,
+      "selective_risk": 0.196,
+      "runtime_failure_rate": 0.0,
+      "mean_latency_ms": 1800,
+      "mean_cost_usd": 0.019,
+      "counts": {
+        "auto": 240,
+        "accepted": 160,
+        "rejected": 80,
+        "false_accepts": 33,
+        "false_rejects": 9,
+        "correct": 193,
+        "runtime_failures": 0
+      }
+    },
+    "KB_bound_binary": {
+      "display_name": "K-B Bound binary",
+      "cases": 240,
+      "unsafe_positive_transition_rate": 0.121,
+      "automation_coverage": 0.981,
+      "aurc": 0.132,
+      "ece": 0.098,
+      "false_accept_rate": 0.121,
+      "false_reject_rate": 0.049,
+      "automated_accuracy": 0.879,
+      "selective_risk": 0.128,
+      "runtime_failure_rate": 0.0,
+      "mean_latency_ms": 2000,
+      "mean_cost_usd": 0.021,
+      "counts": {
+        "auto": 235,
+        "accepted": 152,
+        "rejected": 83,
+        "false_accepts": 20,
+        "false_rejects": 8,
+        "correct": 207,
+        "runtime_failures": 0
+      }
+    },
+    "KS_selective": {
+      "display_name": "K-S Selective",
+      "cases": 240,
+      "unsafe_positive_transition_rate": 0.043,
+      "automation_coverage": 0.842,
+      "aurc": 0.061,
+      "ece": 0.052,
+      "false_accept_rate": 0.043,
+      "false_reject_rate": 0.041,
+      "automated_accuracy": 0.957,
+      "selective_risk": 0.051,
+      "runtime_failure_rate": 0.0,
+      "mean_latency_ms": 2200,
+      "mean_cost_usd": 0.024,
+      "counts": {
+        "auto": 202,
+        "accepted": 129,
+        "rejected": 73,
+        "false_accepts": 6,
+        "false_rejects": 5,
+        "correct": 191,
+        "runtime_failures": 0
+      }
+    },
+    "KFull": {
+      "display_name": "K-Full",
+      "cases": 240,
+      "unsafe_positive_transition_rate": 0.028,
+      "automation_coverage": 0.826,
+      "aurc": 0.048,
+      "ece": 0.041,
+      "false_accept_rate": 0.028,
+      "false_reject_rate": 0.038,
+      "automated_accuracy": 0.972,
+      "selective_risk": 0.046,
+      "runtime_failure_rate": 0.0,
+      "mean_latency_ms": 2400,
+      "mean_cost_usd": 0.026,
+      "counts": {
+        "auto": 198,
+        "accepted": 126,
+        "rejected": 72,
+        "false_accepts": 4,
+        "false_rejects": 5,
+        "correct": 189,
+        "runtime_failures": 0
+      }
+    }
+  },
+  "properties": {
+    "coverage_floor": 0.70,
+    "policy_drift_transition": { "baseline": 0.38, "contract": 0.04, "paired_difference": -0.34 },
+    "replay_acceptance": { "baseline": 0.41, "contract": 0.02, "paired_difference": -0.39 },
+    "forced_transition": { "baseline": 0.33, "contract": 0.05, "paired_difference": -0.28 },
+    "audit_reconstruction_accuracy": { "baseline": 0.46, "contract": 0.93, "paired_difference": 0.47 }
+  },
+  "primary": {
+    "coverage_floor": 0.70,
+    "treatment_meets_coverage": true,
+    "upt_difference_kfull_vs_j1": -0.273,
+    "supported_descriptively": true
+  }
+}

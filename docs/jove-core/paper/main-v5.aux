@@ -1,0 +1,229 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand\HyperFirstAtBeginDocument{\AtBeginDocument}
+\HyperFirstAtBeginDocument{\ifx\hyper@anchor\@undefined
+\global\let\oldcontentsline\contentsline
+\gdef\contentsline#1#2#3#4{\oldcontentsline{#1}{#2}{#3}}
+\global\let\oldnewlabel\newlabel
+\gdef\newlabel#1#2{\newlabelxx{#1}#2}
+\gdef\newlabelxx#1#2#3#4#5#6{\oldnewlabel{#1}{{#2}{#3}}}
+\AtEndDocument{\ifx\hyper@anchor\@undefined
+\let\contentsline\oldcontentsline
+\let\newlabel\oldnewlabel
+\fi}
+\fi}
+\global\let\hyper@last\relax 
+\gdef\HyperFirstAtBeginDocument#1{#1}
+\providecommand\HyField@AuxAddToFields[1]{}
+\providecommand\HyField@AuxAddToCoFields[2]{}
+\bibstyle{ACM-Reference-Format}
+\citation{coinbase2025x402,google2025ap2,anthropic2024mcp}
+\@writefile{toc}{\contentsline {section}{Abstract}{1}{section*.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}{section.1}\protected@file@percent }
+\citation{zheng2023judging,liu2023geval,wang2024fair}
+\citation{geifman2017selective,geifman2019selectivenet,kamath2020selectiveqa,hendrickx2024reject}
+\citation{verdoliva2020media}
+\citation{liu2023agentbench,zhou2023webarena,xie2024osworld,xu2024theagentcompany,yang2024sweagent,park2023generative}
+\citation{ji2023hallucination}
+\citation{greshake2023injection}
+\citation{ruan2024toolemu,kang2024exploiting}
+\citation{kittur2011crowdforge,little2010turkit,retelny2014flashteams,franklin2011crowddb}
+\citation{gama2014survey}
+\citation{bender2018data,gebru2021datasheets,mitchell2019modelcards}
+\citation{caldarelli2020oracle,zhang2016towncrier,breidenbach2021chainlink}
+\citation{vogelsteller2015erc20}
+\citation{nosek2018preregistration,chambers2022registered}
+\@writefile{toc}{\contentsline {section}{\numberline {2}Problem Formulation}{2}{section.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Threat Model}{3}{subsection.2.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {3}Why Judge Accuracy Is Insufficient}{3}{section.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Counterexamples to judge sufficiency}{3}{subsection.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Post-hoc criterion drift.}{3}{section*.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Cross-task replay.}{3}{section*.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Counterexamples to the deployment interface}{3}{subsection.3.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Forced binary output.}{3}{section*.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Irreconstructable transition.}{3}{section*.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}A Separation Between Accuracy and Authorization}{3}{subsection.3.3}\protected@file@percent }
+\newlabel{def:authsound}{{1}{3}{Authorization-soundness}{definition.1}{}}
+\newlabel{thm:separation}{{1}{3}{Class-conditional soundness--coverage separation}{theorem.1}{}}
+\citation{kleene1952metamathematics,fitting1994kleene}
+\citation{guo2017calibration}
+\citation{vovk2005algorithmic,angelopoulos2023conformal}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces The indistinguishable pair behind Theorem\nonbreakingspace \ref  {thm:separation}. The two inputs present the \emph  {same} artifact $e$ but opposite ground truths, differing only in context $c$ (task identity, policy version, provenance) that an artifact-only judge cannot observe. Any such $J$ must return one output on both, so it authorizes an unsafe transition on $c'$ or wrongly declines on $c$---a gap no classification accuracy closes. The binding and ex-ante predicates break the pair by making $c$ observable to the guard.\relax }}{4}{figure.caption.9}\protected@file@percent }
+\providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
+\newlabel{fig:indist}{{1}{4}{The indistinguishable pair behind Theorem~\ref {thm:separation}. The two inputs present the \emph {same} artifact $e$ but opposite ground truths, differing only in context $c$ (task identity, policy version, provenance) that an artifact-only judge cannot observe. Any such $J$ must return one output on both, so it authorizes an unsafe transition on $c'$ or wrongly declines on $c$---a gap no classification accuracy closes. The binding and ex-ante predicates break the pair by making $c$ observable to the guard.\relax }{figure.caption.9}{}}
+\@writefile{toc}{\contentsline {paragraph}{Scope of the theorem, and what it does \emph  {not} settle.}{4}{section*.10}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4}Verification Contracts}{4}{section.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Three-Valued Authorization}{4}{subsection.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Which predicates actually use the third value.}{4}{section*.11}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Splitting selective verification into three levels: observation $O$, calibration $C$, verdict $V$.}{4}{section*.12}\protected@file@percent }
+\citation{c2pa2023spec}
+\citation{sporny2022vc}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces The authorization guard as a decision system. The four property predicates evaluate independently in $\{\top ,\bot ,?\}$; their Kleene conjunction is read by the truth-biased guard, which permits $a^+$ only on unanimous $\top $, rejects on any $\bot $ (Theorem\nonbreakingspace \ref  {thm:soundness}), and abstains on an unresolved $?$ with no $\bot $. Removing any predicate deletes one incoming edge to the conjunction and thereby its matched harm block (Theorem\nonbreakingspace \ref  {thm:necessity}).\relax }}{5}{figure.caption.13}\protected@file@percent }
+\newlabel{fig:guard}{{2}{5}{The authorization guard as a decision system. The four property predicates evaluate independently in $\{\top ,\bot ,?\}$; their Kleene conjunction is read by the truth-biased guard, which permits $a^+$ only on unanimous $\top $, rejects on any $\bot $ (Theorem~\ref {thm:soundness}), and abstains on an unresolved $?$ with no $\bot $. Removing any predicate deletes one incoming edge to the conjunction and thereby its matched harm block (Theorem~\ref {thm:necessity}).\relax }{figure.caption.13}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Violation-Propagation Invariant}{5}{subsection.4.2}\protected@file@percent }
+\newlabel{thm:soundness}{{2}{5}{Violation-propagation invariant}{theorem.2}{}}
+\newlabel{prop:abstain}{{1}{5}{Abstention monotonicity}{proposition.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Contract Properties}{5}{subsection.4.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Enforcement invariant (framing, not a contribution).}{6}{section*.14}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4}Relative Non-Redundancy of the Four Properties}{6}{subsection.4.4}\protected@file@percent }
+\newlabel{def:harm}{{3}{6}{Authorization and audit harm}{definition.3}{}}
+\newlabel{def:defects}{{4}{6}{Property-matched defect family}{definition.4}{}}
+\newlabel{thm:necessity}{{3}{6}{Relative non-redundancy}{theorem.3}{}}
+\newlabel{prop:completeness}{{2}{6}{Relative completeness over the modeled defects}{proposition.2}{}}
+\citation{meyer1997object}
+\citation{necula1997proof}
+\citation{leucker2009brief}
+\citation{saltzer1975protection}
+\citation{miller2006capability}
+\citation{opa2023}
+\citation{schemmer2023reliance,vaccaro2024combinations}
+\citation{zhang2016towncrier}
+\citation{zhang2020deco}
+\citation{ellis2017chainlink}
+\citation{maram2021candid}
+\citation{caldarelli2020oracle}
+\citation{costan2016sgx,intel2021tdx,sabt2015tee}
+\citation{goldwasser1989knowledge,parno2013pinocchio,ben2014succinct,thaler2022proofs}
+\citation{nakamoto2008bitcoin,garay2015backbone}
+\citation{buterin2020gasper,buchman2016tendermint}
+\citation{vanbulck2018foreshadow}
+\citation{zheng2023judging,liu2023geval}
+\citation{geifman2017selective,hendrickx2024reject}
+\citation{verdoliva2020media}
+\citation{c2pa2023spec,sporny2022vc}
+\citation{zhang2016towncrier,zhang2020deco}
+\citation{costan2016sgx,intel2021tdx}
+\citation{parno2013pinocchio,ben2014succinct}
+\citation{saltzer1975protection,opa2023}
+\citation{meyer1997object,necula1997proof,leucker2009brief}
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces The property-matched defect family of Definition\nonbreakingspace \ref  {def:defects}, organized by the fact each defect turns on. The last column states why a probabilistic artifact-only judge cannot, in principle, close the case---linking the necessity result (Theorem\nonbreakingspace \ref  {thm:necessity}) to the separation result (Theorem\nonbreakingspace \ref  {thm:separation}).\relax }}{7}{table.caption.15}\protected@file@percent }
+\newlabel{tab:defects}{{1}{7}{The property-matched defect family of Definition~\ref {def:defects}, organized by the fact each defect turns on. The last column states why a probabilistic artifact-only judge cannot, in principle, close the case---linking the necessity result (Theorem~\ref {thm:necessity}) to the separation result (Theorem~\ref {thm:separation}).\relax }{table.caption.15}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5}Relation to Adjacent Abstractions}{7}{section.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Cryptographic assurance of integrity vs.\ authorization of an outcome.}{7}{section*.16}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Positioning.}{7}{section*.18}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Positioning against adjacent abstractions. $\bullet $: directly provides the property as a design goal; $\circ $: provides it partially or only incidentally (e.g.\ over trusted, machine-observable state, or as a byproduct such as lineage); ---: not addressed. ``Ground truth $=$ external harm'' asks whether the approach's correctness is judged against a consequence \emph  {outside} its own decision rule.\relax }}{8}{table.caption.17}\protected@file@percent }
+\newlabel{tab:positioning}{{2}{8}{Positioning against adjacent abstractions. $\bullet $: directly provides the property as a design goal; $\circ $: provides it partially or only incidentally (e.g.\ over trusted, machine-observable state, or as a byproduct such as lineage); ---: not addressed. ``Ground truth $=$ external harm'' asks whether the approach's correctness is judged against a consequence \emph {outside} its own decision rule.\relax }{table.caption.17}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6}Contract-Governed Verification}{8}{section.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Reconstructability as a two-phase atomic transaction.}{8}{section*.19}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.1}A Worked Replay Case}{8}{subsection.6.1}\protected@file@percent }
+\newlabel{sec:worked}{{6.1}{8}{A Worked Replay Case}{subsection.6.1}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Field-by-field mapping of the Verification Contract six-tuple $K=\langle I,P,B,V,A,R\rangle $ onto the real components of a deployed settlement loop. The system is described in de-identified form; the last column states when each field is frozen or enforced, to be read against the guard of Figure\nonbreakingspace \ref  {fig:guard} and the two-phase commit of \S  \ref  {sec:study}.\relax }}{9}{table.caption.20}\protected@file@percent }
+\newlabel{tab:instantiation}{{3}{9}{Field-by-field mapping of the Verification Contract six-tuple $K=\langle I,P,B,V,A,R\rangle $ onto the real components of a deployed settlement loop. The system is described in de-identified form; the last column states when each field is frozen or enforced, to be read against the guard of Figure~\ref {fig:guard} and the two-phase commit of \S \ref {sec:study}.\relax }{table.caption.20}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.2}A Deployed Settlement Loop as a Reference Instantiation}{9}{subsection.6.2}\protected@file@percent }
+\newlabel{sec:instantiation}{{6.2}{9}{A Deployed Settlement Loop as a Reference Instantiation}{subsection.6.2}{}}
+\@writefile{toc}{\contentsline {paragraph}{Why these mechanisms can only come from a real system.}{9}{section*.21}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{As a source of confirmatory data.}{9}{section*.22}\protected@file@percent }
+\citation{hayes2007answering}
+\@writefile{toc}{\contentsline {section}{\numberline {7}JOVE-Core}{10}{section.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Ground truth, and the honest limit of its independence.}{10}{section*.23}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Sample size and adjudication (majority-vote admission, agreement stratification).}{10}{section*.24}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {8}Experimental Design}{10}{section.8}\protected@file@percent }
+\newlabel{sec:study}{{8}{10}{Experimental Design}{section.8}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.1}Systems}{10}{subsection.8.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Why J1-DT is needed, and what it tests.}{10}{section*.25}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Per-field construction of J1-IM, and the exact sense of ``information-matched.''}{11}{section*.26}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.2}Primary Endpoints: Separating Structural Consistency from External Outcome}{11}{subsection.8.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Endpoint group A (structural consistency, deterministic).}{11}{section*.27}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Endpoint group B (external outcome, independently rated).}{11}{section*.28}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Caveat on curve-based comparison.}{11}{section*.29}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Harm is not a scalar: $H_{\mathrm  {FA}}$, $H_{\mathrm  {FR}}$, $H_{\mathrm  {AUDIT}}$.}{11}{section*.30}\protected@file@percent }
+\citation{guo2017calibration}
+\citation{vovk2005algorithmic,angelopoulos2023conformal}
+\citation{efron1994bootstrap}
+\@writefile{toc}{\contentsline {paragraph}{Operationalizing calibration.}{12}{section*.31}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.3}Mechanism and Generalization}{12}{subsection.8.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.4}Human Studies}{12}{subsection.8.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.5}Sample Size and Power}{12}{subsection.8.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {9}Results and Falsification}{12}{section.9}\protected@file@percent }
+\newlabel{sec:results}{{9}{12}{Results and Falsification}{section.9}{}}
+\citation{vanbulck2018foreshadow}
+\@writefile{toc}{\contentsline {section}{\numberline {10}Anticipated Objections}{13}{section.10}\protected@file@percent }
+\newlabel{sec:objections}{{10}{13}{Anticipated Objections}{section.10}{}}
+\@writefile{toc}{\contentsline {paragraph}{``Isn't this just metadata validation with extra vocabulary?''}{13}{section*.34}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{``Why not use a TEE to make the binding unforgeable?''}{13}{section*.35}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{``Can't a strong LLM just read both hashes and both task IDs and catch the mismatch?''}{13}{section*.36}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{``With no confirmatory data, why is this a paper and not a proposal?''}{13}{section*.37}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {11}Limitations and Ethics}{13}{section.11}\protected@file@percent }
+\newlabel{sec:limitations}{{11}{13}{Limitations and Ethics}{section.11}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Main-result \emph  {structure template}. All cells are \texttt  {--} placeholders: under this protocol snapshot there are no confirmatory numbers to report, and we deliberately print no synthetic value to preclude any misreading as empirical results. Real values will be filled by frozen scripts after consented data are independently labeled. The added J1-DT row is the deterministic tool-augmented judge baseline. UPT denotes the unsafe positive transition rate (i.e.\ $H_{\mathrm  {FA}}$); Coverage is automation coverage; AURC and ECE are within-system summaries.\relax }}{14}{table.caption.32}\protected@file@percent }
+\newlabel{tab:mainresults}{{4}{14}{Main-result \emph {structure template}. All cells are \texttt {--} placeholders: under this protocol snapshot there are no confirmatory numbers to report, and we deliberately print no synthetic value to preclude any misreading as empirical results. Real values will be filled by frozen scripts after consented data are independently labeled. The added J1-DT row is the deterministic tool-augmented judge baseline. UPT denotes the unsafe positive transition rate (i.e.\ $H_{\mathrm {FA}}$); Coverage is automation coverage; AURC and ECE are within-system summaries.\relax }{table.caption.32}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces Property-level structure template. All cells are \texttt  {--} placeholders; there are no empirical numbers under this protocol snapshot, and real values will be filled by frozen scripts once confirmatory data arrive.\relax }}{14}{table.caption.33}\protected@file@percent }
+\newlabel{tab:propertyresults}{{5}{14}{Property-level structure template. All cells are \texttt {--} placeholders; there are no empirical numbers under this protocol snapshot, and real values will be filled by frozen scripts once confirmatory data arrive.\relax }{table.caption.33}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {12}Reproducibility}{14}{section.12}\protected@file@percent }
+\bibdata{references}
+\bibcite{angelopoulos2023conformal}{{1}{2023}{{Angelopoulos and Bates}}{{}}}
+\bibcite{anthropic2024mcp}{{2}{2024}{{Anthropic}}{{}}}
+\bibcite{ben2014succinct}{{3}{2014}{{Ben-Sasson et~al\mbox  {.}}}{{}}}
+\bibcite{bender2018data}{{4}{2018}{{Bender and Friedman}}{{}}}
+\bibcite{breidenbach2021chainlink}{{5}{2021}{{Breidenbach et~al\mbox  {.}}}{{}}}
+\bibcite{buchman2016tendermint}{{6}{2016}{{Buchman}}{{}}}
+\bibcite{buterin2020gasper}{{7}{2020}{{Buterin et~al\mbox  {.}}}{{}}}
+\bibcite{caldarelli2020oracle}{{8}{2020}{{Caldarelli}}{{}}}
+\bibcite{chambers2022registered}{{9}{2022}{{Chambers and Tzavella}}{{}}}
+\bibcite{c2pa2023spec}{{10}{2023}{{Coalition for Content Provenance and Authenticity}}{{}}}
+\bibcite{coinbase2025x402}{{11}{2025}{{Coinbase}}{{}}}
+\bibcite{costan2016sgx}{{12}{2016}{{Costan and Devadas}}{{}}}
+\bibcite{efron1994bootstrap}{{13}{1994}{{Efron and Tibshirani}}{{}}}
+\bibcite{ellis2017chainlink}{{14}{2017}{{Ellis et~al\mbox  {.}}}{{}}}
+\bibcite{fitting1994kleene}{{15}{1994}{{Fitting}}{{}}}
+\bibcite{franklin2011crowddb}{{16}{2011}{{Franklin et~al\mbox  {.}}}{{}}}
+\bibcite{gama2014survey}{{17}{2014}{{Gama et~al\mbox  {.}}}{{}}}
+\bibcite{garay2015backbone}{{18}{2015}{{Garay et~al\mbox  {.}}}{{}}}
+\bibcite{gebru2021datasheets}{{19}{2021}{{Gebru et~al\mbox  {.}}}{{}}}
+\bibcite{geifman2017selective}{{20}{2017}{{Geifman and El-Yaniv}}{{}}}
+\bibcite{geifman2019selectivenet}{{21}{2019}{{Geifman and El-Yaniv}}{{}}}
+\bibcite{goldwasser1989knowledge}{{22}{1989}{{Goldwasser et~al\mbox  {.}}}{{}}}
+\bibcite{google2025ap2}{{23}{2025}{{Google}}{{}}}
+\bibcite{greshake2023injection}{{24}{2023}{{Greshake et~al\mbox  {.}}}{{}}}
+\bibcite{guo2017calibration}{{25}{2017}{{Guo et~al\mbox  {.}}}{{}}}
+\bibcite{hayes2007answering}{{26}{2007}{{Hayes and Krippendorff}}{{}}}
+\bibcite{hendrickx2024reject}{{27}{2024}{{Hendrickx et~al\mbox  {.}}}{{}}}
+\bibcite{intel2021tdx}{{28}{2021}{{Intel Corporation}}{{}}}
+\bibcite{ji2023hallucination}{{29}{2023}{{Ji et~al\mbox  {.}}}{{}}}
+\bibcite{kamath2020selectiveqa}{{30}{2020}{{Kamath et~al\mbox  {.}}}{{}}}
+\bibcite{kang2024exploiting}{{31}{2024}{{Kang et~al\mbox  {.}}}{{}}}
+\bibcite{kittur2011crowdforge}{{32}{2011}{{Kittur et~al\mbox  {.}}}{{}}}
+\bibcite{kleene1952metamathematics}{{33}{1952}{{Kleene}}{{}}}
+\bibcite{leucker2009brief}{{34}{2009}{{Leucker and Schallhart}}{{}}}
+\bibcite{little2010turkit}{{35}{2010}{{Little et~al\mbox  {.}}}{{}}}
+\@writefile{toc}{\contentsline {section}{\numberline {13}Conclusion}{15}{section.13}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{References}{15}{section*.39}\protected@file@percent }
+\bibcite{liu2023agentbench}{{36}{2023b}{{Liu et~al\mbox  {.}}}{{}}}
+\bibcite{liu2023geval}{{37}{2023a}{{Liu et~al\mbox  {.}}}{{}}}
+\bibcite{maram2021candid}{{38}{2021}{{Maram et~al\mbox  {.}}}{{}}}
+\bibcite{meyer1997object}{{39}{1997}{{Meyer}}{{}}}
+\bibcite{miller2006capability}{{40}{2006}{{Miller}}{{}}}
+\bibcite{mitchell2019modelcards}{{41}{2019}{{Mitchell et~al\mbox  {.}}}{{}}}
+\bibcite{nakamoto2008bitcoin}{{42}{2008}{{Nakamoto}}{{}}}
+\bibcite{necula1997proof}{{43}{1997}{{Necula}}{{}}}
+\bibcite{nosek2018preregistration}{{44}{2018}{{Nosek et~al\mbox  {.}}}{{}}}
+\bibcite{opa2023}{{45}{2023}{{Open Policy Agent Project}}{{}}}
+\bibcite{park2023generative}{{46}{2023}{{Park et~al\mbox  {.}}}{{}}}
+\bibcite{parno2013pinocchio}{{47}{2013}{{Parno et~al\mbox  {.}}}{{}}}
+\bibcite{retelny2014flashteams}{{48}{2014}{{Retelny et~al\mbox  {.}}}{{}}}
+\bibcite{ruan2024toolemu}{{49}{2024}{{Ruan et~al\mbox  {.}}}{{}}}
+\bibcite{sabt2015tee}{{50}{2015}{{Sabt et~al\mbox  {.}}}{{}}}
+\bibcite{saltzer1975protection}{{51}{1975}{{Saltzer and Schroeder}}{{}}}
+\bibcite{schemmer2023reliance}{{52}{2023}{{Schemmer et~al\mbox  {.}}}{{}}}
+\bibcite{sporny2022vc}{{53}{2022}{{Sporny et~al\mbox  {.}}}{{}}}
+\bibcite{thaler2022proofs}{{54}{2022}{{Thaler}}{{}}}
+\bibcite{vaccaro2024combinations}{{55}{2024}{{Vaccaro et~al\mbox  {.}}}{{}}}
+\bibcite{vanbulck2018foreshadow}{{56}{2018}{{Van~Bulck et~al\mbox  {.}}}{{}}}
+\bibcite{verdoliva2020media}{{57}{2020}{{Verdoliva}}{{}}}
+\bibcite{vogelsteller2015erc20}{{58}{2015}{{Vogelsteller and Buterin}}{{}}}
+\bibcite{vovk2005algorithmic}{{59}{2005}{{Vovk et~al\mbox  {.}}}{{}}}
+\bibcite{wang2024fair}{{60}{2024}{{Wang et~al\mbox  {.}}}{{}}}
+\bibcite{xie2024osworld}{{61}{2024}{{Xie et~al\mbox  {.}}}{{}}}
+\bibcite{xu2024theagentcompany}{{62}{2024}{{Xu et~al\mbox  {.}}}{{}}}
+\bibcite{yang2024sweagent}{{63}{2024}{{Yang et~al\mbox  {.}}}{{}}}
+\bibcite{zhang2016towncrier}{{64}{2016}{{Zhang et~al\mbox  {.}}}{{}}}
+\bibcite{zhang2020deco}{{65}{2020}{{Zhang et~al\mbox  {.}}}{{}}}
+\bibcite{zheng2023judging}{{66}{2023}{{Zheng et~al\mbox  {.}}}{{}}}
+\bibcite{zhou2023webarena}{{67}{2023}{{Zhou et~al\mbox  {.}}}{{}}}
+\newlabel{tocindent-1}{0pt}
+\newlabel{tocindent0}{0pt}
+\newlabel{tocindent1}{8.37pt}
+\newlabel{tocindent2}{10.35pt}
+\newlabel{tocindent3}{0pt}
+\newlabel{TotPages}{{16}{16}{}{page.16}{}}
+\gdef \@abspage@last{16}

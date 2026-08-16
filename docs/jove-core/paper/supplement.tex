@@ -1,0 +1,94 @@
+\documentclass[sigconf,anonymous,review]{acmart}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{listings}
+\usepackage{xcolor}
+\bibliographystyle{ACM-Reference-Format}
+\title{When May an Agent Claim Success?\\Supplementary Material}
+\author{Anonymous Authors}
+\begin{document}
+\maketitle
+
+\section{Canonical Contract}
+A Verification Contract serializes the tuple $K=\langle I,P,B,V,A,R\rangle$. The released JSON Schema requires immutable identifiers and versions, at least one typed proof obligation, task and policy binding, a three-valued decision space, an admissible-transition allowlist, and a receipt-schema version. Obligations and observations are separate objects: observations cannot introduce a new acceptance criterion after evidence submission.
+
+\begin{lstlisting}[basicstyle=\ttfamily\scriptsize,breaklines=true,frame=single]
+{
+ "contract_id": "k-demo", "version": 1,
+ "proof_obligations": [{
+   "obligation_id": "content", "required": true,
+   "evidence_type": "image",
+   "predicate": "contains required statement",
+   "failure_mode": "reject"
+ }],
+ "binding": {"task_id": "t-demo",
+   "policy_version": 1, "hash_algorithm": "sha256"},
+ "verifier": {"decision_space":
+   ["accept", "reject", "abstain"],
+   "threshold_version": "theta-1"},
+ "admissible_transitions": ["mark_complete"]
+}
+\end{lstlisting}
+
+\section{Three-Valued Authorization}
+Every authorization predicate evaluates to true, false, or unknown. Unknown never coerces to true. Required predicates all true imply accept; any known failed obligation implies reject; otherwise the decision is abstain. Positive transition eligibility additionally requires the action to appear in the contract allowlist and the verifier not to be in a declared degraded state.
+
+\begin{table}[h]
+\centering
+\caption{Decision semantics.}
+\begin{tabular}{lll}
+\toprule
+Required states & Decision & Positive transition \\
+\midrule
+all true & accept & allowlisted action only \\
+any false & reject & blocked \\
+otherwise/unknown & abstain & blocked \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Version and Amendment Protocol}
+The first evidence commitment freezes $K_v$. Any policy change creates $K_{v+1}$ with a semantic diff, initiator, reason, timestamp, and evidence-invalidation rule. Evidence bound to $K_v$ is inadmissible under $K_{v+1}$ unless both versions explicitly permit reuse. The original contract and receipt remain immutable.
+
+\section{Canonical Receipt}
+A receipt contains contract, task, policy, and receipt identifiers; evidence digests; per-obligation states and reason codes; provider and threshold versions; degradation state; final decision; transition action and eligibility; and appeal linkage. Machine completeness and human reconstruction are distinct metrics. Appeals append an adjudication event rather than rewriting history.
+
+\section{Controlled Defects}
+\begin{table*}[h]
+\centering
+\caption{Mutation families and expected safe behavior.}
+\begin{tabular}{llll}
+\toprule
+Family & Controlled defect & Target property & Expected behavior \\
+\midrule
+Policy & deadline/criterion changed after submission & ex-ante consistency & block or versioned amendment \\
+Binding & artifact replayed across task/version & evidence binding & reject or abstain \\
+Binding & stale artifact outside capture window & evidence binding & reject \\
+Decision & provider missing or mandatory modality unsupported & selective safety & abstain \\
+Decision & hard integrity conflict & selective safety & abstain \\
+Receipt & policy version or decisive observation absent & reconstructability & transition blocked \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\section{Metrics and Anti-Gaming Checks}
+Let $N$ be all cases, $A$ automated cases, $C$ accepted cases, and $N^-$ adjudicated-negative cases. We report total automation coverage $|A|/N$, acceptance coverage $|C|/N$, unsafe acceptance among accepted cases, unsafe acceptance per all cases, and unsafe acceptance per negative case. Reporting acceptance coverage prevents a system from appearing safe by satisfying total coverage mainly through rejection.
+
+Selective loss weights a false acceptance five times a correctable false rejection in the confirmatory analysis. Sensitivity at ratios 1:1, 2:1, and 10:1 is secondary. Risk--coverage curves and AURC are reported alongside the frozen 70\% operating point.
+
+\section{Statistical Protocol}
+The base case is the resampling unit. Ten thousand clustered bootstrap resamples preserve dependence among matched variants. The primary estimate is the paired K-Full minus J1 unsafe-positive-transition difference. Raw counts, risk difference, risk ratio, and 95\% intervals are mandatory. With too few independent clusters, a paired randomization analysis is reported as a robustness check. Secondary tests use Holm correction; model families are reported separately before pooling.
+
+\section{Human Studies}
+The review experiment compares raw task/evidence against a contract packet without the final verdict. Primary outcome is unsafe acceptance; secondary outcomes are accuracy, time, confidence, workload, agreement, and confidence calibration. The audit experiment compares a canonical receipt with an unstructured application log and asks participants to recover policy version, decisive obligation, evidence commitment, degradation path, and transition eligibility.
+
+\section{Privacy and Governance}
+Raw artifacts remain access-controlled. Public records contain commitments, versions, derived observations, and privacy-scoped references. Requested fields, submitted fields, PII-bearing fields, retained bytes, and decision-irrelevant fields are measured. Legal, medical, employment, credit, biometric, intimate, and covert-surveillance cases are excluded.
+
+\section{Reproducibility Gates}
+Submission requires a consented confirmatory manifest, sealed independent labels, immutable outputs, real-result metrics, provenance hashes, regenerated tables, privacy and mutation-leakage audits, synthetic isolation, and clean-environment reproduction. Synthetic dry runs validate code paths but cannot satisfy an empirical gate.
+
+\section{Claim Boundaries}
+The protocol does not prove external-world truth, universal media authenticity, authorship, policy legitimacy, unbiased human review, or global safety of long-horizon workflows. It establishes only protocol eligibility under declared predicates.
+
+\end{document}

@@ -1,0 +1,67 @@
+{
+  "version": "jove-core-study/v1",
+  "frozen": true,
+  "task_classes": [
+    "social_content",
+    "account_configuration",
+    "content_publication",
+    "form_document_submission",
+    "time_sensitive_digital_state",
+    "cross_evidence_consistency"
+  ],
+  "systems": [
+    "J0_posthoc_generic",
+    "J1_posthoc_policy_aware",
+    "J1_information_matched",
+    "J1_policy_abstain",
+    "J1_deterministic_tools",
+    "K_P_policy_only",
+    "K_B_bound_binary",
+    "K_S_selective_minimal_receipt",
+    "K_Full_verification_contract"
+  ],
+  "primary": {
+    "baseline": "J1_information_matched",
+    "treatment": "K_Full_verification_contract",
+    "metric": "unsafe_positive_transition_rate_at_matched_coverage",
+    "matched_coverage": 0.7,
+    "confidence_interval": "paired_cluster_bootstrap"
+  },
+  "loss": {
+    "false_accept": 5,
+    "false_reject": 1
+  },
+  "bootstrap": {
+    "resamples": 10000,
+    "cluster": "base_case_id",
+    "confidence": 0.95,
+    "seed": 20260808
+  },
+  "minimum_confirmatory": {
+    "planning_floor_base_cases": 30,
+    "final_base_cases": null,
+    "final_size_requires_pilot_power_analysis": true,
+    "raters": 3,
+    "model_families": 3,
+    "held_out_classes": 2
+  },
+  "decision_mapping": {
+    "pass": "accept",
+    "resubmit": "reject",
+    "manual_review": "abstain",
+    "error": "abstain"
+  },
+  "secondary_diagnostics": {
+    "abstaining_reference": "J1_policy_abstain",
+    "deterministic_tools_reference": "J1_deterministic_tools",
+    "curve_summary": "aurc",
+    "coverage_sensitivity": [
+      0.5,
+      0.6,
+      0.8,
+      0.9
+    ],
+    "mutation_source_holdout": true,
+    "report_per_model_family": true
+  }
+}

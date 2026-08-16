@@ -1,0 +1,92 @@
+{
+  "generated_at": "2026-08-09T01:52:03.397Z",
+  "checks": [
+    {
+      "name": "bibliography",
+      "ok": true,
+      "status": 0,
+      "stdout": "> ai2humanwork@0.1.0 research:jove:bibliography\n> node docs/jove-core/scripts/audit-bibliography.mjs\n\nBibliography audit passed: 28 entries, 22 cited.",
+      "stderr": ""
+    },
+    {
+      "name": "anonymity",
+      "ok": true,
+      "status": 0,
+      "stdout": "> ai2humanwork@0.1.0 research:jove:anonymity\n> node docs/jove-core/scripts/audit-anonymity.mjs\n\nAnonymity audit passed: 5 public submission files.",
+      "stderr": ""
+    },
+    {
+      "name": "contract_receipt",
+      "ok": true,
+      "status": 0,
+      "stdout": "> ai2humanwork@0.1.0 research:jove:receipt\n> node docs/jove-core/scripts/validate-contract-receipt.mjs\n\nContract/receipt validation passed: rct-demo",
+      "stderr": ""
+    },
+    {
+      "name": "reproduction_bundle",
+      "ok": true,
+      "status": 0,
+      "stdout": "> ai2humanwork@0.1.0 research:jove:reproduction-bundle\n> node docs/jove-core/scripts/build-reproduction-bundle.mjs\n\nBuilt reproduction bundle with 20 files: /Users/yanqing/Documents/OmniClaw/docs/jove-core/reproduction/verification-contracts-reproduction.tar.gz",
+      "stderr": ""
+    },
+    {
+      "name": "artifact",
+      "ok": true,
+      "status": 0,
+      "stdout": "> ai2humanwork@0.1.0 research:jove:audit\n> node docs/jove-core/scripts/audit-research-artifact.mjs\n\nResearch artifact audit passed.\nJOVE-Core pilot validation passed: 20 planned slots.\nPrivacy audit passed: no captured cases yet.\nPilot task prompts validated: 20 low-risk templates.\nPilot launch plan valid: 4 retrospective consent blocks, 16 prospective-ready slots.\nProspective task drafts valid: 16 draft-only, consent-gated, payout-disabled tasks.",
+      "stderr": ""
+    },
+    {
+      "name": "tests",
+      "ok": true,
+      "status": 0,
+      "stdout": "> ai2humanwork@0.1.0 research:jove:test\n> node --test docs/jove-core/scripts/*.test.mjs\n\nTAP version 13\n# Subtest: split checker rejects base-case leakage\nok 1 - split checker rejects base-case leakage\n  ---\n  duration_ms: 351.089208\n  type: 'test'\n  ...\n# Subtest: template paper assets are blocked by default\nok 2 - template paper assets are blocked by default\n  ---\n  duration_ms: 1115.790958\n  type: 'test'\n  ...\n# Subtest: submission gate blocks absent confirmatory results\nok 3 - submission gate blocks absent confirmatory results\n  ---\n  duration_ms: 655.786584\n  type: 'test'\n  ...\n# Subtest: generated LaTeX table contains a real line break before midrule\nok 4 - generated LaTeX table contains a real line break before midrule\n  ---\n  duration_ms: 4.134542\n  type: 'test'\n  ...\n# Subtest: pilot manifest and claim boundary pass artifact audit\nok 5 - pilot manifest and claim boundary pass artifact audit\n  ---\n  duration_ms: 2246.739542\n  type: 'test'\n  ...\n# Subtest: canonical verification contract schema is structurally frozen\nok 6 - canonical verification contract schema is structurally frozen\n  ---\n  duration_ms: 4.3695\n  type: 'test'\n  ...\n# Subtest: study freezes fair baseline and sensitivity diagnostics\nok 7 - study freezes fair baseline and sensitivity diagnostics\n  ---\n  duration_ms: 0.405708\n  type: 'test'\n  ...\n# Subtest: mutation leakage audit rejects exposed gold metadata\nok 8 - mutation leakage audit rejects exposed gold metadata\n  ---\n  duration_ms: 345.939\n  type: 'test'\n  ...\n# Subtest: valid contract and receipt satisfy transition semantics\nok 9 - valid contract and receipt satisfy transition semantics\n  ---\n  duration_ms: 609.209958\n  type: 'test'\n  ...\n# Subtest: receipt validator rejects acceptance under unknown evidence\nok 10 - receipt validator rejects acceptance under unknown evidence\n  ---\n  duration_ms: 732.726375\n  type: 'test'\n  ...\n# Subtest: scorer reports anti-gaming acceptance metrics and loss sensitivity\nok 11 - scorer reports anti-gaming acceptance metrics and loss sensitivity\n  ---\n  duration_ms: 381.998\n  type: 'test'\n  ...\n# Subtest: manifest updater rejects status jumps\nok 12 - manifest updater rejects status jumps\n  ---\n  duration_ms: 403.407917\n  type: 'test'\n  ...\n# Subtest: blinded packet audit rejects decision leakage\nok 13 - blinded packet audit rejects decision leakage\n  ---\n  duration_ms: 364.75525\n  type: 'test'\n  ...\n# Subtest: rating validator rejects duplicate rater and semantic conflict\nok 14 - rating validator rejects duplicate rater and semantic conflict\n  ---\n  duration_ms: 593.109833\n  type: 'test'\n  ...\n# Subtest: synthetic rehearsal remains isolated from formal paths\nok 15 - synthetic rehearsal remains isolated from formal paths\n  ---\n  duration_ms: 776.958125\n  type: 'test'\n  ...\n1..15\n# tests 15\n# suites 0\n# pass 15\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 9061.879584",
+      "stderr": ""
+    },
+    {
+      "name": "privacy",
+      "ok": true,
+      "status": 0,
+      "stdout": "> ai2humanwork@0.1.0 research:jove:privacy\n> node docs/jove-core/scripts/privacy-audit.mjs\n\nPrivacy audit passed: no captured cases yet.",
+      "stderr": ""
+    },
+    {
+      "name": "synthetic_isolation",
+      "ok": true,
+      "status": 0,
+      "stdout": "> ai2humanwork@0.1.0 research:jove:synthetic-audit\n> node docs/jove-core/scripts/audit-synthetic-isolation.mjs\n\nSynthetic isolation audit passed.",
+      "stderr": ""
+    },
+    {
+      "name": "latex_main",
+      "ok": true,
+      "status": 0,
+      "stderr": ""
+    },
+    {
+      "name": "latex_supplement",
+      "ok": true,
+      "status": 0,
+      "stderr": ""
+    },
+    {
+      "name": "analysis_freeze",
+      "ok": false,
+      "status": 1,
+      "stdout": "> ai2humanwork@0.1.0 research:jove:freeze-verify\n> node docs/jove-core/scripts/freeze-analysis.mjs --verify",
+      "stderr": "VERIFY FAILED: analysis-freeze.json does not exist. Run freeze-analysis first (before collecting data).",
+      "expected_to_fail_before_freeze": true
+    },
+    {
+      "name": "submission_gate",
+      "ok": false,
+      "status": 1,
+      "stdout": "> ai2humanwork@0.1.0 research:jove:submission-gate\n> node docs/jove-core/scripts/submission-gate.mjs",
+      "stderr": "SUBMISSION BLOCKED:\n- missing confirmatory/manifest.jsonl\n- missing confirmatory/labels.jsonl\n- missing experiments/outputs.jsonl\n- missing results/metrics.json\n- missing paper/generated/provenance.json\n- missing paper/submission.tex",
+      "expected_to_fail_before_real_results": true
+    }
+  ],
+  "all_non_submission_checks_pass": true,
+  "analysis_freeze_status": 1,
+  "submission_ready": false
+}

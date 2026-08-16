@@ -1,0 +1,24 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{draftwatermark}
+\SetWatermarkText{SYNTHETIC -- NOT A PAPER RESULT}
+\SetWatermarkScale{0.42}
+\SetWatermarkColor[gray]{0.88}
+\title{JOVE-Core Synthetic Pipeline Dry Run}
+\author{Engineering Validation Only}
+\date{August 2026}
+\begin{document}\maketitle
+\noindent\colorbox{red!15}{\parbox{0.96\linewidth}{\textbf{Warning:} This report contains generated labels and simulated system outputs. It includes no real evidence, participants, independent ratings, or empirical result.}}
+\section{Purpose}
+Validate grouped data generation, B0--V4 scoring, coverage/risk accounting, clustered bootstrap, figure generation, and manuscript assembly before live data collection.
+\section{Synthetic configuration}
+Thirty simulated base cases, eight variants per base case, six systems, and 1,440 generated outputs. Apparent effect sizes were intentionally encoded by the simulator and have no scientific meaning.
+\section{Pipeline output}
+\input{main-results.tex}
+\section{Primary bootstrap test}
+The dry run produced a synthetic FAR difference and confidence interval. This verifies code execution only; statistical significance is predetermined by the generator assumptions.
+\section{Next gate}
+Replace all synthetic inputs with consented live cases, independent ratings, frozen model outputs, and sealed confirmatory labels. The submission gate rejects this report's provenance.
+\end{document}

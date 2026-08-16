@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai2human.example/jove-core/case.schema.json",
+  "title": "JOVE-Core Case Record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["case_id", "study_phase", "task_class", "request", "consent", "policy", "evidence", "verification", "receipt", "research_status"],
+  "properties": {
+    "case_id": { "type": "string", "pattern": "^jove_core_[0-9]{4}$" },
+    "study_phase": { "enum": ["live_pilot", "development", "confirmatory"] },
+    "task_class": { "enum": ["social_content", "account_configuration", "content_publication", "form_document_submission", "time_sensitive_digital_state", "cross_evidence_consistency"] },
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["text", "created_at", "source"],
+      "properties": {
+        "text": { "type": "string", "minLength": 8 },
+        "created_at": { "type": "string", "format": "date-time" },
+        "source": { "enum": ["live_product", "research_interface"] },
+        "product_task_id": { "type": ["string", "null"] }
+      }
+    },
+    "consent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["research_use", "recorded_at", "retention_policy"],
+      "properties": {
+        "research_use": { "type": "boolean", "const": true },
+        "recorded_at": { "type": "string", "format": "date-time" },
+        "retention_policy": { "type": "string", "minLength": 8 }
+      }
+    },
+    "policy": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["version", "snapshot_sha256", "compiled_at", "requirements", "rules"],
+      "properties": {
+        "version": { "const": "custom-task-spec/v1" },
+        "snapshot_sha256": { "$ref": "#/$defs/sha256" },
+        "compiled_at": { "type": "string", "format": "date-time" },
+        "requirements": { "type": "array", "minItems": 1 },
+        "rules": { "type": "array", "minItems": 1 }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["version", "bundle_id", "integrity_hash", "artifact_count", "server_received_at", "private_source_retained"],
+      "properties": {
+        "version": { "const": "proof-bundle/v1" },
+        "bundle_id": { "type": "string", "minLength": 1 },
+        "integrity_hash": { "$ref": "#/$defs/sha256" },
+        "artifact_count": { "type": "integer", "minimum": 0 },
+        "server_received_at": { "type": "string", "format": "date-time" },
+        "private_source_retained": { "type": "boolean" },
+        "privacy_notes": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["system_decision", "confidence", "deterministic_checks", "forensic_observations", "model_reviews", "degraded", "escalated", "latency_ms", "model_cost_usd"],
+      "properties": {
+        "system_decision": { "enum": ["pass", "resubmit", "manual_review", "error"] },
+        "confidence": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "deterministic_checks": { "type": "array" },
+        "forensic_observations": { "type": "array" },
+        "model_reviews": { "type": "array" },
+        "degraded": { "type": "boolean" },
+        "escalated": { "type": "boolean" },
+        "latency_ms": { "type": "integer", "minimum": 0 },
+        "model_cost_usd": { "type": "number", "minimum": 0 },
+        "human_review_seconds": { "type": ["integer", "null"], "minimum": 0 }
+      }
+    },
+    "receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["receipt_id", "receipt_sha256", "reconstructable", "settlement"],
+      "properties": {
+        "receipt_id": { "type": "string", "minLength": 1 },
+        "receipt_sha256": { "$ref": "#/$defs/sha256" },
+        "reconstructable": { "type": "boolean" },
+        "settlement": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "tx_hash"],
+          "properties": {
+            "status": { "enum": ["not_applicable", "not_triggered", "settled", "refunded", "failed"] },
+            "tx_hash": { "type": ["string", "null"] }
+          }
+        }
+      }
+    },
+    "research_status": { "enum": ["planned", "consented", "captured", "rated", "adjudicated", "excluded"] },
+    "exclusion_reason": { "type": ["string", "null"] }
+  },
+  "$defs": { "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" } }
+}

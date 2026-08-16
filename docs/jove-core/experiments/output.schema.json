@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["case_id", "base_case_id", "system_id", "model_family", "decision", "confidence", "latency_ms", "cost_usd", "runtime_status", "run_at"],
+  "properties": {
+    "case_id": { "type": "string" },
+    "base_case_id": { "type": "string" },
+    "system_id": { "type": "string" },
+    "model_family": { "type": "string" },
+    "decision": { "enum": ["accept", "reject", "abstain"] },
+    "confidence": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+    "reason_codes": { "type": "array", "items": { "type": "string" } },
+    "latency_ms": { "type": "integer", "minimum": 0 },
+    "cost_usd": { "type": "number", "minimum": 0 },
+    "runtime_status": { "enum": ["ok", "timeout", "malformed", "provider_error", "unsupported"] },
+    "model_version": { "type": ["string", "null"] },
+    "prompt_sha256": { "type": ["string", "null"] },
+    "run_at": { "type": "string", "format": "date-time" }
+  }
+}

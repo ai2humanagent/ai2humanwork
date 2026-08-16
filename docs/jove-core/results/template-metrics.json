@@ -1,0 +1,52 @@
+{
+  "study_version": "jove-core-study/v1",
+  "generated_at": "2026-08-08T14:40:33.173Z",
+  "metrics": {
+    "B1_policy_judge": {
+      "cases": 2,
+      "automation_coverage": 1,
+      "false_accept_rate": 0.5,
+      "false_reject_rate": null,
+      "automated_accuracy": 0.5,
+      "selective_risk": 2.5,
+      "runtime_failure_rate": 0,
+      "mean_latency_ms": 1000,
+      "mean_cost_usd": 0.01,
+      "counts": {
+        "auto": 2,
+        "accepted": 2,
+        "rejected": 0,
+        "false_accepts": 1,
+        "false_rejects": 0,
+        "correct": 1,
+        "runtime_failures": 0
+      }
+    },
+    "V4_selective": {
+      "cases": 1,
+      "automation_coverage": 1,
+      "false_accept_rate": 0,
+      "false_reject_rate": null,
+      "automated_accuracy": 1,
+      "selective_risk": 0,
+      "runtime_failure_rate": 0,
+      "mean_latency_ms": 1400,
+      "mean_cost_usd": 0.02,
+      "counts": {
+        "auto": 1,
+        "accepted": 1,
+        "rejected": 0,
+        "false_accepts": 0,
+        "false_rejects": 0,
+        "correct": 1,
+        "runtime_failures": 0
+      }
+    }
+  },
+  "primary": {
+    "coverage_floor": 0.7,
+    "treatment_meets_coverage": true,
+    "far_difference": -0.5,
+    "supported_descriptively": true
+  }
+}

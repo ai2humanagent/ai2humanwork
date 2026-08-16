@@ -1,0 +1,11 @@
+{
+  "comparison": "V4_selective-B1_policy_judge",
+  "resamples_requested": 10000,
+  "resamples_analyzed": 10000,
+  "far_difference_median": -0.36687069481880796,
+  "ci95": [
+    -0.45836256414233456,
+    -0.2751450540167524
+  ],
+  "superiority_supported": true
+}

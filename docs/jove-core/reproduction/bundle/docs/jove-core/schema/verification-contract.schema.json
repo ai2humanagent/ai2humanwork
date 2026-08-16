@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai2human.example/schemas/verification-contract.schema.json",
+  "title": "Verification Contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_id", "version", "intent", "proof_obligations", "binding", "verifier", "admissible_transitions", "receipt_schema_version"],
+  "properties": {
+    "contract_id": {"type": "string", "minLength": 1},
+    "version": {"type": "integer", "minimum": 1},
+    "intent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["claim", "requester_id", "created_at", "constraints"],
+      "properties": {
+        "claim": {"type": "string", "minLength": 1},
+        "requester_id": {"type": "string", "minLength": 1},
+        "created_at": {"type": "string", "format": "date-time"},
+        "constraints": {"type": "array"}
+      }
+    },
+    "proof_obligations": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["obligation_id", "required", "evidence_type", "predicate", "failure_mode"],
+        "properties": {
+          "obligation_id": {"type": "string", "minLength": 1},
+          "required": {"type": "boolean"},
+          "evidence_type": {"enum": ["image", "document", "url", "structured"]},
+          "predicate": {"type": "string", "minLength": 1},
+          "failure_mode": {"enum": ["reject", "abstain"]}
+        }
+      }
+    },
+    "binding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["task_id", "policy_version", "required_context", "hash_algorithm"],
+      "properties": {
+        "task_id": {"type": "string", "minLength": 1},
+        "policy_version": {"type": "integer", "minimum": 1},
+        "required_context": {"type": "array", "items": {"type": "string"}},
+        "hash_algorithm": {"const": "sha256"}
+      }
+    },
+    "verifier": {
+      "type": "object", "additionalProperties": false,
+      "required": ["decision_space", "hard_conflicts", "degradation_policy", "threshold_version"],
+      "properties": {
+        "decision_space": {"const": ["accept", "reject", "abstain"]},
+        "hard_conflicts": {"type": "array", "items": {"type": "string"}},
+        "degradation_policy": {"type": "object"},
+        "threshold_version": {"type": "string", "minLength": 1}
+      }
+    },
+    "admissible_transitions": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+    "receipt_schema_version": {"type": "integer", "minimum": 1},
+    "evidence_governance": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "max_artifacts": {"type": "integer", "minimum": 1},
+        "max_retained_bytes": {"type": "integer", "minimum": 0},
+        "prohibited_fields": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "appeal_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "allowed": {"type": "boolean"},
+        "stays_transition": {"type": "boolean"},
+        "response_window_hours": {"type": "integer", "minimum": 1}
+      }
+    }
+  }
+}

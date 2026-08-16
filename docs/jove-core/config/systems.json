@@ -1,0 +1,8 @@
+{
+  "B0_generic_judge": { "policy": false, "deterministic": false, "forensics": false, "ensemble": false, "selective": false },
+  "B1_policy_judge": { "policy": true, "deterministic": false, "forensics": false, "ensemble": false, "selective": false },
+  "V1_structured": { "policy": true, "deterministic": true, "forensics": false, "ensemble": false, "selective": false },
+  "V2_forensic": { "policy": true, "deterministic": true, "forensics": true, "ensemble": false, "selective": false },
+  "V3_ensemble": { "policy": true, "deterministic": true, "forensics": true, "ensemble": true, "selective": false },
+  "V4_selective": { "policy": true, "deterministic": true, "forensics": true, "ensemble": true, "selective": true }
+}

@@ -1,0 +1,16 @@
+\begin{tikzpicture}[font=\scriptsize, node distance=4mm and 5mm,
+box/.style={draw,rounded corners=2pt,minimum height=8mm,minimum width=20mm,align=center,fill=blue!4},
+state/.style={draw,rounded corners=2pt,minimum height=8mm,minimum width=18mm,align=center,fill=orange!8},
+arr/.style={-{Latex[length=2mm]},thick}]
+\node[box] (intent) {Intent $I$\\constraints};
+\node[box,right=of intent] (policy) {Proof obligations $P$\\committed ex ante};
+\node[box,right=of policy] (evidence) {Evidence $e$\\binding $B$};
+\node[box,right=of evidence] (observe) {Observations $o$\\det./forensic/model};
+\node[box,right=of observe] (verify) {Selective verifier $V$\\accept/reject/abstain};
+\node[state,right=of verify] (guard) {Transition guard\\$A$};
+\node[state,right=of guard] (transition) {Consequential\\state change};
+\draw[arr] (intent)--(policy); \draw[arr] (policy)--(evidence); \draw[arr] (evidence)--(observe); \draw[arr] (observe)--(verify); \draw[arr] (verify)--(guard); \draw[arr] (guard)--(transition);
+\node[box,below=7mm of verify] (receipt) {Reconstructable receipt $R$\\policy, commitment, observations, state};
+\draw[arr] (policy.south) |- (receipt.west); \draw[arr] (evidence.south) |- (receipt.west); \draw[arr] (verify.south)--(receipt.north); \draw[arr] (receipt.east) -| (guard.south);
+\node[below=2mm of guard,align=center,text=red!65!black] {unknown $\Rightarrow$ abstain\\never implicit success};
+\end{tikzpicture}

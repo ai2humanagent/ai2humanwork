@@ -1,0 +1,15 @@
+\begin{tikzpicture}[font=\scriptsize,node distance=5mm and 6mm,
+box/.style={draw,rounded corners=2pt,minimum height=8mm,minimum width=20mm,align=center,fill=teal!5},
+gate/.style={draw,diamond,aspect=2,align=center,fill=orange!8},
+arr/.style={-{Latex[length=2mm]},thick}]
+\node[box] (capture) {Consented\\base cases};
+\node[box,right=of capture] (mutate) {Matched defects\\mutation log};
+\node[box,right=of mutate] (split) {Grouped split\\class/source holdout};
+\node[box,right=of split] (label) {Blinded independent\\ratings};
+\node[box,below=7mm of split] (freeze) {Freeze systems, prompts,\\models, thresholds};
+\node[box,right=of freeze] (run) {Immutable outputs\\failures retained};
+\node[box,right=of run] (score) {Clustered bootstrap\\risk--coverage};
+\node[gate,right=of score] (gate) {Submission\\gate};
+\draw[arr] (capture)--(mutate);\draw[arr] (mutate)--(split);\draw[arr] (split)--(label);
+\draw[arr] (split)--(freeze);\draw[arr] (freeze)--(run);\draw[arr] (run)--(score);\draw[arr] (label)|-(score);\draw[arr] (score)--(gate);
+\end{tikzpicture}

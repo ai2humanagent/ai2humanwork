@@ -1,0 +1,139 @@
+\documentclass[11pt,a4paper]{ctexart}
+\usepackage[margin=2.2cm]{geometry}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{hyperref}
+
+\definecolor{accent}{RGB}{20,90,160}
+\definecolor{ok}{RGB}{30,140,70}
+\definecolor{warn}{RGB}{190,110,20}
+\definecolor{gray}{RGB}{120,120,120}
+
+\hypersetup{colorlinks=true,linkcolor=accent,urlcolor=accent}
+
+\setCJKmainfont{Songti SC}
+\setCJKsansfont{Heiti SC}
+
+\titleformat{\section}{\Large\bfseries\color{accent}}{\thesection}{0.6em}{}
+\titleformat{\subsection}{\large\bfseries}{\thesubsection}{0.6em}{}
+
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\small\color{gray} JOVE-Core 交付说明}
+\rhead{\small\color{gray}\thepage}
+\renewcommand{\headrulewidth}{0.3pt}
+
+\setlist[itemize]{leftmargin=1.4em,itemsep=2pt,topsep=2pt}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{4pt}
+
+\newcommand{\ok}{\textcolor{ok}{\textbf{已完成}}}
+\newcommand{\pending}{\textcolor{warn}{\textbf{待线下执行}}}
+
+\begin{document}
+
+\begin{center}
+{\Huge\bfseries\color{accent} JOVE-Core 研究工件}\\[6pt]
+{\LARGE\bfseries 交付说明（中文版）}\\[10pt]
+{\large\color{gray} 项目路径：\texttt{docs/jove-core/}}\\[2pt]
+{\normalsize\color{gray} 生成日期：2026 年 8 月 9 日}
+\end{center}
+
+\vspace{6pt}
+\hrule
+\vspace{10pt}
+
+\section*{\color{accent}一句话状态}
+\textbf{所有“数据无关”的方法、工程与合规文档已 100\% 就绪并冻结待命；} 唯一剩余的主线是 G1$\rightarrow$G4 的真人 confirmatory 数据采集链，只能由你线下执行。数据一旦到位，G4/G5 基本是“按按钮”。
+
+\vspace{4pt}
+\hrule
+\vspace{6pt}
+
+\section{本轮新交付（此前为 0，现已 100\% 完成，均数据无关）}
+
+\begin{longtable}{@{}p{0.5cm}p{4.2cm}p{8.2cm}p{1.4cm}@{}}
+\toprule
+\textbf{\#} & \textbf{文件} & \textbf{用途} & \textbf{状态}\\
+\midrule
+\endhead
+1 & \texttt{REMAINING\_ACTIONS.md} & 总执行路线图：G1$\rightarrow$G5 全部门禁串成可勾选清单，标明谁做 / 是否阻塞投稿 / 红线规则 & \ok\\
+\addlinespace
+2 & \texttt{datasheet-for-datasets.md} & Gebru 7 段式完整 datasheet（动机 / 构成 / 采集 / 预处理 / 用途 / 分发 / 维护），E\&D 硬性交付物 & \ok\\
+\addlinespace
+3 & \texttt{author-statement.md} & 作者责任声明 + 许可（MIT / CC BY 4.0）+ 托管 / DOI + 维护计划 + 利益冲突 & \ok\\
+\addlinespace
+4 & \texttt{neurips-checklist.md} & NeurIPS 16 项 checklist，逐条诚实填至当前预注册状态，涉及结果的标 \texttt{(planned)} & \ok\\
+\addlinespace
+5 & \texttt{broader-impact.md} & 正负影响 + 误用缓解 + 公平性 + 净评估，交叉链接治理文档 & \ok\\
+\bottomrule
+\end{longtable}
+
+\section{此前已有的核心工件（研究工程基座）}
+
+\begin{longtable}{@{}p{4.6cm}p{10.6cm}@{}}
+\toprule
+\textbf{文件} & \textbf{用途}\\
+\midrule
+\endhead
+\texttt{README.md} & 项目总入口与执行说明\\
+\texttt{preregistration.md} & 预注册（主张 / 端点 / 7 个证伪条件的权威源，118 行）\\
+\texttt{venue-strategy.md} & 双投稿策略（TMLR 主 + NeurIPS E\&D 副），§3 勾选状态已更新\\
+\texttt{ethics-and-governance.md} & 知情同意 / IRB / 隐私操作\\
+\texttt{human-study-plan.md} & 盲评员协议与功效计算\\
+\texttt{dataset-card.md} & datasheet 的短版摘要\\
+\texttt{FREEZE\_RUNBOOK.md} & 冻结操作手册\\
+\texttt{reproducibility.md} & 复现说明\\
+\texttt{rating-rubric.md} & 评分量表\\
+\texttt{mock-review-form.md} & 模拟评审表\\
+\texttt{scripts/}（39 个 .mjs） & 冻结、功效分析、盲评打包、泄漏审计、投稿门禁全链路（测试 15/15 通过）\\
+\texttt{paper/} & 手稿 tex + 编译产物\\
+\texttt{pilot/ synthetic/ reproduction/ confirmatory/} & pilot 基建 / 合成 dry-run / 复现包 / confirmatory 模板\\
+\bottomrule
+\end{longtable}
+
+\section{交付验收状态}
+\begin{itemize}
+\item \textbf{门禁全绿}：\texttt{audit-research-artifact} 通过、测试 \textbf{15/15}。
+\item \texttt{venue-strategy.md §3} 四项 E\&D 交付物已从 \texttt{[ ]} 勾成 \texttt{[x]}；剩余两项（public artifact / limitations 终稿）标注依赖 G4 数据。
+\item \textbf{下一门禁}始终是 \texttt{capture\_consented\_live\_cases}——即真人知情同意 + 3 名盲评员的 confirmatory 数据采集。
+\end{itemize}
+
+\section{可投稿前“必须你线下做”的剩余动作（红线，我不代劳）}
+
+\begin{longtable}{@{}p{2.6cm}p{3.2cm}p{9cm}@{}}
+\toprule
+\textbf{门禁} & \textbf{本质} & \textbf{说明}\\
+\midrule
+\endhead
+\textbf{G1 分析冻结} & 人为决策（非数据） & 预注册承诺：需干净 git 树 + 你亲自提交打时间戳，防止“先看数据再定分析”，学术诚信红线。\pending\\
+\addlinespace
+\textbf{G2 pilot} & 数据 + 校准 & 20--30 例真人知情同意采集 + 2 名盲评员校准（$\alpha \geq 0.67$）。\pending\\
+\addlinespace
+\textbf{G3 全量采集} & 数据 & 200 base / $\geq$600 bundle / 3 名盲评员。\pending\\
+\addlinespace
+\textbf{G4 出结果} & 半自动 & 数据到位后一键跑冻结脚本产出 §8（脚本已备好，你只需触发）。\pending\\
+\addlinespace
+\textbf{G5a / G5b 打包投稿} & 半自动 & TMLR 包 + E\&D 会议版打包（数据齐了就能跑）。\pending\\
+\bottomrule
+\end{longtable}
+
+\section{结论}
+更准确的说法：\textbf{剩下的 = G1 那一次人为冻结提交 + G2/G3 的真人数据采集（含盲评员）。} 其中：
+\begin{itemize}
+\item G1 不是数据，是你必须亲手做的冻结动作，排在最前，是所有后续的前置闸门。
+\item G4/G5 不靠人肉——脚本链路已就绪（测试 15/15 通过），数据一到就是“触发”而非“开发”。
+\item 真正的瓶颈成本集中在 G2+G3：招募真人 + 知情同意 + 盲评员，属人力 / 伦理流程，无法代劳。
+\end{itemize}
+
+\vspace{10pt}
+\hrule
+\vspace{4pt}
+{\small\color{gray} 本文档由交付索引自动生成，详情以 \texttt{docs/jove-core/} 下各源文件为准。}
+
+\end{document}

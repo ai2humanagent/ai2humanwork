@@ -1,0 +1,45 @@
+{
+  "J0_posthoc_generic": {
+    "ex_ante_policy": false,
+    "evidence_binding": false,
+    "selective_decision": false,
+    "reconstructable_receipt": false
+  },
+  "J1_posthoc_policy_aware": {
+    "ex_ante_policy": false,
+    "evidence_binding": false,
+    "selective_decision": false,
+    "reconstructable_receipt": false
+  },
+  "J1_information_matched": {
+    "ex_ante_policy": false,
+    "evidence_binding": false,
+    "selective_decision": false,
+    "reconstructable_receipt": false,
+    "information_matched": true
+  },
+  "K_P_policy_only": {
+    "ex_ante_policy": true,
+    "evidence_binding": false,
+    "selective_decision": false,
+    "reconstructable_receipt": false
+  },
+  "K_B_bound_binary": {
+    "ex_ante_policy": true,
+    "evidence_binding": true,
+    "selective_decision": false,
+    "reconstructable_receipt": false
+  },
+  "K_S_selective_minimal_receipt": {
+    "ex_ante_policy": true,
+    "evidence_binding": true,
+    "selective_decision": true,
+    "reconstructable_receipt": false
+  },
+  "K_Full_verification_contract": {
+    "ex_ante_policy": true,
+    "evidence_binding": true,
+    "selective_decision": true,
+    "reconstructable_receipt": true
+  }
+}
