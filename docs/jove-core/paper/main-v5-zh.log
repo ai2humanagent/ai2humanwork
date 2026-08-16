@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999994 (TeX Live 2022) (preloaded format=xelatex 2022.7.17)  9 AUG 2026 16:43
+This is XeTeX, Version 3.141592653-2.6-0.999994 (TeX Live 2022) (preloaded format=xelatex 2022.7.17)  16 AUG 2026 18:55
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1039,32 +1039,32 @@ Package fontspec Info: Font family 'STFangsong(0)' created for font
 (fontspec)             - 'small caps'  (m/sc) with NFSS spec.: 
 
 [11] [12] [13] [14] [15] [16] [17] [18] [19] (./main-v5-zh.bbl
-Underfull \hbox (badness 1024) in paragraph at lines 16--20
+Underfull \hbox (badness 1024) in paragraph at lines 24--28
 []\TU/lmr/m/n/10.95 Anthropic.  Model context protocol.  Protocol specification
 , 2024.  URL [][]$[][][][][] [] [] []
  []
 
 [20] [21]
-Underfull \hbox (badness 2012) in paragraph at lines 210--215
+Underfull \hbox (badness 2012) in paragraph at lines 218--223
 []\TU/lmr/m/n/10.95 Intel Corporation.  Intel trust domain extensions (intel td
 x).  White paper, In-
  []
 
 
-Underfull \hbox (badness 2961) in paragraph at lines 210--215
+Underfull \hbox (badness 2961) in paragraph at lines 218--223
 \TU/lmr/m/n/10.95 tel, 2021.  URL [][]$[][][][][] [] [] [] [][][] [] [][][][][]
  [] [][][] [] [][][][][][][] [] [][][] [] [][] [] [][] [] [][][][][][][][][] []
  [][][][][][][][] []
  []
 
-
-Underfull \hbox (badness 6141) in paragraph at lines 265--272
+[22]
+Underfull \hbox (badness 6141) in paragraph at lines 273--280
 \TU/lmr/m/n/10.95 URL [][]$[][][][][] [] [] [] [][][][][][] [] [][][] [] [][][]
  [] [][][][][][][][][][] [] [][][][][][][][][][][][][][][][][][][][][][][][][][
 ][][][][][][][][][][][][][][] []
  []
 
-[22] [23] [24]) [25] (./main-v5-zh.aux)
+[23] [24] [25]) [26] (./main-v5-zh.aux)
 
 LaTeX Font Warning: Some font shapes were not available, defaults substituted.
 
@@ -1072,12 +1072,12 @@ Package rerunfilecheck Info: File `main-v5-zh.out' has not changed.
 (rerunfilecheck)             Checksum: 2BD26CDDD6B85A42623023CEE33E03EB;2990.
  ) 
 Here is how much of TeX's memory you used:
- 28659 strings out of 476179
- 652538 string characters out of 5809544
- 942033 words of memory out of 5000000
- 48889 multiletter control sequences out of 15000+600000
+ 28662 strings out of 476179
+ 652619 string characters out of 5809544
+ 942095 words of memory out of 5000000
+ 48892 multiletter control sequences out of 15000+600000
  482746 words of font info for 129 fonts, out of 8000000 for 9000
  1348 hyphenation exceptions out of 8191
- 100i,14n,104p,1295b,864s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 100i,14n,104p,1530b,864s stack positions out of 10000i,1000n,20000p,200000b,200000s
 
-Output written on main-v5-zh.pdf (25 pages).
+Output written on main-v5-zh.pdf (26 pages).

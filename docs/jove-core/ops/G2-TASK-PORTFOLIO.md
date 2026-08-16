@@ -1,6 +1,6 @@
-# G2 Pilot 任务组合设计（20 槽全矩阵）
+# G2 Pilot 任务组合设计（30 槽全矩阵）
 
-设计原则：与预注册 `config/study.json` + `preregistration.md` 对齐；全部低风险、可逆、无 PII、payout-disabled；证据为结构化 proof bundle；consent 由产品勾选框（`jove-core-consent-v1`）或 retrospective 补签记录。
+设计原则：与预注册 `config/study.json` + `preregistration.md` 对齐；pilot 规模 20–30 例（本设计取 30，每类 5 例）；全部低风险、可逆、无 PII、payout-disabled；证据为结构化 proof bundle；consent 由产品勾选框（`jove-core-consent-v1`）或 retrospective 补签记录。
 
 ## 1. 六类任务定义与通用验证规则
 
@@ -13,7 +13,7 @@
 | time_sensitive_digital_state | 在指定时间点记录/核验一个公开数字状态 | screenshot + timestamp + url | 时间戳新鲜（freshnessMinutes）；目标一致 |
 | cross_evidence_consistency | 从 ≥2 个独立公开来源收集证据并交叉核对 | url(s) + screenshot + notes | 两源可访问；结论有依据；冲突如实报告 |
 
-## 2. 20 槽完整矩阵
+## 2. 30 槽完整矩阵
 
 | case_id | 类 | 具体任务 brief | 证据 | 关键验证 |
 |---|---|---|---|---|
@@ -34,6 +34,27 @@
 | 0018 | cross_evidence_consistency | 对照两个独立来源的同一公开声明 | urls + notes | 两源可访问；结论有据 |
 | 0019 | cross_evidence_consistency | 核对 repo README 与真实文件结构 | repoUrl + notes | 结构核对有据 |
 | 0020 | cross_evidence_consistency | 核对主页声明与链接内容的一致性 | urls + notes | 关联关系成立 |
+| 0021 | social_content | 用测试账号发布一条公开状态更新 | postUrl + screenshot | 内容可见且匹配 brief |
+| 0022 | account_configuration | 创建公开测试项目并添加描述 | projectUrl + screenshot | 描述字段可见 |
+| 0023 | account_configuration | 打开测试账号的公开可见性开关 | profileUrl + screenshot | 开关状态公开可验证 |
+| 0024 | content_publication | 在公开项目发布一条 changelog 条目 | repoUrl + screenshot | 条目存在且内容匹配 |
+| 0025 | form_document_submission | 在测试仓库提交公开 feature request | issueUrl + screenshot | 工单存在且含模板字段 |
+| 0026 | form_document_submission | 完成公开投票（安全答案） | confirmUrl + screenshot | 完成记录存在 |
+| 0027 | time_sensitive_digital_state | 指定时刻记录公开粉丝数 | screenshot + timestamp | 时间戳新鲜 |
+| 0028 | time_sensitive_digital_state | 指定时刻核验公开 badge 状态 | screenshot + timestamp | 状态与时刻一致 |
+| 0029 | cross_evidence_consistency | 对比两个公开追踪站的 repo stars | urls + notes | 差异如实报告 |
+| 0030 | cross_evidence_consistency | 核验活动页日期与公告帖一致 | urls + notes | 日期核对有据 |
+
+## 2b. 每类任务菜单（用户自由创建时可参考，不限于矩阵）
+
+| 类 | 更多具体任务变体 |
+|---|---|
+| social_content | 回复公开提问、引用文章发评论、发产品反馈帖、发每日状态、参与公开话题接龙、发投票 |
+| account_configuration | 建测试仓库、改 bio、加 topic/label、开公开开关、设资料链接、创建测试组织/项目、改昵称 |
+| content_publication | 发短文、发 gist、发 changelog、发 wiki 页、发论坛公告、发 README 更新、发数据集条目、发更新日志 |
+| form_document_submission | 反馈表单、问卷、feature request、issue 工单、公开投票、登记表、测试申请单 |
+| time_sensitive_digital_state | 记录粉丝数、commit 数、star 数、release 版本、页面可用性、活动状态、badge 状态、价格/计数 |
+| cross_evidence_consistency | 双源声明核对、README 与文件结构、主页与内容关联、日期一致性、两站指标差异、账号一致性 |
 
 ## 3. 每类 G3 mutation 钩子（confirmatory 用，pilot 不做）
 
@@ -56,6 +77,6 @@
 
 ## 5. 与现有工具链对接
 
-- manifest：`pilot/manifest.csv`（20 槽，4/3/4/3/3/3）
-- launch plan：`pilot/launch-plan.csv`（4 retrospective blocked，16 prospective ready，已填具体任务）
+- manifest：`pilot/manifest.csv`（30 槽，5/5/5/5/5/5）
+- launch plan：`pilot/launch-plan.csv`（4 retrospective blocked，26 prospective ready，已填具体任务）
 - 校验：`npm run research:jove:launch-plan` + `npm run research:jove:validate` + `npm run research:jove:audit`

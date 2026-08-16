@@ -19,3 +19,13 @@ jove_core_0017,prospective_live,record live status of public event page at speci
 jove_core_0018,prospective_live,compare public announcement across two independent sources,required,ready
 jove_core_0019,prospective_live,verify README matches repo file structure,required,ready
 jove_core_0020,prospective_live,verify profile affiliation matches linked content,required,ready
+jove_core_0021,prospective_live,publish a public status update on a test account,required,ready
+jove_core_0022,prospective_live,create a public test project and add a description,required,ready
+jove_core_0023,prospective_live,enable a public visibility flag on a test account,required,ready
+jove_core_0024,prospective_live,publish a changelog entry on a public project,required,ready
+jove_core_0025,prospective_live,submit a public feature request on a test repo,required,ready
+jove_core_0026,prospective_live,complete a public poll with safe answers,required,ready
+jove_core_0027,prospective_live,record public follower count at specified time,required,ready
+jove_core_0028,prospective_live,verify public badge status at specified time,required,ready
+jove_core_0029,prospective_live,compare repo stars across two public trackers,required,ready
+jove_core_0030,prospective_live,verify event page date matches announcement post,required,ready

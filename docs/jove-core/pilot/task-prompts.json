@@ -1,22 +1,152 @@
 [
-  {"case_id":"jove_core_0001","task_class":"social_content","prompt":"Complete a consented social-platform action specified by the requester and submit only the minimum evidence required by the compiled policy."},
-  {"case_id":"jove_core_0002","task_class":"social_content","prompt":"Complete a second consented social action on a different target and provide task-bound evidence."},
-  {"case_id":"jove_core_0003","task_class":"social_content","prompt":"Complete a social interaction with a time requirement and submit evidence showing both target and completion state."},
-  {"case_id":"jove_core_0004","task_class":"social_content","prompt":"Complete a social action requiring two policy checks and provide minimally sufficient evidence."},
-  {"case_id":"jove_core_0005","task_class":"account_configuration","prompt":"Change a harmless account preference in a research or participant-owned account and submit privacy-scoped evidence."},
-  {"case_id":"jove_core_0006","task_class":"account_configuration","prompt":"Enable or disable a non-sensitive account setting and show the resulting state without exposing unrelated account data."},
-  {"case_id":"jove_core_0007","task_class":"account_configuration","prompt":"Complete a reversible profile configuration and submit only policy-relevant evidence."},
-  {"case_id":"jove_core_0008","task_class":"content_publication","prompt":"Publish a consented test post containing required non-sensitive content and submit evidence of publication."},
-  {"case_id":"jove_core_0009","task_class":"content_publication","prompt":"Publish a second test item with a required phrase or tag and provide task-bound evidence."},
-  {"case_id":"jove_core_0010","task_class":"content_publication","prompt":"Publish content with a time-window requirement and provide evidence sufficient to check freshness."},
-  {"case_id":"jove_core_0011","task_class":"content_publication","prompt":"Publish a multi-field test item and submit evidence supporting every required field."},
-  {"case_id":"jove_core_0012","task_class":"form_document_submission","prompt":"Submit a harmless research form and provide evidence that confirms submission without revealing form answers."},
-  {"case_id":"jove_core_0013","task_class":"form_document_submission","prompt":"Upload a non-sensitive test document to a participant-controlled destination and provide minimal completion evidence."},
-  {"case_id":"jove_core_0014","task_class":"form_document_submission","prompt":"Complete a test submission with two required fields and provide evidence scoped to completion status."},
-  {"case_id":"jove_core_0015","task_class":"time_sensitive_digital_state","prompt":"Capture a current, non-sensitive digital state whose validity depends on a defined time window."},
-  {"case_id":"jove_core_0016","task_class":"time_sensitive_digital_state","prompt":"Confirm a temporary status in a participant-owned service and provide freshness-relevant evidence."},
-  {"case_id":"jove_core_0017","task_class":"time_sensitive_digital_state","prompt":"Complete a reversible action before a stated deadline and provide time-bound evidence."},
-  {"case_id":"jove_core_0018","task_class":"cross_evidence_consistency","prompt":"Complete a digital action requiring two evidence items that must refer to the same target and outcome."},
-  {"case_id":"jove_core_0019","task_class":"cross_evidence_consistency","prompt":"Provide a link and an image for one completed digital outcome so their task binding can be compared."},
-  {"case_id":"jove_core_0020","task_class":"cross_evidence_consistency","prompt":"Complete a multi-step digital task and provide evidence whose sequence and final state are mutually consistent."}
+  {
+    "case_id": "jove_core_0001",
+    "task_class": "social_content",
+    "prompt": "Complete a consented social-platform action specified by the requester and submit only the minimum evidence required by the compiled policy."
+  },
+  {
+    "case_id": "jove_core_0002",
+    "task_class": "social_content",
+    "prompt": "Complete a second consented social action on a different target and provide task-bound evidence."
+  },
+  {
+    "case_id": "jove_core_0003",
+    "task_class": "social_content",
+    "prompt": "Complete a social interaction with a time requirement and submit evidence showing both target and completion state."
+  },
+  {
+    "case_id": "jove_core_0004",
+    "task_class": "social_content",
+    "prompt": "Complete a social action requiring two policy checks and provide minimally sufficient evidence."
+  },
+  {
+    "case_id": "jove_core_0005",
+    "task_class": "account_configuration",
+    "prompt": "Change a harmless account preference in a research or participant-owned account and submit privacy-scoped evidence."
+  },
+  {
+    "case_id": "jove_core_0006",
+    "task_class": "account_configuration",
+    "prompt": "Enable or disable a non-sensitive account setting and show the resulting state without exposing unrelated account data."
+  },
+  {
+    "case_id": "jove_core_0007",
+    "task_class": "account_configuration",
+    "prompt": "Complete a reversible profile configuration and submit only policy-relevant evidence."
+  },
+  {
+    "case_id": "jove_core_0008",
+    "task_class": "content_publication",
+    "prompt": "Publish a consented test post containing required non-sensitive content and submit evidence of publication."
+  },
+  {
+    "case_id": "jove_core_0009",
+    "task_class": "content_publication",
+    "prompt": "Publish a second test item with a required phrase or tag and provide task-bound evidence."
+  },
+  {
+    "case_id": "jove_core_0010",
+    "task_class": "content_publication",
+    "prompt": "Publish content with a time-window requirement and provide evidence sufficient to check freshness."
+  },
+  {
+    "case_id": "jove_core_0011",
+    "task_class": "content_publication",
+    "prompt": "Publish a multi-field test item and submit evidence supporting every required field."
+  },
+  {
+    "case_id": "jove_core_0012",
+    "task_class": "form_document_submission",
+    "prompt": "Submit a harmless research form and provide evidence that confirms submission without revealing form answers."
+  },
+  {
+    "case_id": "jove_core_0013",
+    "task_class": "form_document_submission",
+    "prompt": "Upload a non-sensitive test document to a participant-controlled destination and provide minimal completion evidence."
+  },
+  {
+    "case_id": "jove_core_0014",
+    "task_class": "form_document_submission",
+    "prompt": "Complete a test submission with two required fields and provide evidence scoped to completion status."
+  },
+  {
+    "case_id": "jove_core_0015",
+    "task_class": "time_sensitive_digital_state",
+    "prompt": "Capture a current, non-sensitive digital state whose validity depends on a defined time window."
+  },
+  {
+    "case_id": "jove_core_0016",
+    "task_class": "time_sensitive_digital_state",
+    "prompt": "Confirm a temporary status in a participant-owned service and provide freshness-relevant evidence."
+  },
+  {
+    "case_id": "jove_core_0017",
+    "task_class": "time_sensitive_digital_state",
+    "prompt": "Complete a reversible action before a stated deadline and provide time-bound evidence."
+  },
+  {
+    "case_id": "jove_core_0018",
+    "task_class": "cross_evidence_consistency",
+    "prompt": "Complete a digital action requiring two evidence items that must refer to the same target and outcome."
+  },
+  {
+    "case_id": "jove_core_0019",
+    "task_class": "cross_evidence_consistency",
+    "prompt": "Provide a link and an image for one completed digital outcome so their task binding can be compared."
+  },
+  {
+    "case_id": "jove_core_0020",
+    "task_class": "cross_evidence_consistency",
+    "prompt": "Complete a multi-step digital task and provide evidence whose sequence and final state are mutually consistent."
+  },
+  {
+    "case_id": "jove_core_0021",
+    "task_class": "social_content",
+    "prompt": "Complete a low-risk social-platform status update on a test account and submit the public link plus a screenshot."
+  },
+  {
+    "case_id": "jove_core_0022",
+    "task_class": "account_configuration",
+    "prompt": "Create a public test project, add a public description, and submit the project URL plus a screenshot."
+  },
+  {
+    "case_id": "jove_core_0023",
+    "task_class": "account_configuration",
+    "prompt": "Enable a public visibility flag on a test account and submit the profile URL plus a screenshot."
+  },
+  {
+    "case_id": "jove_core_0024",
+    "task_class": "content_publication",
+    "prompt": "Publish a changelog entry on a public project and submit the project URL plus a screenshot."
+  },
+  {
+    "case_id": "jove_core_0025",
+    "task_class": "form_document_submission",
+    "prompt": "Submit a public feature request on a test repository and submit the issue URL plus a screenshot."
+  },
+  {
+    "case_id": "jove_core_0026",
+    "task_class": "form_document_submission",
+    "prompt": "Complete a public poll with safe answers and submit the confirmation URL plus a screenshot."
+  },
+  {
+    "case_id": "jove_core_0027",
+    "task_class": "time_sensitive_digital_state",
+    "prompt": "Record the public follower count of a specified account at a specified time and submit a timestamped screenshot."
+  },
+  {
+    "case_id": "jove_core_0028",
+    "task_class": "time_sensitive_digital_state",
+    "prompt": "Verify the public badge status of a specified account at a specified time and submit a timestamped screenshot."
+  },
+  {
+    "case_id": "jove_core_0029",
+    "task_class": "cross_evidence_consistency",
+    "prompt": "Compare public star counts across two public trackers and report differences with both URLs."
+  },
+  {
+    "case_id": "jove_core_0030",
+    "task_class": "cross_evidence_consistency",
+    "prompt": "Verify that an event page date matches its announcement post and report the check with both URLs."
+  }
 ]

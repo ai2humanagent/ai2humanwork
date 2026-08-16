@@ -23,7 +23,7 @@ function assert(condition, message, errors) {
 
 const errors = [];
 const manifest = parseCsv(fs.readFileSync(manifestPath, "utf8"));
-assert(manifest.length === 20, `manifest must contain 20 cases; found ${manifest.length}`, errors);
+assert(manifest.length === 30, `manifest must contain 30 cases; found ${manifest.length}`, errors);
 assert(new Set(manifest.map((row) => row.case_id)).size === manifest.length, "manifest case IDs must be unique", errors);
 
 for (const row of manifest) {
@@ -36,7 +36,7 @@ for (const row of manifest) {
   }
 }
 
-const expectedCounts = { social_content: 4, account_configuration: 3, content_publication: 4, form_document_submission: 3, time_sensitive_digital_state: 3, cross_evidence_consistency: 3 };
+const expectedCounts = { social_content: 5, account_configuration: 5, content_publication: 5, form_document_submission: 5, time_sensitive_digital_state: 5, cross_evidence_consistency: 5 };
 for (const [taskClass, expected] of Object.entries(expectedCounts)) {
   const actual = manifest.filter((row) => row.task_class === taskClass).length;
   assert(actual === expected, `${taskClass}: expected ${expected} slots; found ${actual}`, errors);

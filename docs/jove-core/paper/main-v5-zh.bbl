@@ -1,9 +1,17 @@
-\begin{thebibliography}{67}
+\begin{thebibliography}{68}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
   \providecommand{\doi}[1]{doi: #1}\else
   \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Aguzzi et~al.(2025)Aguzzi, De~Caro, and {others}]{ethereum2025erc8004}
+Marco Aguzzi, Davide De~Caro, and {others}.
+\newblock {ERC-8004}: Trustless agents.
+\newblock Ethereum Improvement Proposals, ERC-8004 (Draft), 2025.
+\newblock URL \url{https://eips.ethereum.org/EIPS/eip-8004}.
+\newblock Identity, reputation, and validation registries for autonomous
+  agents.
 
 \bibitem[Angelopoulos and Bates(2023)]{angelopoulos2023conformal}
 Anastasios~N. Angelopoulos and Stephen Bates.

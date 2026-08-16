@@ -430,5 +430,275 @@
       "reversible_where_possible": true
     },
     "publish_state": "draft_only"
+  },
+  {
+    "research_case_id": "jove_core_0021",
+    "title": "JOVE-Core consented pilot: social content",
+    "brief": "Complete a low-risk social-platform status update on a test account and submit the public link plus a screenshot.",
+    "budget": "0",
+    "deadline_hours": 72,
+    "campaign": {
+      "platform": "research",
+      "action": "judgment_based_digital_evidence",
+      "environment": "test",
+      "payoutDisabled": true,
+      "reviewPolicy": "publisher_approval",
+      "fundingMode": "test_no_payout",
+      "isTest": true,
+      "originalRequest": {
+        "study": "JOVE-Core live pilot",
+        "case_id": "jove_core_0021",
+        "consent_required": true
+      }
+    },
+    "safety": {
+      "participant_owned_or_test_account_only": true,
+      "no_sensitive_data": true,
+      "reversible_where_possible": true
+    },
+    "publish_state": "draft_only"
+  },
+  {
+    "research_case_id": "jove_core_0022",
+    "title": "JOVE-Core consented pilot: account configuration",
+    "brief": "Create a public test project, add a public description, and submit the project URL plus a screenshot.",
+    "budget": "0",
+    "deadline_hours": 72,
+    "campaign": {
+      "platform": "research",
+      "action": "judgment_based_digital_evidence",
+      "environment": "test",
+      "payoutDisabled": true,
+      "reviewPolicy": "publisher_approval",
+      "fundingMode": "test_no_payout",
+      "isTest": true,
+      "originalRequest": {
+        "study": "JOVE-Core live pilot",
+        "case_id": "jove_core_0022",
+        "consent_required": true
+      }
+    },
+    "safety": {
+      "participant_owned_or_test_account_only": true,
+      "no_sensitive_data": true,
+      "reversible_where_possible": true
+    },
+    "publish_state": "draft_only"
+  },
+  {
+    "research_case_id": "jove_core_0023",
+    "title": "JOVE-Core consented pilot: account configuration",
+    "brief": "Enable a public visibility flag on a test account and submit the profile URL plus a screenshot.",
+    "budget": "0",
+    "deadline_hours": 72,
+    "campaign": {
+      "platform": "research",
+      "action": "judgment_based_digital_evidence",
+      "environment": "test",
+      "payoutDisabled": true,
+      "reviewPolicy": "publisher_approval",
+      "fundingMode": "test_no_payout",
+      "isTest": true,
+      "originalRequest": {
+        "study": "JOVE-Core live pilot",
+        "case_id": "jove_core_0023",
+        "consent_required": true
+      }
+    },
+    "safety": {
+      "participant_owned_or_test_account_only": true,
+      "no_sensitive_data": true,
+      "reversible_where_possible": true
+    },
+    "publish_state": "draft_only"
+  },
+  {
+    "research_case_id": "jove_core_0024",
+    "title": "JOVE-Core consented pilot: content publication",
+    "brief": "Publish a changelog entry on a public project and submit the project URL plus a screenshot.",
+    "budget": "0",
+    "deadline_hours": 72,
+    "campaign": {
+      "platform": "research",
+      "action": "judgment_based_digital_evidence",
+      "environment": "test",
+      "payoutDisabled": true,
+      "reviewPolicy": "publisher_approval",
+      "fundingMode": "test_no_payout",
+      "isTest": true,
+      "originalRequest": {
+        "study": "JOVE-Core live pilot",
+        "case_id": "jove_core_0024",
+        "consent_required": true
+      }
+    },
+    "safety": {
+      "participant_owned_or_test_account_only": true,
+      "no_sensitive_data": true,
+      "reversible_where_possible": true
+    },
+    "publish_state": "draft_only"
+  },
+  {
+    "research_case_id": "jove_core_0025",
+    "title": "JOVE-Core consented pilot: form document submission",
+    "brief": "Submit a public feature request on a test repository and submit the issue URL plus a screenshot.",
+    "budget": "0",
+    "deadline_hours": 72,
+    "campaign": {
+      "platform": "research",
+      "action": "judgment_based_digital_evidence",
+      "environment": "test",
+      "payoutDisabled": true,
+      "reviewPolicy": "publisher_approval",
+      "fundingMode": "test_no_payout",
+      "isTest": true,
+      "originalRequest": {
+        "study": "JOVE-Core live pilot",
+        "case_id": "jove_core_0025",
+        "consent_required": true
+      }
+    },
+    "safety": {
+      "participant_owned_or_test_account_only": true,
+      "no_sensitive_data": true,
+      "reversible_where_possible": true
+    },
+    "publish_state": "draft_only"
+  },
+  {
+    "research_case_id": "jove_core_0026",
+    "title": "JOVE-Core consented pilot: form document submission",
+    "brief": "Complete a public poll with safe answers and submit the confirmation URL plus a screenshot.",
+    "budget": "0",
+    "deadline_hours": 72,
+    "campaign": {
+      "platform": "research",
+      "action": "judgment_based_digital_evidence",
+      "environment": "test",
+      "payoutDisabled": true,
+      "reviewPolicy": "publisher_approval",
+      "fundingMode": "test_no_payout",
+      "isTest": true,
+      "originalRequest": {
+        "study": "JOVE-Core live pilot",
+        "case_id": "jove_core_0026",
+        "consent_required": true
+      }
+    },
+    "safety": {
+      "participant_owned_or_test_account_only": true,
+      "no_sensitive_data": true,
+      "reversible_where_possible": true
+    },
+    "publish_state": "draft_only"
+  },
+  {
+    "research_case_id": "jove_core_0027",
+    "title": "JOVE-Core consented pilot: time sensitive digital state",
+    "brief": "Record the public follower count of a specified account at a specified time and submit a timestamped screenshot.",
+    "budget": "0",
+    "deadline_hours": 72,
+    "campaign": {
+      "platform": "research",
+      "action": "judgment_based_digital_evidence",
+      "environment": "test",
+      "payoutDisabled": true,
+      "reviewPolicy": "publisher_approval",
+      "fundingMode": "test_no_payout",
+      "isTest": true,
+      "originalRequest": {
+        "study": "JOVE-Core live pilot",
+        "case_id": "jove_core_0027",
+        "consent_required": true
+      }
+    },
+    "safety": {
+      "participant_owned_or_test_account_only": true,
+      "no_sensitive_data": true,
+      "reversible_where_possible": true
+    },
+    "publish_state": "draft_only"
+  },
+  {
+    "research_case_id": "jove_core_0028",
+    "title": "JOVE-Core consented pilot: time sensitive digital state",
+    "brief": "Verify the public badge status of a specified account at a specified time and submit a timestamped screenshot.",
+    "budget": "0",
+    "deadline_hours": 72,
+    "campaign": {
+      "platform": "research",
+      "action": "judgment_based_digital_evidence",
+      "environment": "test",
+      "payoutDisabled": true,
+      "reviewPolicy": "publisher_approval",
+      "fundingMode": "test_no_payout",
+      "isTest": true,
+      "originalRequest": {
+        "study": "JOVE-Core live pilot",
+        "case_id": "jove_core_0028",
+        "consent_required": true
+      }
+    },
+    "safety": {
+      "participant_owned_or_test_account_only": true,
+      "no_sensitive_data": true,
+      "reversible_where_possible": true
+    },
+    "publish_state": "draft_only"
+  },
+  {
+    "research_case_id": "jove_core_0029",
+    "title": "JOVE-Core consented pilot: cross evidence consistency",
+    "brief": "Compare public star counts across two public trackers and report differences with both URLs.",
+    "budget": "0",
+    "deadline_hours": 72,
+    "campaign": {
+      "platform": "research",
+      "action": "judgment_based_digital_evidence",
+      "environment": "test",
+      "payoutDisabled": true,
+      "reviewPolicy": "publisher_approval",
+      "fundingMode": "test_no_payout",
+      "isTest": true,
+      "originalRequest": {
+        "study": "JOVE-Core live pilot",
+        "case_id": "jove_core_0029",
+        "consent_required": true
+      }
+    },
+    "safety": {
+      "participant_owned_or_test_account_only": true,
+      "no_sensitive_data": true,
+      "reversible_where_possible": true
+    },
+    "publish_state": "draft_only"
+  },
+  {
+    "research_case_id": "jove_core_0030",
+    "title": "JOVE-Core consented pilot: cross evidence consistency",
+    "brief": "Verify that an event page date matches its announcement post and report the check with both URLs.",
+    "budget": "0",
+    "deadline_hours": 72,
+    "campaign": {
+      "platform": "research",
+      "action": "judgment_based_digital_evidence",
+      "environment": "test",
+      "payoutDisabled": true,
+      "reviewPolicy": "publisher_approval",
+      "fundingMode": "test_no_payout",
+      "isTest": true,
+      "originalRequest": {
+        "study": "JOVE-Core live pilot",
+        "case_id": "jove_core_0030",
+        "consent_required": true
+      }
+    },
+    "safety": {
+      "participant_owned_or_test_account_only": true,
+      "no_sensitive_data": true,
+      "reversible_where_possible": true
+    },
+    "publish_state": "draft_only"
   }
 ]
