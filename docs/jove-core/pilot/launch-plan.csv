@@ -3,19 +3,19 @@ jove_core_0001,retrospective_candidate,request explicit consent for a2h-x-208147
 jove_core_0002,retrospective_candidate,request explicit consent for a2h-x-2081206439067230591,missing,blocked
 jove_core_0003,retrospective_candidate,request explicit consent for a2h-x-2079902774654091682,missing,blocked
 jove_core_0004,retrospective_candidate,request explicit consent for a2h-x-2079099590058598642,missing,blocked
-jove_core_0005,prospective_live,run account configuration template,required,ready
-jove_core_0006,prospective_live,run account configuration template,required,ready
-jove_core_0007,prospective_live,run account configuration template,required,ready
-jove_core_0008,prospective_live,run content publication template,required,ready
-jove_core_0009,prospective_live,run content publication template,required,ready
-jove_core_0010,prospective_live,run content publication template,required,ready
-jove_core_0011,prospective_live,run content publication template,required,ready
-jove_core_0012,prospective_live,run form submission template,required,ready
-jove_core_0013,prospective_live,run document submission template,required,ready
-jove_core_0014,prospective_live,run form submission template,required,ready
-jove_core_0015,prospective_live,run time-sensitive digital state template,required,ready
-jove_core_0016,prospective_live,run time-sensitive digital state template,required,ready
-jove_core_0017,prospective_live,run time-sensitive digital state template,required,ready
-jove_core_0018,prospective_live,run cross-evidence template,required,ready
-jove_core_0019,prospective_live,run cross-evidence template,required,ready
-jove_core_0020,prospective_live,run cross-evidence template,required,ready
+jove_core_0005,prospective_live,create public GitHub test repo with JOVE pilot README,required,ready
+jove_core_0006,prospective_live,set public profile bio to research test string,required,ready
+jove_core_0007,prospective_live,add public topic label to test repo,required,ready
+jove_core_0008,prospective_live,publish short public post referencing a public repo,required,ready
+jove_core_0009,prospective_live,publish neutral public comment on a GitHub issue,required,ready
+jove_core_0010,prospective_live,publish short public gist with research content,required,ready
+jove_core_0011,prospective_live,publish formatted public announcement on community board,required,ready
+jove_core_0012,prospective_live,submit public research feedback form no PII,required,ready
+jove_core_0013,prospective_live,complete public survey with safe dummy answers,required,ready
+jove_core_0014,prospective_live,submit public issue ticket on test repo,required,ready
+jove_core_0015,prospective_live,record public repo commit count at specified time,required,ready
+jove_core_0016,prospective_live,verify public page availability at specified time,required,ready
+jove_core_0017,prospective_live,record live status of public event page at specified time,required,ready
+jove_core_0018,prospective_live,compare public announcement across two independent sources,required,ready
+jove_core_0019,prospective_live,verify README matches repo file structure,required,ready
+jove_core_0020,prospective_live,verify profile affiliation matches linked content,required,ready
