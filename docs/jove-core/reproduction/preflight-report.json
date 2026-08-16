@@ -1,11 +1,11 @@
 {
-  "generated_at": "2026-08-09T01:52:03.397Z",
+  "generated_at": "2026-08-16T10:16:05.668Z",
   "checks": [
     {
       "name": "bibliography",
       "ok": true,
       "status": 0,
-      "stdout": "> ai2humanwork@0.1.0 research:jove:bibliography\n> node docs/jove-core/scripts/audit-bibliography.mjs\n\nBibliography audit passed: 28 entries, 22 cited.",
+      "stdout": "> ai2humanwork@0.1.0 research:jove:bibliography\n> node docs/jove-core/scripts/audit-bibliography.mjs\n\nBibliography audit passed: 68 entries, 22 cited.",
       "stderr": ""
     },
     {
@@ -26,7 +26,7 @@
       "name": "reproduction_bundle",
       "ok": true,
       "status": 0,
-      "stdout": "> ai2humanwork@0.1.0 research:jove:reproduction-bundle\n> node docs/jove-core/scripts/build-reproduction-bundle.mjs\n\nBuilt reproduction bundle with 20 files: /Users/yanqing/Documents/OmniClaw/docs/jove-core/reproduction/verification-contracts-reproduction.tar.gz",
+      "stdout": "> ai2humanwork@0.1.0 research:jove:reproduction-bundle\n> node docs/jove-core/scripts/build-reproduction-bundle.mjs\n\nBuilt method-only reproduction bundle with 28 files: /Users/yanqing/Documents/OmniClaw/docs/jove-core/reproduction/verification-contracts-reproduction.tar.gz\nConfirmatory inputs absent (5); bundle labelled method-only in MANIFEST.json.",
       "stderr": ""
     },
     {
@@ -40,7 +40,7 @@
       "name": "tests",
       "ok": true,
       "status": 0,
-      "stdout": "> ai2humanwork@0.1.0 research:jove:test\n> node --test docs/jove-core/scripts/*.test.mjs\n\nTAP version 13\n# Subtest: split checker rejects base-case leakage\nok 1 - split checker rejects base-case leakage\n  ---\n  duration_ms: 351.089208\n  type: 'test'\n  ...\n# Subtest: template paper assets are blocked by default\nok 2 - template paper assets are blocked by default\n  ---\n  duration_ms: 1115.790958\n  type: 'test'\n  ...\n# Subtest: submission gate blocks absent confirmatory results\nok 3 - submission gate blocks absent confirmatory results\n  ---\n  duration_ms: 655.786584\n  type: 'test'\n  ...\n# Subtest: generated LaTeX table contains a real line break before midrule\nok 4 - generated LaTeX table contains a real line break before midrule\n  ---\n  duration_ms: 4.134542\n  type: 'test'\n  ...\n# Subtest: pilot manifest and claim boundary pass artifact audit\nok 5 - pilot manifest and claim boundary pass artifact audit\n  ---\n  duration_ms: 2246.739542\n  type: 'test'\n  ...\n# Subtest: canonical verification contract schema is structurally frozen\nok 6 - canonical verification contract schema is structurally frozen\n  ---\n  duration_ms: 4.3695\n  type: 'test'\n  ...\n# Subtest: study freezes fair baseline and sensitivity diagnostics\nok 7 - study freezes fair baseline and sensitivity diagnostics\n  ---\n  duration_ms: 0.405708\n  type: 'test'\n  ...\n# Subtest: mutation leakage audit rejects exposed gold metadata\nok 8 - mutation leakage audit rejects exposed gold metadata\n  ---\n  duration_ms: 345.939\n  type: 'test'\n  ...\n# Subtest: valid contract and receipt satisfy transition semantics\nok 9 - valid contract and receipt satisfy transition semantics\n  ---\n  duration_ms: 609.209958\n  type: 'test'\n  ...\n# Subtest: receipt validator rejects acceptance under unknown evidence\nok 10 - receipt validator rejects acceptance under unknown evidence\n  ---\n  duration_ms: 732.726375\n  type: 'test'\n  ...\n# Subtest: scorer reports anti-gaming acceptance metrics and loss sensitivity\nok 11 - scorer reports anti-gaming acceptance metrics and loss sensitivity\n  ---\n  duration_ms: 381.998\n  type: 'test'\n  ...\n# Subtest: manifest updater rejects status jumps\nok 12 - manifest updater rejects status jumps\n  ---\n  duration_ms: 403.407917\n  type: 'test'\n  ...\n# Subtest: blinded packet audit rejects decision leakage\nok 13 - blinded packet audit rejects decision leakage\n  ---\n  duration_ms: 364.75525\n  type: 'test'\n  ...\n# Subtest: rating validator rejects duplicate rater and semantic conflict\nok 14 - rating validator rejects duplicate rater and semantic conflict\n  ---\n  duration_ms: 593.109833\n  type: 'test'\n  ...\n# Subtest: synthetic rehearsal remains isolated from formal paths\nok 15 - synthetic rehearsal remains isolated from formal paths\n  ---\n  duration_ms: 776.958125\n  type: 'test'\n  ...\n1..15\n# tests 15\n# suites 0\n# pass 15\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 9061.879584",
+      "stdout": "> ai2humanwork@0.1.0 research:jove:test\n> node --test docs/jove-core/scripts/*.test.mjs\n\nTAP version 13\n# Subtest: split checker rejects base-case leakage\nok 1 - split checker rejects base-case leakage\n  ---\n  duration_ms: 353.720709\n  type: 'test'\n  ...\n# Subtest: template paper assets are blocked by default\nok 2 - template paper assets are blocked by default\n  ---\n  duration_ms: 347.807958\n  type: 'test'\n  ...\n# Subtest: submission gate blocks absent confirmatory results\nok 3 - submission gate blocks absent confirmatory results\n  ---\n  duration_ms: 2115.264292\n  type: 'test'\n  ...\n# Subtest: generated LaTeX table contains a real line break before midrule\nok 4 - generated LaTeX table contains a real line break before midrule\n  ---\n  duration_ms: 2.119\n  type: 'test'\n  ...\n# Subtest: pilot manifest and claim boundary pass artifact audit\nok 5 - pilot manifest and claim boundary pass artifact audit\n  ---\n  duration_ms: 2758.503\n  type: 'test'\n  ...\n# Subtest: canonical verification contract schema is structurally frozen\nok 6 - canonical verification contract schema is structurally frozen\n  ---\n  duration_ms: 4.603125\n  type: 'test'\n  ...\n# Subtest: study freezes fair baseline and sensitivity diagnostics\nok 7 - study freezes fair baseline and sensitivity diagnostics\n  ---\n  duration_ms: 1.503084\n  type: 'test'\n  ...\n# Subtest: mutation leakage audit rejects exposed gold metadata\nok 8 - mutation leakage audit rejects exposed gold metadata\n  ---\n  duration_ms: 361.477625\n  type: 'test'\n  ...\n# Subtest: valid contract and receipt satisfy transition semantics\nok 9 - valid contract and receipt satisfy transition semantics\n  ---\n  duration_ms: 578.860375\n  type: 'test'\n  ...\n# Subtest: receipt validator rejects acceptance under unknown evidence\nok 10 - receipt validator rejects acceptance under unknown evidence\n  ---\n  duration_ms: 560.123667\n  type: 'test'\n  ...\n# Subtest: scorer reports anti-gaming acceptance metrics and loss sensitivity\nok 11 - scorer reports anti-gaming acceptance metrics and loss sensitivity\n  ---\n  duration_ms: 367.421833\n  type: 'test'\n  ...\n# Subtest: manifest updater rejects status jumps\nok 12 - manifest updater rejects status jumps\n  ---\n  duration_ms: 383.738\n  type: 'test'\n  ...\n# Subtest: blinded packet audit rejects decision leakage\nok 13 - blinded packet audit rejects decision leakage\n  ---\n  duration_ms: 341.122417\n  type: 'test'\n  ...\n# Subtest: rating validator rejects duplicate rater and semantic conflict\nok 14 - rating validator rejects duplicate rater and semantic conflict\n  ---\n  duration_ms: 551.157458\n  type: 'test'\n  ...\n# Subtest: synthetic rehearsal remains isolated from formal paths\nok 15 - synthetic rehearsal remains isolated from formal paths\n  ---\n  duration_ms: 746.719042\n  type: 'test'\n  ...\n# Subtest: estimator RNG and quantile helpers are deterministic and interpolate\nok 16 - estimator RNG and quantile helpers are deterministic and interpolate\n  ---\n  duration_ms: 2.229375\n  type: 'test'\n  ...\n# Subtest: risk-at-coverage interpolates interior points and is null off-range\nok 17 - risk-at-coverage interpolates interior points and is null off-range\n  ---\n  duration_ms: 1.216459\n  type: 'test'\n  ...\n# Subtest: paired-cluster bootstrap is deterministic and applies CI-upper<0 rule\nok 18 - paired-cluster bootstrap is deterministic and applies CI-upper<0 rule\n  ---\n  duration_ms: 49.102625\n  type: 'test'\n  ...\n# Subtest: bootstrap-primary and power simulation share the one estimator source\nok 19 - bootstrap-primary and power simulation share the one estimator source\n  ---\n  duration_ms: 2.268875\n  type: 'test'\n  ...\n1..19\n# tests 19\n# suites 0\n# pass 19\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 10071.445083",
       "stderr": ""
     },
     {
@@ -58,7 +58,13 @@
       "stderr": ""
     },
     {
-      "name": "latex_main",
+      "name": "latex_main-v5",
+      "ok": false,
+      "status": 1,
+      "stderr": "forbidden warning/error in log"
+    },
+    {
+      "name": "latex_main-v5-zh",
       "ok": true,
       "status": 0,
       "stderr": ""
@@ -71,10 +77,10 @@
     },
     {
       "name": "analysis_freeze",
-      "ok": false,
-      "status": 1,
-      "stdout": "> ai2humanwork@0.1.0 research:jove:freeze-verify\n> node docs/jove-core/scripts/freeze-analysis.mjs --verify",
-      "stderr": "VERIFY FAILED: analysis-freeze.json does not exist. Run freeze-analysis first (before collecting data).",
+      "ok": true,
+      "status": 0,
+      "stdout": "> ai2humanwork@0.1.0 research:jove:freeze-verify\n> node docs/jove-core/scripts/freeze-analysis.mjs --verify\n\n{\n  \"verified\": true,\n  \"frozen_at\": \"2026-08-16T09:55:29.310Z\",\n  \"commit\": \"9417ffc\",\n  \"artifacts\": 11\n}",
+      "stderr": "",
       "expected_to_fail_before_freeze": true
     },
     {
@@ -82,11 +88,11 @@
       "ok": false,
       "status": 1,
       "stdout": "> ai2humanwork@0.1.0 research:jove:submission-gate\n> node docs/jove-core/scripts/submission-gate.mjs",
-      "stderr": "SUBMISSION BLOCKED:\n- missing confirmatory/manifest.jsonl\n- missing confirmatory/labels.jsonl\n- missing experiments/outputs.jsonl\n- missing results/metrics.json\n- missing paper/generated/provenance.json\n- missing paper/submission.tex",
+      "stderr": "SUBMISSION BLOCKED:\n- missing confirmatory/manifest.jsonl\n- missing confirmatory/labels.jsonl\n- missing experiments/outputs.jsonl\n- missing results/metrics.json\n- missing results/bootstrap-primary.json\n- missing paper/generated/provenance.json\n- missing paper/submission.tex\n- gate split-leakage skipped: confirmatory manifest not yet present\n- gate mutation-leakage skipped: confirmatory manifest not yet present",
       "expected_to_fail_before_real_results": true
     }
   ],
-  "all_non_submission_checks_pass": true,
-  "analysis_freeze_status": 1,
+  "all_non_submission_checks_pass": false,
+  "analysis_freeze_status": 0,
   "submission_ready": false
 }

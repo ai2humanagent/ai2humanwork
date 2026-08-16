@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022) (preloaded format=pdflatex 2022.7.17)  9 AUG 2026 16:43
+This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022) (preloaded format=pdflatex 2022.7.17)  16 AUG 2026 18:18
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1295,9 +1295,9 @@ va-tional regime---
  []
 
 LaTeX Font Info:    Font shape `T1/LinuxBiolinumT-TLF/m/n' will be
-(Font)              scaled to size 9.0pt on input line 61.
+(Font)              scaled to size 9.0pt on input line 60.
 LaTeX Font Info:    Font shape `T1/LinuxBiolinumT-TLF/m/n' will be
-(Font)              scaled to size 7.0pt on input line 61.
+(Font)              scaled to size 7.0pt on input line 60.
 [2.2]
 LaTeX Font Info:    Font shape `T1/LinuxLibertineT-TLF/m/sc' will be
 (Font)              scaled to size 9.0pt on input line 85.
@@ -1349,6 +1349,8 @@ Package fancyhdr Warning: \headheight is too small (13.0pt):
 (fancyhdr)                \addtolength{\topmargin}{-2.45749pt}.
 
 [5.5] [6.6]
+Underfull \vbox (badness 10000) has occurred while \output is active []
+
 LaTeX Font Info:    Font shape `T1/LinuxLibertineT-TLF/b/n' will be
 (Font)              scaled to size 7.0pt on input line 305.
 
@@ -1364,7 +1366,7 @@ Package fancyhdr Warning: \headheight is too small (13.0pt):
 (fancyhdr)                \addtolength{\topmargin}{-2.45749pt}.
 
 [7.7]
-Underfull \vbox (badness 10000) has occurred while \output is active []
+Underfull \vbox (badness 1460) has occurred while \output is active []
 
 LaTeX Font Info:    Trying to load font information for T1+zi4 on input line 32
 5.
@@ -1379,7 +1381,7 @@ Package microtype Info: Loading generic protrusion settings for font family
 (microtype)             For optimal results, create family-specific settings.
 (microtype)             See the microtype manual for details.
 
-Underfull \vbox (badness 1953) has occurred while \output is active []
+Underfull \vbox (badness 3668) has occurred while \output is active []
 
  [8.8]
 Underfull \hbox (badness 1248) in paragraph at lines 362--362
@@ -1421,9 +1423,15 @@ Package fancyhdr Warning: \headheight is too small (13.0pt):
 [11.11]
 Underfull \vbox (badness 10000) has occurred while \output is active []
 
+
+Underfull \vbox (badness 3049) has occurred while \output is active []
+
  [12.12]
 LaTeX Font Info:    Font shape `T1/zi4/b/n' will be
 (Font)              scaled to size 9.0pt on input line 428.
+
+Underfull \vbox (badness 10000) has occurred while \output is active []
+
 
 Overfull \hbox (1.25226pt too wide) in paragraph at lines 479--480
  []\T1/LinuxLibertineT-TLF/m/it/9 (-20) ``With no con-fir-ma-tory data, why is 
@@ -1445,7 +1453,7 @@ o-cates the non-reconstructability
  []
 
 
-Underfull \vbox (badness 10000) has occurred while \output is active []
+Underfull \vbox (badness 4254) has occurred while \output is active []
 
  [14.14]
 Overfull \hbox (32.70984pt too wide) in paragraph at lines 496--497
@@ -1462,35 +1470,32 @@ tineT-TLF/m/n/9 (-20) sha256 is sta-ble and ver-i-fi-able and whose \T1/zi4/m/n
  []
 
 (./main-v5.bbl
-LaTeX Info: Redefining \tempurl on input line 62.
-LaTeX Info: Redefining \tempurl on input line 89.
-LaTeX Info: Redefining \tempurl on input line 108.
-LaTeX Info: Redefining \tempurl on input line 122.
-LaTeX Info: Redefining \tempurl on input line 138.
-LaTeX Info: Redefining \tempurl on input line 153.
-LaTeX Info: Redefining \tempurl on input line 167.
-LaTeX Info: Redefining \tempurl on input line 180.
-LaTeX Info: Redefining \tempurl on input line 194.
-LaTeX Info: Redefining \tempurl on input line 207.
-LaTeX Info: Redefining \tempurl on input line 223.
-LaTeX Info: Redefining \tempurl on input line 235.
-LaTeX Info: Redefining \tempurl on input line 250.
-LaTeX Info: Redefining \tempurl on input line 266.
-LaTeX Info: Redefining \tempurl on input line 281.
-LaTeX Info: Redefining \tempurl on input line 295.
-LaTeX Info: Redefining \tempurl on input line 311.
-LaTeX Info: Redefining \tempurl on input line 347.
-LaTeX Info: Redefining \tempurl on input line 358.
+Underfull \vbox (badness 10000) has occurred while \output is active []
+
+LaTeX Info: Redefining \tempurl on input line 67.
+LaTeX Info: Redefining \tempurl on input line 79.
+LaTeX Info: Redefining \tempurl on input line 106.
+LaTeX Info: Redefining \tempurl on input line 125.
+LaTeX Info: Redefining \tempurl on input line 139.
+LaTeX Info: Redefining \tempurl on input line 155.
+LaTeX Info: Redefining \tempurl on input line 170.
+LaTeX Info: Redefining \tempurl on input line 184.
+LaTeX Info: Redefining \tempurl on input line 197.
+LaTeX Info: Redefining \tempurl on input line 211.
+LaTeX Info: Redefining \tempurl on input line 224.
+LaTeX Info: Redefining \tempurl on input line 240.
+LaTeX Info: Redefining \tempurl on input line 252.
+LaTeX Info: Redefining \tempurl on input line 267.
+LaTeX Info: Redefining \tempurl on input line 283.
+LaTeX Info: Redefining \tempurl on input line 298.
+LaTeX Info: Redefining \tempurl on input line 312.
+LaTeX Info: Redefining \tempurl on input line 328.
+LaTeX Info: Redefining \tempurl on input line 364.
 LaTeX Info: Redefining \tempurl on input line 375.
-LaTeX Info: Redefining \tempurl on input line 401.
-LaTeX Info: Redefining \tempurl on input line 415.
-LaTeX Info: Redefining \tempurl on input line 428.
-LaTeX Info: Redefining \tempurl on input line 446.
-LaTeX Info: Redefining \tempurl on input line 459.
-LaTeX Info: Redefining \tempurl on input line 475.
-LaTeX Info: Redefining \tempurl on input line 490.
-LaTeX Info: Redefining \tempurl on input line 513.
-LaTeX Info: Redefining \tempurl on input line 528.
+LaTeX Info: Redefining \tempurl on input line 392.
+
+Underfull \vbox (badness 10000) has occurred while \output is active []
+
 
 
 Package fancyhdr Warning: \headheight is too small (13.0pt): 
@@ -1501,33 +1506,46 @@ Package fancyhdr Warning: \headheight is too small (13.0pt):
 (fancyhdr)                \addtolength{\topmargin}{-2.45749pt}.
 
 [15.15]
-LaTeX Info: Redefining \tempurl on input line 565.
-LaTeX Info: Redefining \tempurl on input line 583.
-LaTeX Info: Redefining \tempurl on input line 621.
-LaTeX Info: Redefining \tempurl on input line 633.
-LaTeX Info: Redefining \tempurl on input line 648.
-LaTeX Info: Redefining \tempurl on input line 663.
-LaTeX Info: Redefining \tempurl on input line 677.
-LaTeX Info: Redefining \tempurl on input line 695.
-LaTeX Info: Redefining \tempurl on input line 709.
+LaTeX Info: Redefining \tempurl on input line 418.
+LaTeX Info: Redefining \tempurl on input line 432.
+LaTeX Info: Redefining \tempurl on input line 445.
+LaTeX Info: Redefining \tempurl on input line 463.
+LaTeX Info: Redefining \tempurl on input line 476.
+LaTeX Info: Redefining \tempurl on input line 492.
+LaTeX Info: Redefining \tempurl on input line 507.
+LaTeX Info: Redefining \tempurl on input line 530.
+LaTeX Info: Redefining \tempurl on input line 545.
+LaTeX Info: Redefining \tempurl on input line 582.
+LaTeX Info: Redefining \tempurl on input line 600.
+LaTeX Info: Redefining \tempurl on input line 638.
+LaTeX Info: Redefining \tempurl on input line 650.
+LaTeX Info: Redefining \tempurl on input line 665.
+LaTeX Info: Redefining \tempurl on input line 680.
+LaTeX Info: Redefining \tempurl on input line 694.
+LaTeX Info: Redefining \tempurl on input line 712.
 LaTeX Info: Redefining \tempurl on input line 726.
-LaTeX Info: Redefining \tempurl on input line 742.
-LaTeX Info: Redefining \tempurl on input line 757.
-LaTeX Info: Redefining \tempurl on input line 770.
-LaTeX Info: Redefining \tempurl on input line 785.
-LaTeX Info: Redefining \tempurl on input line 799.
-LaTeX Info: Redefining \tempurl on input line 813.
+LaTeX Info: Redefining \tempurl on input line 743.
+LaTeX Info: Redefining \tempurl on input line 759.
+LaTeX Info: Redefining \tempurl on input line 774.
+LaTeX Info: Redefining \tempurl on input line 787.
+LaTeX Info: Redefining \tempurl on input line 802.
+LaTeX Info: Redefining \tempurl on input line 816.
 LaTeX Info: Redefining \tempurl on input line 830.
-LaTeX Info: Redefining \tempurl on input line 859.
-LaTeX Info: Redefining \tempurl on input line 871.
-LaTeX Info: Redefining \tempurl on input line 885.
-LaTeX Info: Redefining \tempurl on input line 901.
-LaTeX Info: Redefining \tempurl on input line 922.
-LaTeX Info: Redefining \tempurl on input line 946.
+LaTeX Info: Redefining \tempurl on input line 847.
+LaTeX Info: Redefining \tempurl on input line 876.
+LaTeX Info: Redefining \tempurl on input line 888.
+LaTeX Info: Redefining \tempurl on input line 902.
+LaTeX Info: Redefining \tempurl on input line 918.
+LaTeX Info: Redefining \tempurl on input line 939.
 LaTeX Info: Redefining \tempurl on input line 963.
 LaTeX Info: Redefining \tempurl on input line 980.
-LaTeX Info: Redefining \tempurl on input line 995.
-LaTeX Info: Redefining \tempurl on input line 1030.
+LaTeX Info: Redefining \tempurl on input line 997.
+LaTeX Info: Redefining \tempurl on input line 1012.
+
+Underfull \vbox (badness 10000) has occurred while \output is active []
+
+ [16.16]
+LaTeX Info: Redefining \tempurl on input line 1047.
 )
 (/usr/local/texlive/2022/texmf-dist/tex/generic/stringenc/se-pdfdoc.def
 File: se-pdfdoc.def 2019/11/29 v1.12 stringenc: PDFDocEncoding
@@ -1539,21 +1557,25 @@ File: se-utf8.def 2019/11/29 v1.12 stringenc: UTF-8
 Class acmart Warning: Some images may lack descriptions.
 
 
-Package balance Warning: You have called \balance in second column
-(balance)                Columns might not be balanced.
+Package fancyhdr Warning: \headheight is too small (13.0pt): 
+(fancyhdr)                Make it at least 15.45749pt, for example:
+(fancyhdr)                \setlength{\headheight}{15.45749pt}.
+(fancyhdr)                You might also make \topmargin smaller to compensate:
 
-[16.16] (./main-v5.aux)
+(fancyhdr)                \addtolength{\topmargin}{-2.45749pt}.
+
+[17.17] (./main-v5.aux)
 Package rerunfilecheck Info: File `main-v5.out' has not changed.
 (rerunfilecheck)             Checksum: 3BD7E7AD2D4A2219293EBD1E8E5FA997;6082.
  ) 
 Here is how much of TeX's memory you used:
- 32286 strings out of 478268
- 594487 string characters out of 5846347
- 940328 words of memory out of 5000000
- 48715 multiletter control sequences out of 15000+600000
- 708791 words of font info for 658 fonts, out of 8000000 for 9000
+ 32294 strings out of 478268
+ 594674 string characters out of 5846347
+ 936153 words of memory out of 5000000
+ 48718 multiletter control sequences out of 15000+600000
+ 709064 words of font info for 660 fonts, out of 8000000 for 9000
  1302 hyphenation exceptions out of 8191
- 84i,17n,131p,2968b,917s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 84i,17n,131p,3744b,917s stack positions out of 10000i,1000n,20000p,200000b,200000s
 {/usr/local/texlive/2022/texmf-dist/fonts/enc/dvips/inconsolata/i4-t1-4.enc}{
 /usr/local/texlive/2022/texmf-dist/fonts/enc/dvips/libertine/lbtn_ki75ao.enc}{/
 usr/local/texlive/2022/texmf-dist/fonts/enc/dvips/libertine/lbtn_ncsllp.enc}{/u
@@ -1583,10 +1605,10 @@ lic/newtx/txmiaX.pfb></usr/local/texlive/2022/texmf-dist/fonts/type1/public/txf
 onts/txsya.pfb></usr/local/texlive/2022/texmf-dist/fonts/type1/public/txfonts/t
 xsyb.pfb></usr/local/texlive/2022/texmf-dist/fonts/type1/public/newtx/txsys.pfb
 >
-Output written on main-v5.pdf (16 pages, 659128 bytes).
+Output written on main-v5.pdf (17 pages, 662938 bytes).
 PDF statistics:
- 721 PDF objects out of 1000 (max. 8388607)
- 645 compressed objects within 7 object streams
- 168 named destinations out of 1000 (max. 500000)
+ 731 PDF objects out of 1000 (max. 8388607)
+ 654 compressed objects within 7 object streams
+ 170 named destinations out of 1000 (max. 500000)
  111885 words of extra memory for PDF output out of 128383 (max. 10000000)
 

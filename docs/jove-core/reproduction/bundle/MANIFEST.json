@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-09T08:08:37.436Z",
+  "generated_at": "2026-08-16T10:15:42.956Z",
   "bundle_type": "method-only",
   "confirmatory_inputs_present": false,
   "missing_confirmatory_inputs": [
@@ -28,7 +28,7 @@
     },
     {
       "path": "docs/jove-core/preregistration.md",
-      "sha256": "11ddba1702f28afa1f51892e0edf3e13acd8ce17892ac45967a8f9245a155a33"
+      "sha256": "0fc35242ae38b9e82bcd8db356c8a045cb262e26f08837171f12ff6295875256"
     },
     {
       "path": "docs/jove-core/dataset-card.md",
@@ -64,15 +64,15 @@
     },
     {
       "path": "docs/jove-core/scripts/bootstrap-primary.mjs",
-      "sha256": "c03e7f4b585bce3a9526ac7b3a62f109e0c10f7a787e59220281ccc1046af7e3"
+      "sha256": "662dcf83f3689958f4e25190628731981768b2ea41991405b25bebfc2860a575"
     },
     {
       "path": "docs/jove-core/scripts/power-paired-cluster.mjs",
-      "sha256": "2165131459ba7c65addff4ac0d60ec97338a6422d6f506248072269b2e1eef64"
+      "sha256": "d2b5f21b4e594e000711066c41a9919a4adccc158b0d7adcdc99a4a827f866b5"
     },
     {
       "path": "docs/jove-core/scripts/power-sensitivity.mjs",
-      "sha256": "be43a796a38429e975f84ba0d637150f1b1b8221c8a6b18696e5501db4ae9eb9"
+      "sha256": "56a563119f6d30f26b13bfe93a38b1ec7b97f050b1a5cae392993278197386af"
     },
     {
       "path": "docs/jove-core/scripts/submission-gate.mjs",

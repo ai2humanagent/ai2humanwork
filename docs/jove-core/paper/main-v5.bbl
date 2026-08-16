@@ -2,7 +2,7 @@
 %%% Do NOT edit. File created by BibTeX with style
 %%% ACM-Reference-Format-Journals [18-Jan-2012].
 
-\begin{thebibliography}{67}
+\begin{thebibliography}{68}
 
 %%% ====================================================================
 %%% NOTE TO THE USER: you can override these defaults by providing
@@ -36,6 +36,23 @@
 \providecommand\bibinfo[2]{#2}
 \providecommand\natexlab[1]{#1}
 \providecommand\showeprint[2][]{arXiv:#2}
+
+\bibitem[Aguzzi et~al\mbox{.}(2025)]%
+        {ethereum2025erc8004}
+\bibfield{author}{\bibinfo{person}{Marco Aguzzi}, \bibinfo{person}{Davide
+  De~Caro}, {and} \bibinfo{person}{{others}}.} \bibinfo{year}{2025}\natexlab{}.
+\newblock \bibinfo{title}{{ERC-8004}: Trustless Agents}.
+\newblock \bibinfo{howpublished}{Ethereum Improvement Proposals, ERC-8004
+  (Draft)}.
+\newblock
+\urldef\tempurl%
+\url{https://eips.ethereum.org/EIPS/eip-8004}
+\showURL{%
+\tempurl}
+\newblock
+\shownote{Identity, reputation, and validation registries for autonomous
+  agents}.
+
 
 \bibitem[Angelopoulos and Bates(2023)]%
         {angelopoulos2023conformal}
