@@ -1,0 +1,30 @@
+{
+  "schema": "jove-core/analysis-freeze@1",
+  "frozen_at": "2026-08-16T09:55:29.310Z",
+  "git": {
+    "commit": "9417ffc4546e95ee57f677533bae68e0a74aeb6c",
+    "short": "9417ffc",
+    "branch": "HEAD",
+    "dirty": false
+  },
+  "artifacts": {
+    "preregistration.md": "0fc35242ae38b9e82bcd8db356c8a045cb262e26f08837171f12ff6295875256",
+    "config/study.json": "83557d0e21aa81aa5c91ba96a8d6272c284699ba78ff895f36e86189fb7cfe43",
+    "scripts/score-experiments.mjs": "f766159be565b76076bc67b9b9790ca56efae4fe53cdea5de582cbb2f6b3f1dd",
+    "scripts/bootstrap-primary.mjs": "662dcf83f3689958f4e25190628731981768b2ea41991405b25bebfc2860a575",
+    "scripts/summarize-ratings-jsonl.mjs": "061fa133c8c1dd882ad83c96eb2bdf0d51641997e73dc0413a6c715c163c41ef",
+    "scripts/check-split-leakage.mjs": "5a9db0879bbb07374491b98e6631d9e8941ddbd6823e3d794023ece45c689dd2",
+    "scripts/audit-mutation-leakage.mjs": "d0d0d66be7b47da909e5d2583ed4b0029429c57b4dc668f4403b93ecde3a99e6",
+    "scripts/power-paired-cluster.mjs": "d2b5f21b4e594e000711066c41a9919a4adccc158b0d7adcdc99a4a827f866b5",
+    "scripts/submission-gate.mjs": "179b41e2a88e014bb0d833dd6ccf3154fbc4656ab2b4f6f9b7a8017fc24b88b9",
+    "dataset-card.md": "1a92e480c378065de200d372f1de696ca950e1800fcf5061d8c0f9a5d5417300",
+    "human-study-plan.md": "a89a18acaae6d859e8492addc739dc6b9cce3d9ce7bb4e56b11687dddedd2c4f"
+  },
+  "confirmatory_data_surfaces": [
+    "confirmatory/manifest.jsonl",
+    "confirmatory/labels.jsonl",
+    "experiments/outputs.jsonl",
+    "results/metrics.json"
+  ],
+  "note": "Frozen before confirmatory data collection. Any confirmatory datum with mtime earlier than frozen_at invalidates this freeze."
+}
