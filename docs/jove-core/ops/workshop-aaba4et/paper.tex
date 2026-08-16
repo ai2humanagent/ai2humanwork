@@ -1,0 +1,78 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\setlist{nosep,leftmargin=*}
+\newtheorem{theorem}{Theorem}
+\newtheorem{definition}{Definition}
+\title{When Is an Agent Entitled to Claim Success?\\\large Verification Contracts for Open-World Outcomes --- A Preregistered Benchmark}
+\author{AI2Human Research \\ \texttt{https://ai2human.io}}
+\date{August 2026}
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Agents increasingly complete tasks whose outcomes cannot be read from authoritative program state and must instead be inferred from screenshots, documents, links, or bundles of contextual evidence. When an agent settles value over HTTP, a model judge's belief is wired directly to an irreversible transfer. We study a question distinct from improving judge accuracy: under what conditions may a probabilistic observation authorize a deterministic state transition? We summarize a \emph{separation} result placing this problem outside the reach of better classification, introduce a \emph{Verification Contract} protocol with four measurable properties and a three-valued authorization semantics, and present \textbf{JOVE-Core}, a grouped, preregistered benchmark of consented digital-evidence cases with property-aligned matched defects. The study follows the Registered Report model: analysis scripts, sample size, and falsification criteria are frozen before confirmatory data collection (commit \texttt{9417ffc}, tag \texttt{jove-freeze-20260816}). This workshop paper reports the design, the frozen toolchain, and synthetic rehearsal results; confirmatory results will be reported on frozen scripts when consented data collection completes.
+\end{abstract}
+
+\section{Introduction}
+Consider an agent that asks a user to publish a specified statement before a deadline. The user submits a plausible screenshot, and a multimodal judge reports success with 0.97 confidence. Should the system release payment? Emerging agent-commerce and agent-payment protocols \cite{coinbase2025x402,anthropic2024mcp} let autonomous agents settle value the moment an outcome is declared met, so a judge's belief is increasingly wired to an irreversible transfer.
+
+Completion of such tasks cannot be read from program state: it is inferred from evidence whose provenance, binding, and consistency must themselves be checked. Existing systems delegate this decision to a model judge. Yet even a confident, semantically correct judgment may not be eligible to trigger payment: the acceptance rule may have changed after submission, evidence may belong to another task, uncertainty may have been forced into a binary answer, or the transition may be impossible to reconstruct. Our thesis: authorization to trigger a deterministic state transition requires more than an accurate belief---it requires a protocol that makes the decision \emph{reconstructable} and the evidence \emph{bound}.
+
+\section{Why Judge Accuracy Is Insufficient}
+We establish a \emph{separation} result: whenever a safe and an unsafe context are artifact-indistinguishable, an artifact-only judge cannot both authorize the safe member of that equivalence class and remain authorization-sound on the class. The proof is capacity-independent: no better classifier, larger model, or additional judge budget resolves the class. This places open-world outcome verification outside the reach of classification alone and motivates structural enforcement.
+
+\section{Verification Contracts}
+A \emph{Verification Contract} joins an outcome claim, ex-ante proof obligations, evidence binding, selective verification, admissible transitions, and a reconstructable receipt. We define four measurable properties:
+\begin{itemize}
+  \item \textbf{Ex-ante consistency} --- acceptance rules are committed before evidence is submitted;
+  \item \textbf{Evidence binding} --- submitted evidence is bound to the task and submission;
+  \item \textbf{Selective safety} --- uncertain observations are not rounded into forced binary decisions;
+  \item \textbf{Decision reconstructability} --- any decision can be replayed from committed metadata.
+\end{itemize}
+Three properties (ex-ante consistency, binding, reconstructability) are deterministic checks over committed metadata and evaluate two-valuedly; the abstain value $?$ is needed only for selective verification, a calibrated but uncertain probabilistic predicate. We give these predicates a common three-valued authorization semantics and prove two interface properties: a \emph{violation-propagation invariant} (a known-$\bot$ predicate is never masked by satisfied co-predicates) and \emph{abstention-monotonicity} (resolving an unknown never manufactures an unsafe permit). These are compositional invariants, not empirical safety claims; their real-world value is measured by the confirmatory study.
+
+\section{JOVE-Core: A Preregistered Benchmark}
+JOVE-Core covers six digital task classes: social content, account configuration, content publication, form or document submission, time-sensitive digital state, and cross-evidence consistency. Physical execution is outside the confirmatory scope.
+
+The independent unit is a \emph{consented base case}: a low-risk request, frozen contract, valid evidence, provenance, and release boundary. Matched variants (\emph{mutations}) alter one target property while preserving surface features: post-hoc criterion drift, cross-task or cross-version replay, provider failure, integrity conflict, or incomplete receipt. All variants of one base case remain in one split; no base case contributes to both calibration and confirmatory partitions.
+
+Ground truth is an independently rated downstream harm---erroneous payment, access grant, completion, or wrongful rejection---judged by raters blind to the contract mechanism, so the metric does not reduce to the protocol's own rule. Endpoint groups are preregistered separately: \emph{structural-consistency} endpoints ($P/B/R$, deterministic recomputation against frozen commitments) and \emph{external-outcome} endpoints (blinded-rater harm), the latter alone carrying empirical-superiority claims.
+
+\section{Experimental Design and Falsification}
+\begin{itemize}
+  \item \textbf{Primary contrast:} complete contract (\texttt{K-Full}) vs.\ information-matched judge (\texttt{J1-IM}) at preregistered matched coverage 0.70; paired 95\% interval excluding zero. Secondary references: policy-aware judge with abstention (\texttt{J1+abstain}) and deterministic tool-augmented judge (\texttt{J1-DT}, compute budget $\geq$ \texttt{K-Full}).
+  \item \textbf{Primary endpoint:} per-defect-class unsafe positive-transition rate at matched coverage; full risk--coverage curves and AURC are secondary.
+  \item \textbf{Sample:} 200 independently sourced base cases, $\geq$600 matched bundles, 3 blind raters per bundle; $\geq$4 base cases per class; $\geq$2 classes and $\geq$1 mutation source held out. Under-recruitment downgrades confirmatory claims to exploratory rather than relaxing thresholds.
+  \item \textbf{Power:} defined within defect class; decision-anchored MDE fixed before estimation.
+  \item \textbf{Falsification:} seven preregistered conditions, all reported honestly including null results.
+\end{itemize}
+All analysis scripts, thresholds, and falsification criteria were frozen before data collection: commit \texttt{9417ffc}, tag \texttt{jove-freeze-20260816} (2026-08-16), verified by \texttt{freeze-analysis.mjs --verify}.
+
+\section{Status and Synthetic Rehearsal}
+The toolchain is fully exercised on synthetic data:
+\begin{itemize}
+  \item Unit tests: 19/19 pass (frozen analysis scripts).
+  \item Synthetic pilot rehearsal end-to-end: blinded-packet generation, blinded audit, rating validation, and agreement summary all pass (rehearsal Cohen's $\kappa=1.0$ on generated cases).
+  \item Group-preserving split check: no base-case leakage across 30 synthetic base cases; mutation leakage audit passes (240 records).
+  \item Frozen scoring pipeline: 1{,}440 outputs across 6 systems scored at matched coverage 0.7.
+  \item Submission preflight: 10/14 checks pass pre-data (the two pending checks are confirmatory-data-gated).
+\end{itemize}
+Consented live data collection is underway through the AI2Human platform (research consent checkbox, evidence contracts, blinded export); the reproduction bundle, datasheet, and E\&D checklist are published with the frozen artifact.
+
+\section{Conclusion}
+Open-world outcome verification is a protocol problem, not only a modeling problem. JOVE-Core operationalizes this claim as a preregistered, falsifiable, reproducible benchmark. We invite the community to use the artifact, review the frozen analysis, and contribute consented base cases.
+
+{\small
+\bibliographystyle{plain}
+\begin{thebibliography}{9}
+\bibitem{coinbase2025x402} Coinbase. x402: HTTP payments for agents. 2025.
+\bibitem{anthropic2024mcp} Anthropic. Model Context Protocol. 2024.
+\end{thebibliography}
+}
+
+\end{document}

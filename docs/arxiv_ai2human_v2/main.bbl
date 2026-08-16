@@ -1,0 +1,1052 @@
+%%% -*-BibTeX-*-
+%%% Do NOT edit. File created by BibTeX with style
+%%% ACM-Reference-Format-Journals [18-Jan-2012].
+
+\begin{thebibliography}{68}
+
+%%% ====================================================================
+%%% NOTE TO THE USER: you can override these defaults by providing
+%%% customized versions of any of these macros before the \bibliography
+%%% command.  Each of them MUST provide its own final punctuation,
+%%% except for \shownote{}, \showDOI{}, and \showURL{}.  The latter two
+%%% do not use final punctuation, in order to avoid confusing it with
+%%% the Web address.
+%%%
+%%% To suppress output of a particular field, define its macro to expand
+%%% to an empty string, or better, \unskip, like this:
+%%%
+%%% \newcommand{\showDOI}[1]{\unskip}   % LaTeX syntax
+%%%
+%%% \def \showDOI #1{\unskip}           % plain TeX syntax
+%%%
+%%% ====================================================================
+
+\ifx \showCODEN    \undefined \def \showCODEN     #1{\unskip}     \fi
+\ifx \showDOI      \undefined \def \showDOI       #1{#1}\fi
+\ifx \showISBNx    \undefined \def \showISBNx     #1{\unskip}     \fi
+\ifx \showISBNxiii \undefined \def \showISBNxiii  #1{\unskip}     \fi
+\ifx \showISSN     \undefined \def \showISSN      #1{\unskip}     \fi
+\ifx \showLCCN     \undefined \def \showLCCN      #1{\unskip}     \fi
+\ifx \shownote     \undefined \def \shownote      #1{#1}          \fi
+\ifx \showarticletitle \undefined \def \showarticletitle #1{#1}   \fi
+\ifx \showURL      \undefined \def \showURL       {\relax}        \fi
+% The following commands are used for tagged output and should be
+% invisible to TeX
+\providecommand\bibfield[2]{#2}
+\providecommand\bibinfo[2]{#2}
+\providecommand\natexlab[1]{#1}
+\providecommand\showeprint[2][]{arXiv:#2}
+
+\bibitem[Aguzzi et~al\mbox{.}(2025)]%
+        {ethereum2025erc8004}
+\bibfield{author}{\bibinfo{person}{Marco Aguzzi}, \bibinfo{person}{Davide
+  De~Caro}, {and} \bibinfo{person}{{others}}.} \bibinfo{year}{2025}\natexlab{}.
+\newblock \bibinfo{title}{{ERC-8004}: Trustless Agents}.
+\newblock \bibinfo{howpublished}{Ethereum Improvement Proposals, ERC-8004
+  (Draft)}.
+\newblock
+\urldef\tempurl%
+\url{https://eips.ethereum.org/EIPS/eip-8004}
+\showURL{%
+\tempurl}
+\newblock
+\shownote{Identity, reputation, and validation registries for autonomous
+  agents}.
+
+
+\bibitem[Angelopoulos and Bates(2023)]%
+        {angelopoulos2023conformal}
+\bibfield{author}{\bibinfo{person}{Anastasios~N. Angelopoulos} {and}
+  \bibinfo{person}{Stephen Bates}.} \bibinfo{year}{2023}\natexlab{}.
+\newblock \showarticletitle{Conformal Prediction: A Gentle Introduction}.
+\newblock \bibinfo{journal}{\emph{Foundations and Trends in Machine Learning}}
+  \bibinfo{volume}{16}, \bibinfo{number}{4} (\bibinfo{year}{2023}),
+  \bibinfo{pages}{494--591}.
+\newblock
+\urldef\tempurl%
+\url{https://doi.org/10.1561/2200000101}
+\showDOI{\tempurl}
+
+
+\bibitem[{Anthropic}(2024)]%
+        {anthropic2024mcp}
+\bibfield{author}{\bibinfo{person}{{Anthropic}}.}
+  \bibinfo{year}{2024}\natexlab{}.
+\newblock \bibinfo{title}{Model Context Protocol}.
+\newblock \bibinfo{howpublished}{Protocol specification}.
+\newblock
+\urldef\tempurl%
+\url{https://modelcontextprotocol.io}
+\showURL{%
+\tempurl}
+
+
+\bibitem[Ben-Sasson et~al\mbox{.}(2014)]%
+        {ben2014succinct}
+\bibfield{author}{\bibinfo{person}{Eli Ben-Sasson}, \bibinfo{person}{Alessandro
+  Chiesa}, \bibinfo{person}{Eran Tromer}, {and} \bibinfo{person}{Madars
+  Virza}.} \bibinfo{year}{2014}\natexlab{}.
+\newblock \showarticletitle{Succinct Non-Interactive Zero Knowledge for a von
+  Neumann Architecture}. In \bibinfo{booktitle}{\emph{Proceedings of the 23rd
+  USENIX Security Symposium}}. \bibinfo{pages}{781--796}.
+\newblock
+
+
+\bibitem[Bender and Friedman(2018)]%
+        {bender2018data}
+\bibfield{author}{\bibinfo{person}{Emily~M. Bender} {and}
+  \bibinfo{person}{Batya Friedman}.} \bibinfo{year}{2018}\natexlab{}.
+\newblock \showarticletitle{Data Statements for Natural Language Processing:
+  Toward Mitigating System Bias and Enabling Better Science}.
+\newblock \bibinfo{journal}{\emph{Transactions of the Association for
+  Computational Linguistics}}  \bibinfo{volume}{6} (\bibinfo{year}{2018}),
+  \bibinfo{pages}{587--604}.
+\newblock
+\urldef\tempurl%
+\url{https://doi.org/10.1162/tacl_a_00041}
+\showDOI{\tempurl}
+
+
+\bibitem[Breidenbach et~al\mbox{.}(2021)]%
+        {breidenbach2021chainlink}
+\bibfield{author}{\bibinfo{person}{Lorenz Breidenbach},
+  \bibinfo{person}{Christian Cachin}, \bibinfo{person}{Benedict Chan},
+  \bibinfo{person}{Alex Coventry}, \bibinfo{person}{Steve Ellis},
+  \bibinfo{person}{Ari Juels}, \bibinfo{person}{Farinaz Koushanfar},
+  \bibinfo{person}{Andrew Miller}, \bibinfo{person}{Brendan Magauran},
+  \bibinfo{person}{Daniel Moroz}, \bibinfo{person}{Sergey Nazarov},
+  \bibinfo{person}{Alexandru Topliceanu}, \bibinfo{person}{Florian Tram{\`e}r},
+  {and} \bibinfo{person}{Fan Zhang}.} \bibinfo{year}{2021}\natexlab{}.
+\newblock \bibinfo{title}{Chainlink 2.0: Next Steps in the Evolution of
+  Decentralized Oracle Networks}.
+\newblock \bibinfo{howpublished}{Chainlink Labs whitepaper}.
+\newblock
+\urldef\tempurl%
+\url{https://research.chain.link/whitepaper-v2.pdf}
+\showURL{%
+\tempurl}
+
+
+\bibitem[Buchman(2016)]%
+        {buchman2016tendermint}
+\bibfield{author}{\bibinfo{person}{Ethan Buchman}.}
+  \bibinfo{year}{2016}\natexlab{}.
+\newblock \showarticletitle{Tendermint: Byzantine Fault Tolerance in the Age of
+  Blockchains}. In \bibinfo{booktitle}{\emph{M.Sc. Thesis, University of
+  Guelph}}.
+\newblock
+\urldef\tempurl%
+\url{https://atrium.lib.uoguelph.ca/items/e299f095-9c31-4e5c-92c7-e75b4a3affff}
+\showURL{%
+\tempurl}
+
+
+\bibitem[Buterin et~al\mbox{.}(2020)]%
+        {buterin2020gasper}
+\bibfield{author}{\bibinfo{person}{Vitalik Buterin}, \bibinfo{person}{Diego
+  Hernandez}, \bibinfo{person}{Thor Kamphefner}, \bibinfo{person}{Khiem Pham},
+  \bibinfo{person}{Zhi Qiao}, \bibinfo{person}{Danny Ryan},
+  \bibinfo{person}{Juhyeok Sin}, \bibinfo{person}{Ying Wang}, {and}
+  \bibinfo{person}{Yan~X. Zhang}.} \bibinfo{year}{2020}\natexlab{}.
+\newblock \showarticletitle{Combining {GHOST} and Casper}. In
+  \bibinfo{booktitle}{\emph{arXiv preprint arXiv:2003.03052}}.
+\newblock
+\urldef\tempurl%
+\url{https://arxiv.org/abs/2003.03052}
+\showURL{%
+\tempurl}
+
+
+\bibitem[Caldarelli(2020)]%
+        {caldarelli2020oracle}
+\bibfield{author}{\bibinfo{person}{Giulio Caldarelli}.}
+  \bibinfo{year}{2020}\natexlab{}.
+\newblock \showarticletitle{Understanding the Blockchain Oracle Problem: A Call
+  for Action}.
+\newblock \bibinfo{journal}{\emph{Information}} \bibinfo{volume}{11},
+  \bibinfo{number}{11} (\bibinfo{year}{2020}), \bibinfo{pages}{509}.
+\newblock
+\urldef\tempurl%
+\url{https://doi.org/10.3390/info11110509}
+\showDOI{\tempurl}
+
+
+\bibitem[Chambers and Tzavella(2022)]%
+        {chambers2022registered}
+\bibfield{author}{\bibinfo{person}{Christopher~D. Chambers} {and}
+  \bibinfo{person}{Loukia Tzavella}.} \bibinfo{year}{2022}\natexlab{}.
+\newblock \showarticletitle{The Past, Present and Future of Registered
+  Reports}.
+\newblock \bibinfo{journal}{\emph{Nature Human Behaviour}} \bibinfo{volume}{6},
+  \bibinfo{number}{1} (\bibinfo{year}{2022}), \bibinfo{pages}{29--42}.
+\newblock
+\urldef\tempurl%
+\url{https://doi.org/10.1038/s41562-021-01193-7}
+\showDOI{\tempurl}
+
+
+\bibitem[{Coalition for Content Provenance and Authenticity}(2023)]%
+        {c2pa2023spec}
+\bibfield{author}{\bibinfo{person}{{Coalition for Content Provenance and
+  Authenticity}}.} \bibinfo{year}{2023}\natexlab{}.
+\newblock \bibinfo{booktitle}{\emph{Coalition for Content Provenance and
+  Authenticity (C2PA) Specifications, Version 1.3}}.
+\newblock \bibinfo{type}{{T}echnical {R}eport}. \bibinfo{institution}{C2PA}.
+\newblock
+\urldef\tempurl%
+\url{https://c2pa.org/specifications/}
+\showURL{%
+\tempurl}
+
+
+\bibitem[{Coinbase}(2025)]%
+        {coinbase2025x402}
+\bibfield{author}{\bibinfo{person}{{Coinbase}}.}
+  \bibinfo{year}{2025}\natexlab{}.
+\newblock \bibinfo{title}{x402: An Open Protocol for Internet-Native Payments
+  over {HTTP}}.
+\newblock \bibinfo{howpublished}{Protocol specification}.
+\newblock
+\urldef\tempurl%
+\url{https://www.x402.org}
+\showURL{%
+\tempurl}
+
+
+\bibitem[Costan and Devadas(2016)]%
+        {costan2016sgx}
+\bibfield{author}{\bibinfo{person}{Victor Costan} {and}
+  \bibinfo{person}{Srinivas Devadas}.} \bibinfo{year}{2016}\natexlab{}.
+\newblock \showarticletitle{Intel SGX Explained}. In
+  \bibinfo{booktitle}{\emph{IACR Cryptology ePrint Archive}}.
+\newblock
+\urldef\tempurl%
+\url{https://eprint.iacr.org/2016/086}
+\showURL{%
+\tempurl}
+\newblock
+\shownote{Report 2016/086}.
+
+
+\bibitem[Efron and Tibshirani(1994)]%
+        {efron1994bootstrap}
+\bibfield{author}{\bibinfo{person}{Bradley Efron} {and}
+  \bibinfo{person}{Robert~J. Tibshirani}.} \bibinfo{year}{1994}\natexlab{}.
+\newblock \bibinfo{booktitle}{\emph{An Introduction to the Bootstrap}}.
+\newblock \bibinfo{publisher}{Chapman \& Hall/CRC}, \bibinfo{address}{New
+  York}.
+\newblock
+\urldef\tempurl%
+\url{https://doi.org/10.1201/9780429246593}
+\showDOI{\tempurl}
+
+
+\bibitem[Ellis et~al\mbox{.}(2017)]%
+        {ellis2017chainlink}
+\bibfield{author}{\bibinfo{person}{Steve Ellis}, \bibinfo{person}{Ari Juels},
+  {and} \bibinfo{person}{Sergey Nazarov}.} \bibinfo{year}{2017}\natexlab{}.
+\newblock \showarticletitle{ChainLink: A Decentralized Oracle Network}.
+\newblock \bibinfo{journal}{\emph{Whitepaper}} (\bibinfo{year}{2017}).
+\newblock
+\urldef\tempurl%
+\url{https://research.chain.link/whitepaper-v1.pdf}
+\showURL{%
+\tempurl}
+
+
+\bibitem[Fitting(1994)]%
+        {fitting1994kleene}
+\bibfield{author}{\bibinfo{person}{Melvin Fitting}.}
+  \bibinfo{year}{1994}\natexlab{}.
+\newblock \showarticletitle{Kleene's Three Valued Logics and Their Children}.
+\newblock \bibinfo{journal}{\emph{Fundamenta Informaticae}}
+  \bibinfo{volume}{20}, \bibinfo{number}{1--3} (\bibinfo{year}{1994}),
+  \bibinfo{pages}{113--131}.
+\newblock
+\urldef\tempurl%
+\url{https://doi.org/10.3233/FI-1994-201234}
+\showDOI{\tempurl}
+
+
+\bibitem[Franklin et~al\mbox{.}(2011)]%
+        {franklin2011crowddb}
+\bibfield{author}{\bibinfo{person}{Michael~J. Franklin},
+  \bibinfo{person}{Donald Kossmann}, \bibinfo{person}{Tim Kraska},
+  \bibinfo{person}{Sukriti Ramesh}, {and} \bibinfo{person}{Reynold Xin}.}
+  \bibinfo{year}{2011}\natexlab{}.
+\newblock \showarticletitle{CrowdDB: Answering Queries with Crowdsourcing}. In
+  \bibinfo{booktitle}{\emph{Proceedings of the 2011 ACM SIGMOD International
+  Conference on Management of Data}}. \bibinfo{publisher}{Association for
+  Computing Machinery}.
+\newblock
+\urldef\tempurl%
+\url{https://doi.org/10.1145/1989323.1989331}
+\showDOI{\tempurl}
+
+
+\bibitem[Gama et~al\mbox{.}(2014)]%
+        {gama2014survey}
+\bibfield{author}{\bibinfo{person}{Joao Gama}, \bibinfo{person}{Indre
+  Zliobaite}, \bibinfo{person}{Albert Bifet}, \bibinfo{person}{Mykola
+  Pechenizkiy}, {and} \bibinfo{person}{Abdelhamid Bouchachia}.}
+  \bibinfo{year}{2014}\natexlab{}.
+\newblock \showarticletitle{A Survey on Concept Drift Adaptation}.
+\newblock \bibinfo{journal}{\emph{Comput. Surveys}} \bibinfo{volume}{46},
+  \bibinfo{number}{4} (\bibinfo{year}{2014}), \bibinfo{pages}{1--37}.
+\newblock
+\urldef\tempurl%
+\url{https://doi.org/10.1145/2523813}
+\showDOI{\tempurl}
+
+
+\bibitem[Garay et~al\mbox{.}(2015)]%
+        {garay2015backbone}
+\bibfield{author}{\bibinfo{person}{Juan Garay}, \bibinfo{person}{Aggelos
+  Kiayias}, {and} \bibinfo{person}{Nikos Leonardos}.}
+  \bibinfo{year}{2015}\natexlab{}.
+\newblock \showarticletitle{The Bitcoin Backbone Protocol: Analysis and
+  Applications}. In \bibinfo{booktitle}{\emph{Advances in Cryptology ---
+  EUROCRYPT 2015}}. \bibinfo{pages}{281--310}.
+\newblock
+\urldef\tempurl%
+\url{https://doi.org/10.1007/978-3-662-46803-6_10}
+\showDOI{\tempurl}
+
+
+\bibitem[Gebru et~al\mbox{.}(2021)]%
+        {gebru2021datasheets}
+\bibfield{author}{\bibinfo{person}{Timnit Gebru}, \bibinfo{person}{Jamie
+  Morgenstern}, \bibinfo{person}{Briana Vecchione},
+  \bibinfo{person}{Jennifer~Wortman Vaughan}, \bibinfo{person}{Hanna Wallach},
+  \bibinfo{person}{Hal Daum{\\'e}~III}, {and} \bibinfo{person}{Kate Crawford}.}
+  \bibinfo{year}{2021}\natexlab{}.
+\newblock \showarticletitle{Datasheets for Datasets}.
+\newblock \bibinfo{journal}{\emph{Commun. ACM}} \bibinfo{volume}{64},
+  \bibinfo{number}{12} (\bibinfo{year}{2021}), \bibinfo{pages}{86--92}.
+\newblock
+\urldef\tempurl%
+\url{https://doi.org/10.1145/3458723}
+\showDOI{\tempurl}
+
+
+\bibitem[Geifman and El-Yaniv(2017)]%
+        {geifman2017selective}
+\bibfield{author}{\bibinfo{person}{Yonatan Geifman} {and} \bibinfo{person}{Ran
+  El-Yaniv}.} \bibinfo{year}{2017}\natexlab{}.
+\newblock \showarticletitle{Selective Classification for Deep Neural Networks}.
+  In \bibinfo{booktitle}{\emph{Advances in Neural Information Processing
+  Systems}}, Vol.~\bibinfo{volume}{30}.
+\newblock
+
+
+\bibitem[Geifman and El-Yaniv(2019)]%
+        {geifman2019selectivenet}
+\bibfield{author}{\bibinfo{person}{Yonatan Geifman} {and} \bibinfo{person}{Ran
+  El-Yaniv}.} \bibinfo{year}{2019}\natexlab{}.
+\newblock \showarticletitle{SelectiveNet: A Deep Neural Network with an
+  Integrated Reject Option}. In \bibinfo{booktitle}{\emph{Proceedings of the
+  36th International Conference on Machine Learning}}.
+  \bibinfo{pages}{2151--2159}.
+\newblock
+
+
+\bibitem[Goldwasser et~al\mbox{.}(1989)]%
+        {goldwasser1989knowledge}
+\bibfield{author}{\bibinfo{person}{Shafi Goldwasser}, \bibinfo{person}{Silvio
+  Micali}, {and} \bibinfo{person}{Charles Rackoff}.}
+  \bibinfo{year}{1989}\natexlab{}.
+\newblock \showarticletitle{The Knowledge Complexity of Interactive Proof
+  Systems}.
+\newblock \bibinfo{journal}{\emph{SIAM J. Comput.}} \bibinfo{volume}{18},
+  \bibinfo{number}{1} (\bibinfo{year}{1989}), \bibinfo{pages}{186--208}.
+\newblock
+\urldef\tempurl%
+\url{https://doi.org/10.1137/0218012}
+\showDOI{\tempurl}
+
+
+\bibitem[{Google}(2025)]%
+        {google2025ap2}
+\bibfield{author}{\bibinfo{person}{{Google}}.} \bibinfo{year}{2025}\natexlab{}.
+\newblock \bibinfo{title}{Agent Payments Protocol ({AP2})}.
+\newblock \bibinfo{howpublished}{Technical specification}.
+\newblock
+\urldef\tempurl%
+\url{https://ap2-protocol.org}
+\showURL{%
+\tempurl}
+
+
+\bibitem[Greshake et~al\mbox{.}(2023)]%
+        {greshake2023injection}
+\bibfield{author}{\bibinfo{person}{Kai Greshake}, \bibinfo{person}{Sahar
+  Abdelnabi}, \bibinfo{person}{Shailesh Mishra}, \bibinfo{person}{Christoph
+  Endres}, \bibinfo{person}{Thorsten Holz}, {and} \bibinfo{person}{Mario
+  Fritz}.} \bibinfo{year}{2023}\natexlab{}.
+\newblock \showarticletitle{Not What You've Signed Up For: Compromising
+  Real-World {LLM}-Integrated Applications with Indirect Prompt Injection}. In
+  \bibinfo{booktitle}{\emph{Proceedings of the 16th ACM Workshop on Artificial
+  Intelligence and Security (AISec)}}. \bibinfo{pages}{79--90}.
+\newblock
+\urldef\tempurl%
+\url{https://doi.org/10.1145/3605764.3623985}
+\showDOI{\tempurl}
+
+
+\bibitem[Guo et~al\mbox{.}(2017)]%
+        {guo2017calibration}
+\bibfield{author}{\bibinfo{person}{Chuan Guo}, \bibinfo{person}{Geoff Pleiss},
+  \bibinfo{person}{Yu Sun}, {and} \bibinfo{person}{Kilian~Q. Weinberger}.}
+  \bibinfo{year}{2017}\natexlab{}.
+\newblock \showarticletitle{On Calibration of Modern Neural Networks}. In
+  \bibinfo{booktitle}{\emph{Proceedings of the 34th International Conference on
+  Machine Learning}}. \bibinfo{pages}{1321--1330}.
+\newblock
+
+
+\bibitem[Hayes and Krippendorff(2007)]%
+        {hayes2007answering}
+\bibfield{author}{\bibinfo{person}{Andrew~F. Hayes} {and}
+  \bibinfo{person}{Klaus Krippendorff}.} \bibinfo{year}{2007}\natexlab{}.
+\newblock \showarticletitle{Answering the Call for a Standard Reliability
+  Measure for Coding Data}.
+\newblock \bibinfo{journal}{\emph{Communication Methods and Measures}}
+  \bibinfo{volume}{1}, \bibinfo{number}{1} (\bibinfo{year}{2007}),
+  \bibinfo{pages}{77--89}.
+\newblock
+\urldef\tempurl%
+\url{https://doi.org/10.1080/19312450709336664}
+\showDOI{\tempurl}
+
+
+\bibitem[Hendrickx et~al\mbox{.}(2024)]%
+        {hendrickx2024reject}
+\bibfield{author}{\bibinfo{person}{Kilian Hendrickx}, \bibinfo{person}{Lorenzo
+  Perini}, \bibinfo{person}{Dries Van~der Plas}, \bibinfo{person}{Wannes
+  Meert}, {and} \bibinfo{person}{Jesse Davis}.}
+  \bibinfo{year}{2024}\natexlab{}.
+\newblock \showarticletitle{Machine learning with a reject option: a survey}.
+\newblock \bibinfo{journal}{\emph{Machine Learning}} (\bibinfo{year}{2024}).
+\newblock
+\urldef\tempurl%
+\url{https://doi.org/10.1007/s10994-024-06534-x}
+\showDOI{\tempurl}
+
+
+\bibitem[{Intel Corporation}(2021)]%
+        {intel2021tdx}
+\bibfield{author}{\bibinfo{person}{{Intel Corporation}}.}
+  \bibinfo{year}{2021}\natexlab{}.
+\newblock \bibinfo{booktitle}{\emph{Intel Trust Domain Extensions (Intel
+  TDX)}}.
+\newblock \bibinfo{type}{White Paper}. \bibinfo{institution}{Intel}.
+\newblock
+\urldef\tempurl%
+\url{https://www.intel.com/content/www/us/en/developer/articles/technical/intel-trust-domain-extensions.html}
+\showURL{%
+\tempurl}
+
+
+\bibitem[Ji et~al\mbox{.}(2023)]%
+        {ji2023hallucination}
+\bibfield{author}{\bibinfo{person}{Ziwei Ji}, \bibinfo{person}{Nayeon Lee},
+  \bibinfo{person}{Rita Frieske}, \bibinfo{person}{Tiezheng Yu},
+  \bibinfo{person}{Dan Su}, \bibinfo{person}{Yan Xu}, \bibinfo{person}{Etsuko
+  Ishii}, \bibinfo{person}{Ye~Jin Bang}, \bibinfo{person}{Andrea Madotto},
+  {and} \bibinfo{person}{Pascale Fung}.} \bibinfo{year}{2023}\natexlab{}.
+\newblock \showarticletitle{Survey of Hallucination in Natural Language
+  Generation}.
+\newblock \bibinfo{journal}{\emph{Comput. Surveys}} \bibinfo{volume}{55},
+  \bibinfo{number}{12} (\bibinfo{year}{2023}), \bibinfo{pages}{1--38}.
+\newblock
+\urldef\tempurl%
+\url{https://doi.org/10.1145/3571730}
+\showDOI{\tempurl}
+
+
+\bibitem[Kamath et~al\mbox{.}(2020)]%
+        {kamath2020selectiveqa}
+\bibfield{author}{\bibinfo{person}{Amita Kamath}, \bibinfo{person}{Robin Jia},
+  {and} \bibinfo{person}{Percy Liang}.} \bibinfo{year}{2020}\natexlab{}.
+\newblock \showarticletitle{Selective Question Answering under Domain Shift}.
+  In \bibinfo{booktitle}{\emph{Proceedings of the 58th Annual Meeting of the
+  Association for Computational Linguistics}}. \bibinfo{pages}{5684--5696}.
+\newblock
+\urldef\tempurl%
+\url{https://doi.org/10.18653/v1/2020.acl-main.503}
+\showDOI{\tempurl}
+
+
+\bibitem[Kang et~al\mbox{.}(2024)]%
+        {kang2024exploiting}
+\bibfield{author}{\bibinfo{person}{Daniel Kang}, \bibinfo{person}{Xuechen Li},
+  \bibinfo{person}{Ion Stoica}, \bibinfo{person}{Carlos Guestrin},
+  \bibinfo{person}{Matei Zaharia}, {and} \bibinfo{person}{Tatsunori
+  Hashimoto}.} \bibinfo{year}{2024}\natexlab{}.
+\newblock \showarticletitle{Exploiting Programmatic Behavior of {LLM}s:
+  Dual-Use Through Standard Security Attacks}. In
+  \bibinfo{booktitle}{\emph{Proceedings of the 2024 IEEE Security and Privacy
+  Workshops (SPW)}}. \bibinfo{pages}{132--143}.
+\newblock
+\urldef\tempurl%
+\url{https://doi.org/10.1109/SPW63631.2024.00018}
+\showDOI{\tempurl}
+
+
+\bibitem[Kittur et~al\mbox{.}(2011)]%
+        {kittur2011crowdforge}
+\bibfield{author}{\bibinfo{person}{Aniket Kittur}, \bibinfo{person}{Boris
+  Smus}, \bibinfo{person}{Susheel Khamkar}, {and} \bibinfo{person}{Robert~E.
+  Kraut}.} \bibinfo{year}{2011}\natexlab{}.
+\newblock \showarticletitle{CrowdForge: Crowdsourcing Complex Work}. In
+  \bibinfo{booktitle}{\emph{Proceedings of the 24th Annual ACM Symposium on
+  User Interface Software and Technology}}. \bibinfo{publisher}{Association for
+  Computing Machinery}.
+\newblock
+\urldef\tempurl%
+\url{https://doi.org/10.1145/1979742.1979902}
+\showDOI{\tempurl}
+
+
+\bibitem[Kleene(1952)]%
+        {kleene1952metamathematics}
+\bibfield{author}{\bibinfo{person}{Stephen~Cole Kleene}.}
+  \bibinfo{year}{1952}\natexlab{}.
+\newblock \bibinfo{booktitle}{\emph{Introduction to Metamathematics}}.
+\newblock \bibinfo{publisher}{North-Holland}, \bibinfo{address}{Amsterdam}.
+\newblock
+
+
+\bibitem[Leucker and Schallhart(2009)]%
+        {leucker2009brief}
+\bibfield{author}{\bibinfo{person}{Martin Leucker} {and}
+  \bibinfo{person}{Christian Schallhart}.} \bibinfo{year}{2009}\natexlab{}.
+\newblock \showarticletitle{A Brief Account of Runtime Verification}.
+\newblock \bibinfo{journal}{\emph{Journal of Logic and Algebraic Programming}}
+  \bibinfo{volume}{78}, \bibinfo{number}{5} (\bibinfo{year}{2009}),
+  \bibinfo{pages}{293--303}.
+\newblock
+\urldef\tempurl%
+\url{https://doi.org/10.1016/j.jlap.2008.08.004}
+\showDOI{\tempurl}
+
+
+\bibitem[Little et~al\mbox{.}(2010)]%
+        {little2010turkit}
+\bibfield{author}{\bibinfo{person}{Greg Little}, \bibinfo{person}{Lydia~B.
+  Chilton}, \bibinfo{person}{Max Goldman}, {and} \bibinfo{person}{Robert~C.
+  Miller}.} \bibinfo{year}{2010}\natexlab{}.
+\newblock \showarticletitle{TurKit: Human Computation Algorithms on Mechanical
+  Turk}. In \bibinfo{booktitle}{\emph{Proceedings of the 23nd Annual ACM
+  Symposium on User Interface Software and Technology}}.
+  \bibinfo{publisher}{Association for Computing Machinery}.
+\newblock
+\urldef\tempurl%
+\url{https://dspace.mit.edu/bitstreams/c8e0c8c3-fd19-4593-b3bc-ee3c9535532b/download}
+\showURL{%
+\tempurl}
+
+
+\bibitem[Liu et~al\mbox{.}(2023b)]%
+        {liu2023agentbench}
+\bibfield{author}{\bibinfo{person}{Xiao Liu}, \bibinfo{person}{Hao Yu},
+  \bibinfo{person}{Hanchen Zhang}, \bibinfo{person}{Yifan Xu},
+  \bibinfo{person}{Xuanyu Lei}, \bibinfo{person}{Hanyu Lai},
+  \bibinfo{person}{Yu Gu}, \bibinfo{person}{Hangliang Ding},
+  \bibinfo{person}{Kaiwen Men}, \bibinfo{person}{Kejuan Yang},
+  \bibinfo{person}{Shudan Zhang}, \bibinfo{person}{Xiang Deng},
+  \bibinfo{person}{Aohan Zeng}, \bibinfo{person}{Zhengxiao Du},
+  \bibinfo{person}{Chenhui Zhang}, \bibinfo{person}{Sheng Shen},
+  \bibinfo{person}{Tianjun Zhang}, \bibinfo{person}{Yu Su},
+  \bibinfo{person}{Huan Sun}, \bibinfo{person}{Minlie Huang},
+  \bibinfo{person}{Yuxiao Dong}, {and} \bibinfo{person}{Jie Tang}.}
+  \bibinfo{year}{2023}\natexlab{b}.
+\newblock \bibinfo{title}{AgentBench: Evaluating LLMs as Agents}.
+\newblock
+\newblock
+\showeprint[arxiv]{2308.03688}
+
+
+\bibitem[Liu et~al\mbox{.}(2023a)]%
+        {liu2023geval}
+\bibfield{author}{\bibinfo{person}{Yang Liu}, \bibinfo{person}{Dan Iter},
+  \bibinfo{person}{Yichong Xu}, \bibinfo{person}{Shuohang Wang},
+  \bibinfo{person}{Ruochen Xu}, {and} \bibinfo{person}{Chenguang Zhu}.}
+  \bibinfo{year}{2023}\natexlab{a}.
+\newblock \showarticletitle{G-Eval: NLG Evaluation using GPT-4 with Better
+  Human Alignment}. In \bibinfo{booktitle}{\emph{Proceedings of the 2023
+  Conference on Empirical Methods in Natural Language Processing}}.
+  \bibinfo{pages}{2511--2522}.
+\newblock
+\urldef\tempurl%
+\url{https://doi.org/10.18653/v1/2023.emnlp-main.153}
+\showDOI{\tempurl}
+
+
+\bibitem[Maram et~al\mbox{.}(2021)]%
+        {maram2021candid}
+\bibfield{author}{\bibinfo{person}{Deepak Maram}, \bibinfo{person}{Harjasleen
+  Malvai}, \bibinfo{person}{Fan Zhang}, \bibinfo{person}{Nerla Jean-Louis},
+  \bibinfo{person}{Alexander Frolov}, \bibinfo{person}{Tyler Kell},
+  \bibinfo{person}{Tyrone Lobban}, \bibinfo{person}{Christine Moy},
+  \bibinfo{person}{Ari Juels}, {and} \bibinfo{person}{Andrew Miller}.}
+  \bibinfo{year}{2021}\natexlab{}.
+\newblock \showarticletitle{{CanDID}: Can-Do Decentralized Identity with Legacy
+  Compatibility, Sybil-Resistance, and Accountability}. In
+  \bibinfo{booktitle}{\emph{Proceedings of the 2021 IEEE Symposium on Security
+  and Privacy (S\&P)}}. \bibinfo{pages}{1348--1366}.
+\newblock
+\urldef\tempurl%
+\url{https://doi.org/10.1109/SP40001.2021.00038}
+\showDOI{\tempurl}
+
+
+\bibitem[Meyer(1997)]%
+        {meyer1997object}
+\bibfield{author}{\bibinfo{person}{Bertrand Meyer}.}
+  \bibinfo{year}{1997}\natexlab{}.
+\newblock \bibinfo{booktitle}{\emph{Object-Oriented Software Construction}
+  (\bibinfo{edition}{2} ed.)}.
+\newblock \bibinfo{publisher}{Prentice Hall}.
+\newblock
+
+
+\bibitem[Miller(2006)]%
+        {miller2006capability}
+\bibfield{author}{\bibinfo{person}{Mark~Samuel Miller}.}
+  \bibinfo{year}{2006}\natexlab{}.
+\newblock \emph{\bibinfo{title}{Robust Composition: Towards a Unified Approach
+  to Access Control and Concurrency Control}}.
+\newblock \bibinfo{thesistype}{Ph.\,D. Dissertation}. \bibinfo{school}{Johns
+  Hopkins University}.
+\newblock
+
+
+\bibitem[Mitchell et~al\mbox{.}(2019)]%
+        {mitchell2019modelcards}
+\bibfield{author}{\bibinfo{person}{Margaret Mitchell}, \bibinfo{person}{Simone
+  Wu}, \bibinfo{person}{Andrew Zaldivar}, \bibinfo{person}{Parker Barnes},
+  \bibinfo{person}{Lucy Vasserman}, \bibinfo{person}{Ben Hutchinson},
+  \bibinfo{person}{Elena Spitzer}, \bibinfo{person}{Inioluwa~Deborah Raji},
+  {and} \bibinfo{person}{Timnit Gebru}.} \bibinfo{year}{2019}\natexlab{}.
+\newblock \showarticletitle{Model Cards for Model Reporting}. In
+  \bibinfo{booktitle}{\emph{Proceedings of the Conference on Fairness,
+  Accountability, and Transparency}}. \bibinfo{publisher}{Association for
+  Computing Machinery}, \bibinfo{pages}{220--229}.
+\newblock
+\urldef\tempurl%
+\url{https://doi.org/10.1145/3287560.3287596}
+\showDOI{\tempurl}
+
+
+\bibitem[Nakamoto(2008)]%
+        {nakamoto2008bitcoin}
+\bibfield{author}{\bibinfo{person}{Satoshi Nakamoto}.}
+  \bibinfo{year}{2008}\natexlab{}.
+\newblock \showarticletitle{Bitcoin: A Peer-to-Peer Electronic Cash System}.
+\newblock \bibinfo{journal}{\emph{Whitepaper}} (\bibinfo{year}{2008}).
+\newblock
+\urldef\tempurl%
+\url{https://bitcoin.org/bitcoin.pdf}
+\showURL{%
+\tempurl}
+
+
+\bibitem[Necula(1997)]%
+        {necula1997proof}
+\bibfield{author}{\bibinfo{person}{George~C. Necula}.}
+  \bibinfo{year}{1997}\natexlab{}.
+\newblock \showarticletitle{Proof-Carrying Code}. In
+  \bibinfo{booktitle}{\emph{Proceedings of the 24th ACM SIGPLAN-SIGACT
+  Symposium on Principles of Programming Languages}}. \bibinfo{publisher}{ACM},
+  \bibinfo{pages}{106--119}.
+\newblock
+\urldef\tempurl%
+\url{https://doi.org/10.1145/263699.263712}
+\showDOI{\tempurl}
+
+
+\bibitem[Nosek et~al\mbox{.}(2018)]%
+        {nosek2018preregistration}
+\bibfield{author}{\bibinfo{person}{Brian~A. Nosek}, \bibinfo{person}{Charles~R.
+  Ebersole}, \bibinfo{person}{Alexander~C. DeHaven}, {and}
+  \bibinfo{person}{David~T. Mellor}.} \bibinfo{year}{2018}\natexlab{}.
+\newblock \showarticletitle{The Preregistration Revolution}.
+\newblock \bibinfo{journal}{\emph{Proceedings of the National Academy of
+  Sciences}} \bibinfo{volume}{115}, \bibinfo{number}{11}
+  (\bibinfo{year}{2018}), \bibinfo{pages}{2600--2606}.
+\newblock
+\urldef\tempurl%
+\url{https://doi.org/10.1073/pnas.1708274114}
+\showDOI{\tempurl}
+
+
+\bibitem[{Open Policy Agent Project}(2023)]%
+        {opa2023}
+\bibfield{author}{\bibinfo{person}{{Open Policy Agent Project}}.}
+  \bibinfo{year}{2023}\natexlab{}.
+\newblock \bibinfo{title}{Open Policy Agent: Policy-Based Control for Cloud
+  Native Environments}.
+\newblock \bibinfo{howpublished}{Cloud Native Computing Foundation graduated
+  project}.
+\newblock
+\urldef\tempurl%
+\url{https://www.openpolicyagent.org/docs/latest/}
+\showURL{%
+\tempurl}
+
+
+\bibitem[Park et~al\mbox{.}(2023)]%
+        {park2023generative}
+\bibfield{author}{\bibinfo{person}{Joon~Sung Park}, \bibinfo{person}{Joseph~C.
+  O'Brien}, \bibinfo{person}{Carrie~J. Cai}, \bibinfo{person}{Meredith~Ringel
+  Morris}, \bibinfo{person}{Percy Liang}, {and} \bibinfo{person}{Michael~S.
+  Bernstein}.} \bibinfo{year}{2023}\natexlab{}.
+\newblock \showarticletitle{Generative Agents: Interactive Simulacra of Human
+  Behavior}.
+\newblock \bibinfo{journal}{\emph{Proceedings of the 36th Annual ACM Symposium
+  on User Interface Software and Technology (UIST)}} (\bibinfo{year}{2023}),
+  \bibinfo{pages}{1--22}.
+\newblock
+\urldef\tempurl%
+\url{https://doi.org/10.1145/3586183.3606763}
+\showDOI{\tempurl}
+
+
+\bibitem[Parno et~al\mbox{.}(2013)]%
+        {parno2013pinocchio}
+\bibfield{author}{\bibinfo{person}{Bryan Parno}, \bibinfo{person}{Jon Howell},
+  \bibinfo{person}{Craig Gentry}, {and} \bibinfo{person}{Mariana Raykova}.}
+  \bibinfo{year}{2013}\natexlab{}.
+\newblock \showarticletitle{Pinocchio: Nearly Practical Verifiable
+  Computation}. In \bibinfo{booktitle}{\emph{Proceedings of the 2013 IEEE
+  Symposium on Security and Privacy (S\&P)}}. \bibinfo{pages}{238--252}.
+\newblock
+\urldef\tempurl%
+\url{https://doi.org/10.1109/SP.2013.47}
+\showDOI{\tempurl}
+
+
+\bibitem[Retelny et~al\mbox{.}(2014)]%
+        {retelny2014flashteams}
+\bibfield{author}{\bibinfo{person}{Daniela Retelny}, \bibinfo{person}{Sebastien
+  Robaszkiewicz}, \bibinfo{person}{Alexandra To}, \bibinfo{person}{Walter~S.
+  Lasecki}, \bibinfo{person}{Jay Patel}, \bibinfo{person}{Negar Rahmati},
+  \bibinfo{person}{Tulsee Doshi}, \bibinfo{person}{Melissa Valentine}, {and}
+  \bibinfo{person}{Michael~S. Bernstein}.} \bibinfo{year}{2014}\natexlab{}.
+\newblock \showarticletitle{Expert Crowdsourcing with Flash Teams}. In
+  \bibinfo{booktitle}{\emph{Proceedings of the 27th Annual ACM Symposium on
+  User Interface Software and Technology}}. \bibinfo{publisher}{Association for
+  Computing Machinery}.
+\newblock
+\urldef\tempurl%
+\url{https://doi.org/10.1145/2642918.2647409}
+\showDOI{\tempurl}
+
+
+\bibitem[Ruan et~al\mbox{.}(2024)]%
+        {ruan2024toolemu}
+\bibfield{author}{\bibinfo{person}{Yangjun Ruan}, \bibinfo{person}{Honghua
+  Dong}, \bibinfo{person}{Andrew Wang}, \bibinfo{person}{Silviu Pitis},
+  \bibinfo{person}{Yongchao Zhou}, \bibinfo{person}{Jimmy Ba},
+  \bibinfo{person}{Yann Dubois}, \bibinfo{person}{Chris~J. Maddison}, {and}
+  \bibinfo{person}{Tatsunori Hashimoto}.} \bibinfo{year}{2024}\natexlab{}.
+\newblock \showarticletitle{Identifying the Risks of {LM} Agents with an
+  {LM}-Emulated Sandbox}. In \bibinfo{booktitle}{\emph{Proceedings of the 12th
+  International Conference on Learning Representations (ICLR)}}.
+\newblock
+\urldef\tempurl%
+\url{https://arxiv.org/abs/2309.15817}
+\showURL{%
+\tempurl}
+
+
+\bibitem[Sabt et~al\mbox{.}(2015)]%
+        {sabt2015tee}
+\bibfield{author}{\bibinfo{person}{Mohamed Sabt}, \bibinfo{person}{Mohammed
+  Achemlal}, {and} \bibinfo{person}{Abdelmadjid Bouabdallah}.}
+  \bibinfo{year}{2015}\natexlab{}.
+\newblock \showarticletitle{Trusted Execution Environment: What It Is, and What
+  It Is Not}. In \bibinfo{booktitle}{\emph{Proceedings of the 2015 IEEE
+  Trustcom/BigDataSE/ISPA}}, Vol.~\bibinfo{volume}{1}. \bibinfo{pages}{57--64}.
+\newblock
+\urldef\tempurl%
+\url{https://doi.org/10.1109/Trustcom.2015.357}
+\showDOI{\tempurl}
+
+
+\bibitem[Saltzer and Schroeder(1975)]%
+        {saltzer1975protection}
+\bibfield{author}{\bibinfo{person}{Jerome~H. Saltzer} {and}
+  \bibinfo{person}{Michael~D. Schroeder}.} \bibinfo{year}{1975}\natexlab{}.
+\newblock \showarticletitle{The Protection of Information in Computer Systems}.
+\newblock \bibinfo{journal}{\emph{Proc. IEEE}} \bibinfo{volume}{63},
+  \bibinfo{number}{9} (\bibinfo{year}{1975}), \bibinfo{pages}{1278--1308}.
+\newblock
+\urldef\tempurl%
+\url{https://doi.org/10.1109/PROC.1975.9939}
+\showDOI{\tempurl}
+
+
+\bibitem[Schemmer et~al\mbox{.}(2023)]%
+        {schemmer2023reliance}
+\bibfield{author}{\bibinfo{person}{Max Schemmer}, \bibinfo{person}{Niklas
+  Kuehl}, \bibinfo{person}{Constantin Benz}, \bibinfo{person}{Alena Bartos},
+  {and} \bibinfo{person}{Gerhard Satzger}.} \bibinfo{year}{2023}\natexlab{}.
+\newblock \showarticletitle{Appropriate Reliance on AI Advice:
+  Conceptualization and the Effect of Explanations}. In
+  \bibinfo{booktitle}{\emph{Proceedings of the 2023 CHI Conference on Human
+  Factors in Computing Systems}}.
+\newblock
+\urldef\tempurl%
+\url{https://doi.org/10.1145/3581641.3584066}
+\showDOI{\tempurl}
+
+
+\bibitem[Sporny et~al\mbox{.}(2022)]%
+        {sporny2022vc}
+\bibfield{author}{\bibinfo{person}{Manu Sporny}, \bibinfo{person}{Dave
+  Longley}, {and} \bibinfo{person}{David Chadwick}.}
+  \bibinfo{year}{2022}\natexlab{}.
+\newblock \bibinfo{booktitle}{\emph{Verifiable Credentials Data Model v1.1}}.
+\newblock \bibinfo{type}{W3C Recommendation}. \bibinfo{institution}{World Wide
+  Web Consortium (W3C)}.
+\newblock
+\urldef\tempurl%
+\url{https://www.w3.org/TR/vc-data-model/}
+\showURL{%
+\tempurl}
+
+
+\bibitem[Thaler(2022)]%
+        {thaler2022proofs}
+\bibfield{author}{\bibinfo{person}{Justin Thaler}.}
+  \bibinfo{year}{2022}\natexlab{}.
+\newblock \bibinfo{title}{Proofs, Arguments, and Zero-Knowledge}.
+\newblock \bibinfo{howpublished}{Foundations and Trends in Privacy and
+  Security}.
+\newblock
+\urldef\tempurl%
+\url{https://doi.org/10.1561/3300000030}
+\showDOI{\tempurl}
+\newblock
+\shownote{Vol. 4, No. 2--4}.
+
+
+\bibitem[Vaccaro et~al\mbox{.}(2024)]%
+        {vaccaro2024combinations}
+\bibfield{author}{\bibinfo{person}{Michelle Vaccaro}, \bibinfo{person}{Abdullah
+  Almaatouq}, {and} \bibinfo{person}{Thomas Malone}.}
+  \bibinfo{year}{2024}\natexlab{}.
+\newblock \showarticletitle{When combinations of humans and AI are useful: A
+  systematic review and meta-analysis}.
+\newblock \bibinfo{journal}{\emph{Nature Human Behaviour}}
+  (\bibinfo{year}{2024}).
+\newblock
+\urldef\tempurl%
+\url{https://doi.org/10.1038/s41562-024-02024-1}
+\showDOI{\tempurl}
+
+
+\bibitem[Van~Bulck et~al\mbox{.}(2018)]%
+        {vanbulck2018foreshadow}
+\bibfield{author}{\bibinfo{person}{Jo Van~Bulck}, \bibinfo{person}{Marina
+  Minkin}, \bibinfo{person}{Ofir Weisse}, \bibinfo{person}{Daniel Genkin},
+  \bibinfo{person}{Baris Kasikci}, \bibinfo{person}{Frank Piessens},
+  \bibinfo{person}{Mark Silberstein}, \bibinfo{person}{Thomas~F. Wenisch},
+  \bibinfo{person}{Yuval Yarom}, {and} \bibinfo{person}{Raoul Strackx}.}
+  \bibinfo{year}{2018}\natexlab{}.
+\newblock \showarticletitle{Foreshadow: Extracting the Keys to the Intel {SGX}
+  Kingdom with Transient Out-of-Order Execution}. In
+  \bibinfo{booktitle}{\emph{Proceedings of the 27th USENIX Security
+  Symposium}}. \bibinfo{pages}{991--1008}.
+\newblock
+
+
+\bibitem[Verdoliva(2020)]%
+        {verdoliva2020media}
+\bibfield{author}{\bibinfo{person}{Luisa Verdoliva}.}
+  \bibinfo{year}{2020}\natexlab{}.
+\newblock \showarticletitle{Media Forensics and DeepFakes: An Overview}.
+\newblock \bibinfo{journal}{\emph{IEEE Journal of Selected Topics in Signal
+  Processing}} \bibinfo{volume}{14}, \bibinfo{number}{5}
+  (\bibinfo{year}{2020}), \bibinfo{pages}{910--932}.
+\newblock
+\urldef\tempurl%
+\url{https://doi.org/10.1109/JSTSP.2020.3002101}
+\showDOI{\tempurl}
+
+
+\bibitem[Vogelsteller and Buterin(2015)]%
+        {vogelsteller2015erc20}
+\bibfield{author}{\bibinfo{person}{Fabian Vogelsteller} {and}
+  \bibinfo{person}{Vitalik Buterin}.} \bibinfo{year}{2015}\natexlab{}.
+\newblock \bibinfo{title}{ERC-20: Token Standard}.
+\newblock \bibinfo{howpublished}{Ethereum Improvement Proposals, EIP-20}.
+\newblock
+\urldef\tempurl%
+\url{https://eips.ethereum.org/EIPS/eip-20}
+\showURL{%
+\tempurl}
+
+
+\bibitem[Vovk et~al\mbox{.}(2005)]%
+        {vovk2005algorithmic}
+\bibfield{author}{\bibinfo{person}{Vladimir Vovk}, \bibinfo{person}{Alexander
+  Gammerman}, {and} \bibinfo{person}{Glenn Shafer}.}
+  \bibinfo{year}{2005}\natexlab{}.
+\newblock \bibinfo{booktitle}{\emph{Algorithmic Learning in a Random World}}.
+\newblock \bibinfo{publisher}{Springer}, \bibinfo{address}{New York}.
+\newblock
+\urldef\tempurl%
+\url{https://doi.org/10.1007/b106715}
+\showDOI{\tempurl}
+
+
+\bibitem[Wang et~al\mbox{.}(2024)]%
+        {wang2024fair}
+\bibfield{author}{\bibinfo{person}{Peiyi Wang}, \bibinfo{person}{Lei Li},
+  \bibinfo{person}{Liang Chen}, \bibinfo{person}{Dawei Zhu},
+  \bibinfo{person}{Binghuai Lin}, \bibinfo{person}{Yunbo Cao},
+  \bibinfo{person}{Qi Liu}, \bibinfo{person}{Tianyu Liu}, {and}
+  \bibinfo{person}{Zhifang Sui}.} \bibinfo{year}{2024}\natexlab{}.
+\newblock \showarticletitle{Large Language Models are not Fair Evaluators}. In
+  \bibinfo{booktitle}{\emph{Proceedings of the 62nd Annual Meeting of the
+  Association for Computational Linguistics}}. \bibinfo{pages}{9440--9450}.
+\newblock
+\urldef\tempurl%
+\url{https://doi.org/10.18653/v1/2024.acl-long.511}
+\showDOI{\tempurl}
+
+
+\bibitem[Xie et~al\mbox{.}(2024)]%
+        {xie2024osworld}
+\bibfield{author}{\bibinfo{person}{Tianbao Xie}, \bibinfo{person}{Danyang
+  Zhang}, \bibinfo{person}{Jixuan Chen}, \bibinfo{person}{Xiaochuan Li},
+  \bibinfo{person}{Siheng Zhao}, \bibinfo{person}{Ruisheng Cao},
+  \bibinfo{person}{Toh~Jing Hua}, \bibinfo{person}{Zhoujun Cheng},
+  \bibinfo{person}{Dongchan Shin}, \bibinfo{person}{Fangyu Lei},
+  \bibinfo{person}{Yitao Liu}, \bibinfo{person}{Yiheng Xu},
+  \bibinfo{person}{Shuyan Zhou}, \bibinfo{person}{Silvio Savarese},
+  \bibinfo{person}{Caiming Xiong}, \bibinfo{person}{Victor Zhong}, {and}
+  \bibinfo{person}{Tao Yu}.} \bibinfo{year}{2024}\natexlab{}.
+\newblock \bibinfo{title}{OSWorld: Benchmarking Multimodal Agents for
+  Open-Ended Tasks in Real Computer Environments}.
+\newblock
+\newblock
+\showeprint[arxiv]{2404.07972}~[cs.AI]
+\urldef\tempurl%
+\url{https://arxiv.org/abs/2404.07972}
+\showURL{%
+\tempurl}
+
+
+\bibitem[Xu et~al\mbox{.}(2024)]%
+        {xu2024theagentcompany}
+\bibfield{author}{\bibinfo{person}{Frank~F. Xu}, \bibinfo{person}{Yufan Song},
+  \bibinfo{person}{Boxuan Li}, \bibinfo{person}{Yuxuan Tang},
+  \bibinfo{person}{Kritanjali Jain}, \bibinfo{person}{Mengxue Bao},
+  \bibinfo{person}{Zora~Z. Wang}, \bibinfo{person}{Xuhui Zhou},
+  \bibinfo{person}{Zhitong Guo}, \bibinfo{person}{Murong Cao},
+  \bibinfo{person}{Mingyang Yang}, \bibinfo{person}{Hao~Yang Lu},
+  \bibinfo{person}{Amaad Martin}, \bibinfo{person}{Zhe Su},
+  \bibinfo{person}{Leander Maben}, \bibinfo{person}{Raj Mehta},
+  \bibinfo{person}{Wayne Chi}, \bibinfo{person}{Lawrence Jang},
+  \bibinfo{person}{Yiqing Xie}, \bibinfo{person}{Shuyan Zhou}, {and}
+  \bibinfo{person}{Graham Neubig}.} \bibinfo{year}{2024}\natexlab{}.
+\newblock \bibinfo{title}{TheAgentCompany: Benchmarking LLM Agents on
+  Consequential Real World Tasks}.
+\newblock
+\newblock
+\showeprint[arxiv]{2412.14161}~[cs.AI]
+\urldef\tempurl%
+\url{https://arxiv.org/abs/2412.14161}
+\showURL{%
+\tempurl}
+
+
+\bibitem[Yang et~al\mbox{.}(2024)]%
+        {yang2024sweagent}
+\bibfield{author}{\bibinfo{person}{John Yang}, \bibinfo{person}{Carlos~E.
+  Jimenez}, \bibinfo{person}{Alexander Wettig}, \bibinfo{person}{Kilian
+  Lieret}, \bibinfo{person}{Shunyu Yao}, \bibinfo{person}{Karthik Narasimhan},
+  {and} \bibinfo{person}{Ofir Press}.} \bibinfo{year}{2024}\natexlab{}.
+\newblock \bibinfo{title}{SWE-agent: Agent-Computer Interfaces Enable Automated
+  Software Engineering}.
+\newblock
+\newblock
+\showeprint[arxiv]{2405.15793}~[cs.SE]
+\urldef\tempurl%
+\url{https://arxiv.org/abs/2405.15793}
+\showURL{%
+\tempurl}
+
+
+\bibitem[Zhang et~al\mbox{.}(2016)]%
+        {zhang2016towncrier}
+\bibfield{author}{\bibinfo{person}{Fan Zhang}, \bibinfo{person}{Ethan
+  Cecchetti}, \bibinfo{person}{Kyle Croman}, \bibinfo{person}{Ari Juels}, {and}
+  \bibinfo{person}{Elaine Shi}.} \bibinfo{year}{2016}\natexlab{}.
+\newblock \showarticletitle{Town Crier: An Authenticated Data Feed for Smart
+  Contracts}. In \bibinfo{booktitle}{\emph{Proceedings of the 2016 ACM SIGSAC
+  Conference on Computer and Communications Security}}.
+  \bibinfo{publisher}{Association for Computing Machinery},
+  \bibinfo{pages}{270--282}.
+\newblock
+\urldef\tempurl%
+\url{https://doi.org/10.1145/2976749.2978326}
+\showDOI{\tempurl}
+
+
+\bibitem[Zhang et~al\mbox{.}(2020)]%
+        {zhang2020deco}
+\bibfield{author}{\bibinfo{person}{Fan Zhang}, \bibinfo{person}{Deepak Maram},
+  \bibinfo{person}{Harjasleen Malvai}, \bibinfo{person}{Steven Goldfeder},
+  {and} \bibinfo{person}{Ari Juels}.} \bibinfo{year}{2020}\natexlab{}.
+\newblock \showarticletitle{{DECO}: Liberating Web Data Using Decentralized
+  Oracles for {TLS}}. In \bibinfo{booktitle}{\emph{Proceedings of the 2020 ACM
+  SIGSAC Conference on Computer and Communications Security (CCS)}}.
+  \bibinfo{pages}{1919--1938}.
+\newblock
+\urldef\tempurl%
+\url{https://doi.org/10.1145/3372297.3417239}
+\showDOI{\tempurl}
+
+
+\bibitem[Zheng et~al\mbox{.}(2023)]%
+        {zheng2023judging}
+\bibfield{author}{\bibinfo{person}{Lianmin Zheng}, \bibinfo{person}{Wei-Lin
+  Chiang}, \bibinfo{person}{Ying Sheng}, \bibinfo{person}{Siyuan Zhuang},
+  \bibinfo{person}{Zhanghao Wu}, \bibinfo{person}{Yonghao Zhuang},
+  \bibinfo{person}{Zi Lin}, \bibinfo{person}{Zhuohan Li},
+  \bibinfo{person}{Dacheng Li}, \bibinfo{person}{Eric~P. Xing},
+  \bibinfo{person}{Hao Zhang}, \bibinfo{person}{Joseph~E. Gonzalez}, {and}
+  \bibinfo{person}{Ion Stoica}.} \bibinfo{year}{2023}\natexlab{}.
+\newblock \bibinfo{title}{Judging LLM-as-a-Judge with MT-Bench and Chatbot
+  Arena}.
+\newblock
+\newblock
+\showeprint[arxiv]{2306.05685}
+
+
+\bibitem[Zhou et~al\mbox{.}(2023)]%
+        {zhou2023webarena}
+\bibfield{author}{\bibinfo{person}{Shuyan Zhou}, \bibinfo{person}{Frank~F. Xu},
+  \bibinfo{person}{Hao Zhu}, \bibinfo{person}{Xuhui Zhou},
+  \bibinfo{person}{Robert Lo}, \bibinfo{person}{Abishek Sridhar},
+  \bibinfo{person}{Xianyi Cheng}, \bibinfo{person}{Tianyue Ou},
+  \bibinfo{person}{Yonatan Bisk}, \bibinfo{person}{Daniel Fried},
+  \bibinfo{person}{Uri Alon}, {and} \bibinfo{person}{Graham Neubig}.}
+  \bibinfo{year}{2023}\natexlab{}.
+\newblock \bibinfo{title}{WebArena: A Realistic Web Environment for Building
+  Autonomous Agents}.
+\newblock
+\newblock
+\showeprint[arxiv]{2307.13854}~[cs.AI]
+\urldef\tempurl%
+\url{https://arxiv.org/abs/2307.13854}
+\showURL{%
+\tempurl}
+
+
+\end{thebibliography}
