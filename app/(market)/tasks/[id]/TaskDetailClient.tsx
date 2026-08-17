@@ -98,6 +98,7 @@ type Task = {
     targetLabel?: string;
     proofPhrase?: string;
     brief?: string;
+    exampleImages?: string[];
     campaignLinks?: {
       followHandle?: string;
       telegramUrl?: string;
@@ -3419,6 +3420,30 @@ export default function TaskDetailClient({
                   )}
                 </div>
               </div>
+
+              {/* Example memes */}
+              {(task.campaign?.exampleImages?.length || 0) > 0 ? (
+                <div className={styles.qnExampleMemes}>
+                  <div className={styles.qnExampleMemesHead}>
+                    <h3 className={styles.qnExampleMemesTitle}>示例梗图 · Example Memes</h3>
+                    <span className={styles.qnExampleMemesHint}>参考一下，发一张你的版本</span>
+                  </div>
+                  <div className={styles.qnExampleMemesGrid}>
+                    {task.campaign!.exampleImages!.map((src, index) => (
+                      <a
+                        key={`${src}-${index}`}
+                        href={src}
+                        target="_blank"
+                        rel="noreferrer"
+                        className={styles.qnExampleMeme}
+                        aria-label={`Example meme ${index + 1}`}
+                      >
+                        <img src={src} alt={`Example meme ${index + 1}`} loading="lazy" />
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
 
               {/* For You */}
               <div className={styles.qnForYou}>

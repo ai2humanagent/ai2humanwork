@@ -81,6 +81,12 @@ const memeTask = {
     platform: "x",
     targetUrl: "https://x.com/ai2humannetwork/status/2057669148281651651",
     targetLabel: "AI2Human announcement post",
+    exampleImages: [
+      "https://ai2human.work/campaign/niulai-meme-1.png",
+      "https://ai2human.work/campaign/niulai-meme-2.png",
+      "https://ai2human.work/campaign/niulai-meme-3.png",
+      "https://ai2human.work/campaign/niulai-meme-4.png"
+    ],
     proofPhrase: "#A2H #牛来",
     requesterName: "AI2Human",
     requesterHandle: "@ai2humannetwork",
@@ -114,26 +120,36 @@ const bullTask = {
   ),
   campaign: {
     brief:
-      "「牛来了，证据呢？」 AI can't walk outside and photograph a bull — you can. Complete any ONE of these and submit photo proof: (1) a bull/cow statue or real cow (safe distance); (2) a beef noodle bowl with the shop sign; (3) a place whose name contains 牛 (牛市口, 牛街, Oxford…); (4) any sign with 牛/OX/BULL on it; (5) your phone showing a wallet balance next to a bull item (onchain + offline in one shot); (6) a public-transport ticket to a bull landmark. Handwritten paper with today's date + wallet address must appear in the photo. Photo + location note + timestamp note = your proof bundle.",
-    label: "Photograph proof that the bull is here (any one of the six quests)",
-    action: "storefront_check",
-    platform: "real_world",
-    targetUrl: "",
-    targetLabel: "Real-world bull evidence",
+      "「牛来了，证据呢？」 AI can't walk outside and photograph a bull — you can. Complete any ONE of these quests: (1) a bull/cow statue or real cow (safe distance); (2) a beef noodle bowl with the shop sign; (3) a place whose name contains 牛 (牛市口, 牛街, Oxford…); (4) any sign with 牛/OX/BULL on it; (5) your phone showing a wallet balance next to a bull item (onchain + offline in one shot); (6) a public-transport ticket to a bull landmark. Post your photo on X, submit the live post link, and verified entries earn an A2H airdrop. Handwritten paper with today's date + wallet address must appear in the photo.",
+    label: "Post your 真牛证明 photo on X (any one of the six quests)",
+    action: "creative_submission",
+    platform: "x",
+    targetUrl: "https://x.com/ai2humannetwork/status/2057669148281651651",
+    targetLabel: "AI2Human announcement post",
+    proofPhrase: "#A2H #真牛",
     requesterName: "AI2Human",
     requesterHandle: "@ai2humannetwork",
-    submissionFields: ["photo", "locationNote", "timestampNote", "summary"],
+    requiredHashtags: ["#A2H", "#真牛"],
+    requiredMentions: ["@ai2humannetwork"],
+    submissionFields: ["executorHandle", "postUrl", "photo", "locationNote", "timestampNote", "summary"],
     proofRequirements: [
-      "Upload one clear photo showing your bull evidence and a handwritten paper with today's date + your wallet address.",
+      "Attach your X handle.",
+      "Attach the live X post URL containing your bull-proof photo.",
+      "The live URL must belong to the same X handle you submit.",
+      "Upload a screenshot or keep the post visible on your profile for verification.",
+      "The photo must show your bull evidence and a handwritten paper with today's date + your wallet address.",
       "Add a short location note naming the place (store, landmark, station, street).",
-      "Add a timestamp note for when the proof was captured.",
+      "Include the required hashtag or phrase (#A2H #真牛).",
       "Add a one-line execution summary."
     ],
     verificationChecks: [
-      "Bull proof photo is uploaded.",
+      "Executor handle is present.",
+      "Live X post URL is present.",
+      "Submitted X URL matches executor handle.",
+      "Bull proof photo is visible in the post.",
       "Handwritten date + wallet address is visible in the photo.",
       "Location note is present.",
-      "Timestamp note is present.",
+      "Required hashtag or phrase is present.",
       "Execution summary is present."
     ]
   }
