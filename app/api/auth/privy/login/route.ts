@@ -3,10 +3,16 @@ import { NextResponse } from "next/server";
 import {
   SESSION_COOKIE,
   createSessionToken,
+  getAuthContext,
   makeSessionExpiry,
   sanitizeUser
 } from "../../../../lib/auth";
-import { extractPrivyIdentity, getPrivyClient, isPrivyServerConfigured } from "../../../../lib/privy";
+import {
+  ensurePrivyEmbeddedWallet,
+  extractPrivyIdentity,
+  getPrivyClient,
+  isPrivyServerConfigured
+} from "../../../../lib/privy";
 import { updateDb, type UserAccount } from "../../../../lib/store";
 import { isUsableContactEmail } from "../../../../lib/operatorAccess";
 
@@ -28,28 +34,53 @@ export async function POST(request: Request) {
 
   const body = await request.json().catch(() => ({}));
   const accessToken = String(body.accessToken || "").trim();
-  const requestedWalletAddress = normalizeWalletAddress(body.walletAddress);
+  const requestedEmbeddedWalletAddress = normalizeWalletAddress(body.embeddedWalletAddress);
   if (!accessToken) {
     return NextResponse.json({ error: "accessToken is required." }, { status: 400 });
   }
 
   const privy = getPrivyClient();
+  const priorAuth = await getAuthContext(request);
+  const priorUserId = priorAuth.ok ? priorAuth.user.id : "";
 
   let privyUserId = "";
   try {
     const claims = await privy.verifyAuthToken(accessToken);
     privyUserId = claims.userId;
-  } catch {
+  } catch (error) {
+    console.error("[privy/login] verifyAuthToken failed", {
+      appId: process.env.PRIVY_APP_ID || process.env.NEXT_PUBLIC_PRIVY_APP_ID || "",
+      secretConfigured: Boolean(process.env.PRIVY_APP_SECRET),
+      secretLength: String(process.env.PRIVY_APP_SECRET || "").length,
+      tokenLength: accessToken.length,
+      error: error instanceof Error ? error.message : String(error)
+    });
     return NextResponse.json({ error: "Invalid Privy access token." }, { status: 401 });
   }
 
-  const privyUser = await privy.getUser(privyUserId).catch(() => null);
+  let privyUser = await privy.getUser(privyUserId).catch(() => null);
   if (!privyUser) {
+    console.error("[privy/login] getUser failed for", privyUserId);
     return NextResponse.json({ error: "Unable to load Privy user." }, { status: 401 });
+  }
+  try {
+    privyUser = await ensurePrivyEmbeddedWallet(privyUser);
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Unable to create Privy embedded wallet." },
+      { status: 502 }
+    );
   }
 
   const identity = extractPrivyIdentity(privyUser);
-  const walletAddress = requestedWalletAddress || identity.walletAddress;
+  if (
+    requestedEmbeddedWalletAddress &&
+    identity.embeddedWalletAddress &&
+    requestedEmbeddedWalletAddress !== identity.embeddedWalletAddress
+  ) {
+    return NextResponse.json({ error: "Embedded wallet does not belong to this Privy user." }, { status: 403 });
+  }
+  const walletAddress = identity.embeddedWalletAddress;
   const token = createSessionToken();
   const expiresAt = makeSessionExpiry();
   let currentUser: UserAccount | null = null;
@@ -61,7 +92,15 @@ export async function POST(request: Request) {
       db.users.find(
         (item) => Boolean(walletAddress) && item.walletAddress?.toLowerCase() === String(walletAddress).toLowerCase()
       ) ||
+      db.users.find((item) => Boolean(priorUserId) && item.id === priorUserId) ||
+      db.users.find(
+        (item) =>
+          Boolean(identity.xAccount?.subject) &&
+          String(item.xAccount?.subject || "") === String(identity.xAccount?.subject || "")
+      ) ||
       null;
+
+    const priorUser = priorUserId ? db.users.find((item) => item.id === priorUserId) || null : null;
 
     if (!user) {
       user = {
@@ -92,6 +131,12 @@ export async function POST(request: Request) {
       };
       db.users.unshift(user);
     } else {
+      if (priorUser && priorUser.id !== user.id) {
+        user.xAccount ||= priorUser.xAccount;
+        user.contactEmail ||= priorUser.contactEmail;
+        user.notificationPreferences ||= priorUser.notificationPreferences;
+        user.humanId ||= priorUser.humanId;
+      }
       if (isUsableContactEmail(identity.email) || !isUsableContactEmail(user.email)) {
         user.email = identity.email;
       }
@@ -119,7 +164,7 @@ export async function POST(request: Request) {
     }
 
     db.sessions = db.sessions.filter(
-      (session) => session.userId !== user.id && +new Date(session.expiresAt) > Date.now()
+      (session) => +new Date(session.expiresAt) > Date.now()
     );
     db.sessions.unshift({
       id: crypto.randomUUID(),
