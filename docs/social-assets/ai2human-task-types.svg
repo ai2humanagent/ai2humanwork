@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1600" viewBox="0 0 1200 1600">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0A0E17"/>
+      <stop offset="1" stop-color="#0D1526"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#80FFEA"/>
+      <stop offset="1" stop-color="#38BDF8"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="1600" fill="url(#bg)"/>
+
+  <!-- Header -->
+  <text x="600" y="82" text-anchor="middle" font-family="PingFang SC, Helvetica, Arial, sans-serif" font-size="56" font-weight="700" fill="#F8FAFC">AI2Human 任务类型一览</text>
+  <text x="600" y="130" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="26" letter-spacing="4" fill="#80FFEA">TASK TYPES OVERVIEW</text>
+  <rect x="520" y="150" width="160" height="3" rx="1.5" fill="url(#accent)"/>
+
+  <!-- Section 1: Web templates -->
+  <text x="80" y="205" font-family="PingFang SC, Helvetica, Arial, sans-serif" font-size="32" font-weight="700" fill="#F8FAFC">① 网页模板任务</text>
+  <text x="80" y="233" font-family="Helvetica, Arial, sans-serif" font-size="18" fill="#94A3B8">WEB TEMPLATES · 15 TYPES</text>
+
+  <rect x="80" y="255" width="1040" height="355" rx="18" fill="#0F172A" stroke="rgba(128,255,234,0.16)" stroke-width="1.5"/>
+  <text x="110" y="295" font-family="PingFang SC, Helvetica, Arial, sans-serif" font-size="24" font-weight="600" fill="#80FFEA">X 社媒任务（8）</text>
+  <g font-family="PingFang SC, Helvetica, Arial, sans-serif" font-size="23" fill="#E2E8F0">
+    <rect x="110" y="315" width="245" height="62" rx="12" fill="#111B30"/><text x="232" y="354" text-anchor="middle">关注 / 点赞 / 转发</text>
+    <rect x="369" y="315" width="245" height="62" rx="12" fill="#111B30"/><text x="491" y="354" text-anchor="middle">Quote 转发</text>
+    <rect x="628" y="315" width="245" height="62" rx="12" fill="#111B30"/><text x="750" y="354" text-anchor="middle">回复官方线程</text>
+    <rect x="887" y="315" width="205" height="62" rx="12" fill="#111B30"/><text x="989" y="354" text-anchor="middle">转帖</text>
+    <rect x="110" y="391" width="245" height="62" rx="12" fill="#111B30"/><text x="232" y="430" text-anchor="middle">发 Recap 帖</text>
+    <rect x="369" y="391" width="245" height="62" rx="12" fill="#111B30"/><text x="491" y="430" text-anchor="middle">Banner / Meme</text>
+    <rect x="628" y="391" width="245" height="62" rx="12" fill="#111B30"/><text x="750" y="430" text-anchor="middle">产品反馈（截图）</text>
+    <rect x="887" y="391" width="205" height="62" rx="12" fill="#111B30"/><text x="989" y="430" text-anchor="middle">社区证明</text>
+  </g>
+  <line x1="110" y1="478" x2="1090" y2="478" stroke="rgba(128,255,234,0.10)" stroke-width="1"/>
+  <text x="110" y="515" font-family="PingFang SC, Helvetica, Arial, sans-serif" font-size="24" font-weight="600" fill="#80FFEA">线下实地任务（6）</text>
+  <g font-family="PingFang SC, Helvetica, Arial, sans-serif" font-size="23" fill="#E2E8F0">
+    <rect x="110" y="535" width="330" height="62" rx="12" fill="#111B30"/><text x="275" y="574" text-anchor="middle">店头营业核验</text>
+    <rect x="454" y="535" width="330" height="62" rx="12" fill="#111B30"/><text x="619" y="574" text-anchor="middle">货架盘点</text>
+    <rect x="798" y="535" width="292" height="62" rx="12" fill="#111B30"/><text x="944" y="574" text-anchor="middle">签名采集</text>
+    <rect x="110" y="611" width="330" height="62" rx="12" fill="#111B30"/><text x="275" y="650" text-anchor="middle">取件确认</text>
+    <rect x="454" y="611" width="330" height="62" rx="12" fill="#111B30"/><text x="619" y="650" text-anchor="middle">菜单价格核验</text>
+    <rect x="798" y="611" width="292" height="62" rx="12" fill="#111B30"/><text x="944" y="650" text-anchor="middle">门店排队核验</text>
+  </g>
+  <line x1="110" y1="698" x2="1090" y2="698" stroke="rgba(128,255,234,0.10)" stroke-width="1"/>
+  <text x="110" y="732" font-family="PingFang SC, Helvetica, Arial, sans-serif" font-size="24" font-weight="600" fill="#80FFEA">研究任务（1）</text>
+  <rect x="110" y="750" width="980" height="62" rx="12" fill="#111B30"/>
+  <text x="600" y="789" text-anchor="middle" font-family="PingFang SC, Helvetica, Arial, sans-serif" font-size="23" fill="#E2E8F0">公开代码 / 数据集可访问性核验（JOVE-Core 研究模板）</text>
+
+  <!-- Section 2: Agent API -->
+  <text x="80" y="1060" font-family="PingFang SC, Helvetica, Arial, sans-serif" font-size="32" font-weight="700" fill="#F8FAFC">② Agent API 类别</text>
+  <text x="80" y="1088" font-family="Helvetica, Arial, sans-serif" font-size="18" fill="#94A3B8">AGENT API · 6 CATEGORIES</text>
+  <rect x="80" y="1110" width="1040" height="215" rx="18" fill="#0F172A" stroke="rgba(128,255,234,0.16)" stroke-width="1.5"/>
+  <g font-family="PingFang SC, Helvetica, Arial, sans-serif" font-size="24" fill="#E2E8F0">
+    <rect x="110" y="1140" width="330" height="66" rx="12" fill="#111B30"/><text x="275" y="1181" text-anchor="middle">local_verification 实地核验</text>
+    <rect x="454" y="1140" width="330" height="66" rx="12" fill="#111B30"/><text x="619" y="1181" text-anchor="middle">identity_action 账号动作</text>
+    <rect x="798" y="1140" width="292" height="66" rx="12" fill="#111B30"/><text x="944" y="1181" text-anchor="middle">physical_task 实体</text>
+    <rect x="110" y="1220" width="330" height="66" rx="12" fill="#111B30"/><text x="275" y="1261" text-anchor="middle">digital_task 数字任务</text>
+    <rect x="454" y="1220" width="330" height="66" rx="12" fill="#111B30"/><text x="619" y="1261" text-anchor="middle">compliance_check 合规</text>
+    <rect x="798" y="1220" width="292" height="66" rx="12" fill="#111B30"/><text x="944" y="1261" text-anchor="middle">errand 跑腿</text>
+  </g>
+
+  <!-- Section 3: Free-form -->
+  <text x="80" y="1400" font-family="PingFang SC, Helvetica, Arial, sans-serif" font-size="32" font-weight="700" fill="#F8FAFC">③ 自由创建</text>
+  <text x="80" y="1428" font-family="Helvetica, Arial, sans-serif" font-size="18" fill="#94A3B8">FREE-FORM · UNLIMITED</text>
+  <rect x="80" y="1450" width="1040" height="120" rx="18" fill="#0F172A" stroke="rgba(128,255,234,0.16)" stroke-width="1.5"/>
+  <text x="110" y="1500" font-family="PingFang SC, Helvetica, Arial, sans-serif" font-size="28" font-weight="600" fill="#80FFEA">任意类型 · 不限数量</text>
+  <text x="110" y="1540" font-family="PingFang SC, Helvetica, Arial, sans-serif" font-size="22" fill="#E2E8F0">规则：低风险 + 结构化证据 · 入口：ai2human.io/tasks/new</text>
+
+  <text x="600" y="1585" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="20" fill="#475569">ai2human.io · verify layer of AGI</text>
+</svg>
