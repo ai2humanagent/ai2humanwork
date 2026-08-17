@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { usePrivy, useWallets } from "@privy-io/react-auth";
+import { usePrivy, useSigners, useWallets } from "@privy-io/react-auth";
 import {
   getTaskEvidenceFields,
   getTaskSubmissionFields,
@@ -17,15 +17,24 @@ import {
   fetchWithPrivySessionRetry,
   loadAuthWithPrivySession
 } from "../../../lib/clientPrivySession";
-import { formatCampaignWindowUtc8 } from "../../../lib/dateTime";
+import { formatCampaignWindowUtc8, formatTaskWindowUtc8 } from "../../../lib/dateTime";
+import { normalizeTaskBrief, normalizeTaskDisplayTitle } from "../../../lib/taskInput.js";
+import { normalizeExpectedPlace, upgradeCustomTaskSpec } from "../../../lib/customTaskSpec.js";
+import { getCustomProofAttemptState } from "../../../lib/customProofAttempts.js";
+import { buildTaskExperience } from "../../../application/tasks/taskExperience.js";
+import { TaskRoomStatus } from "../../../ui/task-room/TaskRoomStatus";
 import styles from "./detail.module.css";
+
+const privySignerId = process.env.NEXT_PUBLIC_PRIVY_SIGNER_ID || "";
+const privyPolicyId = process.env.NEXT_PUBLIC_PRIVY_POLICY_ID || "";
 
 type EvidenceItem = {
   id: string;
   by: "ai" | "human" | "system";
-  type: "log" | "note" | "photo";
+  type: "log" | "note" | "photo" | "video" | "link";
   content: string;
   createdAt: string;
+  metadata?: Record<string, unknown>;
 };
 
 type Task = {
@@ -44,16 +53,22 @@ type Task = {
     | "human_done"
     | "verified"
     | "paid";
+  createdAt: string;
   updatedAt: string;
   campaign?: {
     requesterName: string;
     requesterHandle?: string;
-    platform: "x" | "real_world";
+    platform: "x" | "real_world" | "research";
     action: string;
     isTest?: boolean;
     environment?: "test" | "production";
     payoutDisabled?: boolean;
+    reviewPolicy?: "ai_auto" | "publisher_approval";
     fundingMode?: "test_no_payout" | "unfunded_campaign" | "escrow_deposit" | "prize_pool_contract" | "ai2human_managed_pool";
+    source?: {
+      requesterUserId?: string;
+      requesterWallet?: string;
+    };
     agentLifecycle?: {
       status?: "draft" | "preflight_passed" | "published" | "closed" | "reviewed" | "paying" | "completed" | "refunded";
       readyToCreate?: boolean;
@@ -66,6 +81,9 @@ type Task = {
       winnerDistribution?: Record<string, unknown>;
       missingInputs?: string[];
       nextQuestions?: Array<{ field: string; question: string }>;
+      workflowState?: string;
+      fundingState?: string;
+      settlementState?: string;
     };
     eligibility?: {
       tokenGate?: TokenGateConfig;
@@ -89,6 +107,42 @@ type Task = {
     proofRequirements: string[];
     verificationChecks?: string[];
     submissionFields?: string[];
+    customTaskSpec?: {
+      version: "custom-task-spec/v1";
+      kind: "real_world_custom" | "research_evidence";
+      compiler?: string;
+      compilerReason?: string;
+      brief: string;
+      operatorInstructions: string[];
+      evidenceRequirements: Array<{
+        id: string;
+        label: string;
+        instruction: string;
+        kind: "image" | "video" | "link" | "text";
+        required: boolean;
+        minCount?: number;
+      }>;
+      verificationRules: Array<{
+        id: string;
+        label: string;
+        instruction: string;
+        method: string;
+        severity: "required" | "advisory";
+      }>;
+      locationPolicy: {
+        mode: "optional" | "required" | "not_needed";
+        expectedPlace?: string;
+      };
+      submission: {
+        allowedKinds: Array<"image" | "video" | "link" | "text">;
+        summaryRequired: boolean;
+        maxArtifacts: number;
+      };
+      settlementPolicy?: {
+        resubmissionAllowed?: boolean;
+        maxSubmissionAttempts?: number;
+      };
+    };
   };
   assignee?: {
     type: "ai" | "human";
@@ -184,7 +238,131 @@ type VerificationCheck = {
   id: string;
   label: string;
   passed: boolean;
+  confidence?: number;
+  reason?: string;
+  severity?: "required" | "advisory";
+  method?: string;
 };
+
+type BrowserLocation = {
+  latitude: number;
+  longitude: number;
+  accuracyMeters?: number;
+  altitudeMeters?: number;
+  headingDegrees?: number;
+  speedMps?: number;
+  capturedAt: string;
+};
+
+type ProofArtifact = {
+  id: string;
+  kind: "image" | "video" | "link";
+  originalFilename?: string;
+  mimeType?: string;
+  sizeBytes?: number;
+  sha256?: string;
+  accessUrl?: string;
+  uri: string;
+};
+
+type PublisherProof = {
+  id: string;
+  summary: string;
+  artifacts: ProofArtifact[];
+  location?: { latitude: number; longitude: number; accuracyMeters?: number; capturedAt?: string };
+  locationNote?: string;
+  clientTimestamp?: string;
+  serverReceivedAt: string;
+  integrityHash: string;
+  deviceProof?: {
+    filePreparation?: EvidenceFilePreparation[];
+  };
+};
+
+type EvidenceFilePreparation = {
+  name: string;
+  originalBytes: number;
+  uploadedBytes: number;
+  originalLastModified: string;
+  optimized: boolean;
+};
+
+const MAX_CUSTOM_EVIDENCE_REQUEST_BYTES = 3_600_000;
+
+function formatFileSize(bytes: number) {
+  return bytes >= 1_000_000
+    ? `${(bytes / 1_000_000).toFixed(1)} MB`
+    : `${Math.max(1, Math.round(bytes / 1000))} KB`;
+}
+
+function EvidenceFilePreview({ file }: { file: File }) {
+  const [url, setUrl] = useState("");
+
+  useEffect(() => {
+    const nextUrl = URL.createObjectURL(file);
+    setUrl(nextUrl);
+    return () => URL.revokeObjectURL(nextUrl);
+  }, [file]);
+
+  if (!url) return null;
+  return (
+    <div className={styles.evidencePreview}>
+      {file.type.startsWith("video/") ? (
+        <video src={url} controls preload="metadata" />
+      ) : (
+        <img src={url} alt={`Selected evidence: ${file.name}`} />
+      )}
+      <span>{file.name}</span>
+    </div>
+  );
+}
+
+async function compressImageToBudget(file: File, maxBytes: number): Promise<File> {
+  if (file.size <= maxBytes) return file;
+  const objectUrl = URL.createObjectURL(file);
+  try {
+    const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const candidate = new Image();
+      candidate.onload = () => resolve(candidate);
+      candidate.onerror = () => reject(new Error(`Unable to prepare ${file.name}. Choose a smaller JPEG, PNG, or WebP image.`));
+      candidate.src = objectUrl;
+    });
+    let scale = Math.min(1, 2400 / Math.max(image.naturalWidth, image.naturalHeight));
+    let bestBlob: Blob | null = null;
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+      canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+      const context = canvas.getContext("2d");
+      if (!context) throw new Error("This browser could not prepare the selected image.");
+      context.fillStyle = "#fff";
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+      for (const quality of [0.88, 0.8, 0.72, 0.64, 0.56]) {
+        const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", quality));
+        if (!blob) continue;
+        if (!bestBlob || blob.size < bestBlob.size) bestBlob = blob;
+        if (blob.size <= maxBytes) {
+          const baseName = file.name.replace(/\.[^.]+$/, "") || "evidence";
+          return new File([blob], `${baseName}-optimized.jpg`, {
+            type: "image/jpeg",
+            lastModified: file.lastModified
+          });
+        }
+      }
+      scale *= 0.78;
+    }
+    if (bestBlob && bestBlob.size <= maxBytes) {
+      return new File([bestBlob], `${file.name.replace(/\.[^.]+$/, "") || "evidence"}-optimized.jpg`, {
+        type: "image/jpeg",
+        lastModified: file.lastModified
+      });
+    }
+    throw new Error(`${file.name} is still too large after optimization. Choose one photo or use an evidence link.`);
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+}
 
 type Quester = {
   wallet: string;
@@ -398,14 +576,17 @@ function cachePayment(taskId: string, payment: PaymentResult) {
 export default function TaskDetailClient({
   initialTask,
   initialPayment,
-  initialAlternateClaimTask
+  initialAlternateClaimTask,
+  justCreated = false
 }: {
   initialTask: Task;
   initialPayment: PaymentResult | null;
   initialAlternateClaimTask: AlternateClaimTask | null;
+  justCreated?: boolean;
 }) {
   const router = useRouter();
   const { ready, authenticated, login, getAccessToken, user } = usePrivy();
+  const { addSigners, removeSigners } = useSigners();
   const { wallets } = useWallets();
   const recaptchaContainerRef = useRef<HTMLDivElement>(null);
   const [recaptchaWidgetId, setRecaptchaWidgetId] = useState<number | null>(null);
@@ -421,6 +602,17 @@ export default function TaskDetailClient({
   const [auth, setAuth] = useState<AuthPayload | null>(null);
   const [loading, setLoading] = useState(false);
   const [claiming, setClaiming] = useState(false);
+  const [takingPublisherAction, setTakingPublisherAction] = useState(false);
+  const [refundingPool, setRefundingPool] = useState(false);
+  const [fundingAuthorizationRequired, setFundingAuthorizationRequired] = useState(false);
+  const [fundingShortfall, setFundingShortfall] = useState<{
+    required: string;
+    usdcBalance: string;
+    a2hRequired?: string;
+    a2hBalance?: string;
+  } | null>(null);
+  const [fundingGasRequired, setFundingGasRequired] = useState(false);
+  const [fundingProviderIssue, setFundingProviderIssue] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -428,6 +620,22 @@ export default function TaskDetailClient({
   const [postUrl, setPostUrl] = useState("");
   const [profileUrl, setProfileUrl] = useState("");
   const [screenshotUrl, setScreenshotUrl] = useState("");
+  const [evidenceFiles, setEvidenceFiles] = useState<File[]>([]);
+  const [evidenceFilePreparation, setEvidenceFilePreparation] = useState<EvidenceFilePreparation[]>([]);
+  const [preparingEvidence, setPreparingEvidence] = useState(false);
+  const [proofError, setProofError] = useState("");
+  const [publisherProof, setPublisherProof] = useState<PublisherProof | null>(null);
+  const [publisherProofLoading, setPublisherProofLoading] = useState(false);
+  const [publisherProofError, setPublisherProofError] = useState("");
+  const [evidenceUrl, setEvidenceUrl] = useState("");
+  const [browserLocation, setBrowserLocation] = useState<BrowserLocation | null>(null);
+  const [locating, setLocating] = useState(false);
+  const proofNonceRef = useRef(
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(16).slice(2)}`
+  );
+  const automaticFundingAttemptRef = useRef(false);
   const [locationNote, setLocationNote] = useState("");
   const [timestampNote, setTimestampNote] = useState("");
   const [proofPhrase, setProofPhrase] = useState(initialTask.campaign?.proofPhrase || "");
@@ -937,6 +1145,187 @@ export default function TaskDetailClient({
     }
   }
 
+  async function takePublisherAction(action: "confirm_task") {
+    setTakingPublisherAction(true);
+    setError("");
+    setMessage("");
+    setFundingShortfall(null);
+    setFundingGasRequired(false);
+    setFundingProviderIssue(false);
+    try {
+      const response = await fetchWithPrivySessionRetry(`/api/v1/tasks/${task.id}/actions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Idempotency-Key": `${action}:${task.id}:${Date.now()}`
+        },
+        body: JSON.stringify({ action })
+      }, { authenticated, getAccessToken });
+      const payload = await response.json().catch(() => ({})) as { error?: string };
+      if (!response.ok) throw new Error(payload.error || "Unable to update task.");
+      setMessage("Task confirmed. Next, fund the reward before publishing.");
+      await loadTask();
+    } catch (actionError) {
+      setError(actionError instanceof Error ? actionError.message : "Unable to update task.");
+    } finally {
+      setTakingPublisherAction(false);
+    }
+  }
+
+  async function refundPoolTask() {
+    setError("");
+    setMessage("");
+    setRefundingPool(true);
+    try {
+      const response = await fetchWithPrivySessionRetry(
+        `/api/tasks/${task.id}/refund-pool`,
+        {
+          method: "POST",
+          credentials: "same-origin"
+        },
+        {
+          authenticated,
+          getAccessToken
+        }
+      );
+      const payload = (await response.json().catch(() => ({}))) as {
+        error?: string;
+        success?: boolean;
+        status?: string;
+        amount?: string;
+        asset?: string;
+        poolTxHash?: string;
+        returnTxHash?: string;
+      };
+      if (!response.ok) {
+        throw new Error(payload.error || "Unable to refund the reward pool.");
+      }
+      setMessage(
+        `Refund ${payload.amount ? `${payload.amount} ${payload.asset || ""}`.trim() : ""} submitted. ` +
+        (payload.poolTxHash
+          ? `Pool tx: ${payload.poolTxHash.slice(0, 10)}… `
+          : "") +
+        (payload.returnTxHash
+          ? `Return tx: ${payload.returnTxHash.slice(0, 10)}… `
+          : "") +
+        "The remaining pool is returned to the original requester wallet."
+      );
+      await loadTask();
+    } catch (refundError) {
+      setError(refundError instanceof Error ? refundError.message : "Unable to refund the reward pool.");
+    } finally {
+      setRefundingPool(false);
+    }
+  }
+
+  async function reviewPublisherProof(decision: "approve" | "revision") {
+    setTakingPublisherAction(true);
+    setError("");
+    setMessage("");
+    try {
+      const response = await fetchWithPrivySessionRetry(`/api/tasks/${task.id}/${decision === "approve" ? "verify" : "reject"}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify(decision === "revision" ? { reason: "Publisher requested clearer or corrected proof." } : {})
+      }, { authenticated, getAccessToken });
+      const payload = await response.json().catch(() => ({})) as { error?: string; message?: string };
+      if (!response.ok) throw new Error(payload.error || payload.message || "Unable to review proof.");
+      setMessage(decision === "approve" ? "Proof approved. Settlement is now authorized." : "Revision requested. The executor can submit corrected proof.");
+      await loadTask();
+    } catch (reviewError) {
+      setError(reviewError instanceof Error ? reviewError.message : "Unable to review proof.");
+    } finally {
+      setTakingPublisherAction(false);
+    }
+  }
+
+  async function fundAndPublishTask() {
+    setTakingPublisherAction(true);
+    setError("");
+    setMessage("");
+    try {
+      const response = await fetchWithPrivySessionRetry(`/api/v1/tasks/${task.id}/fund-and-publish`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" }
+      }, { authenticated, getAccessToken });
+      const payload = await response.json().catch(() => ({})) as {
+        error?: string;
+        code?: string;
+        status?: string;
+        required?: string;
+        balance?: string;
+        a2hRequired?: string;
+        a2hBalance?: string;
+      };
+      if (!response.ok) {
+        if (payload.code === "needs_automation") {
+          setFundingAuthorizationRequired(true);
+          return;
+        }
+        if (response.status === 402) {
+          setFundingShortfall({
+            required: payload.required || task.budget,
+            usdcBalance: payload.balance || "0",
+            a2hRequired: payload.a2hRequired,
+            a2hBalance: payload.a2hBalance
+          });
+          return;
+        }
+        if (/add .*eth on base|network fee/i.test(payload.error || "")) {
+          setFundingGasRequired(true);
+          return;
+        }
+        if (/wallet provider|privy|transaction simulation|wallet policy/i.test(payload.error || "")) {
+          setFundingProviderIssue(true);
+          setError(payload.error || "The wallet provider rejected this publishing attempt.");
+          return;
+        }
+        throw new Error(payload.error || "Unable to fund and publish task.");
+      }
+      setMessage("Reward funded from your embedded wallet. The task is now live.");
+      setFundingAuthorizationRequired(false);
+      setFundingShortfall(null);
+      setFundingGasRequired(false);
+      setFundingProviderIssue(false);
+      await loadTask();
+    } catch (fundingError) {
+      setError(fundingError instanceof Error ? fundingError.message : "Unable to fund and publish task.");
+    } finally {
+      setTakingPublisherAction(false);
+    }
+  }
+
+  async function authorizeTaskFunding() {
+    const embeddedWallet = wallets.find((wallet) => wallet.walletClientType === "privy" && wallet.address);
+    if (!embeddedWallet?.address) {
+      setError("Your Privy embedded wallet is not ready. Sign out and sign in again, then retry.");
+      return;
+    }
+    if (!privySignerId || !privyPolicyId) {
+      setError("Task funding authorization is not configured. Contact AI2Human support.");
+      return;
+    }
+    setTakingPublisherAction(true);
+    setError("");
+    try {
+      try {
+        await addSigners({ address: embeddedWallet.address, signers: [{ signerId: privySignerId, policyIds: [privyPolicyId] }] });
+      } catch (authorizationError) {
+        const authorizationMessage = authorizationError instanceof Error ? authorizationError.message : "";
+        if (!authorizationMessage.toLowerCase().includes("duplicate signer")) throw authorizationError;
+        await removeSigners({ address: embeddedWallet.address });
+        await addSigners({ address: embeddedWallet.address, signers: [{ signerId: privySignerId, policyIds: [privyPolicyId] }] });
+      }
+      setFundingAuthorizationRequired(false);
+      setMessage("Wallet authorized once for AI2Human task funding. Future tasks will not ask again unless this permission is revoked.");
+      await fundAndPublishTask();
+    } catch (authorizationError) {
+      setError("We could not update the wallet permission. Your task and funds are safe. Please try once more.");
+      setTakingPublisherAction(false);
+    }
+  }
+
   async function loadQuesters() {
     try {
       const res = await fetch(`/api/tasks/${initialTask.id}/questers`, { cache: "no-store" });
@@ -952,8 +1341,7 @@ export default function TaskDetailClient({
   async function loadAuth(): Promise<AuthPayload | null> {
     const payload = await loadAuthWithPrivySession<AuthPayload>({
       authenticated,
-      getAccessToken,
-      walletAddress: connectedWallet
+      getAccessToken
     });
     if (!payload) {
       setAuth(null);
@@ -970,8 +1358,9 @@ export default function TaskDetailClient({
   }
 
   useEffect(() => {
-    loadAuth();
-  }, []);
+    if (!ready) return;
+    void loadAuth();
+  }, [ready, authenticated]);
 
   // Load Google reCAPTCHA v2 script once
   useEffect(() => {
@@ -1043,8 +1432,51 @@ export default function TaskDetailClient({
   const claimedByMe = useMemo(() => isClaimedByCurrentUser(task, auth), [task, auth]);
   const claimable = useMemo(() => canClaim(task, auth), [task, auth]);
   const verificationStatus = useMemo(() => getTaskVerificationStatus(task), [task]);
+  const verificationReviewReasons = useMemo(() => {
+    const reasons: string[] = [];
+    const addReason = (reason: unknown) => {
+      const normalized = String(reason || "").trim();
+      if (normalized && !reasons.includes(normalized)) reasons.push(normalized);
+    };
+    const taskCreatedEpoch = Date.parse(task.createdAt);
+    const selectedFilesPredatingTask = (publisherProof?.deviceProof?.filePreparation || []).filter((file) => {
+      const selectedFileEpoch = Date.parse(file.originalLastModified);
+      return Number.isFinite(taskCreatedEpoch)
+        && Number.isFinite(selectedFileEpoch)
+        && selectedFileEpoch < taskCreatedEpoch - 5 * 60_000;
+    });
+    if (selectedFilesPredatingTask.length) {
+      addReason(
+        `The browser reports that ${selectedFilesPredatingTask.map((file) => `${file.name} was last modified on ${new Date(file.originalLastModified).toLocaleString()}`).join(", ")}, before this task was created on ${new Date(task.createdAt).toLocaleString()}. The photo may be older than the task, so its freshness needs reviewer confirmation or a new capture.`
+      );
+    }
+    verificationStatus.checks
+      .filter((check: VerificationCheck) => !check.passed || (
+        Number.isFinite(Number(check.confidence))
+        && Number(check.confidence) > 0
+        && Number(check.confidence) < 0.72
+      ))
+      .forEach((check: VerificationCheck) => addReason(check.reason || check.label));
+    if (verificationStatus.providerDiagnostic?.code === "ensemble_degraded") {
+      addReason("One of the configured image verifiers did not return a usable result, so the automated model ensemble was incomplete.");
+    } else if (verificationStatus.reviewCause === "provider_unavailable") {
+      addReason("The configured image verifier did not return a usable result. This is a system condition, not evidence rejection.");
+    }
+    if (!reasons.length) addReason(verificationStatus.reason);
+    return reasons.slice(0, 5);
+  }, [publisherProof, task.createdAt, verificationStatus]);
   const submissionFields = useMemo(() => getTaskSubmissionFields(task), [task]);
-  const rewardLabel = useMemo(() => formatBudgetLabel(task.budget), [task.budget]);
+  const rewardLabel = useMemo(() => {
+    const plan = task.campaign?.agentLifecycle?.fundingPlan;
+    const settlementAsset = plan?.settlementAsset && typeof plan.settlementAsset === "object"
+      ? plan.settlementAsset as Record<string, unknown>
+      : null;
+    const approximateUsd = Number(settlementAsset?.approximateUsd);
+    const label = formatBudgetLabel(task.budget);
+    return /\bA2H\b/i.test(label) && Number.isFinite(approximateUsd) && approximateUsd > 0
+      ? `${label} (≈ ${approximateUsd < 0.01 ? approximateUsd.toFixed(4) : approximateUsd.toFixed(2)} USDC)`
+      : label;
+  }, [task.budget, task.campaign?.agentLifecycle?.fundingPlan]);
   const requiresExecutorHandle = submissionFields.includes("executorHandle");
   const requiresPostUrl = submissionFields.includes("postUrl");
   const requiresProfileUrl = submissionFields.includes("profileUrl");
@@ -1052,6 +1484,8 @@ export default function TaskDetailClient({
   const requiresLocationNote = submissionFields.includes("locationNote");
   const requiresTimestampNote = submissionFields.includes("timestampNote");
   const requiresProofPhrase = submissionFields.includes("proofPhrase");
+  const isCustomRealWorldTask = task.campaign?.customTaskSpec?.version === "custom-task-spec/v1";
+  const isResearchEvidenceTask = task.campaign?.platform === "research";
   const targetLabel = task.campaign?.platform === "x"
     ? "Official link"
     : task.campaign?.targetLabel || "Reference";
@@ -1064,10 +1498,147 @@ export default function TaskDetailClient({
     : "https://... or /path/to/photo";
   const summaryPlaceholder = task.campaign?.platform === "x"
     ? "One-line summary of what you published and where."
+    : isResearchEvidenceTask
+      ? "State the artifact checked, access result, bounded verdict, and limitation."
     : "One-line summary of what you checked, picked up, or verified on site.";
-  const canEditProof =
-    claimedByMe && (task.status === "human_assigned" || task.status === "human_done");
+  const customProofAttemptState = useMemo(
+    () => getCustomProofAttemptState(task, verificationStatus),
+    [task, verificationStatus]
+  );
+  const canEditProof = claimedByMe && (
+    isCustomRealWorldTask
+      ? customProofAttemptState.allowed
+      : task.status === "human_assigned"
+        || (task.status === "human_done" && verificationStatus.verdict === "resubmit")
+  );
   const isClosedProofRecord = ["human_done", "verified", "paid"].includes(task.status);
+  const isTaskPublisher = Boolean(auth?.user.id && task.campaign?.source?.requesterUserId === auth.user.id);
+  useEffect(() => {
+    if (!isTaskPublisher || !authenticated || !ready) return;
+    if (buildTaskExperience(task).workflow !== "awaiting_funding") return;
+    if (automaticFundingAttemptRef.current) return;
+    automaticFundingAttemptRef.current = true;
+    void fundAndPublishTask();
+  }, [authenticated, isTaskPublisher, ready, task]);
+
+  const loadPublisherProof = useCallback(async () => {
+    setPublisherProofLoading(true);
+    setPublisherProofError("");
+    try {
+      const response = await fetchWithPrivySessionRetry(
+        `/api/tasks/${task.id}/proof`,
+        { cache: "no-store", credentials: "same-origin" },
+        { authenticated, getAccessToken }
+      );
+      const payload = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(payload?.error || "Unable to open submitted evidence.");
+      setPublisherProof(payload?.proofBundle || null);
+    } catch (cause) {
+      setPublisherProofError(cause instanceof Error ? cause.message : "Unable to open submitted evidence.");
+    } finally {
+      setPublisherProofLoading(false);
+    }
+  }, [task.id, authenticated, getAccessToken, connectedWallet]);
+
+  useEffect(() => {
+    if (!isClosedProofRecord || (!isTaskPublisher && !claimedByMe)) return;
+    void loadPublisherProof();
+  }, [isClosedProofRecord, isTaskPublisher, claimedByMe, loadPublisherProof]);
+
+  function captureOptionalLocation() {
+    setError("");
+    if (!navigator.geolocation) {
+      setError("This browser does not support location capture. You can still submit without GPS unless this task explicitly requires it.");
+      return;
+    }
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setBrowserLocation({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          accuracyMeters: position.coords.accuracy,
+          altitudeMeters: position.coords.altitude ?? undefined,
+          headingDegrees: position.coords.heading ?? undefined,
+          speedMps: position.coords.speed ?? undefined,
+          capturedAt: new Date(position.timestamp).toISOString()
+        });
+        setLocating(false);
+      },
+      (locationError) => {
+        setLocating(false);
+        setError(`Location was not attached (${locationError.message}). You may continue if GPS is optional.`);
+      },
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
+    );
+  }
+
+  async function copyTaskLink() {
+    try {
+      await navigator.clipboard.writeText(window.location.href.split("?")[0]);
+      setMessage("Task link copied. Share it with the intended executor or your team.");
+    } catch {
+      setError("The task link could not be copied. Copy it from your browser address bar.");
+    }
+  }
+
+  async function prepareEvidenceFiles(selectedFiles: File[]) {
+    setProofError("");
+    setError("");
+    setPreparingEvidence(true);
+    try {
+      const selected = selectedFiles.slice(0, 4);
+      const prepared: File[] = [];
+      const preparation: EvidenceFilePreparation[] = [];
+      let remainingBytes = MAX_CUSTOM_EVIDENCE_REQUEST_BYTES;
+
+      for (let index = 0; index < selected.length; index += 1) {
+        const file = selected[index];
+        const remainingFiles = selected.length - index;
+        const fileBudget = Math.max(450_000, Math.floor(remainingBytes / remainingFiles));
+        if (file.type.startsWith("video/")) {
+          if (file.size > fileBudget) {
+            throw new Error(`${file.name} is too large for direct upload. Use a shorter video or paste an evidence link.`);
+          }
+          prepared.push(file);
+          preparation.push({
+            name: file.name,
+            originalBytes: file.size,
+            uploadedBytes: file.size,
+            originalLastModified: new Date(file.lastModified).toISOString(),
+            optimized: false
+          });
+          remainingBytes -= file.size;
+          continue;
+        }
+        if (!file.type.startsWith("image/")) {
+          throw new Error(`${file.name} is not a supported image or short video.`);
+        }
+        const optimized = await compressImageToBudget(file, fileBudget);
+        prepared.push(optimized);
+        preparation.push({
+          name: file.name,
+          originalBytes: file.size,
+          uploadedBytes: optimized.size,
+          originalLastModified: new Date(file.lastModified).toISOString(),
+          optimized: optimized !== file
+        });
+        remainingBytes -= optimized.size;
+      }
+
+      if (prepared.reduce((sum, file) => sum + file.size, 0) > MAX_CUSTOM_EVIDENCE_REQUEST_BYTES) {
+        throw new Error("The selected evidence is still too large. Submit one clear photo or use an evidence link.");
+      }
+      setEvidenceFiles(prepared);
+      setEvidenceFilePreparation(preparation);
+    } catch (preparationError) {
+      setEvidenceFiles([]);
+      setEvidenceFilePreparation([]);
+      setProofError(preparationError instanceof Error ? preparationError.message : "Unable to prepare evidence.");
+    } finally {
+      setPreparingEvidence(false);
+    }
+  }
 
   useEffect(() => {
     const values = (evidenceFields.values || {}) as Record<string, string>;
@@ -1108,13 +1679,23 @@ export default function TaskDetailClient({
       return;
     }
 
-    if (!auth?.human?.id || !auth?.user?.walletAddress) {
-      router.push("/app/profile");
-      return;
-    }
-
     setClaiming(true);
     try {
+      // Privy authentication becomes ready before our server profile snapshot
+      // on a cold task-page load. Refresh once instead of treating that brief
+      // loading state as a missing operator profile and redirecting the user.
+      const claimAuth = auth?.user.walletAddress
+        ? auth
+        : await loadAuth();
+      if (!claimAuth) {
+        throw new Error("Unable to verify your AI2Human profile. Refresh the page and try again.");
+      }
+      if (!claimAuth.user.walletAddress) {
+        setError("Connect a payout wallet before claiming tasks.");
+        router.push("/app/profile");
+        return;
+      }
+      const claimWallet = connectedWallet || claimAuth.user.walletAddress;
       const response = await fetchWithPrivySessionRetry(
         `/api/tasks/${task.id}/claim`,
         {
@@ -1123,15 +1704,14 @@ export default function TaskDetailClient({
         },
         {
           authenticated,
-          getAccessToken,
-          walletAddress: connectedWallet
+          getAccessToken
         }
       );
       const payload = (await response.json().catch(() => ({}))) as { error?: string };
       if (!response.ok) {
         throw new Error(payload.error || "Unable to claim task.");
       }
-      setMessage(`Claimed "${task.title}" as ${auth.human.name}.`);
+      setMessage(`Claimed "${task.title}". You now hold this execution slot.`);
       await Promise.all([loadTask(), loadAuth()]);
     } catch (claimError) {
       setError(claimError instanceof Error ? claimError.message : "Unable to claim task.");
@@ -1143,6 +1723,7 @@ export default function TaskDetailClient({
   async function submitProof() {
     setError("");
     setMessage("");
+    setProofError("");
 
     if (!claimedByMe) {
       setError("Claim the task before submitting proof.");
@@ -1151,45 +1732,98 @@ export default function TaskDetailClient({
 
     setSubmitting(true);
     try {
+      const totalEvidenceBytes = evidenceFiles.reduce((sum, file) => sum + file.size, 0);
+      if (isCustomRealWorldTask && totalEvidenceBytes > MAX_CUSTOM_EVIDENCE_REQUEST_BYTES) {
+        throw new Error("The selected evidence is too large. Re-select it so the page can optimize the upload.");
+      }
       const proofArtifactUrl = requiresPhoto
         ? screenshotUrl.trim() || postUrl.trim() || profileUrl.trim() || undefined
         : undefined;
+      let requestBody: BodyInit;
+      let requestHeaders: HeadersInit | undefined = { "Content-Type": "application/json" };
+      if (isCustomRealWorldTask) {
+        const form = new FormData();
+        const clientCapturedAt = new Date().toISOString();
+        evidenceFiles.slice(0, 4).forEach((file) => form.append("artifacts", file));
+        if (evidenceUrl.trim()) form.append("evidenceUrl", evidenceUrl.trim());
+        form.append("by", "human");
+        form.append("summary", summary.trim());
+        form.append("clientTimestamp", clientCapturedAt);
+        if (locationNote.trim()) form.append("locationNote", locationNote.trim());
+        if (browserLocation) form.append("location", JSON.stringify(browserLocation));
+        form.append("deviceProof", JSON.stringify({
+          captureMethod: evidenceFiles.length ? "file_picker" : evidenceUrl.trim() ? "link" : undefined,
+          userAgent: navigator.userAgent,
+          platform: navigator.platform,
+          language: navigator.language,
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          viewport: `${window.innerWidth}x${window.innerHeight}@${window.devicePixelRatio || 1}`,
+          clientCapturedAt,
+          clientNonce: proofNonceRef.current,
+          filePreparation: evidenceFilePreparation
+        }));
+        requestBody = form;
+        requestHeaders = undefined;
+      } else {
+        requestBody = JSON.stringify({
+          by: "human",
+          executorHandle: requiresExecutorHandle ? executorHandle : undefined,
+          postUrl: requiresPostUrl ? postUrl : undefined,
+          profileUrl: requiresProfileUrl ? profileUrl : profileUrl || undefined,
+          screenshotUrl: proofArtifactUrl,
+          locationNote: requiresLocationNote ? locationNote : undefined,
+          timestampNote: requiresTimestampNote ? timestampNote : undefined,
+          proofPhrase: requiresProofPhrase ? proofPhrase : undefined,
+          summary
+        });
+      }
       const response = await fetchWithPrivySessionRetry(
         `/api/tasks/${task.id}/evidence`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: requestHeaders,
           credentials: "same-origin",
-          body: JSON.stringify({
-            by: "human",
-            executorHandle: requiresExecutorHandle ? executorHandle : undefined,
-            postUrl: requiresPostUrl ? postUrl : undefined,
-            profileUrl: requiresProfileUrl ? profileUrl : profileUrl || undefined,
-            screenshotUrl: proofArtifactUrl,
-            locationNote: requiresLocationNote ? locationNote : undefined,
-            timestampNote: requiresTimestampNote ? timestampNote : undefined,
-            proofPhrase: requiresProofPhrase ? proofPhrase : undefined,
-            summary
-          })
+          body: requestBody
         },
         {
           authenticated,
-          getAccessToken,
-          walletAddress: connectedWallet
+          getAccessToken
         }
       );
       const payload = (await response.json().catch(() => ({}))) as {
         error?: string;
         task?: Task;
         payment?: PaymentResult;
+        message?: string;
+        status?: "pass" | "resubmit" | "manual_review";
+        attempt?: {
+          used?: number;
+          remaining?: number;
+          max?: number;
+        };
       };
       if (payload.task) {
         setTask(payload.task);
       } else {
         await loadTask();
       }
-      if (!response.ok) {
+      const storedForAnotherAttempt = Boolean(
+        payload.task
+        && (payload.status === "manual_review" || payload.status === "resubmit")
+      );
+      if (!response.ok && !storedForAnotherAttempt) {
         throw new Error(payload.error || "Unable to submit proof.");
+      }
+      setEvidenceFiles([]);
+      setEvidenceFilePreparation([]);
+      setEvidenceUrl("");
+      setSummary("");
+      proofNonceRef.current =
+        typeof crypto !== "undefined" && "randomUUID" in crypto
+          ? crypto.randomUUID()
+          : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      if (isCustomRealWorldTask) {
+        void loadPublisherProof();
       }
       if (payload.payment) {
         setLatestPayment(payload.payment);
@@ -1201,11 +1835,21 @@ export default function TaskDetailClient({
             payload.payment.receiverAddress || payload.payment.receiver || "the executor"
           }.`
         );
+      } else if (payload.status === "manual_review" || payload.status === "resubmit") {
+        const attemptUsed = Number(payload.attempt?.used || 0);
+        const attemptsRemaining = Number(payload.attempt?.remaining || 0);
+        setMessage(
+          `Attempt ${attemptUsed || "saved"} was received. ${
+            attemptsRemaining > 0
+              ? `You can upload ${attemptsRemaining} more replacement${attemptsRemaining === 1 ? "" : "s"}.`
+              : "No replacement attempts remain; the stored proof now needs reviewer action."
+          }`
+        );
       } else {
-        setMessage("Proof submitted and verified.");
+        setMessage(payload.message || "Proof submitted and verified.");
       }
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : "Unable to submit proof.");
+      setProofError(submitError instanceof Error ? submitError.message : "Unable to submit proof.");
     } finally {
       setSubmitting(false);
     }
@@ -1481,6 +2125,7 @@ export default function TaskDetailClient({
     function getDeadlineDisplay() {
       const deadline = task.deadline;
       if (!deadline) return "No deadline";
+      if (isCustomRealWorldTask) return formatTaskWindowUtc8(task.createdAt, deadline);
       return formatCampaignWindowUtc8(deadline);
     }
 
@@ -1490,6 +2135,687 @@ export default function TaskDetailClient({
       task.campaign?.campaignLinks?.repostUrl || extractRequirementUrl(task.campaign, ["Repost", "Retweet"]);
     const likeUrl =
       task.campaign?.campaignLinks?.likeUrl || extractRequirementUrl(task.campaign, ["Like"]) || task.campaign?.targetUrl || "";
+
+    if (isCustomRealWorldTask) {
+      const spec = upgradeCustomTaskSpec(task.campaign!.customTaskSpec!) as NonNullable<NonNullable<Task["campaign"]>["customTaskSpec"]>;
+      const locationRequired = spec.locationPolicy.mode === "required";
+      const expectedPlace = normalizeExpectedPlace(spec.locationPolicy.expectedPlace);
+      const rawBrief = normalizeTaskBrief(spec.brief || task.campaign?.brief || task.title);
+      const displayBrief = normalizeTaskDisplayTitle(rawBrief, 4000) || rawBrief;
+      const cleanStoredTitle = normalizeTaskDisplayTitle(task.title);
+      const displayTitle = cleanStoredTitle || displayBrief;
+      const allowedEvidenceKinds = new Set(spec.submission.allowedKinds);
+      const acceptsImages = allowedEvidenceKinds.has("image");
+      const acceptsVideos = allowedEvidenceKinds.has("video");
+      const acceptsLinks = allowedEvidenceKinds.has("link");
+      const acceptsText = allowedEvidenceKinds.has("text");
+      const acceptsFiles = acceptsImages || acceptsVideos;
+      const fileAccept = [
+        ...(acceptsImages ? ["image/*"] : []),
+        ...(acceptsVideos ? ["video/mp4", "video/quicktime", "video/webm"] : [])
+      ].join(",");
+      const fileLabel = acceptsImages && acceptsVideos
+        ? "Images or short videos"
+        : acceptsVideos
+          ? "Short video"
+          : "Image evidence";
+      const evidenceInstructions = new Set(
+        spec.evidenceRequirements.map((requirement) => requirement.instruction.trim().toLowerCase())
+      );
+      const operatorInstructions = spec.operatorInstructions.filter((instruction) => {
+        const normalized = instruction.trim().toLowerCase();
+        if (!normalized || /^complete (?:this|the) custom task\s*:/i.test(instruction)) return false;
+        if (normalizeTaskBrief(instruction).toLowerCase() === displayBrief.toLowerCase()) return false;
+        return !evidenceInstructions.has(normalized);
+      });
+      const materialCounts = {
+        image: evidenceFiles.filter((file) => file.type.startsWith("image/")).length,
+        video: evidenceFiles.filter((file) => file.type.startsWith("video/")).length,
+        link: evidenceUrl.trim() ? 1 : 0,
+        text: summary.trim().length >= 3 ? 1 : 0
+      };
+      const requiredMaterialsReady = spec.evidenceRequirements
+        .filter((requirement) => requirement.required)
+        .every((requirement) => materialCounts[requirement.kind] >= Math.max(1, requirement.minCount || 1));
+      const missingRequirements = spec.evidenceRequirements
+        .filter((requirement) => requirement.required)
+        .filter((requirement) => materialCounts[requirement.kind] < Math.max(1, requirement.minCount || 1));
+      const requiredFileCount = spec.evidenceRequirements
+        .filter((requirement) => requirement.required && (requirement.kind === "image" || requirement.kind === "video"))
+        .reduce((sum, requirement) => sum + Math.max(1, requirement.minCount || 1), 0);
+      const submitLabel = allowedEvidenceKinds.size > 1
+        ? "Submit evidence"
+        : acceptsImages
+          ? "Submit image"
+          : acceptsVideos
+            ? "Submit video"
+            : acceptsLinks
+              ? "Submit link"
+              : "Submit answer";
+      const canSubmitCustomProof = canEditProof
+        && requiredMaterialsReady
+        && (!spec.submission.summaryRequired || summary.trim().length >= 3)
+        && (!locationRequired || Boolean(browserLocation || locationNote.trim()))
+        && !preparingEvidence;
+      const needsProofAttention =
+        task.status === "human_done"
+        && ["manual_review", "resubmit"].includes(String(verificationStatus.verdict || ""));
+      const freshnessCheck = verificationStatus.checks.find(
+        (check: VerificationCheck) => check.id === "selected_file_recency" && !check.passed
+      );
+      const primaryAttentionReason =
+        freshnessCheck?.reason
+        || verificationReviewReasons[0]
+        || verificationStatus.reason
+        || "The current proof did not clear automatic verification.";
+      const selectedFileLooksOlderThanTask =
+        Boolean(freshnessCheck)
+        || /(?:before this task was created|predate(?:s|d)? the task)/i.test(primaryAttentionReason);
+      const supportingAttentionReasons = verificationReviewReasons
+        .filter((reason) => reason !== primaryAttentionReason)
+        .slice(0, 4);
+      const attentionTitle = selectedFileLooksOlderThanTask
+        ? "This photo appears older than the task"
+        : verificationStatus.reviewCause === "provider_unavailable"
+          ? "AI verification could not finish"
+          : "Your evidence needs attention";
+      const canReplaceProof =
+        claimedByMe
+        && customProofAttemptState.allowed
+        && customProofAttemptState.isResubmission;
+      // Custom real-world tasks currently use one exclusive executor slot.
+      // A slot is work authorization, not a contest entry: nobody should begin
+      // collecting evidence until the claim has been committed.
+      const executorSlots = 1;
+      const taskExperience = buildTaskExperience(task);
+      const workflowState = taskExperience.workflow;
+      const awaitingPublication = ["draft", "awaiting_funding"].includes(workflowState);
+      const slotAvailable = taskExperience.claimable
+        &&
+        !isGloballyEnded
+        && !task.assignee
+        && ["created", "ai_failed"].includes(task.status);
+      const availableExecutorSlots = slotAvailable ? 1 : 0;
+      const proofSubmitted = ["human_done", "verified", "paid"].includes(task.status);
+      const slotStatus = task.status === "paid"
+        ? "Reward paid"
+        : task.status === "verified"
+          ? "Proof verified"
+          : task.status === "human_done"
+            ? ["manual_review", "resubmit"].includes(String(verificationStatus.verdict || ""))
+              ? "Proof needs attention"
+              : "Proof submitted"
+            : awaitingPublication
+              ? "Not published yet"
+            : claimedByMe
+        ? "Reserved for you"
+        : slotAvailable
+          ? "1 slot available"
+          : task.assignee
+            ? "Slot claimed"
+            : "No slot available";
+      const slotGuidance = task.status === "paid"
+        ? "Approved proof has been paid. This task is complete."
+        : task.status === "verified"
+          ? "Proof passed verification and settlement is being completed."
+          : task.status === "human_done"
+            ? verificationStatus.reviewCause === "provider_unavailable"
+              ? "Proof is safely stored. The image verifier is unavailable, so a reviewer must approve settlement."
+              : ["manual_review", "resubmit"].includes(String(verificationStatus.verdict || ""))
+                ? customProofAttemptState.attemptsRemaining > 0
+                  ? `The proof needs a replacement. The executor has ${customProofAttemptState.attemptsRemaining} attempt${customProofAttemptState.attemptsRemaining === 1 ? "" : "s"} remaining.`
+                  : "The proof needs review and all replacement attempts have been used."
+                : "Proof is stored and waiting for verification."
+            : awaitingPublication
+              ? workflowState === "draft"
+                ? "The publisher must confirm this task before it can accept an executor."
+                : "The reward must be funded and verified before this task can accept an executor."
+            : claimedByMe
+        ? "You hold the execution slot. Submit the required proof before the deadline."
+        : slotAvailable
+          ? "First come, first served. Only the confirmed executor should travel or collect evidence."
+          : task.assignee
+            ? "Another executor holds this slot. Do not begin work for this task."
+            : "This task is closed and no longer accepts execution claims.";
+      const publisherStage = taskExperience.stage;
+      const publisherGuidance = task.status === "paid"
+        ? "Settlement is complete. The proof and payment receipt remain available as the task record."
+        : task.status === "verified"
+          ? "The proof passed verification. Settlement is now the next recorded step."
+          : task.status === "human_done"
+            ? ["manual_review", "resubmit"].includes(String(verificationStatus.verdict || ""))
+              ? "Automatic payment is paused. The reason and replacement status are highlighted below."
+              : "The executor submitted proof. Inspect the originals and verification results below."
+            : task.status === "human_assigned"
+              ? "An executor holds the slot and is collecting the required evidence."
+              : taskExperience.publisher;
+      const publicStatusLabel = taskExperience.label;
+      return (
+        <main className={styles.page}>
+          <div className={styles.qnOuter}>
+            <Link href="/tasks" className={styles.backLink}>← Back to tasks</Link>
+            {justCreated && isTaskPublisher ? (
+              <section className={styles.creationHandoff} aria-live="polite">
+                <span className={styles.creationHandoffCheck}>✓</span>
+                <div>
+                  <strong>Your task is saved</strong>
+                  <p>You are now in its publishing workspace. Complete the highlighted wallet step below; the task becomes public only after its reward is secured.</p>
+                </div>
+              </section>
+            ) : null}
+            {error ? <div className={styles.noticeMsg}>{error}</div> : null}
+            {message ? <div className={styles.successMsg}>{message}</div> : null}
+
+            {isTaskPublisher ? (
+              <section className={styles.publisherPanel} aria-label="Publisher task status">
+                <div className={styles.publisherPanelTop}>
+                  <div>
+                    <span>Publisher workspace</span>
+                    <h2>{publicStatusLabel}</h2>
+                    <p>{publisherGuidance}</p>
+                  </div>
+                  <div className={styles.publisherActions}>
+                    {task.status === "human_done" && task.campaign?.reviewPolicy === "publisher_approval" ? (
+                      <>
+                        <button type="button" onClick={() => void reviewPublisherProof("approve")} disabled={takingPublisherAction}>
+                          {takingPublisherAction ? "Reviewing…" : "Approve proof"}
+                        </button>
+                        <button type="button" onClick={() => void reviewPublisherProof("revision")} disabled={takingPublisherAction}>
+                          Request revision
+                        </button>
+                      </>
+                    ) : null}
+                    {workflowState === "draft" ? (
+                      <button type="button" onClick={() => void takePublisherAction("confirm_task")} disabled={takingPublisherAction}>
+                        {takingPublisherAction ? "Confirming..." : "Confirm task"}
+                      </button>
+                    ) : null}
+                    {isTaskPublisher &&
+                    task.campaign?.fundingMode === "ai2human_managed_pool" &&
+                    task.campaign?.poolAddress &&
+                    task.taskState !== "refunded" &&
+                    ["funded", "refund_pending"].includes(String(task.campaign?.agentLifecycle?.fundingState || "")) &&
+                    (countdown.ended || ["expired", "cancelled", "refund_pending"].includes(workflowState)) ? (
+                      <button
+                        type="button"
+                        onClick={() => void refundPoolTask()}
+                        disabled={takingPublisherAction || refundingPool}
+                        title="Return the remaining pool to the original requester wallet"
+                      >
+                        {refundingPool ? "Refunding…" : "Refund remaining pool"}
+                      </button>
+                    ) : null}
+                    <button type="button" onClick={() => void copyTaskLink()}>Copy task link</button>
+                    <Link href="/tasks/mine">All published tasks</Link>
+                  </div>
+                </div>
+                {workflowState === "awaiting_funding" ? (
+                  <div className={styles.fundingGuide}>
+                    <div className={styles.fundingGuideHeader}>
+                      <span>Task saved</span>
+                      <strong>{fundingAuthorizationRequired ? "One-time wallet permission required" : fundingShortfall ? "Add funds to publish" : fundingGasRequired ? "Add Base ETH for network fees" : fundingProviderIssue ? "Wallet provider needs another attempt" : "Preparing reward funding"}</strong>
+                      <p>
+                        {fundingAuthorizationRequired
+                          ? "Authorize your Privy embedded wallet once. AI2Human can then fund this and future tasks from that wallet without repeating this step."
+                          : fundingShortfall
+                            ? `Your task is safe but not public yet. Add at least ${fundingShortfall.required} USDC to the embedded wallet below, then retry publishing.`
+                            : fundingGasRequired
+                              ? "The reward balance is ready, but this wallet needs a small amount of ETH on Base to pay the network fee. Send Base ETH to the address below, then retry."
+                              : fundingProviderIssue
+                                ? "Your task and funds are safe. Retry the same publishing operation so AI2Human can capture the wallet provider response; this cannot create a duplicate charge."
+                            : "AI2Human is checking your embedded wallet and will publish automatically after the reward is secured."}
+                      </p>
+                    </div>
+                    {fundingAuthorizationRequired ? (
+                      <button type="button" onClick={() => void authorizeTaskFunding()} disabled={takingPublisherAction}>
+                        {takingPublisherAction ? "Authorizing wallet…" : "Authorize once & continue"}
+                      </button>
+                    ) : null}
+                    {fundingShortfall ? (
+                      <div className={styles.fundingBalanceBox}>
+                        <div><span>Needed</span><strong>{fundingShortfall.required} USDC</strong></div>
+                        <div><span>Available</span><strong>{fundingShortfall.usdcBalance} USDC</strong></div>
+                        <div className={styles.fundingWalletAddress}>
+                          <span>Deposit USDC on Base to your embedded wallet</span>
+                          <strong>{user?.wallet?.address || wallets.find((wallet) => wallet.walletClientType === "privy")?.address || "Wallet unavailable"}</strong>
+                        </div>
+                        <button type="button" onClick={() => void fundAndPublishTask()} disabled={takingPublisherAction}>
+                          {takingPublisherAction ? "Checking balance…" : "I added funds · Retry publish"}
+                        </button>
+                      </div>
+                    ) : null}
+                    {fundingGasRequired ? (
+                      <div className={styles.fundingBalanceBox}>
+                        <div><span>Network</span><strong>Base</strong></div>
+                        <div><span>Asset needed</span><strong>ETH for gas</strong></div>
+                        <div className={styles.fundingWalletAddress}>
+                          <span>Deposit a small amount of ETH on Base to this embedded wallet</span>
+                          <strong>{user?.wallet?.address || wallets.find((wallet) => wallet.walletClientType === "privy")?.address || "Wallet unavailable"}</strong>
+                        </div>
+                        <p>A small Base ETH balance is normally sufficient. If you already funded this wallet, do not keep adding ETH—retry once and report the displayed wallet-provider error.</p>
+                        <button type="button" onClick={() => void fundAndPublishTask()} disabled={takingPublisherAction}>
+                          {takingPublisherAction ? "Checking Base ETH…" : "I added Base ETH · Retry publish"}
+                        </button>
+                      </div>
+                    ) : null}
+                    {fundingProviderIssue ? (
+                      <button type="button" onClick={() => void authorizeTaskFunding()} disabled={takingPublisherAction}>
+                        {takingPublisherAction ? "Updating wallet permission…" : "Update wallet permission & continue"}
+                      </button>
+                    ) : null}
+                    {!fundingAuthorizationRequired && !fundingShortfall && !fundingGasRequired && !fundingProviderIssue ? (
+                      <button type="button" onClick={() => void fundAndPublishTask()} disabled={takingPublisherAction}>
+                        {takingPublisherAction ? "Checking wallet…" : "Retry publish"}
+                      </button>
+                    ) : null}
+                  </div>
+                ) : null}
+                <div className={styles.publisherProgress}>
+                  {["Task", "Execute", "Proof", "Verify", "Settle"].map((label, index) => (
+                    <span className={index <= publisherStage ? styles.publisherProgressDone : ""} key={label}>
+                      <i>{index < publisherStage ? "✓" : index + 1}</i>{label}
+                    </span>
+                  ))}
+                </div>
+              </section>
+            ) : null}
+
+            <div className={styles.qnSection}>
+              <div className={styles.qnMain}>
+                <div className={styles.qnDetail}>
+                  <div className={styles.qnCommunityBox}>
+                    <div className={styles.qnCommunity}>
+                      <div className={styles.qnLogo}>
+                        <img src="/brand/ai2human-dual-arrow-256.png" alt="AI2Human" />
+                      </div>
+                      <span className={styles.qnName}>{isResearchEvidenceTask ? "Research evidence review" : "Real-world human execution"}</span>
+                    </div>
+                    <span className={`${styles.qnTag} ${isDone ? styles.qnTagCompleted : styles.qnTagOngoing}`}>
+                      {publicStatusLabel}
+                    </span>
+                  </div>
+
+                  <div className={styles.qnTitleWrap}>
+                    <h1 className={styles.qnTitle}>{displayTitle}</h1>
+                    <div className={styles.qnTagBox}>
+                      <span className={styles.qnTag}>{rewardLabel}</span>
+                      <span className={styles.qnTag}>{getDeadlineDisplay()}</span>
+                    </div>
+                  </div>
+                  <TaskRoomStatus task={task} />
+
+                  <section className={styles.executionPanel} aria-label="Execution availability">
+                    <div className={styles.executionStats}>
+                      <div className={styles.executionStat}>
+                        <span>Execution</span>
+                        <strong>{executorSlots} executor needed</strong>
+                        <small>Exclusive assignment</small>
+                      </div>
+                      <div className={`${styles.executionStat} ${slotAvailable ? styles.executionStatAvailable : styles.executionStatUnavailable}`}>
+                        <span>Availability</span>
+                        <strong>{slotStatus}</strong>
+                        <small>{proofSubmitted ? "Execution complete" : slotAvailable ? "First come, first served" : claimedByMe ? "Assigned to your account" : awaitingPublication ? "Waiting for publisher" : "Do not begin work"}</small>
+                      </div>
+                      <div className={styles.executionStat}>
+                        <span>Reward</span>
+                        <strong>{rewardLabel}</strong>
+                        <small>For approved proof</small>
+                      </div>
+                    </div>
+                    <div className={styles.executionRule}>
+                      <span className={styles.executionRuleIcon} aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                          <path d="m9 12 2 2 4-4" />
+                        </svg>
+                      </span>
+                      <div className={styles.executionRuleCopy}>
+                        <strong>{proofSubmitted ? slotStatus : claimedByMe ? "This slot is reserved for you" : awaitingPublication ? "Wait for publication" : "Claim before starting work"}</strong>
+                        <span>{slotGuidance}</span>
+                      </div>
+                      {!claimedByMe && slotAvailable ? (
+                        <button type="button" className={styles.executionClaimButton} onClick={claimTask} disabled={claiming}>
+                          {claiming ? "Claiming..." : authenticated ? "Claim this slot" : "Connect and claim"}
+                        </button>
+                      ) : null}
+                    </div>
+                  </section>
+
+                  {needsProofAttention ? (
+                    <section className={styles.proofActionCard} role="alert" aria-label="Proof action required">
+                      <div className={styles.proofActionIcon} aria-hidden="true">!</div>
+                      <div className={styles.proofActionBody}>
+                        <div className={styles.proofActionTopline}>
+                          <span>Action required</span>
+                          <strong>
+                            {customProofAttemptState.attemptsUsed}/{customProofAttemptState.maxAttempts} attempts used
+                          </strong>
+                        </div>
+                        <h2>{attentionTitle}</h2>
+                        <p>{primaryAttentionReason}</p>
+                        {canReplaceProof ? (
+                          <div className={styles.proofActionNext}>
+                            <strong>Next step</strong>
+                            <span>
+                              {acceptsImages
+                                ? "Take a new photo now, then upload it below. The replacement will be checked again automatically."
+                                : "Replace the evidence below. The new submission will be checked again automatically."}
+                            </span>
+                          </div>
+                        ) : customProofAttemptState.attemptsRemaining <= 0 ? (
+                          <div className={styles.proofActionNext}>
+                            <strong>No retries remaining</strong>
+                            <span>The stored proof now needs a reviewer decision. It will not be paid automatically.</span>
+                          </div>
+                        ) : isTaskPublisher ? (
+                          <div className={styles.proofActionNext}>
+                            <strong>Publisher view</strong>
+                            <span>The executor may replace this proof before using all three attempts.</span>
+                          </div>
+                        ) : null}
+                        <div className={styles.proofActionControls}>
+                          {canReplaceProof ? (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const fileInput = document.getElementById("custom-proof-file") as HTMLInputElement | null;
+                                if (fileInput) fileInput.click();
+                                else document.getElementById("custom-proof-form")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                              }}
+                            >
+                              {acceptsImages ? "Take or upload a new photo" : "Replace evidence"}
+                            </button>
+                          ) : null}
+                          {supportingAttentionReasons.length ? (
+                            <details>
+                              <summary>Technical details</summary>
+                              <ul>
+                                {supportingAttentionReasons.map((reason) => <li key={reason}>{reason}</li>)}
+                              </ul>
+                            </details>
+                          ) : null}
+                        </div>
+                      </div>
+                    </section>
+                  ) : null}
+
+                  <div className={styles.qnDesc}>
+                    <p className={styles.qnDescTitle}>What to do</p>
+                    <div className={styles.qnDescContent}>
+                      {displayTitle.toLowerCase() !== displayBrief.toLowerCase() ? <p>{displayBrief}</p> : null}
+                      {operatorInstructions.length ? (
+                        <ol>
+                          {operatorInstructions.map((instruction) => <li key={instruction}>{instruction}</li>)}
+                        </ol>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  <div className={styles.articleRuleGrid}>
+                    {spec.evidenceRequirements.map((requirement, index) => (
+                      <div className={styles.articleRuleCard} key={requirement.id}>
+                        <span className={styles.articleRuleIndex}>{String(index + 1).padStart(2, "0")}</span>
+                        <span className={styles.evidenceTypeBadge}>{requirement.kind}{requirement.minCount && requirement.minCount > 1 ? ` × ${requirement.minCount}` : ""}</span>
+                        <p className={styles.articleRuleTitle}>{requirement.label}</p>
+                        <p>{requirement.instruction}</p>
+                      </div>
+                    ))}
+                    {locationRequired ? (
+                      <div className={styles.articleRuleCard}>
+                        <span className={styles.articleRuleIndex}>GPS</span>
+                        <p className={styles.articleRuleTitle}>Location required</p>
+                        <p>Attach browser location or type the place because this task explicitly requires physical presence.</p>
+                      </div>
+                    ) : null}
+                  </div>
+
+                  {canEditProof && (
+                    <div className={styles.form} id="custom-proof-form">
+                      <div className={styles.notice}>
+                        <strong>
+                          {customProofAttemptState.isResubmission
+                            ? `Replacement attempt ${customProofAttemptState.nextAttempt} of ${customProofAttemptState.maxAttempts}`
+                            : `Proof attempt ${customProofAttemptState.nextAttempt} of ${customProofAttemptState.maxAttempts}`}
+                        </strong>
+                        <p>
+                          {customProofAttemptState.isResubmission
+                            ? "Choose newly captured evidence that fixes the issue shown above. Your previous proof remains in the audit history."
+                            : "Submit only the evidence listed for this task. No watermark is required. Server receipt time is recorded automatically."}
+                        </p>
+                      </div>
+
+                      {acceptsFiles ? (
+                        <div className={styles.field}>
+                          <label htmlFor="custom-proof-file">{fileLabel}</label>
+                          <input
+                            id="custom-proof-file"
+                            className={styles.input}
+                            type="file"
+                            accept={fileAccept}
+                            capture="environment"
+                            multiple={requiredFileCount > 1}
+                            onChange={(event) => void prepareEvidenceFiles(Array.from(event.target.files || []))}
+                            disabled={submitting || preparingEvidence}
+                          />
+                          <p className={styles.fieldHelp}>Up to 4 files. Large phone photos are optimized automatically before upload.</p>
+                          {preparingEvidence ? <p className={styles.fieldHelp}>Preparing evidence…</p> : null}
+                          {evidenceFilePreparation.map((file) => (
+                            <p className={styles.fieldHelp} key={`${file.name}-${file.originalLastModified}`}>
+                              ✓ {file.name} · {formatFileSize(file.uploadedBytes)}
+                              {file.optimized ? ` · optimized from ${formatFileSize(file.originalBytes)}` : ""}
+                            </p>
+                          ))}
+                          {evidenceFiles.length ? (
+                            <div className={styles.evidencePreviewGrid}>
+                              {evidenceFiles.map((file) => <EvidenceFilePreview key={`${file.name}-${file.lastModified}`} file={file} />)}
+                            </div>
+                          ) : null}
+                        </div>
+                      ) : null}
+
+                      {acceptsLinks ? (
+                        <div className={styles.field}>
+                          <label htmlFor="custom-proof-link">Evidence link</label>
+                          <input
+                            id="custom-proof-link"
+                            className={styles.input}
+                            type="url"
+                            value={evidenceUrl}
+                            onChange={(event) => setEvidenceUrl(event.target.value)}
+                            placeholder="https://..."
+                            disabled={submitting}
+                          />
+                          <p className={styles.fieldHelp}>Submit the direct source URL requested by this task.</p>
+                        </div>
+                      ) : null}
+
+                      {acceptsText && spec.submission.summaryRequired ? (
+                        <div className={styles.field}>
+                          <label htmlFor="custom-proof-summary">Written result (required)</label>
+                          <textarea
+                            id="custom-proof-summary"
+                            className={styles.textarea}
+                            value={summary}
+                            onChange={(event) => setSummary(event.target.value)}
+                            placeholder="Enter the written result requested by this task."
+                            rows={3}
+                            disabled={submitting}
+                          />
+                        </div>
+                      ) : null}
+
+                      {locationRequired ? (
+                        <div className={styles.field}>
+                          <label htmlFor="custom-location-note">Place (required)</label>
+                          <input
+                            id="custom-location-note"
+                            className={styles.input}
+                            value={locationNote}
+                            onChange={(event) => setLocationNote(event.target.value)}
+                            placeholder={expectedPlace || "Store or venue name"}
+                            disabled={submitting}
+                          />
+                          <div className={styles.ctaRow}>
+                            <button type="button" className={styles.buttonGhost} onClick={captureOptionalLocation} disabled={locating || submitting}>
+                              {locating ? "Getting location..." : browserLocation ? "✓ Location attached" : "Attach location"}
+                            </button>
+                            {browserLocation && (
+                              <button type="button" className={styles.buttonGhost} onClick={() => setBrowserLocation(null)} disabled={submitting}>
+                                Remove location
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ) : null}
+
+                      <div className={styles.ctaRow}>
+                        <button type="button" className={styles.button} onClick={submitProof} disabled={!canSubmitCustomProof || submitting || preparingEvidence}>
+                          {preparingEvidence ? "Preparing evidence..." : submitting ? "Submitting..." : submitLabel}
+                        </button>
+                      </div>
+                      {missingRequirements.length ? (
+                        <p className={styles.evidenceMissing}>Still needed: {missingRequirements.map((requirement) => requirement.label).join(", ")}</p>
+                      ) : (
+                        <p className={styles.evidenceReady}>✓ Required evidence is ready</p>
+                      )}
+                      {proofError ? <div className={styles.noticeMsg}>{proofError}</div> : null}
+                    </div>
+                  )}
+
+                  {isClosedProofRecord && (isTaskPublisher || claimedByMe) ? (
+                    <section className={styles.submittedProof} aria-label="Submitted evidence">
+                      <div className={styles.submittedProofHeader}>
+                        <div>
+                          <span>{isTaskPublisher ? "Publisher view" : "Your submission"}</span>
+                          <h2>Submitted evidence</h2>
+                        </div>
+                        {publisherProof ? <strong>{publisherProof.artifacts.length} artifact{publisherProof.artifacts.length === 1 ? "" : "s"}</strong> : null}
+                      </div>
+
+                      <p className={styles.proofPrivacy}>Private evidence · visible only to the publisher and assigned executor · original links expire automatically.</p>
+                      {publisherProofLoading ? <p className={styles.proofState}>Preparing secure evidence links…</p> : null}
+                      {publisherProofError ? (
+                        <div className={styles.proofErrorRow}>
+                          <span>{publisherProofError}</span>
+                          <button type="button" onClick={() => void loadPublisherProof()}>Refresh evidence links</button>
+                        </div>
+                      ) : null}
+                      {!publisherProofLoading && !publisherProofError && !publisherProof ? (
+                        <p className={styles.proofState}>The proof record is stored, but no viewable proof bundle is attached to this legacy submission.</p>
+                      ) : null}
+                      {publisherProof ? (
+                        <>
+                          <div className={styles.submittedArtifactGrid}>
+                            {publisherProof.artifacts.map((artifact) => {
+                              const artifactUrl = artifact.accessUrl || artifact.uri;
+                              return (
+                                <article className={styles.submittedArtifact} key={artifact.id}>
+                                  {artifact.kind === "video" ? (
+                                    <video src={artifactUrl} controls preload="metadata" />
+                                  ) : artifact.kind === "image" ? (
+                                    <img src={artifactUrl} alt={artifact.originalFilename || "Submitted task evidence"} />
+                                  ) : (
+                                    <div className={styles.submittedLinkPreview}>↗</div>
+                                  )}
+                                  <div>
+                                    <strong>{artifact.originalFilename || (artifact.kind === "link" ? "Evidence link" : `${artifact.kind} evidence`)}</strong>
+                                    <span>{artifact.sizeBytes ? formatFileSize(artifact.sizeBytes) : artifact.kind}</span>
+                                    <a href={artifactUrl} target="_blank" rel="noreferrer">Open original ↗</a>
+                                  </div>
+                                </article>
+                              );
+                            })}
+                          </div>
+                          <dl className={styles.proofMetadata}>
+                            <div><dt>Server received</dt><dd>{new Date(publisherProof.serverReceivedAt).toLocaleString()}</dd></div>
+                            {publisherProof.summary ? <div><dt>Written result</dt><dd>{publisherProof.summary}</dd></div> : null}
+                            {publisherProof.locationNote ? <div><dt>Venue / location</dt><dd>{publisherProof.locationNote}</dd></div> : null}
+                            {publisherProof.location ? (
+                              <div>
+                                <dt>Captured location</dt>
+                                <dd>
+                                  <a href={`https://www.google.com/maps?q=${publisherProof.location.latitude},${publisherProof.location.longitude}`} target="_blank" rel="noreferrer">
+                                    {publisherProof.location.latitude.toFixed(5)}, {publisherProof.location.longitude.toFixed(5)}
+                                  </a>
+                                  {publisherProof.location.accuracyMeters ? ` · ±${Math.round(publisherProof.location.accuracyMeters)} m` : ""}
+                                </dd>
+                              </div>
+                            ) : null}
+                            <div><dt>Integrity seal</dt><dd className={styles.proofHash}>{publisherProof.integrityHash}</dd></div>
+                          </dl>
+                        </>
+                      ) : null}
+                    </section>
+                  ) : null}
+
+                  {isClosedProofRecord && (
+                    <div className={styles.qnDesc}>
+                      <p className={styles.qnDescTitle}>Verification</p>
+                      <div className={styles.qnDescContent}>
+                        {verificationStatus.reviewCause === "provider_unavailable" ? (
+                          <p><strong>System review required.</strong> The proof is stored. Use the action panel above for the available next step.</p>
+                        ) : verificationStatus.verdict === "manual_review" ? (
+                          <p><strong>Payment paused.</strong> The main reason and replacement action are highlighted above.</p>
+                        ) : verificationStatus.verdict === "resubmit" ? (
+                          <p><strong>Replacement required.</strong> Follow the action shown above and submit clearer task-specific evidence.</p>
+                        ) : null}
+                        {verificationStatus.checks.length ? (
+                          <details className={styles.verificationDetails}>
+                            <summary>View all verification checks</summary>
+                            <div>
+                              {verificationStatus.checks.map((check: VerificationCheck) => {
+                                const lowConfidencePass = check.passed
+                                  && Number.isFinite(Number(check.confidence))
+                                  && Number(check.confidence) > 0
+                                  && Number(check.confidence) < 0.72;
+                                return (
+                                  <p key={check.id}>
+                                    {lowConfidencePass ? "△" : check.passed ? "✓" : "○"} {check.label}
+                                    {lowConfidencePass ? " — supporting evidence is incomplete" : ""}
+                                  </p>
+                                );
+                              })}
+                            </div>
+                          </details>
+                        ) : <p>Proof is waiting for verification.</p>}
+                        {latestPayment?.explorerUrl && <p><a href={latestPayment.explorerUrl} target="_blank" rel="noreferrer">View settlement</a></p>}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className={styles.qnSidebar}>
+                <div className={styles.qnRewardCard}>
+                  <div className={styles.qnRewardHeader}>
+                    <h3 className={styles.qnRewardH3}>Reward</h3>
+                    <span className={styles.qnRewardBadge}>FCFS</span>
+                  </div>
+                  <div className={styles.qnRewardStats}>
+                    <div className={styles.qnStatItem}>
+                      <span className={styles.qnStatValue}>{rewardLabel}</span>
+                      <span className={styles.qnStatLabel}>For approved proof</span>
+                    </div>
+                    <div className={styles.qnStatDivider} />
+                    <div className={styles.qnStatItem}>
+                      <span className={styles.qnStatValue}>{proofSubmitted ? "Filled" : `${availableExecutorSlots}/${executorSlots}`}</span>
+                      <span className={styles.qnStatLabel}>{proofSubmitted ? "Slot status" : "Slots available"}</span>
+                    </div>
+                  </div>
+                  <div className={styles.notice}>{task.status === "paid"
+                    ? "Approved proof has been paid."
+                    : proofSubmitted
+                      ? "The execution slot is closed. Payment is released only after the stored proof is approved."
+                      : awaitingPublication
+                        ? "No execution slot is available until the task is confirmed and funded."
+                      : "Claim first. Payment is released only after the required proof passes verification."}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+      );
+    }
 
     if (isArticleContest) {
       const articlePrizes = dist?.prizes?.length
@@ -1646,8 +2972,8 @@ export default function TaskDetailClient({
 
                   {!articleWallet && (
                     <div className={styles.qnProfileNotice}>
-                      Connect your wallet before submitting.
-                      <button type="button" onClick={() => login()}>Connect Wallet</button>
+                      Sign in before submitting.
+                      <button type="button" onClick={() => login()}>Sign in</button>
                     </div>
                   )}
 
@@ -1900,6 +3226,7 @@ export default function TaskDetailClient({
                     <span className={styles.qnTag}>{getDeadlineDisplay()}</span>
                   </div>
                 </div>
+                <TaskRoomStatus task={task} />
 
                 {isGloballyEnded && (
                   <div className={styles.qnEndedBanner}>
@@ -1965,7 +3292,7 @@ export default function TaskDetailClient({
                                         className={styles.btn3dFace}
                                         onClick={() => login()}
                                       >
-                                        Connect Wallet
+                                        Sign in
                                       </button>
                                       <span className={styles.btn3dShadow} />
                                     </div>
@@ -2252,7 +3579,7 @@ export default function TaskDetailClient({
                         className={styles.btn3dFace}
                         onClick={() => login()}
                       >
-                        Connect Wallet
+                        Sign in
                       </button>
                       <span className={styles.btn3dShadow} />
                     </div>
@@ -2305,7 +3632,7 @@ export default function TaskDetailClient({
                 )}
 
                 {!connectedWallet && (
-                  <p className={styles.qnClaimTips}>Connect wallet to start earning</p>
+                  <p className={styles.qnClaimTips}>Sign in to start earning</p>
                 )}
                 {connectedWallet && (!hasContactEmail || !hasBoundXAccount) && !claimResult && (
                   <p className={styles.qnClaimTips}>Add contact email and bind X from Profile before doing tasks</p>
