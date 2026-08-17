@@ -358,6 +358,7 @@ export default function ProfilePage() {
     explorerUrl?: string;
     amount?: string;
     asset?: string;
+    recipient?: string;
   } | null>(null);
   const [enablingAutomation, setEnablingAutomation] = useState(false);
 
@@ -646,6 +647,10 @@ export default function ProfilePage() {
       setError("Enter a withdrawal address and amount.");
       return;
     }
+    if (!/^0x[a-fA-F0-9]{40}$/.test(withdrawAddress.trim())) {
+      setError("Enter a valid 0x withdrawal address.");
+      return;
+    }
     setWithdrawing(true);
     try {
       const response = await fetch("/api/x-wallet/withdraw", {
@@ -665,6 +670,7 @@ export default function ProfilePage() {
         explorerUrl?: string;
         amount?: string;
         asset?: string;
+        recipient?: string;
       };
       if (!response.ok || !payload.success) {
         throw new Error(payload.error || "Withdrawal failed.");
@@ -673,12 +679,12 @@ export default function ProfilePage() {
         txHash: payload.txHash,
         explorerUrl: payload.explorerUrl,
         amount: payload.amount,
-        asset: payload.asset
+        asset: payload.asset,
+        recipient: withdrawAddress.trim()
       });
-      setMessage(`Withdrawal submitted. ${payload.amount || ""} ${String(payload.asset || "").toUpperCase()} sent to your address.`);
+      setMessage(`Withdrawal successful. ${payload.amount || ""} ${String(payload.asset || "").toUpperCase()} sent to ${withdrawAddress.trim()}.`);
       setWithdrawAddress("");
       setWithdrawAmount("");
-      setWithdrawOpen(false);
       await loadXWallet();
     } catch (withdrawError) {
       setError(withdrawError instanceof Error ? withdrawError.message : "Withdrawal failed.");
@@ -902,8 +908,28 @@ export default function ProfilePage() {
               </div>
               {withdrawOpen ? (
                 <div className={styles.withdrawPanel}>
-                  <strong>Withdraw from AI2Human wallet</strong>
-                  <p>Send ETH, A2H, or USDC from your embedded wallet to an external address on Base.</p>
+                  <div className={styles.withdrawFlow}>
+                    <div className={styles.withdrawLeg}>
+                      <span className={styles.withdrawLegLabel}>From (AI2Human wallet)</span>
+                      <strong className={styles.withdrawLegValue}>{shortAddress(xWallet.address)}</strong>
+                      <small className={styles.withdrawLegBalances}>
+                        {Number(xWallet.a2hBalance).toLocaleString(undefined, { maximumFractionDigits: 2 })} A2H ·{" "}
+                        {Number(xWallet.usdcBalance).toLocaleString(undefined, { maximumFractionDigits: 6 })} USDC ·{" "}
+                        {Number(xWallet.nativeBalance).toLocaleString(undefined, { maximumFractionDigits: 6 })} ETH
+                      </small>
+                    </div>
+                    <div className={styles.withdrawArrow}>↓</div>
+                    <div className={styles.withdrawLeg}>
+                      <span className={styles.withdrawLegLabel}>To (recipient)</span>
+                      <input
+                        className={styles.withdrawInput}
+                        type="text"
+                        placeholder="0x recipient address"
+                        value={withdrawAddress}
+                        onChange={(event) => setWithdrawAddress(event.target.value)}
+                      />
+                    </div>
+                  </div>
                   <div className={styles.withdrawRow}>
                     <select
                       className={styles.withdrawInput}
@@ -918,15 +944,6 @@ export default function ProfilePage() {
                     <input
                       className={styles.withdrawInput}
                       type="text"
-                      placeholder="0x recipient address"
-                      value={withdrawAddress}
-                      onChange={(event) => setWithdrawAddress(event.target.value)}
-                    />
-                  </div>
-                  <div className={styles.withdrawRow}>
-                    <input
-                      className={styles.withdrawInput}
-                      type="text"
                       inputMode="decimal"
                       placeholder="Amount"
                       value={withdrawAmount}
@@ -937,10 +954,14 @@ export default function ProfilePage() {
                     </button>
                   </div>
                   {withdrawResult?.txHash ? (
-                    <p className={styles.withdrawReceipt}>
-                      {withdrawResult.amount} {String(withdrawResult.asset || "").toUpperCase()} withdrawn.{" "}
-                      <a href={withdrawResult.explorerUrl} target="_blank" rel="noreferrer">View on Basescan</a>
-                    </p>
+                    <div className={styles.withdrawSuccess}>
+                      <strong>✅ Withdrawal successful</strong>
+                      <p>
+                        {withdrawResult.amount} {String(withdrawResult.asset || "").toUpperCase()} sent to{" "}
+                        <span className={styles.withdrawSuccessAddr}>{shortAddress(withdrawResult.recipient)}</span>
+                      </p>
+                      <a href={withdrawResult.explorerUrl} target="_blank" rel="noreferrer">View transaction on Basescan →</a>
+                    </div>
                   ) : null}
                 </div>
               ) : null}

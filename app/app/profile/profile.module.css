@@ -227,16 +227,47 @@
   background: rgba(128, 255, 234, 0.04);
 }
 
-.withdrawPanel > strong {
-  color: var(--tm-text);
-  font-size: 14px;
+.withdrawFlow {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
 }
 
-.withdrawPanel > p {
-  margin: 4px 0 12px;
+.withdrawLeg {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.withdrawLegLabel {
   color: var(--tm-muted);
-  font-size: 12px;
-  line-height: 1.5;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.withdrawLegValue {
+  color: var(--tm-cyan);
+  font-size: 13px;
+  word-break: break-all;
+}
+
+.withdrawLegBalances {
+  color: var(--tm-muted);
+  font-size: 11px;
+}
+
+.withdrawArrow {
+  align-self: center;
+  color: rgba(128, 255, 234, 0.7);
+  font-size: 16px;
+  line-height: 1;
 }
 
 .withdrawRow {
@@ -273,8 +304,34 @@
   font-size: 12px;
 }
 
-.withdrawReceipt a {
+.withdrawSuccess {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid rgba(50, 231, 152, 0.35);
+  border-radius: 10px;
+  background: rgba(50, 231, 152, 0.08);
+}
+
+.withdrawSuccess strong {
+  color: var(--tm-green);
+  font-size: 13px;
+}
+
+.withdrawSuccess p {
+  margin: 4px 0 6px;
+  color: var(--tm-text);
+  font-size: 12px;
+}
+
+.withdrawSuccessAddr {
   color: var(--tm-cyan);
+  font-weight: 700;
+}
+
+.withdrawSuccess a {
+  color: var(--tm-cyan);
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .xAccountPreview {
