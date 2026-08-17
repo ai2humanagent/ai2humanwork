@@ -1958,7 +1958,6 @@ export default function TaskDetailClient({
 
   // ===== QuestN Layout (all tasks) =====
   {
-    const allTasksVerified = ["0","1","2","3"].every(k => taskStates[k]?.verified);
     // For quest/twitter tasks, "done" means the current user has claimed, not the global task status
     // Also treat taskState as ended when pool is exhausted
     const isDone = !!claimResult || task.taskState === "full" || task.taskState === "closed" || task.taskState === "refunded";
@@ -2061,14 +2060,6 @@ export default function TaskDetailClient({
       </svg>
     );
 
-    function getTaskActionLabel(taskType: string): string {
-      if (taskType === "twitter_follow") return "Follow";
-      if (taskType === "twitter_like") return "Like";
-      if (taskType === "twitter_retweet") return "Repost";
-      if (taskType === "twitter_comment") return "Comment";
-      return "Join";
-    }
-
     function buildTwitterIntentUrl(taskType: string, campaign?: Task["campaign"]): string {
       const handle = campaign?.campaignLinks?.followHandle?.replace("@", "") || campaign?.requesterHandle?.replace("@", "") || "";
       if (taskType === "twitter_follow") {
@@ -2134,7 +2125,47 @@ export default function TaskDetailClient({
     const repostUrl =
       task.campaign?.campaignLinks?.repostUrl || extractRequirementUrl(task.campaign, ["Repost", "Retweet"]);
     const likeUrl =
-      task.campaign?.campaignLinks?.likeUrl || extractRequirementUrl(task.campaign, ["Like"]) || task.campaign?.targetUrl || "";
+      task.campaign?.campaignLinks?.likeUrl || extractRequirementUrl(task.campaign, ["Like"]);
+
+    // Build the step list from the actual campaign instead of hardcoded actions.
+    // Telegram / Repost / Like steps only appear when the campaign supplies those links.
+    const campaignAction = task.campaign?.action;
+    const mainActionLabel =
+      campaignAction === "follow" ? "Follow"
+      : campaignAction === "engage" ? "Engage"
+      : campaignAction === "quote" ? "Quote"
+      : campaignAction === "reply" ? "Reply"
+      : campaignAction === "repost" ? "Repost"
+      : campaignAction === "post" || campaignAction === "creative_submission" ? "Post"
+      : campaignAction === "product_feedback" ? "Try it"
+      : campaignAction === "community_proof" ? "Join"
+      : campaignAction === "storefront_check" || campaignAction === "human_execution_request" ? "Start"
+      : "Open";
+    const mainIntentUrl =
+      task.campaign?.targetUrl
+      || (task.campaign?.platform === "x"
+        ? buildTwitterIntentUrl("twitter_follow", task.campaign)
+        : "")
+      || "";
+    const questTaskItems = [
+      {
+        key: "0",
+        icon: followSvg,
+        label: task.campaign?.label || getTaskDisplayLabel("twitter_follow", task.campaign?.requesterHandle),
+        actionLabel: mainActionLabel,
+        intentUrl: mainIntentUrl
+      }
+    ];
+    if (telegramUrl) {
+      questTaskItems.push({ key: "1", icon: joinSvg, label: "Join Telegram Group", actionLabel: "Join", intentUrl: telegramUrl });
+    }
+    if (repostUrl) {
+      questTaskItems.push({ key: "2", icon: retweetSvg, label: "Repost announcement tweet", actionLabel: "Repost", intentUrl: buildTweetIntentFromUrl("retweet", repostUrl) });
+    }
+    if (likeUrl) {
+      questTaskItems.push({ key: "3", icon: likeSvg, label: "Like announcement tweet", actionLabel: "Like", intentUrl: buildTweetIntentFromUrl("like", likeUrl) });
+    }
+    const allTasksVerified = questTaskItems.length > 0 && questTaskItems.every((item) => taskStates[item.key]?.verified);
 
     if (isCustomRealWorldTask) {
       const spec = upgradeCustomTaskSpec(task.campaign!.customTaskSpec!) as NonNullable<NonNullable<Task["campaign"]>["customTaskSpec"]>;
@@ -3240,12 +3271,7 @@ export default function TaskDetailClient({
 
                 {/* Task List */}
                 <div className={styles.qnTaskList}>
-                  {[
-                    { key: "0", icon: followSvg, label: task.campaign?.label || getTaskDisplayLabel("twitter_follow", task.campaign?.requesterHandle), actionLabel: getTaskActionLabel("twitter_follow"), intentUrl: buildTwitterIntentUrl("twitter_follow", task.campaign) },
-                    { key: "1", icon: joinSvg, label: "Join Telegram Group", actionLabel: "Join", intentUrl: telegramUrl },
-                    { key: "2", icon: retweetSvg, label: "Repost announcement tweet", actionLabel: "Repost", intentUrl: buildTweetIntentFromUrl("retweet", repostUrl) },
-                    { key: "3", icon: likeSvg, label: "Like announcement tweet", actionLabel: "Like", intentUrl: buildTweetIntentFromUrl("like", likeUrl) },
-                  ].map((item) => {
+                  {questTaskItems.map((item) => {
                     const state = taskStates[item.key] || { actionClicked: false, acting: false, verifying: false, verified: false };
                     const taskHint = state.error
                       ? state.error

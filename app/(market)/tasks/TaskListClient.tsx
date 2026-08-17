@@ -297,34 +297,6 @@ export default function TaskListClient({ justCreated, searchQuery }: { justCreat
         </p>
       </header>
 
-      <section className={styles.niulaiCampaign}>
-        <div className={styles.niulaiCampaignHead}>
-          <div>
-            <p className={styles.niulaiCampaignEyebrow}>牛来双活动 · 全民可参与</p>
-            <h2 className={styles.niulaiCampaignTitle}>
-              牛市来了，但证据呢？
-            </h2>
-            <p className={styles.niulaiCampaignLead}>
-              AI 写得出文案，但拍不了这张照片。出门找牛或发一张梗图，
-              提交真证据，验证通过就能拿 A2H。
-            </p>
-          </div>
-          <div className={styles.niulaiCampaignActions}>
-            <Link className={styles.niulaiCampaignCta} href="/tasks/x-meme-20260817-niulai">
-              去发梗图 🎨
-            </Link>
-            <Link className={styles.niulaiCampaignCtaAlt} href="/tasks/real-bull-20260817-niulai">
-              去拍真牛 🐂
-            </Link>
-          </div>
-        </div>
-        <div className={styles.niulaiCampaignMemes}>
-          <img src="/campaign/niulai-meme-1.png" alt="牛市来了，但证据呢？" />
-          <img src="/campaign/niulai-meme-2.png" alt="AI 写得出文案，拍不了这张照片" />
-          <img src="/campaign/niulai-meme-4.png" alt="出门找牛，拍照领 A2H" />
-        </div>
-      </section>
-
       {justCreated ? <div className={styles.success}>Task draft created. Confirm and fund it before it appears on the available board.</div> : null}
       {message ? <div className={styles.success}>{message}</div> : null}
       {error ? <div className={styles.alert}>{error}</div> : null}

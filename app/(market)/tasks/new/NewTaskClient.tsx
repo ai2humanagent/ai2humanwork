@@ -164,6 +164,9 @@ function QuickTaskComposer({
 }
 
 const TEMPLATES = [...getOfficialCampaignTemplates(), ...getResearchEvidenceTemplates()];
+// Neutral default: most new tasks are prompt-driven human fallback requests,
+// not X engagement campaigns, so don't preselect an X follow/like/repost template.
+const DEFAULT_TEMPLATE_ID = "community_proof_task";
 const RESEARCH_PILOT = {
   requesterName: "AI2Human Research Pilot",
   requesterHandle: "@ai2humannetwork",
@@ -499,7 +502,7 @@ function CreateTaskShell({
 }
 
 function NewTaskStatic() {
-  const [templateId, setTemplateId] = useState(TEMPLATES[0]?.id || "x_quote_launch");
+  const [templateId, setTemplateId] = useState(DEFAULT_TEMPLATE_ID);
   const [requesterName, setRequesterName] = useState("");
   const [requesterHandle, setRequesterHandle] = useState("");
   const [targetUrl, setTargetUrl] = useState("");
@@ -561,7 +564,7 @@ function NewTaskPrivy() {
   const router = useRouter();
   const { ready, authenticated, login, getAccessToken, user } = usePrivy();
   const { wallets } = useWallets();
-  const [templateId, setTemplateId] = useState(TEMPLATES[0]?.id || "x_quote_launch");
+  const [templateId, setTemplateId] = useState(DEFAULT_TEMPLATE_ID);
   const [requesterName, setRequesterName] = useState("");
   const [requesterHandle, setRequesterHandle] = useState("");
   const [targetUrl, setTargetUrl] = useState("");
