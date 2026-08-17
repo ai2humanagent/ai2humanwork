@@ -17,7 +17,7 @@ const supabase = createClient(supabaseUrl, supabaseKey, {
 });
 
 // 牛来 ("Bull Is Coming") 双活动 — 无持仓门槛，任何人可参与。
-// 1) 二创梗图挑战：牛市来了，但证据呢？
+// 1) 二创梗图挑战：牛来，证据呢？
 // 2) 真牛证明：出门找牛/牛肉面/带牛字的地标，拍照提交证据。
 // 两个任务都走 AI2Human 闭环：task -> human execution -> proof -> verify -> settle。
 
@@ -75,12 +75,12 @@ function baseTask(id, title, budget) {
 const memeTask = {
   ...baseTask(
     "x-meme-20260817-niulai",
-    "牛来 Meme Challenge — 牛市来了，但证据呢？ (A2H)",
+    "牛来 Meme Challenge — 牛来，证据呢？ (A2H)",
     `${TOTAL_POOL} A2H`
   ),
   campaign: {
     brief:
-      "牛市来了，但证据呢？\n\nAI 写得出文案，但拍不出这张图。梗图创作这件事，还是得靠人。\n\n【活动内容】\n围绕「牛市来了，但证据呢？」创作一张牛来梗图——电影截图、表情包、AI 辅助都行，越离谱越有梗越好。\n\n【怎么参与】\n1. 创作梗图并公开发布到你的 X 账号，@AI2Human，带上 #A2H #牛来；\n2. 在本页面提交你的 X 帖子链接；\n3. 提交后等待 AI2Human 验证，通过即得 A2H 空投。\n\n【奖励】\n验证通过即可获得 A2H 空投，共 50 个名额，先到先得。社区点赞高、最有创意的作品，活动结束后还有额外奖励。",
+      "牛来，证据呢？\n\n全网都在喊牛，牛呢？AI 写得出文案，画不出这张梗图——所以这张图得你上。\n\n【活动内容】\n围绕「牛来，证据呢？」创作一张牛来梗图——电影截图、表情包、AI 辅助都行，越离谱越有梗越好。\n\n【怎么参与】\n1. 创作梗图并公开发布到你的 X 账号，@AI2Human，带上 #A2H #牛来；\n2. 在本页面提交你的 X 帖子链接；\n3. 截止后 AI2Human 验证并排名，按名次发放 A2H。\n\n【奖励】\n总奖池约 100u A2H，最高 50u：🥇第1名 ≈50u · 🥈第2名 ≈20u · 🥉第3名 ≈10u×3。",
     label: "Post a 牛来 meme on X (bull is coming… but where's the proof?)",
     action: "creative_submission",
     platform: "x",
@@ -114,12 +114,12 @@ const memeTask = {
 const bullTask = {
   ...baseTask(
     "real-bull-20260817-niulai",
-    "真牛证明 Bull Hunt — 出门找牛，拍照领 A2H",
+    "真牛证明 Bull Hunt — 牛来，证据呢？",
     `${TOTAL_POOL} A2H`
   ),
   campaign: {
     brief:
-      "「牛来了，证据呢？」\n\nAI 拍不了这张照片——出门找牛，只能靠人。\n\n【活动内容】\n完成以下任一「找牛」任务并拍照：\n1. 公牛/奶牛雕像或真牛（保持安全距离）；\n2. 一碗牛肉面 + 店铺招牌；\n3. 名字带「牛」的地方（牛市口、牛街、Oxford…）；\n4. 任何带 牛 / OX / BULL 字样的招牌；\n5. 手机钱包余额 + 牛元素同框（链上 + 线下一次拍全）；\n6. 通往牛地标的公共交通票据。\n\n【怎么参与】\n1. 照片里必须出现手写的当天日期 + 你的钱包地址；\n2. 把照片公开发布到你的 X 账号，@AI2Human，带上 #A2H #真牛；\n3. 在本页面提交你的 X 帖子链接。\n\n【奖励】\n验证通过即可获得 A2H 空投，共 50 个名额，先到先得。",
+      "牛来，证据呢？\n\nAI 拍不了这张照片——出门找牛，只能靠人。\n\n【活动内容】\n完成以下任一「找牛」任务并拍照：\n1. 公牛/奶牛雕像或真牛（保持安全距离）；\n2. 一碗牛肉面 + 店铺招牌；\n3. 名字带「牛」的地方（牛市口、牛街、Oxford…）；\n4. 任何带 牛 / OX / BULL 字样的招牌；\n5. 手机钱包余额 + 牛元素同框（链上 + 线下一次拍全）；\n6. 通往牛地标的公共交通票据。\n\n【怎么参与】\n1. 照片里必须出现手写的当天日期 + 你的钱包地址；\n2. 把照片公开发布到你的 X 账号，@AI2Human，带上 #A2H #真牛；\n3. 在本页面提交你的 X 帖子链接；\n4. 截止后 AI2Human 验证并排名，按名次发放 A2H。\n\n【奖励】\n总奖池约 100u A2H，最高 50u：🥇第1名 ≈50u · 🥈第2名 ≈20u · 🥉第3名 ≈10u×3。",
     label: "Post your 真牛证明 photo on X (any one of the six quests)",
     action: "creative_submission",
     platform: "x",
