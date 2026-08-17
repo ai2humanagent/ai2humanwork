@@ -542,6 +542,21 @@ export async function sendRequesterWalletA2h(input: {
   const cfg = config();
   const value = parseUnits(input.amount, A2H_DECIMALS);
   if (value <= BigInt(0)) return { ok: false as const, error: "A2H amount must be positive." };
+  const publicClient = client();
+  const balance = await publicClient.readContract({
+    address: cfg.a2hAddress as `0x${string}`,
+    abi: erc20Abi,
+    functionName: "balanceOf",
+    args: [wallet.address as `0x${string}`]
+  }) as bigint;
+  if (balance < value) {
+    return {
+      ok: false as const,
+      error: "Insufficient embedded wallet A2H balance.",
+      balance: formatUnits(balance, A2H_DECIMALS),
+      required: formatUnits(value, A2H_DECIMALS)
+    };
+  }
   const data = encodeFunctionData({
     abi: erc20Abi,
     functionName: "transfer",
@@ -555,7 +570,6 @@ export async function sendRequesterWalletA2h(input: {
       data,
       idempotencyKey: input.idempotencyKey
     });
-    const publicClient = client();
     const receipt = await publicClient.waitForTransactionReceipt({ hash: sent.hash as `0x${string}` });
     if (receipt.status !== "success") {
       return { ok: false as const, error: "Embedded wallet A2H transfer failed on Base." };
