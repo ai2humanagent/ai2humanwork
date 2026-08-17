@@ -24,11 +24,16 @@ const supabase = createClient(supabaseUrl, supabaseKey, {
 const now = new Date().toISOString();
 const deadline = "2026-08-24T23:59:00.000Z";
 
-// A2H price: $0.0000004217 as of 2026-07-27
-// ~$4.2 ≈ 10,000,000 A2H per winner, 50 winners per task.
-const PER_WINNER = "10000000";
-const MAX_WINNERS = 50;
-const TOTAL_POOL = String(Number(PER_WINNER) * MAX_WINNERS);
+// A2H price: $0.0000004217 (reference, 2026-07-27)
+// Bankr-style ranked prizes, ~$100 total per task:
+// 1st ≈ 50u, 2nd ≈ 20u, 3rd ≈ 10u × 3 slots.
+const PRIZES = [
+  { rank: 1, amount: "118568000 A2H", slots: 1, label: "1st place" },
+  { rank: 2, amount: "47427000 A2H", slots: 1, label: "2nd place" },
+  { rank: 3, amount: "23714000 A2H", slots: 3, label: "3rd place" }
+];
+const TOTAL_POOL = "237137000";
+const MAX_WINNERS = 5;
 
 function baseTask(id, title, budget) {
   return {
@@ -36,7 +41,7 @@ function baseTask(id, title, budget) {
     title,
     budget,
     deadline,
-    acceptance: "Submit verifiable proof; approval unlocks the A2H reward",
+    acceptance: "Submit your X post link; top-ranked entries win A2H",
     task_type: null,
     status: "created",
     task_state: "open",
@@ -50,9 +55,9 @@ function baseTask(id, title, budget) {
     ],
     agent_id: "ai2human-official",
     reward_distribution: {
-      mode: "fcfs",
+      mode: "ranked_article_contest",
       totalPool: `${TOTAL_POOL} A2H`,
-      perWinner: PER_WINNER,
+      prizes: PRIZES,
       maxWinners: MAX_WINNERS,
       network: "base-mainnet",
       currency: "A2H",
@@ -81,6 +86,7 @@ const memeTask = {
     platform: "x",
     targetUrl: "https://x.com/ai2humannetwork/status/2057669148281651651",
     targetLabel: "AI2Human announcement post",
+    requiresImage: true,
     exampleImages: [
       "https://ai2human.work/campaign/niulai-meme-1.png",
       "https://ai2human.work/campaign/niulai-meme-2.png",
@@ -119,6 +125,7 @@ const bullTask = {
     platform: "x",
     targetUrl: "https://x.com/ai2humannetwork/status/2057669148281651651",
     targetLabel: "AI2Human announcement post",
+    requiresImage: true,
     proofPhrase: "#A2H #真牛",
     requesterName: "AI2Human",
     requesterHandle: "@ai2humannetwork",
