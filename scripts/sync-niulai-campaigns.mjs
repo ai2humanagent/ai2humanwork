@@ -75,7 +75,7 @@ const memeTask = {
   ),
   campaign: {
     brief:
-      "Everyone keeps saying the bull is coming. Where is the proof? Make the funniest or sharpest meme about 「牛市来了，但证据呢？」— AI agents can draft ideas, but only humans can turn them into something worth sharing. Post your meme on X, submit the link, and verified entries earn an A2H airdrop. Top community picks get bonus rewards after review.",
+      "牛市来了，但证据呢？\n\nAI 写得出文案，但拍不出这张图。梗图创作这件事，还是得靠人。\n\n【活动内容】\n围绕「牛市来了，但证据呢？」创作一张牛来梗图——电影截图、表情包、AI 辅助都行，越离谱越有梗越好。\n\n【怎么参与】\n1. 创作梗图并公开发布到你的 X 账号，@AI2Human，带上 #A2H #牛来；\n2. 在本页面提交你的 X 帖子链接；\n3. 提交后等待 AI2Human 验证，通过即得 A2H 空投。\n\n【奖励】\n验证通过即可获得 A2H 空投，共 50 个名额，先到先得。社区点赞高、最有创意的作品，活动结束后还有额外奖励。",
     label: "Post a 牛来 meme on X (bull is coming… but where's the proof?)",
     action: "creative_submission",
     platform: "x",
@@ -92,22 +92,14 @@ const memeTask = {
     requesterHandle: "@ai2humannetwork",
     requiredHashtags: ["#A2H", "#牛来"],
     requiredMentions: ["@ai2humannetwork"],
-    submissionFields: ["executorHandle", "postUrl", "photo", "proofPhrase", "summary"],
+    submissionFields: ["postUrl"],
     proofRequirements: [
-      "Attach your X handle.",
-      "Attach the live X post URL containing your meme image.",
-      "The live URL must belong to the same X handle you submit.",
-      "Upload a screenshot of the post and attached image.",
-      "Include the required hashtag or phrase (#A2H #牛来).",
-      "Add a one-line reason for the meme."
+      "Submit the live X post URL of your meme."
     ],
     verificationChecks: [
-      "Executor handle is present.",
       "Live X post URL is present.",
-      "Submitted X URL matches executor handle.",
-      "Image proof is uploaded.",
-      "Required hashtag or phrase is present.",
-      "Meme reason is present."
+      "The post is publicly accessible.",
+      "The post shows your meme and was published after the campaign started."
     ]
   }
 };
@@ -120,7 +112,7 @@ const bullTask = {
   ),
   campaign: {
     brief:
-      "「牛来了，证据呢？」 AI can't walk outside and photograph a bull — you can. Complete any ONE of these quests: (1) a bull/cow statue or real cow (safe distance); (2) a beef noodle bowl with the shop sign; (3) a place whose name contains 牛 (牛市口, 牛街, Oxford…); (4) any sign with 牛/OX/BULL on it; (5) your phone showing a wallet balance next to a bull item (onchain + offline in one shot); (6) a public-transport ticket to a bull landmark. Post your photo on X, submit the live post link, and verified entries earn an A2H airdrop. Handwritten paper with today's date + wallet address must appear in the photo.",
+      "「牛来了，证据呢？」\n\nAI 拍不了这张照片——出门找牛，只能靠人。\n\n【活动内容】\n完成以下任一「找牛」任务并拍照：\n1. 公牛/奶牛雕像或真牛（保持安全距离）；\n2. 一碗牛肉面 + 店铺招牌；\n3. 名字带「牛」的地方（牛市口、牛街、Oxford…）；\n4. 任何带 牛 / OX / BULL 字样的招牌；\n5. 手机钱包余额 + 牛元素同框（链上 + 线下一次拍全）；\n6. 通往牛地标的公共交通票据。\n\n【怎么参与】\n1. 照片里必须出现手写的当天日期 + 你的钱包地址；\n2. 把照片公开发布到你的 X 账号，@AI2Human，带上 #A2H #真牛；\n3. 在本页面提交你的 X 帖子链接。\n\n【奖励】\n验证通过即可获得 A2H 空投，共 50 个名额，先到先得。",
     label: "Post your 真牛证明 photo on X (any one of the six quests)",
     action: "creative_submission",
     platform: "x",
@@ -131,26 +123,15 @@ const bullTask = {
     requesterHandle: "@ai2humannetwork",
     requiredHashtags: ["#A2H", "#真牛"],
     requiredMentions: ["@ai2humannetwork"],
-    submissionFields: ["executorHandle", "postUrl", "photo", "locationNote", "timestampNote", "summary"],
+    submissionFields: ["postUrl"],
     proofRequirements: [
-      "Attach your X handle.",
-      "Attach the live X post URL containing your bull-proof photo.",
-      "The live URL must belong to the same X handle you submit.",
-      "Upload a screenshot or keep the post visible on your profile for verification.",
-      "The photo must show your bull evidence and a handwritten paper with today's date + your wallet address.",
-      "Add a short location note naming the place (store, landmark, station, street).",
-      "Include the required hashtag or phrase (#A2H #真牛).",
-      "Add a one-line execution summary."
+      "Submit the live X post URL of your bull-proof photo."
     ],
     verificationChecks: [
-      "Executor handle is present.",
       "Live X post URL is present.",
-      "Submitted X URL matches executor handle.",
-      "Bull proof photo is visible in the post.",
-      "Handwritten date + wallet address is visible in the photo.",
-      "Location note is present.",
-      "Required hashtag or phrase is present.",
-      "Execution summary is present."
+      "The post is publicly accessible.",
+      "The photo shows one of the six bull quests.",
+      "Handwritten date + wallet address is visible in the photo."
     ]
   }
 };

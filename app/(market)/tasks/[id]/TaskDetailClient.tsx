@@ -3414,7 +3414,9 @@ export default function TaskDetailClient({
               <div className={styles.qnDesc}>
                 <p className={styles.qnDescTitle}>Description</p>
                 <div className={styles.qnDescContent}>
-                  <p>{task.campaign?.brief || task.acceptance}</p>
+                  {(task.campaign?.brief || task.acceptance).split(/\n{2,}/).map((paragraph, index) => (
+                    <p key={index}>{paragraph}</p>
+                  ))}
                   {task.campaign?.targetUrl && (
                     <p>Target: <a href={task.campaign.targetUrl} target="_blank" rel="noreferrer">{task.campaign.targetUrl}</a></p>
                   )}
