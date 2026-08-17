@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1800" viewBox="0 0 1200 1800">
+<defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0A0E17"/><stop offset="1" stop-color="#0D1526"/></linearGradient><linearGradient id="ac" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#80FFEA"/><stop offset="1" stop-color="#38BDF8"/></linearGradient></defs>
+<rect width="1200" height="1800" fill="url(#bg)"/>
+<text x="600" y="78" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="48" font-weight="700" fill="#F8FAFC">AI2Human — What Tasks Can You Create?</text>
+<text x="600" y="122" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="24" font-weight="600" fill="#80FFEA">TASK TYPES</text>
+<rect x="510" y="138" width="180" height="3" rx="1.5" fill="url(#ac)"/>
+<text x="80" y="185" text-anchor="start" font-family="Helvetica, Arial, sans-serif" font-size="30" font-weight="700" fill="#F8FAFC">1 · Web Templates</text>
+<text x="80" y="211" text-anchor="start" font-family="Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#94A3B8">READY-MADE · 15 TYPES</text>
+<rect x="80" y="233" width="1040" height="430" rx="18" fill="#0F172A" stroke="rgba(128,255,234,0.16)" stroke-width="1"/>
+<text x="110" y="263" text-anchor="start" font-family="Helvetica, Arial, sans-serif" font-size="20" font-weight="600" fill="#80FFEA">Social &amp; Engagement</text>
+<text x="440" y="263" text-anchor="start" font-family="Helvetica, Arial, sans-serif" font-size="16" font-weight="400" fill="#94A3B8">(8)</text>
+<rect x="110" y="289" width="245" height="54" rx="12" fill="#111B30" stroke="rgba(128,255,234,0.10)" stroke-width="1"/>
+<text x="232.5" y="321.6" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="16" font-weight="500" fill="#E2E8F0">Follow / Like / Repost</text>
+<rect x="369" y="289" width="245" height="54" rx="12" fill="#111B30" stroke="rgba(128,255,234,0.10)" stroke-width="1"/>
+<text x="491.5" y="321.6" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="16" font-weight="500" fill="#E2E8F0">Quote Post</text>
+<rect x="628" y="289" width="245" height="54" rx="12" fill="#111B30" stroke="rgba(128,255,234,0.10)" stroke-width="1"/>
+<text x="750.5" y="321.6" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="16" font-weight="500" fill="#E2E8F0">Reply Thread</text>
+<rect x="887" y="289" width="245" height="54" rx="12" fill="#111B30" stroke="rgba(128,255,234,0.10)" stroke-width="1"/>
+<text x="1009.5" y="321.6" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="16" font-weight="500" fill="#E2E8F0">Repost Update</text>
+<rect x="110" y="357" width="245" height="54" rx="12" fill="#111B30" stroke="rgba(128,255,234,0.10)" stroke-width="1"/>
+<text x="232.5" y="389.6" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="16" font-weight="500" fill="#E2E8F0">Recap Post</text>
+<rect x="369" y="357" width="245" height="54" rx="12" fill="#111B30" stroke="rgba(128,255,234,0.10)" stroke-width="1"/>
+<text x="491.5" y="389.6" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="16" font-weight="500" fill="#E2E8F0">Banner &amp; Meme</text>
+<rect x="628" y="357" width="245" height="54" rx="12" fill="#111B30" stroke="rgba(128,255,234,0.10)" stroke-width="1"/>
+<text x="750.5" y="389.6" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="16" font-weight="500" fill="#E2E8F0">Product Feedback</text>
+<rect x="887" y="357" width="245" height="54" rx="12" fill="#111B30" stroke="rgba(128,255,234,0.10)" stroke-width="1"/>
+<text x="1009.5" y="389.6" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="16" font-weight="500" fill="#E2E8F0">Community Proof</text>
+<line x1="110" y1="425" x2="1090" y2="425" stroke="rgba(128,255,234,0.10)"/>
+<text x="110" y="443" text-anchor="start" font-family="Helvetica, Arial, sans-serif" font-size="20" font-weight="600" fill="#80FFEA">Real-World</text>
+<text x="440" y="443" text-anchor="start" font-family="Helvetica, Arial, sans-serif" font-size="16" font-weight="400" fill="#94A3B8">(6)</text>
+<rect x="110" y="469" width="325" height="54" rx="12" fill="#111B30" stroke="rgba(128,255,234,0.10)" stroke-width="1"/>
+<text x="272.5" y="501.6" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="16" font-weight="500" fill="#E2E8F0">Storefront Open Check</text>
+<rect x="451" y="469" width="325" height="54" rx="12" fill="#111B30" stroke="rgba(128,255,234,0.10)" stroke-width="1"/>
+<text x="613.5" y="501.6" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="16" font-weight="500" fill="#E2E8F0">Shelf Audit</text>
+<rect x="792" y="469" width="325" height="54" rx="12" fill="#111B30" stroke="rgba(128,255,234,0.10)" stroke-width="1"/>
+<text x="954.5" y="501.6" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="16" font-weight="500" fill="#E2E8F0">Signature Capture</text>
+<rect x="110" y="537" width="325" height="54" rx="12" fill="#111B30" stroke="rgba(128,255,234,0.10)" stroke-width="1"/>
+<text x="272.5" y="569.6" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="16" font-weight="500" fill="#E2E8F0">Pickup Confirmation</text>
+<rect x="451" y="537" width="325" height="54" rx="12" fill="#111B30" stroke="rgba(128,255,234,0.10)" stroke-width="1"/>
+<text x="613.5" y="569.6" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="16" font-weight="500" fill="#E2E8F0">Menu &amp; Price Check</text>
+<rect x="792" y="537" width="325" height="54" rx="12" fill="#111B30" stroke="rgba(128,255,234,0.10)" stroke-width="1"/>
+<text x="954.5" y="569.6" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="16" font-weight="500" fill="#E2E8F0">Venue Queue Check</text>
+<line x1="110" y1="605" x2="1090" y2="605" stroke="rgba(128,255,234,0.10)"/>
+<text x="110" y="623" text-anchor="start" font-family="Helvetica, Arial, sans-serif" font-size="20" font-weight="600" fill="#80FFEA">Research</text>
+<text x="440" y="623" text-anchor="start" font-family="Helvetica, Arial, sans-serif" font-size="16" font-weight="400" fill="#94A3B8">(1)</text>
+<rect x="110" y="649" width="980" height="54" rx="12" fill="#111B30" stroke="rgba(128,255,234,0.10)" stroke-width="1"/>
+<text x="600" y="682" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="16" font-weight="500" fill="#E2E8F0">Public Code &amp; Dataset Access Check (JOVE-Core)</text>
+<text x="80" y="731" text-anchor="start" font-family="Helvetica, Arial, sans-serif" font-size="30" font-weight="700" fill="#F8FAFC">2 · Agent API Categories</text>
+<text x="80" y="757" text-anchor="start" font-family="Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#94A3B8">PROGRAMMATIC · 6 CATEGORIES</text>
+<rect x="80" y="779" width="1040" height="196" rx="18" fill="#0F172A" stroke="rgba(128,255,234,0.16)" stroke-width="1"/>
+<rect x="110" y="805" width="325" height="58" rx="12" fill="#111B30" stroke="rgba(128,255,234,0.10)" stroke-width="1"/>
+<text x="272.5" y="839.95" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="17" font-weight="500" fill="#E2E8F0">Local Verification</text>
+<rect x="451" y="805" width="325" height="58" rx="12" fill="#111B30" stroke="rgba(128,255,234,0.10)" stroke-width="1"/>
+<text x="613.5" y="839.95" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="17" font-weight="500" fill="#E2E8F0">Identity Action</text>
+<rect x="792" y="805" width="325" height="58" rx="12" fill="#111B30" stroke="rgba(128,255,234,0.10)" stroke-width="1"/>
+<text x="954.5" y="839.95" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="17" font-weight="500" fill="#E2E8F0">Physical Task</text>
+<rect x="110" y="877" width="325" height="58" rx="12" fill="#111B30" stroke="rgba(128,255,234,0.10)" stroke-width="1"/>
+<text x="272.5" y="911.95" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="17" font-weight="500" fill="#E2E8F0">Digital Task</text>
+<rect x="451" y="877" width="325" height="58" rx="12" fill="#111B30" stroke="rgba(128,255,234,0.10)" stroke-width="1"/>
+<text x="613.5" y="911.95" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="17" font-weight="500" fill="#E2E8F0">Compliance Check</text>
+<rect x="792" y="877" width="325" height="58" rx="12" fill="#111B30" stroke="rgba(128,255,234,0.10)" stroke-width="1"/>
+<text x="954.5" y="911.95" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="17" font-weight="500" fill="#E2E8F0">Errand</text>
+<text x="80" y="981" text-anchor="start" font-family="Helvetica, Arial, sans-serif" font-size="30" font-weight="700" fill="#F8FAFC">3 · Free-Form</text>
+<text x="80" y="1007" text-anchor="start" font-family="Helvetica, Arial, sans-serif" font-size="15" font-weight="400" fill="#94A3B8">UNLIMITED · EXAMPLES FROM THE JOVE-CORE STUDY</text>
+<rect x="80" y="1029" width="1040" height="268" rx="18" fill="#0F172A" stroke="rgba(128,255,234,0.16)" stroke-width="1"/>
+<rect x="110" y="1055" width="325" height="62" rx="12" fill="#111B30" stroke="rgba(128,255,234,0.10)" stroke-width="1"/>
+<text x="272.5" y="1091.95" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="17" font-weight="500" fill="#E2E8F0">Social Content</text>
+<rect x="451" y="1055" width="325" height="62" rx="12" fill="#111B30" stroke="rgba(128,255,234,0.10)" stroke-width="1"/>
+<text x="613.5" y="1091.95" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="17" font-weight="500" fill="#E2E8F0">Account Configuration</text>
+<rect x="792" y="1055" width="325" height="62" rx="12" fill="#111B30" stroke="rgba(128,255,234,0.10)" stroke-width="1"/>
+<text x="954.5" y="1091.95" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="17" font-weight="500" fill="#E2E8F0">Content Publication</text>
+<rect x="110" y="1131" width="325" height="62" rx="12" fill="#111B30" stroke="rgba(128,255,234,0.10)" stroke-width="1"/>
+<text x="272.5" y="1167.95" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="17" font-weight="500" fill="#E2E8F0">Form &amp; Document Submission</text>
+<rect x="451" y="1131" width="325" height="62" rx="12" fill="#111B30" stroke="rgba(128,255,234,0.10)" stroke-width="1"/>
+<text x="613.5" y="1167.95" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="17" font-weight="500" fill="#E2E8F0">Time-Sensitive State</text>
+<rect x="792" y="1131" width="325" height="62" rx="12" fill="#111B30" stroke="rgba(128,255,234,0.10)" stroke-width="1"/>
+<text x="954.5" y="1167.95" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="17" font-weight="500" fill="#E2E8F0">Cross-Evidence Consistency</text>
+<text x="110" y="1235" text-anchor="start" font-family="Helvetica, Arial, sans-serif" font-size="17" font-weight="400" fill="#94A3B8">Any low-risk task with structured evidence. No limit.</text>
+<text x="110" y="1261" text-anchor="start" font-family="Helvetica, Arial, sans-serif" font-size="17" font-weight="600" fill="#80FFEA">Create at ai2human.io/tasks/new · consent checkbox for research</text>
+<text x="600" y="1301" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="20" font-weight="600" fill="#475569">ai2human.io · the verify layer of AGI</text>
+</svg>
