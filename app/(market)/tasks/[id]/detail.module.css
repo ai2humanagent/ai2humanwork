@@ -3437,3 +3437,128 @@
   aspect-ratio: 1;
   object-fit: cover;
 }
+
+/* Single-field X URL submission card */
+.qnXLinkCard {
+  border: 1px solid var(--tm-border);
+  border-radius: 20px;
+  background:
+    linear-gradient(135deg, rgba(50, 231, 152, 0.08), rgba(128, 255, 234, 0.04) 45%, rgba(255, 255, 255, 0.02)),
+    var(--tm-panel);
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: var(--tm-shadow);
+}
+
+.qnXLinkHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.qnXLinkTitle {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--tm-text);
+  line-height: 1.2;
+}
+
+.qnXLinkHint {
+  font-size: 13px;
+  color: var(--tm-muted);
+}
+
+.qnXLinkForm {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.qnXLinkInput {
+  flex: 1 1 300px;
+  height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--tm-border);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--tm-text);
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.qnXLinkInput:focus {
+  outline: none;
+  border-color: rgba(128, 255, 234, 0.55);
+}
+
+.qnXLinkSubmit {
+  height: 44px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #32e798, #2ab7a8);
+  color: #04130d;
+  font-size: 14px;
+  font-weight: 800;
+  font-family: inherit;
+  cursor: pointer;
+  transition: filter 0.15s ease, transform 0.15s ease;
+}
+
+.qnXLinkSubmit:hover:not(:disabled) {
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+}
+
+.qnXLinkSubmit:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.qnXLinkError {
+  margin: 12px 0 0;
+  color: #ff7b72;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.qnXLinkSuccess {
+  margin: 12px 0 0;
+  color: #32e798;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.qnXLinkVerified {
+  margin: 0;
+  color: #32e798;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.qnXLinkEnded {
+  margin: 0;
+  color: var(--tm-muted);
+  font-size: 14px;
+}
+
+.qnXLinkButtons {
+  display: flex;
+}
+
+.qnXLinkSignin {
+  height: 40px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--tm-cyan);
+  color: #031311;
+  font-size: 14px;
+  font-weight: 800;
+  font-family: inherit;
+  cursor: pointer;
+}

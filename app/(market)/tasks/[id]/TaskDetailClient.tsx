@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { usePrivy, useSigners, useWallets } from "@privy-io/react-auth";
 import {
@@ -92,6 +92,7 @@ type Task = {
     requiresImage?: boolean;
     requiredMentions?: string[];
     requiredHashtags?: string[];
+    contentKeywords?: string[];
     label?: string;
     targetUrl?: string;
     poolAddress?: string;
@@ -641,6 +642,11 @@ export default function TaskDetailClient({
   const [timestampNote, setTimestampNote] = useState("");
   const [proofPhrase, setProofPhrase] = useState(initialTask.campaign?.proofPhrase || "");
   const [summary, setSummary] = useState("");
+  // Single-field X URL submission (campaigns that only ask for one X post link)
+  const [xLinkUrl, setXLinkUrl] = useState("");
+  const [xLinkSubmitting, setXLinkSubmitting] = useState(false);
+  const [xLinkMessage, setXLinkMessage] = useState("");
+  const [xLinkError, setXLinkError] = useState("");
   // Per-task interaction state for QuestN-style task list
   type TaskItemState = { actionClicked: boolean; acting?: boolean; verifying: boolean; verified: boolean; error?: string };
   const [taskStates, setTaskStates] = useState<Record<string, TaskItemState>>({});
@@ -968,6 +974,57 @@ export default function TaskDetailClient({
         [taskKey]: { ...prev[taskKey], verifying: false, error: errorMessage }
       }));
       setError(errorMessage);
+    }
+  }
+
+  // Single-field X URL submission — posts the link, server fetches the live post,
+  // checks campaign keywords, records evidence, and marks the main step verified.
+  async function submitXLink(event: FormEvent) {
+    event.preventDefault();
+    if (!connectedWallet) {
+      login();
+      return;
+    }
+    setXLinkSubmitting(true);
+    setXLinkError("");
+    setXLinkMessage("");
+    try {
+      const res = await fetch(`/api/tasks/${initialTask.id}/x-link-submission`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({ wallet: connectedWallet.toLowerCase(), postUrl: xLinkUrl.trim() })
+      });
+      const data = await res.json().catch(() => ({})) as {
+        error?: string;
+        ok?: boolean;
+        matchedKeywords?: string[];
+        missingKeywords?: string[];
+      };
+      if (!res.ok || !data.ok) {
+        setXLinkError(data.error || "Unable to submit the X link. Please try again.");
+        return;
+      }
+      setXLinkMessage(
+        data.matchedKeywords && data.matchedKeywords.length > 0
+          ? `提交成功 ✓ 检测到关键词：${data.matchedKeywords.map((keyword) => `#${keyword}`).join("、")}`
+          : "提交成功 ✓ 链接已验证"
+      );
+      setXLinkUrl("");
+      setTaskStates((prev) => ({
+        ...prev,
+        "0": {
+          ...(prev["0"] || { actionClicked: true, acting: false, verifying: false, verified: false }),
+          verified: true,
+          actionClicked: true,
+          error: ""
+        }
+      }));
+      await Promise.all([loadQuestProgress(connectedWallet.toLowerCase()), loadTask()]);
+    } catch (err) {
+      setXLinkError(err instanceof Error ? err.message : "Unable to submit the X link. Please try again.");
+    } finally {
+      setXLinkSubmitting(false);
     }
   }
 
@@ -1467,6 +1524,10 @@ export default function TaskDetailClient({
     return reasons.slice(0, 5);
   }, [publisherProof, task.createdAt, verificationStatus]);
   const submissionFields = useMemo(() => getTaskSubmissionFields(task), [task]);
+  const isSingleXUrlSubmission = useMemo(
+    () => submissionFields.length === 1 && submissionFields[0] === "postUrl",
+    [submissionFields]
+  );
   const rewardLabel = useMemo(() => {
     const plan = task.campaign?.agentLifecycle?.fundingPlan;
     const settlementAsset = plan?.settlementAsset && typeof plan.settlementAsset === "object"
@@ -3377,6 +3438,47 @@ export default function TaskDetailClient({
                     );
                   })}
                 </div>
+
+                {/* Single-field X URL submission */}
+                {isSingleXUrlSubmission ? (
+                  <div className={styles.qnXLinkCard}>
+                    <div className={styles.qnXLinkHead}>
+                      <h3 className={styles.qnXLinkTitle}>提交你的 X 帖子链接</h3>
+                      <span className={styles.qnXLinkHint}>把发布后的 X 链接粘贴到这里，只需填写这一项</span>
+                    </div>
+                    {isGloballyEnded ? (
+                      <p className={styles.qnXLinkEnded}>活动已结束，提交已关闭。</p>
+                    ) : taskStates["0"]?.verified ? (
+                      <p className={styles.qnXLinkVerified}>✓ 已验证，可以领取奖励了</p>
+                    ) : !connectedWallet ? (
+                      <div className={styles.qnXLinkButtons}>
+                        <button type="button" className={styles.qnXLinkSignin} onClick={() => login()}>
+                          Sign in to submit
+                        </button>
+                      </div>
+                    ) : (
+                      <form className={styles.qnXLinkForm} onSubmit={submitXLink}>
+                        <input
+                          type="url"
+                          className={styles.qnXLinkInput}
+                          value={xLinkUrl}
+                          onChange={(event) => setXLinkUrl(event.target.value)}
+                          placeholder="https://x.com/yourhandle/status/..."
+                          required
+                        />
+                        <button
+                          type="submit"
+                          className={styles.qnXLinkSubmit}
+                          disabled={xLinkSubmitting || xLinkUrl.trim().length < 12}
+                        >
+                          {xLinkSubmitting ? "检测中…" : "提交并验证"}
+                        </button>
+                      </form>
+                    )}
+                    {xLinkError ? <p className={styles.qnXLinkError}>{xLinkError}</p> : null}
+                    {xLinkMessage ? <p className={styles.qnXLinkSuccess}>{xLinkMessage}</p> : null}
+                  </div>
+                ) : null}
 
                 {/* Warning notice */}
                 <div className={styles.qnWarning}>

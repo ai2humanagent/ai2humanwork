@@ -92,6 +92,7 @@ const memeTask = {
     requesterHandle: "@ai2humannetwork",
     requiredHashtags: ["#A2H", "#牛来"],
     requiredMentions: ["@ai2humannetwork"],
+    contentKeywords: ["牛来", "牛市", "牛", "bull", "梗图", "meme"],
     submissionFields: ["postUrl"],
     proofRequirements: [
       "Submit the live X post URL of your meme."
@@ -123,6 +124,7 @@ const bullTask = {
     requesterHandle: "@ai2humannetwork",
     requiredHashtags: ["#A2H", "#真牛"],
     requiredMentions: ["@ai2humannetwork"],
+    contentKeywords: ["牛", "bull", "ox", "真牛", "牛肉面"],
     submissionFields: ["postUrl"],
     proofRequirements: [
       "Submit the live X post URL of your bull-proof photo."
