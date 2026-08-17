@@ -1,9 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { usePrivy, useWallets } from "@privy-io/react-auth";
+import { useFundWallet, usePrivy, useSigners, useWallets } from "@privy-io/react-auth";
 import Link from "next/link";
+import { base } from "viem/chains";
+import { refreshPrivyServerSession } from "../../lib/clientPrivySession";
 import styles from "./profile.module.css";
+
+const privySignerId = process.env.NEXT_PUBLIC_PRIVY_SIGNER_ID || "";
+const privyPolicyId = process.env.NEXT_PUBLIC_PRIVY_POLICY_ID || "";
 
 type SessionUser = {
   id: string;
@@ -57,6 +62,29 @@ type AuthPayload = {
   services: ServiceSummary[];
 };
 
+type XRequest = {
+  id: string;
+  title: string;
+  budget: string;
+  deadline: string;
+  state: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+type XWalletSnapshot = {
+  ready: boolean;
+  address: string;
+  usdcBalance: string;
+  a2hBalance: string;
+  nativeBalance: string;
+  delegated: boolean;
+  automationConfigured: boolean;
+  network: string;
+  chainId: number;
+  tokenSymbol: string;
+};
+
 function shortAddress(address?: string) {
   if (!address) return "No wallet connected";
   if (address.length <= 12) return address;
@@ -105,6 +133,39 @@ function joinList(value?: string[]) {
 
 function priceLabel(service: ServiceSummary) {
   return `$${service.price}${service.pricing === "hourly" ? "/hr" : ""}`;
+}
+
+function xRequestStateLabel(state: string) {
+  const labels: Record<string, string> = {
+    draft: "Ready",
+    awaiting_funding: "Needs funding",
+    live: "Live",
+    in_progress: "Live",
+    proof_review: "Proof ready",
+    revision_required: "Action required",
+    verified: "Proof ready",
+    settlement_submitted: "Proof ready",
+    settled: "Completed",
+    cancelled: "Cancelled",
+    expired: "Expired",
+    refund_pending: "Refund pending",
+    partially_refunded: "Partially refunded",
+    refunded: "Refunded",
+    disputed: "Disputed",
+    needs_review: "Needs review"
+  };
+  return labels[state] || "Needs review";
+}
+
+function formatXRequestDeadline(value: string) {
+  const timestamp = Date.parse(value);
+  if (!Number.isFinite(timestamp)) return value || "TBD";
+  return new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit"
+  }).format(new Date(timestamp));
 }
 
 function ProfileSkeleton() {
@@ -211,7 +272,7 @@ function ProfileSkeleton() {
 
 function getXOAuthStatusMessage(code: string) {
   const messages: Record<string, string> = {
-    connect_wallet_first: "Connect your wallet first, then bind your X account.",
+    connect_wallet_first: "Sign in first, then bind your X account.",
     x_oauth_not_configured: "X login is not configured yet.",
     invalid_x_oauth_state: "The X login window expired. Please try again.",
     session_changed: "Your wallet session changed. Please reconnect and try again.",
@@ -268,7 +329,12 @@ async function resizeAvatarFile(file: File) {
 export default function ProfilePage() {
   const { ready, authenticated, login, logout, getAccessToken, user } = usePrivy();
   const { wallets } = useWallets();
+  const { fundWallet } = useFundWallet();
+  const { addSigners } = useSigners();
   const avatarInputRef = useRef<HTMLInputElement | null>(null);
+  const profileLoadRef = useRef<Promise<void> | null>(null);
+  const getAccessTokenRef = useRef(getAccessToken);
+  getAccessTokenRef.current = getAccessToken;
 
   const [profile, setProfile] = useState<AuthPayload | null>(null);
   const [loading, setLoading] = useState(true);
@@ -277,6 +343,23 @@ export default function ProfilePage() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [copiedWallet, setCopiedWallet] = useState(false);
+  const [xRequests, setXRequests] = useState<XRequest[]>([]);
+  const [xRequestsLoading, setXRequestsLoading] = useState(false);
+  const [xWallet, setXWallet] = useState<XWalletSnapshot | null>(null);
+  const [xWalletLoading, setXWalletLoading] = useState(false);
+  const [fundingWallet, setFundingWallet] = useState(false);
+  const [withdrawOpen, setWithdrawOpen] = useState(false);
+  const [withdrawAsset, setWithdrawAsset] = useState<"eth" | "a2h" | "usdc">("a2h");
+  const [withdrawAddress, setWithdrawAddress] = useState("");
+  const [withdrawAmount, setWithdrawAmount] = useState("");
+  const [withdrawing, setWithdrawing] = useState(false);
+  const [withdrawResult, setWithdrawResult] = useState<{
+    txHash?: string;
+    explorerUrl?: string;
+    amount?: string;
+    asset?: string;
+  } | null>(null);
+  const [enablingAutomation, setEnablingAutomation] = useState(false);
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -291,12 +374,27 @@ export default function ProfilePage() {
   const [avatarUrl, setAvatarUrl] = useState("");
 
   const connectedWallet =
-    wallets.find((wallet) => wallet.walletClientType !== "privy" && wallet.address)?.address ||
-    user?.wallet?.address ||
+    wallets.find((wallet) => wallet.walletClientType === "privy" && wallet.address)?.address ||
+    (user?.wallet?.walletClientType === "privy" ? user.wallet.address : undefined) ||
     wallets.find((wallet) => wallet.address)?.address ||
     undefined;
 
+  const loadXWallet = useCallback(async () => {
+    setXWalletLoading(true);
+    try {
+      const response = await fetch("/api/x-wallet", { cache: "no-store", credentials: "same-origin" });
+      const payload = (await response.json().catch(() => ({}))) as { wallet?: XWalletSnapshot };
+      setXWallet(response.ok && payload.wallet ? payload.wallet : null);
+    } catch {
+      setXWallet(null);
+    } finally {
+      setXWalletLoading(false);
+    }
+  }, []);
+
   const loadProfile = useCallback(async () => {
+    if (profileLoadRef.current) return profileLoadRef.current;
+    const request = (async () => {
     if (!ready) return;
     if (!authenticated) {
       setProfile(null);
@@ -315,20 +413,25 @@ export default function ProfilePage() {
     }
 
     let response = await fetchProfile();
-
-    try {
-      const accessToken = await getAccessToken();
-      if (accessToken) {
-        await fetch("/api/auth/privy/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "same-origin",
-          body: JSON.stringify({ accessToken, walletAddress: connectedWallet })
-        });
-        response = await fetchProfile();
+    if (response.status === 401) {
+      try {
+        const accessToken = await getAccessTokenRef.current();
+        if (accessToken) {
+          const syncResponse = await fetch("/api/auth/privy/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "same-origin",
+            body: JSON.stringify(
+              connectedWallet
+                ? { accessToken, embeddedWalletAddress: connectedWallet }
+                : { accessToken }
+            )
+          });
+          if (syncResponse.ok) response = await fetchProfile();
+        }
+      } catch {
+        // The error response below provides the canonical session recovery message.
       }
-    } catch {
-      // Fall through to the normal error path below.
     }
 
     if (!response.ok) {
@@ -340,6 +443,7 @@ export default function ProfilePage() {
 
     const payload = (await response.json()) as AuthPayload;
 
+    setError("");
     setProfile(payload);
     setName(getSuggestedName(payload, connectedWallet));
     setEmail(getDisplayEmail(payload.user.email));
@@ -353,7 +457,30 @@ export default function ProfilePage() {
     setHourlyRate(String(payload.human?.hourlyRate || 30));
     setAvatarUrl(payload.human?.avatarUrl || "");
     setLoading(false);
-  }, [authenticated, connectedWallet, getAccessToken, ready]);
+    void loadXWallet();
+    setXRequestsLoading(true);
+    try {
+      const xTasksResponse = await fetch("/api/x-tasks/mine", {
+        cache: "no-store",
+        credentials: "same-origin"
+      });
+      const xTasksPayload = (await xTasksResponse.json().catch(() => ({}))) as {
+        tasks?: XRequest[];
+      };
+      setXRequests(xTasksResponse.ok && Array.isArray(xTasksPayload.tasks) ? xTasksPayload.tasks : []);
+    } catch {
+      setXRequests([]);
+    } finally {
+      setXRequestsLoading(false);
+    }
+    })();
+    profileLoadRef.current = request;
+    try {
+      await request;
+    } finally {
+      profileLoadRef.current = null;
+    }
+  }, [authenticated, connectedWallet, loadXWallet, ready]);
 
   useEffect(() => {
     loadProfile();
@@ -452,10 +579,14 @@ export default function ProfilePage() {
         setMessage("X account status refreshed.");
       } else {
         setLinkingX(true);
-        const params = new URLSearchParams();
-        const walletAddress = connectedWallet || profile?.user.walletAddress;
-        if (walletAddress) params.set("wallet", walletAddress);
-        window.location.assign(`/api/auth/x/start?${params.toString()}`);
+        const sessionReady = await refreshPrivyServerSession({
+          authenticated,
+          getAccessToken
+        });
+        if (!sessionReady) {
+          throw new Error("Your session expired. Sign in again, then connect X.");
+        }
+        window.location.assign("/api/auth/x/start");
       }
     } catch (linkError) {
       setLinkingX(false);
@@ -488,6 +619,93 @@ export default function ProfilePage() {
     }
   }
 
+  async function fundRequesterWallet() {
+    if (!xWallet?.address) return;
+    setFundingWallet(true);
+    setError("");
+    setMessage("");
+    try {
+      await fundWallet({
+        address: xWallet.address,
+        options: { chain: base, amount: "5", asset: "USDC" }
+      });
+      setMessage("Funding submitted. Balance can take a few moments to update.");
+      await loadXWallet();
+    } catch (fundError) {
+      setError(fundError instanceof Error ? fundError.message : "Unable to open wallet funding.");
+    } finally {
+      setFundingWallet(false);
+    }
+  }
+
+  async function submitWithdraw() {
+    setError("");
+    setMessage("");
+    setWithdrawResult(null);
+    if (!withdrawAddress.trim() || !withdrawAmount.trim()) {
+      setError("Enter a withdrawal address and amount.");
+      return;
+    }
+    setWithdrawing(true);
+    try {
+      const response = await fetch("/api/x-wallet/withdraw", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({
+          asset: withdrawAsset,
+          recipient: withdrawAddress.trim(),
+          amount: withdrawAmount.trim()
+        })
+      });
+      const payload = (await response.json().catch(() => ({}))) as {
+        error?: string;
+        success?: boolean;
+        txHash?: string;
+        explorerUrl?: string;
+        amount?: string;
+        asset?: string;
+      };
+      if (!response.ok || !payload.success) {
+        throw new Error(payload.error || "Withdrawal failed.");
+      }
+      setWithdrawResult({
+        txHash: payload.txHash,
+        explorerUrl: payload.explorerUrl,
+        amount: payload.amount,
+        asset: payload.asset
+      });
+      setMessage(`Withdrawal submitted. ${payload.amount || ""} ${String(payload.asset || "").toUpperCase()} sent to your address.`);
+      setWithdrawAddress("");
+      setWithdrawAmount("");
+      setWithdrawOpen(false);
+      await loadXWallet();
+    } catch (withdrawError) {
+      setError(withdrawError instanceof Error ? withdrawError.message : "Withdrawal failed.");
+    } finally {
+      setWithdrawing(false);
+    }
+  }
+
+  async function enableXAutomation() {
+    if (!xWallet?.address || !privySignerId || !privyPolicyId) return;
+    setEnablingAutomation(true);
+    setError("");
+    setMessage("");
+    try {
+      await addSigners({
+        address: xWallet.address,
+        signers: [{ signerId: privySignerId, policyIds: [privyPolicyId] }]
+      });
+      setMessage("AI2Human task funding enabled for this embedded wallet.");
+      await loadXWallet();
+    } catch (automationError) {
+      setError(automationError instanceof Error ? automationError.message : "Unable to enable task funding.");
+    } finally {
+      setEnablingAutomation(false);
+    }
+  }
+
   async function handleAvatarFile(file?: File) {
     if (!file) return;
     setError("");
@@ -512,11 +730,11 @@ export default function ProfilePage() {
         <div className={styles.authPanel}>
           <div className={styles.authMark}>a2h</div>
           <div className={styles.profileInfo}>
-            <h1>Connect your wallet</h1>
-            <p>Sign in to save your profile, connect X, complete tasks, and receive rewards.</p>
+            <h1>Sign in to AI2Human</h1>
+            <p>Continue with X, email, or a wallet. Your AI2Human embedded wallet is created automatically.</p>
           </div>
           <button className={styles.saveBtn} type="button" onClick={() => login()}>
-            Connect Wallet
+            Continue
           </button>
         </div>
       </div>
@@ -641,7 +859,148 @@ export default function ProfilePage() {
           >
             {linkingX ? "Opening X..." : xAccount?.username ? "Refresh X account" : "Connect X account"}
           </button>
+          {!xAccount?.username && (
+            <details className={styles.xOAuthHelp}>
+              <summary>X says “Something went wrong”?</summary>
+              <p>Sign in to the intended X account in this browser, then retry. If AI2Human is already authorized, revoke it once and reconnect.</p>
+              <div className={styles.xOAuthHelpLinks}>
+                <a href="https://x.com/login" target="_blank" rel="noreferrer">Sign in to X</a>
+                <a href="https://x.com/settings/connected_apps" target="_blank" rel="noreferrer">Connected apps</a>
+              </div>
+            </details>
+          )}
         </div>
+
+        <div className={styles.identityCard}>
+          <div className={styles.identityHeader}>
+            <span className={xWallet?.ready ? styles.identityReady : styles.identityMissing}>
+              {xWallet?.ready ? "Created" : "Creating"}
+            </span>
+            <div>
+              <h2>AI2Human wallet</h2>
+              <p>Your Privy embedded wallet funds X tasks. USDC is used first; A2H can cover the equivalent task budget.</p>
+            </div>
+          </div>
+          {xWalletLoading ? (
+            <div className={styles.loadingStatus}><span className={styles.spinner} /><strong>Loading wallet</strong></div>
+          ) : xWallet?.ready ? (
+            <>
+              <div className={styles.xAccountPreview}>
+                <strong>{Number(xWallet.usdcBalance).toLocaleString(undefined, { maximumFractionDigits: 6 })} USDC</strong>
+                <span>{Number(xWallet.a2hBalance).toLocaleString(undefined, { maximumFractionDigits: 2 })} A2H · {shortAddress(xWallet.address)} · Base</span>
+              </div>
+              <div className={styles.identityToggles}>
+                <button className={styles.saveBtn} type="button" onClick={fundRequesterWallet} disabled={fundingWallet}>
+                  {fundingWallet ? "Opening..." : "Fund wallet"}
+                </button>
+                <button className={styles.saveBtn} type="button" onClick={() => { setWithdrawOpen((open) => !open); setWithdrawResult(null); }} disabled={withdrawing}>
+                  {withdrawOpen ? "Close withdraw" : "Withdraw"}
+                </button>
+                <button className={styles.saveBtn} type="button" onClick={() => copyRewardWallet(xWallet.address)}>
+                  {copiedWallet ? "Copied" : "Copy address"}
+                </button>
+              </div>
+              {withdrawOpen ? (
+                <div className={styles.withdrawPanel}>
+                  <strong>Withdraw from AI2Human wallet</strong>
+                  <p>Send ETH, A2H, or USDC from your embedded wallet to an external address on Base.</p>
+                  <div className={styles.withdrawRow}>
+                    <select
+                      className={styles.withdrawInput}
+                      value={withdrawAsset}
+                      onChange={(event) => setWithdrawAsset(event.target.value as "eth" | "a2h" | "usdc")}
+                      aria-label="Asset to withdraw"
+                    >
+                      <option value="a2h">A2H</option>
+                      <option value="eth">ETH</option>
+                      <option value="usdc">USDC</option>
+                    </select>
+                    <input
+                      className={styles.withdrawInput}
+                      type="text"
+                      placeholder="0x recipient address"
+                      value={withdrawAddress}
+                      onChange={(event) => setWithdrawAddress(event.target.value)}
+                    />
+                  </div>
+                  <div className={styles.withdrawRow}>
+                    <input
+                      className={styles.withdrawInput}
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="Amount"
+                      value={withdrawAmount}
+                      onChange={(event) => setWithdrawAmount(event.target.value)}
+                    />
+                    <button className={styles.saveBtn} type="button" onClick={() => void submitWithdraw()} disabled={withdrawing}>
+                      {withdrawing ? "Withdrawing..." : "Submit withdrawal"}
+                    </button>
+                  </div>
+                  {withdrawResult?.txHash ? (
+                    <p className={styles.withdrawReceipt}>
+                      {withdrawResult.amount} {String(withdrawResult.asset || "").toUpperCase()} withdrawn.{" "}
+                      <a href={withdrawResult.explorerUrl} target="_blank" rel="noreferrer">View on Basescan</a>
+                    </p>
+                  ) : null}
+                </div>
+              ) : null}
+              {xWallet.automationConfigured && !xWallet.delegated ? (
+                <button className={styles.saveBtn} type="button" onClick={enableXAutomation} disabled={enablingAutomation}>
+                  {enablingAutomation ? "Enabling..." : "Enable task funding"}
+                </button>
+              ) : xWallet.delegated ? (
+                <p>Automation enabled. AI2Human can use policy-approved USDC or equivalent A2H for task funding.</p>
+              ) : (
+                <p>Wallet funding is ready. X automation policy is being configured.</p>
+              )}
+            </>
+          ) : (
+            <p>Sign out and sign in again to finish creating your embedded wallet.</p>
+          )}
+        </div>
+      </section>
+
+      <section className={styles.xRequestsPanel}>
+        <div className={styles.sectionHeader}>
+          <div>
+            <h2>My X requests</h2>
+            <p>Tasks created from your connected X account, from draft through proof-gated settlement.</p>
+          </div>
+          <span>{xRequests.length} requests</span>
+        </div>
+
+        {!xAccount?.username ? (
+          <div className={styles.emptyServices}>
+            <strong>Connect X to recover your requests</strong>
+            <p>Once connected, drafts created by that X account appear here automatically.</p>
+          </div>
+        ) : xRequestsLoading ? (
+          <div className={styles.loadingStatus}>
+            <span className={styles.spinner} />
+            <strong>Loading X requests</strong>
+          </div>
+        ) : xRequests.length ? (
+          <div className={styles.xRequestList}>
+            {xRequests.map((request) => (
+              <Link className={styles.xRequestCard} href={`/tasks/${request.id}`} key={request.id}>
+                <div>
+                  <span className={styles.xRequestState}>{xRequestStateLabel(request.state)}</span>
+                  <h3>{request.title}</h3>
+                  <small>{request.id}</small>
+                </div>
+                <dl>
+                  <div><dt>Budget</dt><dd>{request.budget}</dd></div>
+                  <div><dt>Deadline</dt><dd>{formatXRequestDeadline(request.deadline)}</dd></div>
+                </dl>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div className={styles.emptyServices}>
+            <strong>No X requests yet</strong>
+            <p>Mention @ai2humanbot once to create a request, then continue inside that X thread.</p>
+          </div>
+        )}
       </section>
 
       <div className={styles.profileGrid}>
