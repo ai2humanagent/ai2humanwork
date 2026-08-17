@@ -3416,6 +3416,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   gap: 12px;
+  align-items: start;
 }
 
 .qnExampleMeme {
@@ -3434,7 +3435,7 @@
 .qnExampleMeme img {
   display: block;
   width: 100%;
-  aspect-ratio: 1;
+  height: auto;
   object-fit: cover;
 }
 
