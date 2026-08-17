@@ -10,7 +10,12 @@ import {
   fetchWithPrivySessionRetry,
   loadAuthWithPrivySession
 } from "../../lib/clientPrivySession";
-import { sortTasksForBoard } from "../../lib/taskBoard.js";
+import {
+  isBoardTaskAvailable,
+  normalizeTaskSearchValue,
+  sortTasksForBoard
+} from "../../lib/taskBoard.js";
+import { buildTaskExperience } from "../../application/tasks/taskExperience.js";
 
 type Task = {
   id: string;
@@ -32,7 +37,7 @@ type Task = {
   campaign?: {
     requesterName: string;
     requesterHandle?: string;
-    platform: "x" | "real_world";
+    platform: "x" | "real_world" | "research";
     action: string;
     label?: string;
     targetUrl?: string;
@@ -41,6 +46,7 @@ type Task = {
     brief?: string;
     proofRequirements: string[];
     submissionFields?: string[];
+    agentLifecycle?: { workflowState?: string; fundingState?: string; settlementState?: string };
   };
   assignee?: {
     type: "ai" | "human";
@@ -104,9 +110,8 @@ function articleContestActionLabel(task: Task) {
 
 function canClaim(task: Task, auth: AuthPayload | null) {
   if (isArticleContest(task)) return false;
-  if (!["created", "ai_failed"].includes(task.status)) return false;
-  if (task.taskState === "full" || task.taskState === "closed" || task.taskState === "refunded") return false;
-  if (!auth?.human?.id || !auth?.user?.walletAddress) return false;
+  if (!isBoardTaskAvailable(task)) return false;
+  if (!auth?.user?.walletAddress) return false;
   return true;
 }
 
@@ -154,7 +159,7 @@ export default function TaskListClient({ justCreated, searchQuery }: { justCreat
   const [tasks, setTasks] = useState<Task[]>([]);
   const [auth, setAuth] = useState<AuthPayload | null>(null);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState("all");
+  const [filter, setFilter] = useState("available");
   const [sort, setSort] = useState("newest");
   const [rewardType, setRewardType] = useState("all");
   const [claimingId, setClaimingId] = useState("");
@@ -172,23 +177,24 @@ export default function TaskListClient({ justCreated, searchQuery }: { justCreat
     setTasks(sortTasksForBoard(payload));
   }
 
-  async function loadAuth() {
+  async function loadAuth(): Promise<AuthPayload | null> {
     const payload = await loadAuthWithPrivySession<AuthPayload>({
       authenticated,
-      getAccessToken,
-      walletAddress: connectedWallet
+      getAccessToken
     });
     if (!payload) {
       setAuth(null);
-      return;
+      return null;
     }
     setAuth(payload);
+    return payload;
   }
 
   useEffect(() => {
+    if (!ready) return;
     setLoading(true);
     Promise.all([loadTasks(), loadAuth()]).finally(() => setLoading(false));
-  }, []);
+  }, [ready, authenticated]);
 
   useEffect(() => {
     if (!ready || !authenticated) return;
@@ -198,24 +204,28 @@ export default function TaskListClient({ justCreated, searchQuery }: { justCreat
   const filtered = useMemo(() => {
     let result = tasks.filter((task) => {
       if (filter === "available") {
-        return ["created", "ai_failed"].includes(task.status);
+        return isBoardTaskAvailable(task);
       }
       if (filter === "mine") {
         return isClaimedByCurrentUser(task, auth);
       }
       if (filter === "closed") {
-        return ["verified", "paid"].includes(task.status);
+        return (
+          ["verified", "paid"].includes(task.status) ||
+          ["full", "closed", "refunded"].includes(String(task.taskState || ""))
+        );
       }
       return true;
     });
 
     if (searchQuery && searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
+      const q = normalizeTaskSearchValue(searchQuery);
       result = result.filter(
         (t) =>
-          t.title.toLowerCase().includes(q) ||
-          (t.campaign?.brief || "").toLowerCase().includes(q) ||
-          (t.campaign?.requesterName || "").toLowerCase().includes(q)
+          normalizeTaskSearchValue(t.id).includes(q) ||
+          normalizeTaskSearchValue(t.title).includes(q) ||
+          normalizeTaskSearchValue(t.campaign?.brief).includes(q) ||
+          normalizeTaskSearchValue(t.campaign?.requesterName).includes(q)
       );
     }
 
@@ -243,13 +253,17 @@ export default function TaskListClient({ justCreated, searchQuery }: { justCreat
       return;
     }
 
-    if (!auth?.human?.id || !auth?.user?.walletAddress) {
-      router.push("/app/profile");
-      return;
-    }
-
     setClaimingId(task.id);
     try {
+      const claimAuth = auth?.user.walletAddress ? auth : await loadAuth();
+      if (!claimAuth) {
+        throw new Error("Unable to verify your AI2Human account. Refresh the page and try again.");
+      }
+      if (!claimAuth.user.walletAddress) {
+        setError("Connect a payout wallet before claiming tasks.");
+        router.push("/app/profile");
+        return;
+      }
       const response = await fetchWithPrivySessionRetry(
         `/api/tasks/${task.id}/claim`,
         {
@@ -258,15 +272,14 @@ export default function TaskListClient({ justCreated, searchQuery }: { justCreat
         },
         {
           authenticated,
-          getAccessToken,
-          walletAddress: connectedWallet
+          getAccessToken
         }
       );
       const payload = (await response.json().catch(() => ({}))) as { error?: string };
       if (!response.ok) {
         throw new Error(payload.error || "Unable to claim task.");
       }
-      setMessage(`Claimed "${task.title}" as ${auth.human.name}.`);
+      setMessage(`Claimed "${task.title}". You now hold this execution slot.`);
       await Promise.all([loadTasks(), loadAuth()]);
     } catch (claimError) {
       setError(claimError instanceof Error ? claimError.message : "Unable to claim task.");
@@ -280,11 +293,11 @@ export default function TaskListClient({ justCreated, searchQuery }: { justCreat
       <header className={styles.pageHeader}>
         <h1>Tasks</h1>
         <p className={styles.pageLead}>
-          Earn by completing tasks across social and real-world execution. Connect a wallet, claim, and submit proof for onchain settlement.
+          Earn by completing social and real-world tasks. Sign in with X, email, or a wallet; Privy creates your settlement wallet automatically.
         </p>
       </header>
 
-      {justCreated ? <div className={styles.success}>Task created and added to the live board.</div> : null}
+      {justCreated ? <div className={styles.success}>Task draft created. Confirm and fund it before it appears on the available board.</div> : null}
       {message ? <div className={styles.success}>{message}</div> : null}
       {error ? <div className={styles.alert}>{error}</div> : null}
 
@@ -320,6 +333,7 @@ export default function TaskListClient({ justCreated, searchQuery }: { justCreat
         </div>
         <div className={styles.questStatusFilter}>
           {[
+            { key: "all", label: "All" },
             { key: "available", label: "Available" },
             { key: "mine", label: "My Tasks" }
           ].map((opt) => (
@@ -355,6 +369,7 @@ export default function TaskListClient({ justCreated, searchQuery }: { justCreat
 
       <div className={styles.tasksGrid}>
         {filtered.map((task) => {
+          const experience = buildTaskExperience(task);
           const claimedByMe = isClaimedByCurrentUser(task, auth);
           const claimable = canClaim(task, auth);
           const articleContest = isArticleContest(task);
@@ -412,9 +427,7 @@ export default function TaskListClient({ justCreated, searchQuery }: { justCreat
                           : STATUS_COLORS[task.status]
                       }}
                     >
-                      {task.taskState === "full" || task.taskState === "closed" || task.taskState === "refunded"
-                        ? "Ended"
-                        : STATUS_LABELS[task.status]}
+                      {task.campaign?.agentLifecycle ? experience.label : task.taskState === "full" || task.taskState === "closed" || task.taskState === "refunded" ? "Ended" : STATUS_LABELS[task.status]}
                     </span>
                   )}
                 </div>
