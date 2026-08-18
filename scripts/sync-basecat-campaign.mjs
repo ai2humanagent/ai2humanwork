@@ -80,7 +80,8 @@ const task = {
       "https://ai2human.work/campaign/basecat-meme-2.svg",
       "https://ai2human.work/campaign/basecat-meme-3.svg",
       "https://ai2human.work/campaign/basecat-meme-4.svg",
-      "https://ai2human.work/campaign/basecat-meme-5.svg"
+      "https://ai2human.work/campaign/basecat-meme-5.svg",
+      "https://ai2human.work/campaign/basecat-meme-6.png"
     ],
     proofPhrase: "#A2H #BaseCat",
     requesterName: "AI2Human",
