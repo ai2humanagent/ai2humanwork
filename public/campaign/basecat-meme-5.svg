@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" viewBox="0 0 800 800">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0A0F1E"/>
+      <stop offset="1" stop-color="#111C38"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="800" fill="url(#bg)"/>
+  <circle cx="660" cy="150" r="70" fill="#E8ECF4"/>
+  <circle cx="660" cy="150" r="60" fill="#C9D2DC"/>
+  <circle cx="640" cy="138" r="8" fill="#8E9AA8"/>
+  <circle cx="680" cy="140" r="6" fill="#8E9AA8"/>
+  <circle cx="662" cy="158" r="9" fill="#8E9AA8"/>
+
+  <!-- BASE blocks -->
+  <rect x="120" y="560" width="180" height="90" rx="12" fill="#1E6BFF"/>
+  <rect x="330" y="480" width="180" height="90" rx="12" fill="#154FC4"/>
+  <rect x="540" y="540" width="180" height="90" rx="12" fill="#1E6BFF"/>
+  <text x="210" y="616" text-anchor="middle" font-family="Arial, sans-serif" font-size="38" font-weight="900" fill="#FFFFFF">BASE</text>
+  <text x="420" y="536" text-anchor="middle" font-family="Arial, sans-serif" font-size="38" font-weight="900" fill="#FFFFFF">BASE</text>
+  <text x="630" y="596" text-anchor="middle" font-family="Arial, sans-serif" font-size="38" font-weight="900" fill="#FFFFFF">BASE</text>
+
+  <!-- cat 1 -->
+  <rect x="188" y="420" width="92" height="80" rx="30" fill="#C9D2DC"/>
+  <path d="M280 450 Q340 410 330 330" stroke="#C9D2DC" stroke-width="20" stroke-linecap="round" fill="none"/>
+  <circle cx="240" cy="400" r="96" fill="#C9D2DC"/>
+  <path d="M144 386 L160 312 L202 352 Z" fill="#C9D2DC"/>
+  <path d="M336 386 L320 312 L278 352 Z" fill="#C9D2DC"/>
+  <path d="M152 382 L166 330 L196 356 Z" fill="#F4A9B8"/>
+  <path d="M328 382 L314 330 L284 356 Z" fill="#F4A9B8"/>
+  <path d="M144 372 Q148 288 240 288 Q332 288 336 372 Z" fill="#1E6BFF"/>
+  <rect x="132" y="362" width="216" height="22" rx="8" fill="#0E47C2"/>
+  <circle cx="208" cy="402" r="11" fill="#1A2233"/>
+  <circle cx="272" cy="402" r="11" fill="#1A2233"/>
+  <path d="M228 426 L252 426 L240 440 Z" fill="#F4A9B8"/>
+
+  <!-- cat 2 -->
+  <rect x="448" y="430" width="92" height="80" rx="30" fill="#C9D2DC"/>
+  <path d="M540 460 Q600 420 590 340" stroke="#C9D2DC" stroke-width="20" stroke-linecap="round" fill="none"/>
+  <circle cx="500" cy="410" r="96" fill="#C9D2DC"/>
+  <path d="M404 396 L420 322 L462 362 Z" fill="#C9D2DC"/>
+  <path d="M596 396 L580 322 L538 362 Z" fill="#C9D2DC"/>
+  <path d="M412 392 L426 340 L456 366 Z" fill="#F4A9B8"/>
+  <path d="M588 392 L574 340 L544 366 Z" fill="#F4A9B8"/>
+  <path d="M404 382 Q408 298 500 298 Q592 298 596 382 Z" fill="#1E6BFF"/>
+  <rect x="392" y="372" width="216" height="22" rx="8" fill="#0E47C2"/>
+  <circle cx="468" cy="412" r="11" fill="#1A2233"/>
+  <circle cx="532" cy="412" r="11" fill="#1A2233"/>
+  <path d="M488 436 L512 436 L500 450 Z" fill="#F4A9B8"/>
+
+  <text x="400" y="120" text-anchor="middle" font-family="Arial, sans-serif" font-size="44" font-weight="900" fill="#FFFFFF">THE CATS ARE WORKING OVERTIME</text>
+  <text x="400" y="176" text-anchor="middle" font-family="Arial, sans-serif" font-size="28" font-weight="700" fill="#2EE6A8">building Base, one block at a time</text>
+  <text x="400" y="720" text-anchor="middle" font-family="Arial, sans-serif" font-size="34" font-weight="900" fill="#FFD166">$BASECAT</text>
+</svg>
