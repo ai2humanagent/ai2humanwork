@@ -90,3 +90,28 @@ console.log(
 // 6. get_verification round-trip
 const fetched = getVerification(dPass.verificationId);
 console.log("GET_VERIFICATION:", fetched?.verificationId === dPass.verificationId ? "ok" : "mismatch", fetched?.receipt ? "receipt-ok" : "no-receipt");
+
+// 7. eligibility_check — community program participation (no crypto framing)
+const BASE_POST = "https://x.com/BasecatOnBase/status/2089239292522443175";
+const eligibilityRuns = [
+  { accountId: "acct_alice", url: BASE_POST, label: "valid member + valid post" },
+  { accountId: "acct_carol", url: BASE_POST, label: "suspended member" },
+  { accountId: "acct_alice", url: BASE_POST, label: "duplicate claim (same account+post)" }
+];
+const report: Record<string, number> = { submitted: 0, passed: 0, failed: 0, resubmit: 0 };
+const rejectedReasons: string[] = [];
+for (const item of eligibilityRuns) {
+  const r = await runClaim({
+    claimType: "eligibility_check",
+    registry: policies,
+    evidence: { identity: { accountId: item.accountId }, content: { url: item.url } },
+    config: { requiredHashtags: ["#BASECAT"], contentKeywords: ["moon"] }
+  });
+  report.submitted += 1;
+  report[r.verdict === "pass" ? "passed" : r.verdict === "fail" ? "failed" : "resubmit"] += 1;
+  if (r.verdict !== "pass") {
+    rejectedReasons.push(`${item.label} -> ${r.checks.filter((c) => !c.passed).map((c) => c.name).join(",")}`);
+  }
+  console.log(`ELIGIBILITY [${item.label}]:`, r.status, r.verdict, r.receipt ? `receipt=${r.receipt.receiptId}` : "no-receipt");
+}
+console.log("REPORT:", JSON.stringify(report), "rejected:", rejectedReasons.join(" | "));

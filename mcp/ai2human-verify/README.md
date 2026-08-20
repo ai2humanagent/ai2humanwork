@@ -22,6 +22,7 @@ Design docs:
 | `x_post_claim` | L2 | Live X post exists, author matches, hashtags/mentions/keywords present |
 | `wallet_claim` | L2 | On-chain wallet balance / holder / transaction success (Base or Ethereum) |
 | `delivery_confirmed` | L3 | Generic delivery claim: capture time, image hashes, GPS plausibility, delivery reference (mock service) |
+| `eligibility_check` | L3 | Community program eligibility: active membership (mock registry) + public post with required signals + one-claim-per-account dedupe |
 
 ## Example
 

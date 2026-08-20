@@ -2,6 +2,10 @@ import type { CheckContext, PolicyConfig } from "./types.js";
 import { verifyXPostClaim } from "./verifyXPost.js";
 import { verifyWalletClaim } from "./verifyWallet.js";
 import { checkDeliveryReference, isPlausibleGps, isValidImageHash } from "./mockEvidence.js";
+import { checkMembership } from "./mockMembership.js";
+
+// One account + one public post per program: used to reject duplicate claims.
+const usedEligibilityClaims = new Set<string>();
 
 export const policies: Record<string, PolicyConfig> = {
   x_post_claim: {
@@ -159,6 +163,74 @@ export const policies: Record<string, PolicyConfig> = {
       {
         name: "anchor",
         run: () => ({ name: "anchor", passed: true, detail: "receipt issued by engine" })
+      }
+    ]
+  },
+
+  eligibility_check: {
+    policyId: "eligibility_check",
+    version: 1,
+    level: "L3",
+    claim: "An account is an active member and posted publicly with the required campaign signals, once",
+    evidenceRequirements: [
+      { dimension: "identity", required: true, note: "identity.accountId (participant account)" },
+      { dimension: "content", required: true, note: "content.url = the public social post URL" }
+    ],
+    checks: [
+      {
+        name: "membership",
+        run: ({ evidence }: CheckContext) => {
+          const accountId = evidence.identity?.accountId || "";
+          const member = checkMembership(accountId);
+          if (!member.found) {
+            return { name: "membership", passed: false, detail: `account ${accountId || "?"} is not registered` };
+          }
+          const ok = member.status === "active";
+          return {
+            name: "membership",
+            passed: ok,
+            detail: ok
+              ? `account ${accountId} active since ${member.memberSince}`
+              : `account ${accountId} is ${member.status}`
+          };
+        }
+      },
+      {
+        name: "social_proof",
+        run: async ({ evidence, config }: CheckContext) => {
+          const result = await verifyXPostClaim({
+            postUrl: evidence.content?.url || "",
+            expectedAuthorHandle: config.expectedAuthorHandle,
+            requiredHashtags: config.requiredHashtags,
+            requiredMentions: config.requiredMentions,
+            contentKeywords: config.contentKeywords,
+            maxAgeHours: config.maxAgeHours
+          });
+          const failed = result.checks.filter((c) => !c.passed);
+          return {
+            name: "social_proof",
+            passed: result.verdict === "pass",
+            detail: failed.length
+              ? failed.map((c) => `${c.name}: ${c.detail}`).join("; ")
+              : `post verified (author ${result.evidence?.authorHandle || "unknown"})`,
+            inconclusive: result.verdict === "unverifiable"
+          };
+        }
+      },
+      {
+        name: "dedupe",
+        run: ({ evidence }: CheckContext) => {
+          const key = `${evidence.identity?.accountId || "?"}:${evidence.content?.url || "?"}`;
+          if (usedEligibilityClaims.has(key)) {
+            return { name: "dedupe", passed: false, detail: "this account + post was already used for this program" };
+          }
+          usedEligibilityClaims.add(key);
+          return { name: "dedupe", passed: true, detail: "first use" };
+        }
+      },
+      {
+        name: "anchor",
+        run: () => ({ name: "anchor", passed: true, detail: "credential issued by engine" })
       }
     ]
   }
