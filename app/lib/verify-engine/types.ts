@@ -1,3 +1,4 @@
+// Mirror of mcp/ai2human-verify/src (web build). Keep in sync with the MCP package.
 export type CheckResult = {
   name: string;
   passed: boolean;

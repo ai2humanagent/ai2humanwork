@@ -49,6 +49,33 @@ npm test        # engine smoke tests (real X post + real on-chain check + mock d
 npm run dev     # start MCP server over stdio
 ```
 
+## Hosted API (developer usage)
+
+The same engine is exposed as an HTTP API in the web app:
+
+```bash
+# 1. List available policies
+curl https://ai2human.work/api/v1/verify/policies \
+  -H "Authorization: Bearer $VERIFY_API_KEY"
+
+# 2. Verify a claim
+curl -X POST https://ai2human.work/api/v1/verify_claim \
+  -H "Authorization: Bearer $VERIFY_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "claimType": "eligibility_check",
+    "evidence": {
+      "identity": { "accountId": "acct_alice" },
+      "content": { "url": "https://x.com/BasecatOnBase/status/2089239292522443175" }
+    },
+    "config": { "requiredHashtags": ["#BASECAT"], "contentKeywords": ["moon"] }
+  }'
+```
+
+Response: the full verification record — `verdict` (`pass | fail | resubmit | manual_review`), per-check results, missing evidence, and a self-contained `receipt` (claim/evidence/checks hashes + signer + timestamp). Verdicts are returned with HTTP 200 (they are results, not errors); `400` = unknown `claimType`, `401` = invalid key.
+
+Set `VERIFY_API_KEY` (comma-separated keys via `VERIFY_API_KEYS`) in the app environment. Receipts are self-contained — store them in your own system; record persistence (lookup by id) is the next milestone.
+
 ## Connect from an MCP client
 
 ```jsonc
