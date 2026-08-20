@@ -1,8 +1,8 @@
-Agents are great at claiming things. "Your package is delivered." "The order is placed." "The ticket is resolved." Sometimes those claims are true. Sometimes the agent just… decided they were true. The most famous failure mode of the current agent stack isn't capability — it's that **an agent's word is its own verification**.
+An agent tells your customer: "The package is delivered." The customer never got it. The agent is completely confident. The refund is now your problem.
 
-This is about to become a liability. Agents are moving from chat to actions: they'll file refunds, dispatch deliveries, sign off on compliance, release bounties, settle invoices. The moment an agent's claim gates money or an irreversible action, "trust me, I did it" stops being a UX quirk and becomes a financial hole.
+This is the failure mode nobody fixes with a better prompt. As agents move from chat to actions — refunds, deliveries, compliance sign-offs, bounties, invoices — a claim that gates money or an irreversible action can't be a model's opinion. **The bottleneck for agents isn't intelligence anymore. It's trust.**
 
-We think the fix isn't better prompting. It's a missing primitive: **the ability to prove a claim — and a receipt you can keep.**
+So we built the missing primitive: **`verify(claim, evidence) → verdict + receipt`** — treating "prove it" as a primitive, not a feature, with a receipt you can keep.
 
 ## Why self-verification is structurally broken
 
@@ -43,6 +43,18 @@ capture → integrity → authenticity → consistency → judgment → anchor
 - **anchor**: bind the verdict, the evidence hashes, and the checks into a receipt.
 
 Each step is an attack model: fake GPS, reused photos, AI-generated "handmade" content, sybil clusters, timestamp tampering. The chain is how we make each one expensive.
+
+The whole pipeline, in one picture:
+
+```text
+                verify_claim(claimType, evidence)
+                            │
+        policy (level + required dimensions + checks)
+                            │
+   capture → integrity → authenticity → consistency → judgment → anchor
+                            │
+                    verdict + receipt
+```
 
 ## Assurance levels: the generalization that makes this composable
 
@@ -99,6 +111,18 @@ if "finalized" in output and "receiptId" not in output:
 ```
 
 Why both? Because a guardrail only sees text and only runs on final output — by the time it trips, the agent may have already spent tokens and called other tools. The tool-level check is the actual gate; the guardrail is the visible one. Most "verification" demos show one layer; the failure cases are exactly in the gap between them.
+
+```text
+agent ──► verify_claim (MCP tool) ──► verdict + receipt
+                    │
+                    ▼
+    finalize_delivery (tool) re-runs verification
+                    │
+       pass ──► finalized + receiptId      fail ──► refused
+                    │
+                    ▼
+    output guardrail: claims "done" without receiptId ──► trip
+```
 
 ## This is the value, and it's bigger than one API
 

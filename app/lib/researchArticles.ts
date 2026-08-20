@@ -9,7 +9,7 @@ export type ResearchArticle = {
 export const researchArticles: ResearchArticle[] = [
   {
     slug: "agents-must-prove",
-    title: "How to make an agent prove it did the job",
+    title: "Agents can't prove they did the job — so we built the verify primitive",
     date: "August 20, 2026",
     status: "Technical note",
     excerpt:
