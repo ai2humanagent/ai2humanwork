@@ -9,12 +9,43 @@ guardrail trips if the agent claims completion without a receipt.
 from __future__ import annotations
 
 import json
+import os
+import re
 import sys
 
 from agents import Agent, GuardrailFunctionOutput, Runner, function_tool, output_guardrail
 from agents.mcp import MCPServerStdio
+from pydantic import BaseModel
 
 from verification_core import run_delivery_verification
+
+
+class DeliveryResult(BaseModel):
+    status: str
+    order_ref: str
+    receipt_id: str | None = None
+
+
+def build_model():
+    """Return an OpenAI-compatible model when configured, else None.
+
+    Set DEEPSEEK_API_KEY (optionally OPENAI_BASE_URL) to run the demo against
+    DeepSeek or another OpenAI-compatible endpoint instead of OpenAI.
+    """
+    key = os.environ.get("DEEPSEEK_API_KEY", "").strip()
+    if not key:
+        return None
+    from openai import AsyncOpenAI
+    from agents import OpenAIChatCompletionsModel
+
+    client = AsyncOpenAI(
+        api_key=key,
+        base_url=os.environ.get("OPENAI_BASE_URL", "https://api.deepseek.com"),
+    )
+    return OpenAIChatCompletionsModel(
+        model=os.environ.get("OPENAI_MODEL", "deepseek-chat"),
+        openai_client=client,
+    )
 
 
 def finalize_delivery_fn(
@@ -35,7 +66,7 @@ def finalize_delivery_fn(
     evidence = {
         "time": {"capturedAt": captured_at},
         "location": {"gps": {"lat": gps_lat, "lng": gps_lng}},
-        "content": {"referenceId": order_ref, "imageHashes": [image_hash]},
+        "content": {"referenceId": order_ref, "imageHashes": [normalize_image_hash(image_hash)]},
         "process": {"source": "in_app_capture"},
     }
     record = run_delivery_verification(evidence)
@@ -55,15 +86,40 @@ def finalize_delivery_fn(
 finalize_delivery = function_tool(finalize_delivery_fn)
 
 
-async def completion_guardrail_fn(agent: Agent, output) -> GuardrailFunctionOutput:
+def normalize_image_hash(value: str) -> str:
+    """Accept a bare 64-hex hash and normalize it to sha256:<hex>."""
+    cleaned = str(value or "").strip().lower()
+    if re.fullmatch(r"[0-9a-f]{64}", cleaned):
+        return f"sha256:{cleaned}"
+    return cleaned
+
+
+async def completion_guardrail_fn(context, agent: Agent, output) -> GuardrailFunctionOutput:
     """Trip if the agent claims completion without a verification receipt."""
-    text = output if isinstance(output, str) else str(output)
-    claims_done = "finalized" in text.lower() or "delivered" in text.lower()
-    has_receipt = "receiptId" in text
+    if isinstance(output, DeliveryResult):
+        claims_done = output.status == "finalized"
+        has_receipt = bool(output.receipt_id)
+        detail = f"status={output.status} receipt={output.receipt_id}"
+    else:
+        text = str(output)
+        lower = text.lower()
+        has_receipt = "receiptid" in lower or "receipt_id" in lower
+        refusal_markers = [
+            "refused",
+            "cannot be finalized",
+            "cannot finalize",
+            "not finalized",
+            "verification failed",
+            "could not finalize",
+            "was refused",
+        ]
+        is_refusal = any(marker in lower for marker in refusal_markers)
+        claims_done = ("finalized" in lower or "delivered" in lower) and not is_refusal
+        detail = text[:120]
     if claims_done and not has_receipt:
         return GuardrailFunctionOutput(
             tripwire_triggered=True,
-            output_info={"reason": "completion claimed without a verification receipt"},
+            output_info={"reason": "completion claimed without a verification receipt", "output": detail},
         )
     return GuardrailFunctionOutput(tripwire_triggered=False, output_info={})
 
@@ -71,24 +127,42 @@ async def completion_guardrail_fn(agent: Agent, output) -> GuardrailFunctionOutp
 completion_guardrail = output_guardrail(completion_guardrail_fn)
 
 
-def build_agent(mcp_server: MCPServerStdio) -> Agent:
-    return Agent(
+def build_agent(mcp_server: MCPServerStdio, model=None) -> Agent:
+    structured = model is None
+    base_instructions = (
+        "You finalize delivery claims. Evidence: order reference, capture timestamp, "
+        "GPS, image hash. You may call verify_claim (MCP) to pre-check. To finalize, "
+        "call finalize_delivery with the exact evidence. "
+    )
+    if structured:
+        instructions = base_instructions + (
+            "Return the structured result: set status to 'finalized' ONLY if "
+            "finalize_delivery returned 'finalized', and ALWAYS include its receiptId "
+            "in receipt_id. If finalize_delivery is refused, set status to 'refused' "
+            "and receipt_id to null. Never claim completion without a receipt_id."
+        )
+    else:
+        instructions = base_instructions + (
+            "NEVER claim a delivery is finalized unless finalize_delivery returns "
+            "'finalized'. When it does, end your final answer with exactly: "
+            "Finalized receiptId=r_<id>. If it is refused, end with: Refused."
+        )
+    kwargs = dict(
         name="delivery-agent",
-        instructions=(
-            "You finalize delivery claims. Evidence: order reference, capture timestamp, "
-            "GPS, image hash. You may call verify_claim (MCP) to pre-check. To finalize, "
-            "call finalize_delivery with the exact evidence. NEVER claim a delivery is "
-            "finalized or completed unless finalize_delivery returns status 'finalized' "
-            "with a receiptId. If it is refused, report the reasons and do not claim completion."
-        ),
+        instructions=instructions,
         tools=[finalize_delivery],
         mcp_servers=[mcp_server],
         output_guardrails=[completion_guardrail],
     )
+    if structured:
+        kwargs["output_type"] = DeliveryResult
+    if model is not None:
+        kwargs["model"] = model
+    return Agent(**kwargs)
 
 
-async def run_scenarios(mcp_server: MCPServerStdio) -> None:
-    agent = build_agent(mcp_server)
+async def run_scenarios(mcp_server: MCPServerStdio, model=None) -> None:
+    agent = build_agent(mcp_server, model)
 
     print("=== Scenario A: valid evidence ===")
     result_a = await Runner.run(
@@ -119,6 +193,7 @@ async def main() -> None:
     import asyncio
     from pathlib import Path
 
+    model = build_model()
     server = MCPServerStdio(
         params={
             "command": sys.executable,
@@ -126,7 +201,7 @@ async def main() -> None:
         }
     )
     async with server:
-        await run_scenarios(server)
+        await run_scenarios(server, model)
 
 
 if __name__ == "__main__":

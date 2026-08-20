@@ -33,6 +33,8 @@ python -m venv .venv
 
 Parts 1-3 are deterministic and need no API key. Part 4 runs the live agent and requires a valid `OPENAI_API_KEY`.
 
+To run Part 4 against an OpenAI-compatible provider (e.g. DeepSeek), set `DEEPSEEK_API_KEY` (optionally `OPENAI_BASE_URL` and `OPENAI_MODEL`). When a custom model is used, the demo falls back to plain-text output, since some providers do not support structured outputs.
+
 ## How it works
 
 ```text

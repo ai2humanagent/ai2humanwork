@@ -83,12 +83,13 @@ async def part3_guardrail() -> None:
     """Output guardrail trips when completion is claimed without a receipt."""
     print("=== Part 3: output guardrail (no receipt -> trip) ===")
     from agent import completion_guardrail_fn
+    from agent import DeliveryResult
 
-    check = await completion_guardrail_fn(None, "The delivery is finalized.")
+    check = await completion_guardrail_fn(None, None, DeliveryResult(status="finalized", order_ref="ORD-1001"))
     print(f"  'finalized' without receiptId -> tripwire={check.tripwire_triggered}")
     assert check.tripwire_triggered is True
     check_ok = await completion_guardrail_fn(
-        None, "Delivery finalized. receiptId=r_1 evidenceHash=sha256:xxx"
+        None, None, DeliveryResult(status="finalized", order_ref="ORD-1001", receipt_id="r_1")
     )
     print(f"  'finalized' with receiptId -> tripwire={check_ok.tripwire_triggered}")
     assert check_ok.tripwire_triggered is False
@@ -103,7 +104,7 @@ async def part4_live_agent() -> None:
     from agents import Runner
     from agents.mcp import MCPServerStdio
 
-    from agent import build_agent
+    from agent import build_agent, build_model
 
     server = MCPServerStdio(
         params={
@@ -113,7 +114,7 @@ async def part4_live_agent() -> None:
     )
     try:
         async with server:
-            agent = build_agent(server)
+            agent = build_agent(server, build_model())
             result_a = await Runner.run(agent, VALID_PROMPT)
             print("  A (valid):", result_a.final_output)
             result_b = await Runner.run(agent, INVALID_PROMPT)
