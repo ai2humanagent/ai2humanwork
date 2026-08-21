@@ -76,6 +76,30 @@ Response: the full verification record — `verdict` (`pass | fail | resubmit | 
 
 Set `VERIFY_API_KEY` (comma-separated keys via `VERIFY_API_KEYS`) in the app environment. Receipts are self-contained — store them in your own system; record persistence (lookup by id) is the next milestone.
 
+### Try it without signing up
+
+Set `VERIFY_DEMO_KEY` in the app environment, and anyone can try two policies (rate-limited per IP):
+
+```bash
+curl -X POST https://ai2human.work/api/v1/verify_claim \
+  -H "Authorization: Bearer $VERIFY_DEMO_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "claimType": "delivery_confirmed",
+    "evidence": {
+      "time": { "capturedAt": "2026-08-20T12:30:00Z" },
+      "location": { "gps": { "lat": 31.23, "lng": 121.47 } },
+      "content": {
+        "referenceId": "ORD-1001",
+        "imageHashes": ["sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"]
+      },
+      "process": { "source": "in_app_capture" }
+    }
+  }'
+```
+
+Demo key is restricted to `eligibility_check` and `delivery_confirmed` (mock evidence sources, deterministic). Full keys unlock all policies.
+
 ## Connect from an MCP client
 
 ```jsonc

@@ -18,9 +18,9 @@ export function apiJson(data: unknown, status = 200): NextResponse {
   });
 }
 
-export function requireApiKey(
-  request: Request
-): { ok: true } | { ok: false; response: NextResponse } {
+export type VerifyApiAuth = { ok: true; isDemo: boolean } | { ok: false; response: NextResponse };
+
+export function requireApiKey(request: Request): VerifyApiAuth {
   const authHeader = request.headers.get("authorization") || "";
   const bearer = authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : "";
   const xApiKey = request.headers.get("x-api-key")?.trim() || "";
@@ -30,6 +30,7 @@ export function requireApiKey(
     .split(",")
     .map((key) => key.trim())
     .filter(Boolean);
+  const demoKey = (process.env.VERIFY_DEMO_KEY || "").trim();
 
   if (configured.length === 0) {
     return {
@@ -37,9 +38,12 @@ export function requireApiKey(
       response: apiJson({ error: "Verification API is not configured (missing VERIFY_API_KEY)." }, 500)
     };
   }
+  if (demoKey && safeEqual(provided, demoKey)) {
+    return { ok: true, isDemo: true };
+  }
   const valid = Boolean(provided) && configured.some((key) => safeEqual(provided, key));
   if (!valid) {
     return { ok: false, response: apiJson({ error: "Invalid or missing API key." }, 401) };
   }
-  return { ok: true };
+  return { ok: true, isDemo: false };
 }
